@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  githubId  String    @unique
+  username  String
+  avatarUrl String?
+  services  Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Service {
+  id           String       @id @default(uuid())
+  name         String       @unique
+  repoUrl      String
+  branch       String       @default("main")
+  buildCommand String?
+  startCommand String?
+  port         Int          @default(3000)
+  status       String       @default("IDLE") // IDLE, DEPLOYING, ACTIVE, FAILED
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  deployments  Deployment[]
+  envVars      Json?        // Key-value pairs
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Deployment {
+  id         String   @id @default(uuid())
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id])
+  status     String   @default("QUEUED") // QUEUED, BUILDING, SUCCESS, FAILED
+  logs       String?  @db.Text
+  commitHash String?
+  imageTag   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

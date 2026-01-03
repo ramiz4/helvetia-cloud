@@ -1,0 +1,83 @@
+services:
+  # Reverse Proxy
+  traefik:
+    image: traefik:v3.1
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - helvetia-net
+
+  # Database
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: helvetia
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: helvetia
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - helvetia-net
+
+  # Queue
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - helvetia-net
+
+  # API Service (Placeholder for now)
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    environment:
+      DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
+      REDIS_URL: redis://redis:6379
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - helvetia-net
+
+  # Worker Service (Placeholder for now)
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./worker:/app
+      - /app/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
+    depends_on:
+      - redis
+    networks:
+      - helvetia-net
+
+networks:
+  helvetia-net:
+    name: helvetia-net
+
+volumes:
+  postgres_data:

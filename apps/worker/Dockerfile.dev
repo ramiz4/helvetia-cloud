@@ -1,0 +1,15 @@
+FROM node:22-alpine
+
+# Install Docker CLI in worker to allow it to build images (Docker-out-of-Docker)
+RUN apk add --no-cache docker-cli git
+
+WORKDIR /app
+
+RUN npm install -g pnpm
+
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install
+
+COPY . .
+
+CMD ["pnpm", "run", "dev"]
