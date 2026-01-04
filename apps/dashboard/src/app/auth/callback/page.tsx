@@ -26,6 +26,9 @@ function CallbackContent() {
 
         if (data.token) {
           localStorage.setItem('token', data.token);
+          if (data.accessToken) {
+            localStorage.setItem('gh_token', data.accessToken);
+          }
           localStorage.setItem('user', JSON.stringify(data.user));
           router.push('/');
         } else {

@@ -1,20 +1,17 @@
 import { Job, Worker } from 'bullmq';
-import { exec } from 'child_process';
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
-import { promisify } from 'util';
 
 dotenv.config();
 
-const execAsync = promisify(exec);
 const docker = new Docker();
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
 
-const worker = new Worker(
+new Worker(
   'deployments',
   async (job: Job) => {
     const {
@@ -30,13 +27,11 @@ const worker = new Worker(
       customDomain,
     } = job.data;
 
-    let builder: any = null;
+    let builder: Docker.Container | null = null;
 
     // Prepare secrets for scrubbing
     const secrets = envVars
-      ? (Object.values(envVars).filter(
-          (v: any) => typeof v === 'string' && v.length > 0,
-        ) as string[])
+      ? (Object.values(envVars).filter((v) => typeof v === 'string' && v.length > 0) as string[])
       : [];
     const scrubLogs = (log: string) => {
       let cleaned = log;
@@ -87,11 +82,28 @@ const worker = new Worker(
           echo "RUN apk add --no-cache git build-base python3" >> Dockerfile
           echo "RUN npm install -g pnpm" >> Dockerfile
           echo "WORKDIR /app" >> Dockerfile
+
+          # Add ARG declarations for build-time env vars (needed for Vite/static apps)
+          if [ -n "${envVars}" ]; then
+            echo '${Object.keys(envVars || {})
+              .map((key) => `ARG ${key}`)
+              .join('\\n')}' >> Dockerfile
+          fi
+
           echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
-          echo "RUN ${buildCommand || 'pnpm install --frozen-lockfile'}" >> Dockerfile
+          echo "RUN pnpm install --frozen-lockfile" >> Dockerfile
           echo "COPY . ." >> Dockerfile
+
+          # Set env vars before build (for Vite to embed them)
+          if [ -n "${envVars}" ]; then
+            echo '${Object.entries(envVars || {})
+              .map(([k, v]) => `ENV ${k}="${v}"`)
+              .join('\\n')}' >> Dockerfile
+          fi
+
+          echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
           echo "EXPOSE ${port || 3000}" >> Dockerfile
-          echo "CMD ${startCommand || 'npm start'}" >> Dockerfile
+          echo 'CMD ["sh", "-c", "${startCommand || 'pnpm start'}"]' >> Dockerfile
 
           echo "node_modules" > .dockerignore
           echo ".git" >> .dockerignore
@@ -131,10 +143,17 @@ const worker = new Worker(
         throw new Error(`Build failed with exit code ${execResult.ExitCode}`);
       }
 
+      // Sanitize logs for PostgreSQL (remove null bytes and invalid UTF8)
+      /* eslint-disable no-control-regex */
+      const sanitizedLogs = buildLogs
+        .replace(/\0/g, '')
+        .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+      /* eslint-enable no-control-regex */
+
       // Update logs in DB
       await prisma.deployment.update({
         where: { id: deploymentId },
-        data: { logs: buildLogs },
+        data: { logs: sanitizedLogs },
       });
 
       // 4. Run Container (and stop old one)
@@ -204,11 +223,12 @@ const worker = new Worker(
       });
 
       console.log(`Deployment ${deploymentId} successful!`);
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Deployment ${deploymentId} failed:`, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       await prisma.deployment.update({
         where: { id: deploymentId },
-        data: { status: 'FAILED', logs: error.message },
+        data: { status: 'FAILED', logs: errorMessage },
       });
       await prisma.service.update({
         where: { id: serviceId },

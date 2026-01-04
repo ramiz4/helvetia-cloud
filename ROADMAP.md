@@ -43,6 +43,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Interactive Logs**: Advanced log viewer with search, filtering, and live-tailing capabilities.
 - [x] **Mobile Responsiveness**: Full mobile support for monitoring and management on the go.
 - [x] **Dark/Light Mode**: System-aware theming support.
+- [x] **GitHub Repository Picker**: Allow users to select repositories and branches directly from their GitHub account when creating a service. Ensure the "Connect a Repository" form features a premium, fancy, and user-friendly UX/UI for a seamless experience.
 
 ## 🔮 Phase 6: Advanced Ecosystem & Growth
 
@@ -52,6 +53,21 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [ ] **Billing Integration**: Stripe integration for implementation of usage-based pricing and subscription tiers.
 - [ ] **Marketplace**: One-click catalog for deploying popular open-source applications (e.g., WordPress, Ghost, Plausible).
 - [ ] **CLI Tool**: specialized command-line tool for Helvetia Cloud.
+
+## 🛠 Code Quality & Technical Debt
+
+- [ ] **Environment Configuration**: Extract hardcoded `http://localhost:3001` in `src/app/page.tsx` to an environment variable.
+- [ ] **React State Management**: Fix `useEffect` dependency issue in `src/app/page.tsx` (potential infinite loop with `services` dependency).
+- [ ] **UI/UX**: Restore multi-line formatting for delete confirmation message in `src/app/page.tsx`.
+- [ ] **Styling**: Refactor inline styles to Tailwind CSS classes in `src/components/LandingPage.tsx`.
+- [ ] **Modal Accessibility**: Implement proper focus trapping and Escape key handling for modals in `src/app/page.tsx`.
+- [ ] **Logo Accessibility**: Add `alt` text or ARIA attributes to the logo in `src/components/Navigation.tsx`.
+- [ ] **Hydration**: Remove `suppressHydrationWarning` from `src/app/layout.tsx` and fix the underlying hydration mismatches.
+- [ ] **Input Accessibility**: Add ARIA labels to the search input in `src/app/page.tsx`.
+- [ ] **Dependency Cleanup**: Remove unused `tailwind-merge` dependency in `package.json` if not needed.
+- [ ] **Code Cleanup**: Remove unused `Settings` import in `src/components/Navigation.tsx`.
+- [ ] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
+- [ ] **Documentation Maintenance**: Review and update all project documentation (README.md, ARCHITECTURE.md, and all other .md files) to ensure they are accurate and up-to-date with the current implementation.
 
 ## 🔭 Future Horizon
 
