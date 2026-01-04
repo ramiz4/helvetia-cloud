@@ -1,70 +1,82 @@
-# Helvetia Cloud
+# 🌫️ Helvetia Cloud
 
-A minimal, production-realistic Platform-as-a-Service (PaaS) for automated deployments of web applications from GitHub.
+A premium, production-realistic **Platform-as-a-Service (PaaS)** designed for seamless, automated deployments from GitHub. Experience a sleek, glassmorphic dashboard while Helvetia handles the heavy lifting of containerization, routing, and scaling.
 
-## Features
+---
 
-- **Automated Builds**: Clones and builds Docker images from Git repos.
-- **Dynamic Routing**: Uses Traefik to route traffic to containers via `https://{service}.helvetia.cloud`.
-- **Infrastructure**: Powered by BullMQ (Redis) for job processing and PostgreSQL for data.
-- **Dashboard**: Premium, dark-mode management interface.
+## ✨ Key Features
 
-## Tech Stack
+- **🚀 Automated Deployments**: Fully integrated with GitHub webhooks for instant `git push` deployments.
+- **🎨 Premium UI/UX**: A modern, glassmorphic dashboard featuring real-time logs and deployment history.
+- **📦 Multi-Service Support**: Native support for **Docker-based** backends and optimized **Static Sites** (React, Vue, Angular).
+- **🛡️ Secure & Isolated**: Builds are performed in isolated Docker-in-Docker environments with resource limits (CPU/Memory) and secret scrubbing.
+- **🚦 Dynamic Routing**: Traefik-powered routing with support for custom domains and automatic health checks.
+- **📊 Real-time Monitoring**: Live log streaming (SSE/WebSockets) and container resource usage metrics.
+- **🏗️ Developer First**: Smart GitHub repository picker and branch selection for a seamless onboarding experience.
 
-- **Backend**: Node.js, Fastify, Prisma, BullMQ.
-- **Worker**: Node.js, Dockerode, Docker-out-of-Docker.
-- **Frontend**: Next.js, Vanilla CSS.
-- **Infra**: PostgreSQL, Redis, Traefik.
+## 🛠 Tech Stack
 
-## Prerequisites
+- **Dashboard**: [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/)
+- **API Engine**: [Fastify](https://www.fastify.io/), [Prisma](https://www.prisma.io/), [JWT Auth](https://jwt.io/)
+- **Workforce**: [BullMQ](https://docs.bullmq.io/) (Redis), [Dockerode](https://github.com/apocas/dockerode)
+- **Networking**: [Traefik](https://traefik.io/), [Docker Compose](https://docs.docker.com/compose/)
+- **Storage**: [PostgreSQL](https://www.postgresql.org/), [Redis](https://redis.io/)
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
 
 - Docker & Docker Compose
-- Node.js & pnpm
+- Node.js (v20+) & [pnpm](https://pnpm.io/)
 
-## Getting Started
+### 2. Setup Environment
 
-### 1. Setup Environment
-
-Copy the example environment variables:
+Clone the repository and copy the example environment variables:
 
 ```bash
 cp .env.example .env
 ```
 
-_(Optionally configure GitHub OAuth and domain)_
+_Ensure you configure your `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` for GitHub OAuth._
 
-### 2. Start Infrastructure
+### 3. Launch Infrastructure
+
+Start the core services (Database, Redis, and Traefik):
 
 ```bash
 docker-compose up -d postgres redis traefik
 ```
 
-### 3. Initialize Database
+### 4. Initialize & Start
+
+Install dependencies, prepare the database, and run in development mode:
 
 ```bash
 pnpm install
 pnpm db:push
-```
-
-### 4. Run Services locally
-
-```bash
 pnpm dev
 ```
 
-Accessible at:
+### 5. Access the Platform
 
-- **Dashboard**: http://localhost:3000
-- **API**: http://localhost:3001
-- **Traefik Dashboard**: http://localhost:8080
+- **Dashboard**: [http://localhost:3000](http://localhost:3000)
+- **API Engine**: [http://localhost:3001](http://localhost:3001)
+- **Traefik Dashboard**: [http://localhost:8080](http://localhost:8080)
 
-## Deployment Workflow
+---
 
-1. Click **New Service** on the dashboard.
-2. Enter the GitHub repository URL and branch.
-3. Helvetia worker clones the repo, builds a container, and starts it.
-4. Traefik automatically routes traffic to the new container.
+## 🗺 Roadmap
 
-## Architecture
+Stay updated with our progress and future plans in the [ROADMAP.md](./ROADMAP.md).
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for a detailed breakdown.
+## 🏗 Architecture
+
+For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+---
+
+## 📄 License
+
+This project is open-source and available under the MIT License.
