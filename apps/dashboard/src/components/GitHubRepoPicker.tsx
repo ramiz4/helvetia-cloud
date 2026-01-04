@@ -85,8 +85,9 @@ export default function GitHubRepoPicker({
       }
 
       setRepos(allRepos);
-    } catch {
-      setError('Could not load repositories.');
+    } catch (err) {
+      console.error('Failed to load GitHub repositories', err);
+      setError('Could not load repositories. Please check your network connection and GitHub token.');
     } finally {
       setLoading(false);
     }
