@@ -195,7 +195,7 @@ export default function GitHubRepoPicker({
                     key={repo.id}
                     onClick={() => handleRepoSelect(repo)}
                     className="w-full p-4 flex flex-col gap-3 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-blue-500/30 rounded-xl transition-all group text-left relative overflow-hidden"
-                    aria-label={`Select ${repo.private ? 'private' : 'public'} repository ${repo.full_name}, last updated ${new Date(repo.updated_at).toLocaleDateString()}`}
+                    aria-label={`Select ${repo.private ? 'private' : 'public'} repository ${repo.full_name}, last updated ${new Date(repo.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`}
                   >
                     <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                     <div className="flex items-start justify-between w-full">
