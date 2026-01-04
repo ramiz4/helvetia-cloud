@@ -70,10 +70,8 @@ export async function getValidatedGitHubToken(): Promise<{
   const validation = await validateGitHubToken(token);
 
   if (!validation.isValid) {
-    // Clear invalid token from localStorage
+    // Clear invalid GitHub token from localStorage
     localStorage.removeItem('gh_token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
 
     return {
       token: null,

@@ -45,7 +45,7 @@ export default function GitHubRepoPicker({
     // Validate token before making API calls
     const { token, error: validationError } = await getValidatedGitHubToken();
 
-    if (!token || validationError) {
+    if (!token) {
       setError(validationError || 'GitHub token not found. Please log in again.');
       setLoading(false);
       return;
@@ -113,12 +113,21 @@ export default function GitHubRepoPicker({
     // Validate token before making API calls
     const { token, error: validationError } = await getValidatedGitHubToken();
 
-    if (!token || validationError) {
+    if (!token) {
       console.error('Token validation failed:', validationError);
-      // Fallback to default branch if token validation fails
-      setBranches([repo.default_branch]);
-      setSelectedBranch(repo.default_branch);
-      onSelect(repo.html_url, repo.default_branch, repo.name);
+      // Clear tokens and surface an explicit error instead of silently falling back
+      try {
+        localStorage.removeItem('gh_token');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } catch (storageError) {
+        console.error('Failed to clear auth tokens from localStorage:', storageError);
+      }
+
+      setError('Token expired or invalid. Please log in again.');
+      setBranches([]);
+      setSelectedBranch('');
+      setSelectedRepo(null);
       setLoadingBranches(false);
       return;
     }
