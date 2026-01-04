@@ -56,8 +56,6 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 
 ## 🛠 Code Quality & Technical Debt
 
-### Dashboard (`apps/dashboard`)
-
 - [ ] **Environment Configuration**: Extract hardcoded `http://localhost:3001` in `src/app/page.tsx` to an environment variable.
 - [ ] **React State Management**: Fix `useEffect` dependency issue in `src/app/page.tsx` (potential infinite loop with `services` dependency).
 - [ ] **UI/UX**: Restore multi-line formatting for delete confirmation message in `src/app/page.tsx`.
@@ -68,6 +66,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [ ] **Input Accessibility**: Add ARIA labels to the search input in `src/app/page.tsx`.
 - [ ] **Dependency Cleanup**: Remove unused `tailwind-merge` dependency in `package.json` if not needed.
 - [ ] **Code Cleanup**: Remove unused `Settings` import in `src/components/Navigation.tsx`.
+- [ ] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
 - [ ] **Documentation Maintenance**: Review and update all project documentation (README.md, ARCHITECTURE.md, and all other .md files) to ensure they are accurate and up-to-date with the current implementation.
 
 ## 🔭 Future Horizon
