@@ -26,7 +26,7 @@ This is a monorepo managed by PNPM Workspaces containing:
 - **Styling**: Tailwind CSS 4. Use utility classes. Avoid custom CSS unless identical to utility classes.
 - **State Management**: Use React Hooks and Context. Avoid external state libraries unless necessary (e.g., Zustand, TanStack Query).
 - **Components**: Create small, reusable components. Use functional components with hooks.
-- **Performance**: Optimize images, use lazy loading, and leverage Next.js server components (RSC) by default. Client components only when interactivity is needed (`'use strict'; 'use client';`).
+- **Performance**: Optimize images, use lazy loading, and leverage Next.js server components (RSC) by default. Use client components only when interactivity is needed (add `'use client'` at the top of the file).
 
 ### Backend (API & Worker)
 
@@ -41,13 +41,21 @@ This is a monorepo managed by PNPM Workspaces containing:
 - **Naming**: camelCase for variables/functions, PascalCase for classes/components, UPPER_CASE for constants.
 - **Async/Await**: Always use async/await over raw Promises.
 - **Error Handling**: Use try/catch blocks. Ensure errors are logged and handled gracefully.
-- **Types**: distinct types vs interfaces (prefer interfaces for objects). Avoid `any`.
+- **Types**: Distinguish between type aliases and interfaces. Prefer interfaces for object shapes; use type aliases for unions, primitives, and utility/derived types. Avoid `any`.
 
 ### Git & Commits
 
 - **Conventional Commits**: Use semantic commit messages (feat, fix, chore, docs, style, refactor, perf, test).
   - Example: `feat(dashboard): add user profile page`
   - Example: `fix(api): resolve docker connection issue`
+
+## Agent Workflow
+
+- **Task Invitation**: When starting a task from a user prompt, the Agent MUST follow this GitHub Flow:
+  1. **Create Branch**: Create a new branch appropriate for the task (e.g., `git checkout -b feat/task-name`).
+  2. **Implement**: Make the necessary code changes.
+  3. **Commit**: Create small, conventional commits (e.g., `feat: add functionality`, `chore: update config`).
+  4. **Push**: Push the changes to the remote (e.g., `git push -u origin feat/task-name`).
 
 ## AI Behavior
 
