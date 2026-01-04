@@ -251,7 +251,7 @@ export default function NewService() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, type: 'DOCKER' })}
+                      onClick={() => setFormData({ ...formData, type: 'DOCKER', port: 3000 })}
                       className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${formData.type === 'DOCKER'
                         ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
                         : 'bg-white/5 border-white/10 hover:border-white/20'
@@ -279,7 +279,7 @@ export default function NewService() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, type: 'STATIC' })}
+                      onClick={() => setFormData({ ...formData, type: 'STATIC', port: 80 })}
                       className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${formData.type === 'STATIC'
                         ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
                         : 'bg-white/5 border-white/10 hover:border-white/20'

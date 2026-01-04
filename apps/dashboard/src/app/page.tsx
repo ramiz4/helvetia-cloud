@@ -752,7 +752,11 @@ export default function Home() {
                   <select
                     value={editingService.type || 'DOCKER'}
                     onChange={(e) =>
-                      setEditingService({ ...editingService, type: e.target.value })
+                      setEditingService({
+                        ...editingService,
+                        type: e.target.value,
+                        port: e.target.value === 'STATIC' ? 80 : editingService.port,
+                      })
                     }
                     className="w-full"
                   >

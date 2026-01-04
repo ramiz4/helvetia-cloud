@@ -212,6 +212,11 @@ fastify.patch('/services/:id', async (request, reply) => {
     staticOutputDir,
   } = request.body as any;
 
+  if (type !== undefined && type !== 'DOCKER' && type !== 'STATIC') {
+    return reply
+      .status(400)
+      .send({ error: 'Invalid type. Must be "DOCKER" or "STATIC".' });
+  }
   const user = (request as any).user;
   const service = await prisma.service.updateMany({
     where: { id, userId: user.id },
