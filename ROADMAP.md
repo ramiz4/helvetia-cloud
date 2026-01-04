@@ -37,11 +37,10 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 
 ## 🚧 Phase 5: UI/UX & Developer Experience
 
-- [ ] **Landing Page**: A modern, engaging landing page that highlights the platform's key features and benefits.
+- [x] **Landing Page**: A modern, engaging landing page that highlights the platform's key features and benefits.
 - [x] **Main Menu**: A global menu bar that provides quick access to key features and actions.
 - [x] **Dashboard Redesign**: Adopt a premium, glassmorphic aesthetic with improved information architecture and navigation.
 - [x] **Interactive Logs**: Advanced log viewer with search, filtering, and live-tailing capabilities.
-- [ ] **Command Palette**: Global `Cmd+K` interface for quick navigation and actions.
 - [x] **Mobile Responsiveness**: Full mobile support for monitoring and management on the go.
 - [x] **Dark/Light Mode**: System-aware theming support.
 

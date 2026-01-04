@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import LandingPage from '../components/LandingPage';
 import {
   RefreshCw,
   Trash2,
@@ -31,13 +32,20 @@ interface Service {
   deployments: { id: string; status: string; createdAt: string }[];
 }
 
-export default function Dashboard() {
+export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [selectedLogs, setSelectedLogs] = useState<string | null>(null);
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    // Check authentication status
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  }, []);
 
   useEffect(() => {
     if (!activeDeploymentId) return;
@@ -57,11 +65,39 @@ export default function Dashboard() {
   }, [activeDeploymentId]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/login';
+    if (isAuthenticated) {
+      fetchServices();
+      const interval = setInterval(fetchServices, 10000); // Poll for service updates every 10s
+      return () => clearInterval(interval);
     }
-  }, []);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && services.length > 0) {
+      const fetchMetrics = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const updatedServices = await Promise.all(
+          services.map(async (service) => {
+            try {
+              const res = await fetch(`http://localhost:3001/services/${service.id}/metrics`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              const metrics = await res.json();
+              return { ...service, metrics };
+            } catch (err) {
+              return service;
+            }
+          }),
+        );
+        setServices(updatedServices);
+      };
+
+      const interval = setInterval(fetchMetrics, 5000); // Poll metrics every 5s
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, services.length]);
 
   const getHeaders = () => {
     const token = localStorage.getItem('token');
@@ -125,39 +161,6 @@ export default function Dashboard() {
       });
   };
 
-  useEffect(() => {
-    fetchServices();
-    const interval = setInterval(fetchServices, 10000); // Poll for service updates every 10s
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (services.length === 0) return;
-
-    const fetchMetrics = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const updatedServices = await Promise.all(
-        services.map(async (service) => {
-          try {
-            const res = await fetch(`http://localhost:3001/services/${service.id}/metrics`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            const metrics = await res.json();
-            return { ...service, metrics };
-          } catch (err) {
-            return service;
-          }
-        }),
-      );
-      setServices(updatedServices);
-    };
-
-    const interval = setInterval(fetchMetrics, 5000); // Poll metrics every 5s
-    return () => clearInterval(interval);
-  }, [services.length]);
-
   const triggerDeploy = async (serviceId: string) => {
     try {
       const res = await fetch(`http://localhost:3001/services/${serviceId}/deploy`, {
@@ -208,7 +211,15 @@ export default function Dashboard() {
     }
   };
 
-  // Stats
+  if (isAuthenticated === null) {
+    return null; // or a loading spinner
+  }
+
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
+  // Dashboard View
   const activeServices = services.filter(s => s.status === 'Running' || s.status === 'Active').length;
   const failingServices = services.filter(s => s.status === 'Failed').length;
 
@@ -296,18 +307,6 @@ export default function Dashboard() {
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
               {searchQuery ? 'Try adjusting your search query.' : 'Get started by deploying your first service.'}
             </p>
-            {/*
-            // Removed redundant button, users can use the sidebar or navbar 'New Service'
-            {!searchQuery && (
-              <a href="/new" className="btn btn-primary">
-                <Plus size={18} />
-                Connect Repository
-              </a>
-            )}
-            // wait, Plus is not imported, I should check if I imported Plus.
-            // I removed Plus from imports in the top block of this write_file command.
-            // so I must NOT use it here.
-            */}
           </div>
         </div>
       ) : (
