@@ -20,7 +20,20 @@ const worker = new Worker(
   'deployments',
   async (job: Job) => {
     const { deploymentId, serviceId, repoUrl, branch, buildCommand, startCommand, serviceName, port, envVars, customDomain } = job.data;
-    const workDir = path.join(__dirname, '../temp', deploymentId);
+
+    let builder: any = null;
+
+    // Prepare secrets for scrubbing
+    const secrets = envVars ? Object.values(envVars).filter((v: any) => typeof v === 'string' && v.length > 0) as string[] : [];
+    const scrubLogs = (log: string) => {
+      let cleaned = log;
+      for (const secret of secrets) {
+        if (secret.length >= 3) {
+          cleaned = cleaned.split(secret).join('[REDACTED]');
+        }
+      }
+      return cleaned;
+    };
 
     console.log(`Starting deployment ${deploymentId} for service ${serviceName}`);
 
@@ -30,72 +43,80 @@ const worker = new Worker(
         data: { status: 'BUILDING' },
       });
 
-      // 1. Clone Repo
-      await fs.mkdir(workDir, { recursive: true });
-      await execAsync(`git clone --depth 1 --branch ${branch} ${repoUrl} .`, { cwd: workDir });
-
-      // 2. Create Dockerfile if not exists
-      const dockerfilePath = path.join(workDir, 'Dockerfile');
-      try {
-        await fs.access(dockerfilePath);
-      } catch {
-        // Generate a more optimized Dockerfile
-        const content = `
-FROM node:22-alpine
-RUN apk add --no-cache git build-base python3
-RUN npm install -g pnpm
-WORKDIR /app
-COPY package*.json pnpm-lock.yaml* ./
-RUN ${buildCommand || 'pnpm install --frozen-lockfile'}
-COPY . .
-EXPOSE ${port || 3000}
-CMD ${startCommand || 'npm start'}
-`;
-        await fs.writeFile(dockerfilePath, content);
-
-        // Add a .dockerignore to optimize context transfer
-        const ignoreContent = `
-node_modules
-.git
-.next
-dist
-temp
-`;
-        await fs.writeFile(path.join(workDir, '.dockerignore'), ignoreContent);
-      }
-
-      // 3. Build Image
+      // 1. Start Builder (Isolated Environment)
+      const builderName = `builder-${deploymentId}`;
       const imageTag = `helvetia/${serviceName}:latest`;
-      console.log(`Building image ${imageTag}...`);
+
+      // Ensure docker:cli is present (pulled in setup or earlier)
+      builder = await docker.createContainer({
+        Image: 'docker:cli',
+        name: builderName,
+        Entrypoint: ['sleep', '3600'],
+        HostConfig: {
+          AutoRemove: true,
+          Binds: ['/var/run/docker.sock:/var/run/docker.sock']
+        }
+      });
+      await builder.start();
+
+      console.log(`Building image ${imageTag} in isolated environment...`);
+
+      // 2. Prepare Build Script
+      const buildScript = `
+        set -e
+        apk add --no-cache git
+        mkdir -p /app
+        git clone --depth 1 --branch ${branch} ${repoUrl} /app
+        cd /app
+        if [ ! -f Dockerfile ]; then
+          echo "Generating Dockerfile..."
+          echo "FROM node:22-alpine" > Dockerfile
+          echo "RUN apk add --no-cache git build-base python3" >> Dockerfile
+          echo "RUN npm install -g pnpm" >> Dockerfile
+          echo "WORKDIR /app" >> Dockerfile
+          echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
+          echo "RUN ${buildCommand || 'pnpm install --frozen-lockfile'}" >> Dockerfile
+          echo "COPY . ." >> Dockerfile
+          echo "EXPOSE ${port || 3000}" >> Dockerfile
+          echo "CMD ${startCommand || 'npm start'}" >> Dockerfile
+
+          echo "node_modules" > .dockerignore
+          echo ".git" >> .dockerignore
+          echo ".next" >> .dockerignore
+          echo "dist" >> .dockerignore
+          echo "temp" >> .dockerignore
+        fi
+        docker build -t ${imageTag} .
+      `;
 
       let buildLogs = '';
 
-      const stream = await docker.buildImage(
-        { context: workDir, src: ['.'] },
-        { t: imageTag }
-      );
+      // 3. Execute Build
+      const exec = await builder.exec({
+        Cmd: ['sh', '-c', buildScript],
+        AttachStdout: true,
+        AttachStderr: true,
+        Tty: true
+      });
+
+      const stream = await exec.start({ hijack: true, stdin: false });
 
       await new Promise((resolve, reject) => {
-        docker.modem.followProgress(stream, (err, res) => {
-          if (err) return reject(err);
-          const lastRes = res && res[res.length - 1];
-          if (lastRes && lastRes.error) return reject(new Error(lastRes.error));
-          resolve(res);
-        }, async (event) => {
-          if (event.stream) {
-            buildLogs += event.stream;
-            console.log(event.stream);
-            // Publish to Redis for real-time streaming
-            await redisConnection.publish(`deployment-logs:${deploymentId}`, event.stream);
-          }
-          if (event.error) {
-            const errorMsg = `\nERROR: ${event.error}\n`;
-            buildLogs += errorMsg;
-            console.error('Build error:', event.error);
-            await redisConnection.publish(`deployment-logs:${deploymentId}`, errorMsg);
-          }
+        stream.on('data', async (chunk: Buffer) => {
+          const text = chunk.toString();
+          const clean = scrubLogs(text);
+          buildLogs += clean;
+          console.log(clean);
+          await redisConnection.publish(`deployment-logs:${deploymentId}`, clean);
         });
+        stream.on('end', resolve);
+        stream.on('error', reject);
       });
+
+      const execResult = await exec.inspect();
+      if (execResult.ExitCode !== 0) {
+        throw new Error(`Build failed with exit code ${execResult.ExitCode}`);
+      }
 
       // Update logs in DB
       await prisma.deployment.update({
@@ -128,6 +149,8 @@ temp
         HostConfig: {
           NetworkMode: 'helvetia-net',
           RestartPolicy: { Name: 'always' },
+          Memory: 512 * 1024 * 1024, // 512MB limit
+          NanoCpus: 1000000000,      // 1 CPU core limit
           LogConfig: {
             Type: 'json-file',
             Config: {},
@@ -177,8 +200,11 @@ temp
         data: { status: 'FAILED' },
       });
     } finally {
-      await fs.rm(workDir, { recursive: true, force: true }).catch(() => { });
+      if (builder) {
+        await builder.remove({ force: true }).catch(() => { });
+      }
     }
+
   },
   { connection: redisConnection }
 );

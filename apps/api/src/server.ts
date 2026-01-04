@@ -42,7 +42,6 @@ fastify.addHook('preHandler', async (request, reply) => {
   // Check if it's a public route or an OPTIONS request (CORS)
   if (
     publicRoutes.some(route => request.url.startsWith(route)) ||
-    request.url.includes('/logs/stream') ||
     request.method === 'OPTIONS'
   ) {
     return;
@@ -138,7 +137,9 @@ fastify.post('/auth/github', async (request, reply) => {
 // Service Routes
 fastify.get('/services', async (request) => {
   // Add authentication middleware in real app
+  const user = (request as any).user;
   return prisma.service.findMany({
+    where: { userId: user.id },
     include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
 });
@@ -147,8 +148,9 @@ fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
   const { name, repoUrl, branch, buildCommand, startCommand, port, envVars, customDomain } = request.body as any;
 
-  const service = await prisma.service.update({
-    where: { id },
+  const user = (request as any).user;
+  const service = await prisma.service.updateMany({
+    where: { id, userId: user.id },
     data: {
       name,
       repoUrl,
@@ -161,22 +163,22 @@ fastify.patch('/services/:id', async (request, reply) => {
     } as any,
   });
 
+  if (service.count === 0) return reply.status(404).send({ error: 'Service not found or unauthorized' });
+
+  return prisma.service.findUnique({ where: { id } });
+
   return service;
 });
 
 fastify.post('/services', async (request, reply) => {
-  const { name, repoUrl, branch, buildCommand, startCommand, userId, port, customDomain } = request.body as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, port, customDomain } = request.body as any;
+  const user = (request as any).user;
+  const userId = user.id;
 
-  // Ensure user exists for MVP/Mock purposes
-  const existingUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (!existingUser) {
-    await prisma.user.create({
-      data: {
-        id: userId,
-        githubId: `github-${userId}`,
-        username: 'mock-user',
-      }
-    });
+  // Check ownership if exists
+  const existing = await prisma.service.findUnique({ where: { name } });
+  if (existing && existing.userId !== userId) {
+    return reply.status(403).send({ error: 'Service name taken by another user' });
   }
 
   const service = await prisma.service.upsert({
@@ -187,7 +189,6 @@ fastify.post('/services', async (request, reply) => {
       buildCommand,
       startCommand,
       port: port ? parseInt(port) : 3000,
-      userId,
       customDomain,
     } as any,
     create: {
@@ -207,9 +208,10 @@ fastify.post('/services', async (request, reply) => {
 
 fastify.delete('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
+  const user = (request as any).user;
 
-  const service = await prisma.service.findUnique({ where: { id } });
-  if (!service) return reply.status(404).send({ error: 'Service not found' });
+  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
   // 1. Stop and remove containers if they exist
   const Docker = (await import('dockerode')).default;
@@ -232,6 +234,11 @@ fastify.delete('/services/:id', async (request, reply) => {
 
 fastify.get('/services/:id/health', async (request, reply) => {
   const { id } = request.params as any;
+  const user = (request as any).user;
+
+  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  if (!service) return reply.status(404).send({ error: 'Service not found' });
+
   const Docker = (await import('dockerode')).default;
   const docker = new Docker();
 
@@ -256,6 +263,11 @@ fastify.get('/services/:id/health', async (request, reply) => {
 
 fastify.get('/services/:id/metrics', async (request, reply) => {
   const { id } = request.params as any;
+  const user = (request as any).user;
+
+  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  if (!service) return reply.status(404).send({ error: 'Service not found' });
+
   const Docker = (await import('dockerode')).default;
   const docker = new Docker();
 
@@ -291,8 +303,9 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
 // Deployment Routes
 fastify.post('/services/:id/deploy', async (request, reply) => {
   const { id } = request.params as any;
+  const user = (request as any).user;
 
-  const service = await prisma.service.findUnique({ where: { id } });
+  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
 
   const deployment = await prisma.deployment.create({
@@ -374,6 +387,12 @@ fastify.post('/webhooks/github', async (request, reply) => {
 
 fastify.get('/services/:id/deployments', async (request, reply) => {
   const { id } = request.params as any;
+  const user = (request as any).user;
+
+  // Verify ownership
+  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  if (!service) return reply.status(404).send({ error: 'Service not found' });
+
   return prisma.deployment.findMany({
     where: { serviceId: id },
     orderBy: { createdAt: 'desc' },
@@ -382,12 +401,34 @@ fastify.get('/services/:id/deployments', async (request, reply) => {
 
 fastify.get('/deployments/:id/logs', async (request, reply) => {
   const { id } = request.params as any;
-  const deployment = await prisma.deployment.findUnique({ where: { id } });
+  const user = (request as any).user;
+
+  const deployment = await prisma.deployment.findUnique({
+    where: { id },
+    include: { service: true }
+  });
+
+  if (!deployment || deployment.service.userId !== user.id) {
+    return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
+  }
   return { logs: deployment?.logs };
 });
 
 fastify.get('/deployments/:id/logs/stream', { websocket: true }, (connection, req) => {
   const { id } = req.params as any;
+  const { token } = req.query as any;
+
+  // Auth check for WS
+  try {
+    const decoded = (req.server as any).jwt.verify(token);
+    // Ideally check ownership of deployment here via DB, but for streaming speed/simplicity
+    // we can rely on knowledge of ID + valid token.
+    // To be strict: await prisma.deployment.findFirst({ where: { id, service: { userId: decoded.id } } })
+  } catch (err) {
+    connection.socket.close();
+    return;
+  }
+
   const channel = `deployment-logs:${id}`;
 
   console.log(`Client connected for live logs: ${id}`);

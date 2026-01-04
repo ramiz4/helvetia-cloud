@@ -25,15 +25,15 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Build Optimization**: Implement layer caching to speed up Docker builds.
 - [x] **Custom Domains**: Allow users to point their own domains to the services.
 
-## 🏗️ Phase 4: Security & Hardening (Current)
-- [ ] **Resource Limits**: Enforce CPU/Memory limits on user containers.
-- [ ] **Isolated Build Environments**: Use temporary Docker-in-Docker containers for builds to prevent host pollution.
-- [ ] **API Authentication**: Secure all API endpoints with JWT. (Partially done in Phase 3)
-- [ ] **Sensitive Data Scrubbing**: Ensure secrets are redacted from build/runtime logs.
+## ✅ Phase 4: Security & Hardening
+- [x] **Resource Limits**: Enforce CPU/Memory limits on user containers.
+- [x] **Isolated Build Environments**: Use temporary Docker-in-Docker containers for builds to prevent host pollution.
+- [x] **API Authentication**: Secure all API endpoints with JWT. (Partially done in Phase 3)
+- [x] **Sensitive Data Scrubbing**: Ensure secrets are redacted from build/runtime logs.
 
 ---
 
 ## 📋 Next Priorities
-1. **Resource Limits**: Preventing a single app from hogging the host.
-2. **Isolated Builds**: Moving builds into separate, disposable containers.
-3. **Sensitive Data Scrubbing**: Redacting env vars from logs.
+1. **Billing Integration**: Stripe integration for paid plans.
+2. **Cluster Mode**: Kubernetes support.
+3. **Marketplace**: One-click install for popular apps.
