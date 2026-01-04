@@ -89,9 +89,9 @@ export default function NewService() {
         router.push('/');
       } else {
         const errorData = await res.json();
-        // Sanitize error message by converting to string and escaping HTML
+        // Sanitize error message by converting to string and escaping HTML/special characters
         const errorMsg = errorData.error || 'Unknown error';
-        const sanitizedError = String(errorMsg).replace(/[<>]/g, '');
+        const sanitizedError = String(errorMsg).replace(/[<>&"']/g, '');
         setErrorMessage(`Failed to create service: ${sanitizedError}`);
       }
     } catch (error) {
