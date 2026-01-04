@@ -212,10 +212,8 @@ fastify.patch('/services/:id', async (request, reply) => {
     staticOutputDir,
   } = request.body as any;
 
-  if (type !== undefined && type !== 'DOCKER' && type !== 'STATIC') {
-    return reply
-      .status(400)
-      .send({ error: 'Invalid type. Must be "DOCKER" or "STATIC".' });
+  if (type !== undefined && !['DOCKER', 'STATIC'].includes(type)) {
+    return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
   const service = await prisma.service.updateMany({
@@ -226,7 +224,7 @@ fastify.patch('/services/:id', async (request, reply) => {
       branch,
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : undefined,
+      port: port ? parseInt(port) : type ? (type === 'STATIC' ? 80 : 3000) : undefined,
       envVars,
       customDomain,
       type,
@@ -254,6 +252,10 @@ fastify.post('/services', async (request, reply) => {
     type,
     staticOutputDir,
   } = request.body as any;
+
+  if (type && !['DOCKER', 'STATIC'].includes(type)) {
+    return reply.status(400).send({ error: 'Invalid service type' });
+  }
   const user = (request as any).user;
   const userId = user.id;
 
@@ -263,6 +265,9 @@ fastify.post('/services', async (request, reply) => {
     return reply.status(403).send({ error: 'Service name taken by another user' });
   }
 
+  const finalType = type || 'DOCKER';
+  const finalPort = port ? parseInt(port) : finalType === 'STATIC' ? 80 : 3000;
+
   const service = await prisma.service.upsert({
     where: { name },
     update: {
@@ -270,9 +275,9 @@ fastify.post('/services', async (request, reply) => {
       branch: branch || 'main',
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : 3000,
+      port: finalPort,
       customDomain,
-      type: type || 'DOCKER',
+      type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
     } as any,
     create: {
@@ -281,10 +286,10 @@ fastify.post('/services', async (request, reply) => {
       branch: branch || 'main',
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : 3000,
+      port: finalPort,
       userId,
       customDomain,
-      type: type || 'DOCKER',
+      type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
     } as any,
   });
@@ -468,7 +473,7 @@ fastify.post('/services/:id/restart', async (request, reply) => {
         [`traefik.http.routers.${service.name}.rule`]: traefikRule,
         [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
         [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
-          service.port || (service.type === 'STATIC' ? 80 : 3000)
+          service.port || ((service as any).type === 'STATIC' ? 80 : 3000)
         ).toString(),
       },
       HostConfig: {

@@ -434,16 +434,11 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      style={{
-                        fontSize: '0.7rem',
-                        padding: '0.1rem 0.5rem',
-                        borderRadius: '0.5rem',
-                        background: service.type === 'STATIC' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(168, 85, 247, 0.15)',
-                        color: service.type === 'STATIC' ? '#38bdf8' : '#a855f7',
-                        border: service.type === 'STATIC' ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(168, 85, 247, 0.2)',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                      }}
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
+                        service.type === 'STATIC'
+                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
+                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                      }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
@@ -841,8 +836,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                        .map(([k, v]) => `${k}=${v}`)
-                        .join('\n')
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join('\n')
                       : ''
                   }
                   onChange={(e) => {

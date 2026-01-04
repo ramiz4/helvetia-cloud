@@ -88,7 +88,7 @@ new Worker(
             echo "RUN npm install -g pnpm" >> Dockerfile
             echo "WORKDIR /app" >> Dockerfile
 
-            if [ -n "${envVars}" ]; then
+            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
               echo '${Object.keys(envVars || {})
                 .map((key) => `ARG ${key}`)
                 .join('\\n')}' >> Dockerfile
@@ -98,7 +98,7 @@ new Worker(
             echo "RUN pnpm install" >> Dockerfile
             echo "COPY . ." >> Dockerfile
 
-            if [ -n "${envVars}" ]; then
+            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
               echo '${Object.entries(envVars || {})
                 .map(([k, v]) => `ENV ${k}="${v}"`)
                 .join('\\n')}' >> Dockerfile
@@ -136,7 +136,7 @@ new Worker(
             echo "RUN npm install -g pnpm" >> Dockerfile
             echo "WORKDIR /app" >> Dockerfile
 
-            if [ -n "${envVars}" ]; then
+            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
               echo '${Object.keys(envVars || {})
                 .map((key) => `ARG ${key}`)
                 .join('\\n')}' >> Dockerfile
@@ -146,7 +146,7 @@ new Worker(
             echo "RUN pnpm install" >> Dockerfile
             echo "COPY . ." >> Dockerfile
 
-            if [ -n "${envVars}" ]; then
+            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
               echo '${Object.entries(envVars || {})
                 .map(([k, v]) => `ENV ${k}="${v}"`)
                 .join('\\n')}' >> Dockerfile
