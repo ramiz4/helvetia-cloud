@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Repo {
   id: number;
@@ -33,11 +33,7 @@ export default function GitHubRepoPicker({
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [view, setView] = useState<'list' | 'config'>('list');
 
-  useEffect(() => {
-    fetchRepos();
-  }, []);
-
-  const fetchRepos = async () => {
+  const fetchRepos = useCallback(async () => {
     setLoading(true);
     const token = localStorage.getItem('gh_token');
     if (!token) {
@@ -91,7 +87,11 @@ export default function GitHubRepoPicker({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchRepos();
+  }, [fetchRepos]);
 
   const fetchBranches = async (repo: Repo) => {
     setLoadingBranches(true);
