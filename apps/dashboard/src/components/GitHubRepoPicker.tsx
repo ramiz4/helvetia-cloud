@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getValidatedGitHubToken } from '@/lib/github';
 
 interface Repo {
   id: number;
@@ -39,9 +40,13 @@ export default function GitHubRepoPicker({
 
   const fetchRepos = async () => {
     setLoading(true);
-    const token = localStorage.getItem('gh_token');
-    if (!token) {
-      setError('GitHub token not found. Please log in again.');
+    setError(null);
+
+    // Validate token before making API calls
+    const { token, error: validationError } = await getValidatedGitHubToken();
+
+    if (!token || validationError) {
+      setError(validationError || 'GitHub token not found. Please log in again.');
       setLoading(false);
       return;
     }
@@ -71,6 +76,13 @@ export default function GitHubRepoPicker({
         });
 
         if (!res.ok) {
+          // Handle token expiration during API call
+          if (res.status === 401) {
+            localStorage.removeItem('gh_token');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            throw new Error('Token expired or invalid. Please log in again.');
+          }
           throw new Error('Failed to fetch repositories');
         }
 
@@ -87,7 +99,9 @@ export default function GitHubRepoPicker({
       setRepos(allRepos);
     } catch (err) {
       console.error('Failed to load GitHub repositories', err);
-      setError('Could not load repositories. Please check your network connection and GitHub token.');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Could not load repositories. Please check your network connection and GitHub token.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -95,7 +109,20 @@ export default function GitHubRepoPicker({
 
   const fetchBranches = async (repo: Repo) => {
     setLoadingBranches(true);
-    const token = localStorage.getItem('gh_token');
+
+    // Validate token before making API calls
+    const { token, error: validationError } = await getValidatedGitHubToken();
+
+    if (!token || validationError) {
+      console.error('Token validation failed:', validationError);
+      // Fallback to default branch if token validation fails
+      setBranches([repo.default_branch]);
+      setSelectedBranch(repo.default_branch);
+      onSelect(repo.html_url, repo.default_branch, repo.name);
+      setLoadingBranches(false);
+      return;
+    }
+
     try {
       const res = await fetch(`https://api.github.com/repos/${repo.full_name}/branches`, {
         headers: {
@@ -104,7 +131,16 @@ export default function GitHubRepoPicker({
         },
       });
 
-      if (!res.ok) throw new Error('Failed to fetch branches');
+      if (!res.ok) {
+        // Handle token expiration during API call
+        if (res.status === 401) {
+          localStorage.removeItem('gh_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          throw new Error('Token expired or invalid. Please log in again.');
+        }
+        throw new Error('Failed to fetch branches');
+      }
 
       const data = await res.json();
       setBranches(data.map((b: { name: string }) => b.name));
