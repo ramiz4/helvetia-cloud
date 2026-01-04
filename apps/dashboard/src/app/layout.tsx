@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import Navigation from '../components/Navigation';
 
 export const metadata: Metadata = {
   title: 'Helvetia Cloud | Platform-as-a-Service',
@@ -17,24 +18,16 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body suppressHydrationWarning={true}>
-        <div className="container">
-          <header>
-            <div className="logo">HELVETIA CLOUD</div>
-            <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <a href="/" style={{ color: 'var(--text-secondary)' }}>
-                Dashboard
-              </a>
-              <a href="/new" className="btn btn-primary">
-                New Service
-              </a>
-            </nav>
-          </header>
-          {children}
+        <div className="app-shell">
+          <Navigation />
+          <main className="main-content container animate-fade-in">
+            {children}
+          </main>
         </div>
       </body>
     </html>

@@ -35,17 +35,14 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **API Authentication**: Secure all API endpoints with JWT. (Partially done in Phase 3)
 - [x] **Sensitive Data Scrubbing**: Ensure secrets are redacted from build/runtime logs.
 
----
-
 ## 🚧 Phase 5: UI/UX & Developer Experience
 
-- [ ] **Landing Page**: A modern, engaging landing page that highlights the platform's key features and benefits.
-- [ ] **Main Menu**: A global menu bar that provides quick access to key features and actions.
-- [ ] **Dashboard Redesign**: Adopt a premium, glassmorphic aesthetic with improved information architecture and navigation.
-- [ ] **Interactive Logs**: Advanced log viewer with search, filtering, and live-tailing capabilities.
-- [ ] **Command Palette**: Global `Cmd+K` interface for quick navigation and actions.
-- [ ] **Mobile Responsiveness**: Full mobile support for monitoring and management on the go.
-- [ ] **Dark/Light Mode**: System-aware theming support.
+- [x] **Landing Page**: A modern, engaging landing page that highlights the platform's key features and benefits.
+- [x] **Main Menu**: A global menu bar that provides quick access to key features and actions.
+- [x] **Dashboard Redesign**: Adopt a premium, glassmorphic aesthetic with improved information architecture and navigation.
+- [x] **Interactive Logs**: Advanced log viewer with search, filtering, and live-tailing capabilities.
+- [x] **Mobile Responsiveness**: Full mobile support for monitoring and management on the go.
+- [x] **Dark/Light Mode**: System-aware theming support.
 
 ## 🔮 Phase 6: Advanced Ecosystem & Growth
 
