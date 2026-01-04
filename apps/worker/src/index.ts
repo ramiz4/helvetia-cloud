@@ -74,12 +74,14 @@ CMD ${startCommand || 'npm start'}
           if (event.stream) {
             buildLogs += event.stream;
             console.log(event.stream);
-            // Periodically update logs in DB for longer builds
-            // For MVP, we'll update the final log at the end, but let's keep it in memory for now
+            // Publish to Redis for real-time streaming
+            await redisConnection.publish(`deployment-logs:${deploymentId}`, event.stream);
           }
           if (event.error) {
-            buildLogs += `\nERROR: ${event.error}\n`;
+            const errorMsg = `\nERROR: ${event.error}\n`;
+            buildLogs += errorMsg;
             console.error('Build error:', event.error);
+            await redisConnection.publish(`deployment-logs:${deploymentId}`, errorMsg);
           }
         });
       });

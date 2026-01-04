@@ -11,14 +11,14 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] Worker Service Skeleton (BullMQ)
 - [x] Dashboard Skeleton (Next.js)
 
-## 🏗️ Phase 2: Fundamental Features (Current)
-- [ ] **Real-time Logs Stream**: Implement WebSocket or Server-Sent Events (SSE) to stream build logs from worker to dashboard.
-- [ ] **GitHub Webhook Integration**: Automate deployments on `git push` instead of manual triggers.
-- [ ] **Deployment History**: UI to view past deployments and their specific logs.
-- [ ] **Environment Variable Management**: UI to add/edit secrets and env vars for services.
-- [ ] **Health Checks**: Implement logic for the platform to monitor the health of deployed containers.
+## ✅ Phase 2: Fundamental Features
+- [x] **Real-time Logs Stream**: Implement WebSocket or Server-Sent Events (SSE) to stream build logs from worker to dashboard.
+- [x] **GitHub Webhook Integration**: Automate deployments on `git push` instead of manual triggers.
+- [x] **Deployment History**: UI to view past deployments and their specific logs.
+- [x] **Environment Variable Management**: UI to add/edit secrets and env vars for services.
+- [x] **Health Checks**: Implement logic for the platform to monitor the health of deployed containers.
 
-## 🚀 Phase 3: Reliability & UX Polish
+## 🏗️ Phase 3: Reliability & UX Polish (Current)
 - [ ] **Zero-Downtime Deploys**: Use Traefik's health checks to ensure the new container is ready before stopping the old one.
 - [ ] **Container Metrics**: Basic CPU/Memory usage stats on the dashboard.
 - [ ] **GitHub OAuth Integration**: Complete the login flow (currently mocked).
@@ -34,6 +34,6 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 ---
 
 ## 📋 Next Priorities
-1. **Live Build Logs**: The biggest missing piece for "Render-like" UX. We need to capture the Docker build stream and pipe it to the UI.
-2. **GitHub Webhooks**: Connecting a repo is manual right now; webhooks make it feel like a real PaaS.
-3. **Internal Port Detection**: Currently hardcoded to 3000; need a way to detect or configure the app's listening port.
+1. **Zero-Downtime Deploys**: Making sure the app doesn't go down during updates.
+2. **Container Metrics**: Visualizing resource usage.
+3. **GitHub OAuth**: Full login flow with user's real repos.

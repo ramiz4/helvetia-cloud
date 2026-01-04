@@ -11,14 +11,31 @@ interface Service {
   startCommand: string;
   port: number;
   status: string;
+  envVars?: Record<string, string>;
   deployments: { id: string; status: string; createdAt: string }[];
 }
 
 export default function Dashboard() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedLogs, setSelectedLogs] = useState<string | null>(null);
+  const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!activeDeploymentId) return;
+
+    const socket = new WebSocket(`ws://localhost:3001/deployments/${activeDeploymentId}/logs/stream`);
+
+    socket.onopen = () => console.log('WebSocket connected');
+    socket.onmessage = (event) => {
+      setSelectedLogs(prev => (prev === 'No logs available.' ? '' : (prev || '')) + event.data);
+    };
+    socket.onerror = (error) => console.error('WebSocket error:', error);
+    socket.onclose = () => console.log('WebSocket disconnected');
+
+    return () => socket.close();
+  }, [activeDeploymentId]);
 
   const updateService = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +52,7 @@ export default function Dashboard() {
           buildCommand: editingService.buildCommand,
           startCommand: editingService.startCommand,
           port: editingService.port,
+          envVars: editingService.envVars,
         }),
       });
 
@@ -50,24 +68,35 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:3001/services')
-      .then(res => res.json())
-      .then(data => {
-        setServices(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+    const fetchServices = () => {
+      fetch('http://localhost:3001/services')
+        .then(res => res.json())
+        .then(data => {
+          setServices(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+    };
+
+    fetchServices();
+    const interval = setInterval(fetchServices, 5000); // Poll for status updates
+    return () => clearInterval(interval);
   }, []);
 
   const triggerDeploy = async (serviceId: string) => {
     try {
-      await fetch(`http://localhost:3001/services/${serviceId}/deploy`, { method: 'POST' });
+      const res = await fetch(`http://localhost:3001/services/${serviceId}/deploy`, { method: 'POST' });
+      const deployment = await res.json();
+
+      // Open logs immediately for the new deployment
+      fetchLogs(deployment.id);
+
       // Refresh status
-      const res = await fetch('http://localhost:3001/services');
-      const data = await res.json();
+      const servicesRes = await fetch('http://localhost:3001/services');
+      const data = await servicesRes.json();
       setServices(data);
     } catch (err) {
       alert('Failed to trigger deployment');
@@ -90,6 +119,7 @@ export default function Dashboard() {
   };
 
   const fetchLogs = async (deploymentId: string) => {
+    setActiveDeploymentId(deploymentId);
     try {
       const res = await fetch(`http://localhost:3001/deployments/${deploymentId}/logs`);
       const data = await res.json();
@@ -177,6 +207,32 @@ export default function Dashboard() {
                   Visit App
                 </a>
               </div>
+
+              <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Recent Deployments
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {service.deployments.length === 0 ? (
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>No deployments yet.</p>
+                  ) : (
+                    service.deployments.slice(0, 5).map(dep => (
+                      <div key={dep.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span className={`status-badge status-${dep.status.toLowerCase()}`} style={{ width: '8px', height: '8px', borderRadius: '50%', padding: 0 }}></span>
+                          <span style={{ color: 'var(--text-main)' }}>{new Date(dep.createdAt).toLocaleString()}</span>
+                        </div>
+                        <button
+                          onClick={() => fetchLogs(dep.id)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                          Logs
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -191,7 +247,7 @@ export default function Dashboard() {
           <div className="card" style={{ width: '100%', maxWidth: '900px', maxHeight: '80vh', overflow: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
               <h2>Deployment Logs</h2>
-              <button onClick={() => setSelectedLogs(null)} className="btn" style={{ background: '#da3633' }}>Close</button>
+              <button onClick={() => { setSelectedLogs(null); setActiveDeploymentId(null); }} className="btn" style={{ background: '#da3633' }}>Close</button>
             </div>
             <pre style={{ background: '#0d1117', padding: '1rem', borderRadius: '6px', fontSize: '0.85rem', color: '#8b949e', whiteSpace: 'pre-wrap' }}>
               {selectedLogs}
@@ -270,6 +326,23 @@ export default function Dashboard() {
                     placeholder="3000"
                   />
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label>Environment Variables (KEY=VALUE, one per line)</label>
+                <textarea
+                  style={{ width: '100%', minHeight: '120px', background: 'var(--input-bg)', color: 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.8rem', fontFamily: 'monospace' }}
+                  value={Object.entries((editingService as any).envVars || {}).map(([k, v]) => `${k}=${v}`).join('\n')}
+                  onChange={e => {
+                    const lines = e.target.value.split('\n');
+                    const envVars = Object.fromEntries(lines.filter(l => l.includes('=')).map(l => {
+                      const [k, ...v] = l.split('=');
+                      return [k.trim(), v.join('=').trim()];
+                    }));
+                    setEditingService({ ...editingService, envVars } as any);
+                  }}
+                  placeholder="DATABASE_URL=postgres://..."
+                />
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>
