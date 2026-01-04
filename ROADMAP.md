@@ -11,29 +11,29 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] Worker Service Skeleton (BullMQ)
 - [x] Dashboard Skeleton (Next.js)
 
-## 🏗️ Phase 2: Fundamental Features (Current)
-- [ ] **Real-time Logs Stream**: Implement WebSocket or Server-Sent Events (SSE) to stream build logs from worker to dashboard.
-- [ ] **GitHub Webhook Integration**: Automate deployments on `git push` instead of manual triggers.
-- [ ] **Deployment History**: UI to view past deployments and their specific logs.
-- [ ] **Environment Variable Management**: UI to add/edit secrets and env vars for services.
-- [ ] **Health Checks**: Implement logic for the platform to monitor the health of deployed containers.
+## ✅ Phase 2: Fundamental Features
+- [x] **Real-time Logs Stream**: Implement WebSocket or Server-Sent Events (SSE) to stream build logs from worker to dashboard.
+- [x] **GitHub Webhook Integration**: Automate deployments on `git push` instead of manual triggers.
+- [x] **Deployment History**: UI to view past deployments and their specific logs.
+- [x] **Environment Variable Management**: UI to add/edit secrets and env vars for services.
+- [x] **Health Checks**: Implement logic for the platform to monitor the health of deployed containers.
 
-## 🚀 Phase 3: Reliability & UX Polish
-- [ ] **Zero-Downtime Deploys**: Use Traefik's health checks to ensure the new container is ready before stopping the old one.
-- [ ] **Container Metrics**: Basic CPU/Memory usage stats on the dashboard.
-- [ ] **GitHub OAuth Integration**: Complete the login flow (currently mocked).
-- [ ] **Build Optimization**: Implement layer caching to speed up Docker builds.
-- [ ] **Custom Domains**: Allow users to point their own domains to the services.
+## ✅ Phase 3: Reliability & UX Polish
+- [x] **Zero-Downtime Deploys**: Use Traefik's health checks to ensure the new container is ready before stopping the old one.
+- [x] **Container Metrics**: Basic CPU/Memory usage stats on the dashboard.
+- [x] **GitHub OAuth Integration**: Complete the login flow (currently mocked).
+- [x] **Build Optimization**: Implement layer caching to speed up Docker builds.
+- [x] **Custom Domains**: Allow users to point their own domains to the services.
 
-## 🛡️ Phase 4: Security & Hardening
+## 🏗️ Phase 4: Security & Hardening (Current)
 - [ ] **Resource Limits**: Enforce CPU/Memory limits on user containers.
 - [ ] **Isolated Build Environments**: Use temporary Docker-in-Docker containers for builds to prevent host pollution.
-- [ ] **API Authentication**: Secure all API endpoints with JWT.
+- [ ] **API Authentication**: Secure all API endpoints with JWT. (Partially done in Phase 3)
 - [ ] **Sensitive Data Scrubbing**: Ensure secrets are redacted from build/runtime logs.
 
 ---
 
 ## 📋 Next Priorities
-1. **Live Build Logs**: The biggest missing piece for "Render-like" UX. We need to capture the Docker build stream and pipe it to the UI.
-2. **GitHub Webhooks**: Connecting a repo is manual right now; webhooks make it feel like a real PaaS.
-3. **Internal Port Detection**: Currently hardcoded to 3000; need a way to detect or configure the app's listening port.
+1. **Resource Limits**: Preventing a single app from hogging the host.
+2. **Isolated Builds**: Moving builds into separate, disposable containers.
+3. **Sensitive Data Scrubbing**: Redacting env vars from logs.

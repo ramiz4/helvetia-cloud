@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function NewService() {
@@ -15,22 +15,43 @@ export default function NewService() {
     port: 3000,
   });
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    if (!token || !user) {
+      router.push('/login');
+      return;
+    }
+
     try {
-      // Mock userId for MVP
       const res = await fetch('http://localhost:3001/services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, userId: 'mock-user-id' }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...formData, userId: user.id }),
       });
 
       if (res.ok) {
         const service = await res.json();
         // Trigger initial deploy
-        await fetch(`http://localhost:3001/services/${service.id}/deploy`, { method: 'POST' });
+        await fetch(`http://localhost:3001/services/${service.id}/deploy`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         router.push('/');
       } else {
         alert('Failed to create service');

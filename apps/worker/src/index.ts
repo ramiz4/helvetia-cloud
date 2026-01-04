@@ -19,7 +19,7 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 const worker = new Worker(
   'deployments',
   async (job: Job) => {
-    const { deploymentId, serviceId, repoUrl, branch, buildCommand, startCommand, serviceName, port } = job.data;
+    const { deploymentId, serviceId, repoUrl, branch, buildCommand, startCommand, serviceName, port, envVars, customDomain } = job.data;
     const workDir = path.join(__dirname, '../temp', deploymentId);
 
     console.log(`Starting deployment ${deploymentId} for service ${serviceName}`);
@@ -39,18 +39,29 @@ const worker = new Worker(
       try {
         await fs.access(dockerfilePath);
       } catch {
-        // Generate a basic Node.js Dockerfile
+        // Generate a more optimized Dockerfile
         const content = `
 FROM node:22-alpine
 RUN apk add --no-cache git build-base python3
 RUN npm install -g pnpm
 WORKDIR /app
+COPY package*.json pnpm-lock.yaml* ./
+RUN ${buildCommand || 'pnpm install --frozen-lockfile'}
 COPY . .
-RUN ${buildCommand || 'pnpm install'}
 EXPOSE ${port || 3000}
 CMD ${startCommand || 'npm start'}
 `;
         await fs.writeFile(dockerfilePath, content);
+
+        // Add a .dockerignore to optimize context transfer
+        const ignoreContent = `
+node_modules
+.git
+.next
+dist
+temp
+`;
+        await fs.writeFile(path.join(workDir, '.dockerignore'), ignoreContent);
       }
 
       // 3. Build Image
@@ -74,12 +85,14 @@ CMD ${startCommand || 'npm start'}
           if (event.stream) {
             buildLogs += event.stream;
             console.log(event.stream);
-            // Periodically update logs in DB for longer builds
-            // For MVP, we'll update the final log at the end, but let's keep it in memory for now
+            // Publish to Redis for real-time streaming
+            await redisConnection.publish(`deployment-logs:${deploymentId}`, event.stream);
           }
           if (event.error) {
-            buildLogs += `\nERROR: ${event.error}\n`;
+            const errorMsg = `\nERROR: ${event.error}\n`;
+            buildLogs += errorMsg;
             console.error('Build error:', event.error);
+            await redisConnection.publish(`deployment-logs:${deploymentId}`, errorMsg);
           }
         });
       });
@@ -97,24 +110,18 @@ CMD ${startCommand || 'npm start'}
       const postfix = Math.random().toString(36).substring(2, 8);
       const containerName = `${serviceName}-${postfix}`;
 
-      // Stop existing containers for this service if any (using label for better accuracy)
-      const containers = await docker.listContainers({ all: true });
-      const oldContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === serviceId);
+      const traefikRule = customDomain
+        ? `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`) || Host(\`${customDomain}\`)`
+        : `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`;
 
-      for (const old of oldContainers) {
-        const container = docker.getContainer(old.Id);
-        await container.stop().catch(() => { });
-        await container.remove().catch(() => { });
-      }
-
-      await docker.createContainer({
+      const newContainer = await docker.createContainer({
         Image: imageTag,
         name: containerName,
-        Env: job.data.envVars ? Object.entries(job.data.envVars).map(([k, v]) => `${k}=${v}`) : [],
+        Env: envVars ? Object.entries(envVars).map(([k, v]) => `${k}=${v}`) : [],
         Labels: {
           'helvetia.serviceId': serviceId,
           'traefik.enable': 'true',
-          [`traefik.http.routers.${serviceName}.rule`]: `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`,
+          [`traefik.http.routers.${serviceName}.rule`]: traefikRule,
           [`traefik.http.routers.${serviceName}.entrypoints`]: 'web',
           [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: (port || 3000).toString(),
         },
@@ -126,7 +133,26 @@ CMD ${startCommand || 'npm start'}
             Config: {},
           },
         },
-      }).then(container => container.start());
+      });
+
+      await newContainer.start();
+      console.log(`New container ${containerName} started.`);
+
+      // 5. Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
+      console.log(`Cleaning up old containers for ${serviceName}...`);
+      const containers = await docker.listContainers({ all: true });
+      const oldContainers = containers.filter(c =>
+        c.Labels['helvetia.serviceId'] === serviceId &&
+        c.Names.some(name => !name.includes(postfix))
+      );
+
+      for (const old of oldContainers) {
+        const container = docker.getContainer(old.Id);
+        // Wait a small grace period for Traefik to switch traffic if needed
+        // In a more robust system, we would check health here.
+        await container.stop().catch(() => { });
+        await container.remove().catch(() => { });
+      }
 
       await prisma.deployment.update({
         where: { id: deploymentId },

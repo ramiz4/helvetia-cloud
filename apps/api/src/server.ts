@@ -4,13 +4,18 @@ import jwt from '@fastify/jwt';
 import { prisma } from 'database';
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
+import fastifyWebsocket from '@fastify/websocket';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: require('path').resolve(__dirname, '../../.env'), override: true });
+dotenv.config({ override: true }); // Prefer local .env if it exists
 
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
+
+// Separate connection for subscriptions
+const subConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
@@ -24,8 +29,31 @@ fastify.register(cors, {
   origin: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
+
+fastify.register(fastifyWebsocket);
+
 fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'secret',
+});
+
+// Auth Hook
+fastify.addHook('preHandler', async (request, reply) => {
+  const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
+  // Check if it's a public route or an OPTIONS request (CORS)
+  if (
+    publicRoutes.some(route => request.url.startsWith(route)) ||
+    request.url.includes('/logs/stream') ||
+    request.method === 'OPTIONS'
+  ) {
+    return;
+  }
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    console.error('Auth Error:', err);
+    console.log('Failed Route:', request.url, request.method);
+    reply.status(401).send({ error: 'Unauthorized' });
+  }
 });
 
 // Routes
@@ -35,19 +63,76 @@ fastify.get('/health', async () => {
 
 // Auth Routes (Simplified for MVP)
 fastify.post('/auth/github', async (request, reply) => {
-  // In a real app, we would exchange code for token
-  // For MVP, we'll assume the frontend sends user info after GitHub OAuth
-  const { githubId, username, avatarUrl } = request.body as any;
+  const { code } = request.body as any;
 
-  let user = await prisma.user.findUnique({ where: { githubId } });
-  if (!user) {
-    user = await prisma.user.create({
-      data: { githubId, username, avatarUrl },
-    });
+  if (!code) {
+    return reply.status(400).send({ error: 'Code is required' });
   }
 
-  const token = fastify.jwt.sign({ id: user.id, username: user.username });
-  return { token, user };
+  try {
+    // 1. Exchange code for access token
+    console.log(`Exchanging code for token with Client ID: ${process.env.GITHUB_CLIENT_ID?.slice(0, 5)}...`);
+    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      }),
+    });
+
+    const tokenData = await tokenRes.json() as any;
+    if (tokenData.error) {
+      console.error('GitHub Token Error:', tokenData);
+      return reply.status(400).send({ error: tokenData.error_description || tokenData.error, details: tokenData });
+    }
+
+    const accessToken = tokenData.access_token;
+
+    // 2. Fetch user profile
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+        'User-Agent': 'Helvetia-Cloud',
+      },
+    });
+
+    const userData = await userRes.json() as any;
+
+    // 3. Create or update user in database
+    let user = await prisma.user.findUnique({
+      where: { githubId: userData.id.toString() }
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          githubId: userData.id.toString(),
+          username: userData.login,
+          avatarUrl: userData.avatar_url,
+        },
+      });
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          username: userData.login,
+          avatarUrl: userData.avatar_url,
+        },
+      });
+    }
+
+    const token = fastify.jwt.sign({ id: user.id, username: user.username });
+    return { token, user, accessToken };
+  } catch (err: any) {
+    fastify.log.error(err);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
 });
 
 // Service Routes
@@ -60,7 +145,7 @@ fastify.get('/services', async (request) => {
 
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
-  const { name, repoUrl, branch, buildCommand, startCommand, port } = request.body as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, port, envVars, customDomain } = request.body as any;
 
   const service = await prisma.service.update({
     where: { id },
@@ -71,14 +156,16 @@ fastify.patch('/services/:id', async (request, reply) => {
       buildCommand,
       startCommand,
       port: port ? parseInt(port) : undefined,
-    },
+      envVars,
+      customDomain,
+    } as any,
   });
 
   return service;
 });
 
 fastify.post('/services', async (request, reply) => {
-  const { name, repoUrl, branch, buildCommand, startCommand, userId, port } = request.body as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, userId, port, customDomain } = request.body as any;
 
   // Ensure user exists for MVP/Mock purposes
   const existingUser = await prisma.user.findUnique({ where: { id: userId } });
@@ -101,7 +188,8 @@ fastify.post('/services', async (request, reply) => {
       startCommand,
       port: port ? parseInt(port) : 3000,
       userId,
-    },
+      customDomain,
+    } as any,
     create: {
       name,
       repoUrl,
@@ -110,7 +198,8 @@ fastify.post('/services', async (request, reply) => {
       startCommand,
       port: port ? parseInt(port) : 3000,
       userId,
-    },
+      customDomain,
+    } as any,
   });
 
   return service;
@@ -141,6 +230,64 @@ fastify.delete('/services/:id', async (request, reply) => {
   return { success: true };
 });
 
+fastify.get('/services/:id/health', async (request, reply) => {
+  const { id } = request.params as any;
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+
+  const containers = await docker.listContainers({ all: true });
+  const serviceContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === id);
+
+  if (serviceContainers.length === 0) {
+    return { status: 'NOT_RUNNING' };
+  }
+
+  const containerInfo = serviceContainers[0]; // Take the latest one
+  const container = docker.getContainer(containerInfo.Id);
+  const data = await container.inspect();
+
+  return {
+    status: data.State.Running ? 'RUNNING' : 'STOPPED',
+    health: data.State.Health?.Status || 'UNKNOWN',
+    startedAt: data.State.StartedAt,
+    exitCode: data.State.ExitCode,
+  };
+});
+
+fastify.get('/services/:id/metrics', async (request, reply) => {
+  const { id } = request.params as any;
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+
+  const containers = await docker.listContainers({ all: true });
+  const serviceContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === id && c.State === 'running');
+
+  if (serviceContainers.length === 0) {
+    return { cpu: 0, memory: 0, memoryLimit: 0 };
+  }
+
+  const containerInfo = serviceContainers[0];
+  const container = docker.getContainer(containerInfo.Id);
+
+  // Get single stats snapshot
+  const stats = await container.stats({ stream: false });
+
+  // Calculate CPU percentage (simplified)
+  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+  const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+  const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
+
+  // Calculate Memory usage in MB
+  const memoryUsage = (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
+  const memoryLimit = stats.memory_stats.limit / 1024 / 1024;
+
+  return {
+    cpu: parseFloat(cpuPercent.toFixed(2)),
+    memory: parseFloat(memoryUsage.toFixed(2)),
+    memoryLimit: parseFloat(memoryLimit.toFixed(2)),
+  };
+});
+
 // Deployment Routes
 fastify.post('/services/:id/deploy', async (request, reply) => {
   const { id } = request.params as any;
@@ -164,15 +311,103 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
     startCommand: service.startCommand,
     serviceName: service.name,
     port: service.port,
+    envVars: service.envVars,
+    customDomain: (service as any).customDomain,
   });
 
   return deployment;
+});
+
+fastify.post('/webhooks/github', async (request, reply) => {
+  const payload = request.body as any;
+
+  // Basic check for push event
+  if (!payload.repository || !payload.ref) {
+    return { skipped: 'Not a push event' };
+  }
+
+  const repoUrl = payload.repository.html_url;
+  const branch = payload.ref.replace('refs/heads/', '');
+
+  console.log(`Received GitHub webhook for ${repoUrl} on branch ${branch}`);
+
+  // Find service(s) matching this repo and branch
+  const services = await prisma.service.findMany({
+    where: {
+      repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
+      branch,
+    },
+  });
+
+  if (services.length === 0) {
+    console.log(`No service found for ${repoUrl} on branch ${branch}`);
+    return { skipped: 'No matching service found' };
+  }
+
+  for (const service of services) {
+    console.log(`Triggering automated deployment for ${service.name}`);
+
+    const deployment = await prisma.deployment.create({
+      data: {
+        serviceId: service.id,
+        status: 'QUEUED',
+        commitHash: payload.after,
+      },
+    });
+
+    await deploymentQueue.add('build', {
+      deploymentId: deployment.id,
+      serviceId: service.id,
+      repoUrl: service.repoUrl,
+      branch: service.branch,
+      buildCommand: service.buildCommand,
+      startCommand: service.startCommand,
+      serviceName: service.name,
+      port: service.port,
+      envVars: service.envVars,
+      customDomain: (service as any).customDomain,
+    });
+  }
+
+  return { success: true, servicesTriggered: services.length };
+});
+
+fastify.get('/services/:id/deployments', async (request, reply) => {
+  const { id } = request.params as any;
+  return prisma.deployment.findMany({
+    where: { serviceId: id },
+    orderBy: { createdAt: 'desc' },
+  });
 });
 
 fastify.get('/deployments/:id/logs', async (request, reply) => {
   const { id } = request.params as any;
   const deployment = await prisma.deployment.findUnique({ where: { id } });
   return { logs: deployment?.logs };
+});
+
+fastify.get('/deployments/:id/logs/stream', { websocket: true }, (connection, req) => {
+  const { id } = req.params as any;
+  const channel = `deployment-logs:${id}`;
+
+  console.log(`Client connected for live logs: ${id}`);
+
+  const onMessage = (chan: string, message: string) => {
+    if (chan === channel) {
+      connection.socket.send(message);
+    }
+  };
+
+  subConnection.subscribe(channel);
+  subConnection.on('message', onMessage);
+
+  connection.socket.on('close', () => {
+    console.log(`Client disconnected from live logs: ${id}`);
+    // We shouldn't unsubscribe from the channel globally if other clients are listening
+    // But for MVP, simple is fine. Actually, ioredis handles multiple subscribers on the same connection.
+    // However, we only have one subConnection. Let's just remove the listener.
+    subConnection.removeListener('message', onMessage);
+  });
 });
 
 const start = async () => {
