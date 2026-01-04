@@ -150,10 +150,34 @@ fastify.post('/auth/github', async (request, reply) => {
 fastify.get('/services', async (request) => {
   // Add authentication middleware in real app
   const user = (request as any).user;
-  return prisma.service.findMany({
+  const services = await prisma.service.findMany({
     where: { userId: user.id },
     include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
+
+  // Enrich services with actual Docker container status
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+  const containers = await docker.listContainers({ all: true });
+
+  const enrichedServices = services.map((service) => {
+    const serviceContainers = containers.filter(
+      (c) => c.Labels['helvetia.serviceId'] === service.id,
+    );
+
+    let containerStatus = 'IDLE';
+    if (serviceContainers.length > 0) {
+      const container = serviceContainers[0];
+      containerStatus = container.State === 'running' ? 'RUNNING' : 'STOPPED';
+    }
+
+    return {
+      ...service,
+      status: containerStatus,
+    };
+  });
+
+  return enrichedServices;
 });
 
 fastify.patch('/services/:id', async (request, reply) => {
