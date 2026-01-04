@@ -57,6 +57,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 
 ## 🛠 Code Quality & Technical Debt
 
+- [ ] **CI/CD Pipeline**: Add a GitHub Action workflow following best practices to automate linting, testing, and security scanning for the application.
 - [ ] **Environment Configuration**: Extract hardcoded `http://localhost:3001` in `src/app/page.tsx` to an environment variable.
 - [ ] **React State Management**: Fix `useEffect` dependency issue in `src/app/page.tsx` (potential infinite loop with `services` dependency).
 - [ ] **UI/UX**: Restore multi-line formatting for delete confirmation message in `src/app/page.tsx`.
