@@ -1,12 +1,10 @@
-import { Worker, Job } from 'bullmq';
-import IORedis from 'ioredis';
+import { Job, Worker } from 'bullmq';
+import { exec } from 'child_process';
 import { prisma } from 'database';
 import Docker from 'dockerode';
-import path from 'path';
-import fs from 'fs/promises';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import dotenv from 'dotenv';
+import IORedis from 'ioredis';
+import { promisify } from 'util';
 
 dotenv.config();
 
@@ -19,12 +17,27 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 const worker = new Worker(
   'deployments',
   async (job: Job) => {
-    const { deploymentId, serviceId, repoUrl, branch, buildCommand, startCommand, serviceName, port, envVars, customDomain } = job.data;
+    const {
+      deploymentId,
+      serviceId,
+      repoUrl,
+      branch,
+      buildCommand,
+      startCommand,
+      serviceName,
+      port,
+      envVars,
+      customDomain,
+    } = job.data;
 
     let builder: any = null;
 
     // Prepare secrets for scrubbing
-    const secrets = envVars ? Object.values(envVars).filter((v: any) => typeof v === 'string' && v.length > 0) as string[] : [];
+    const secrets = envVars
+      ? (Object.values(envVars).filter(
+          (v: any) => typeof v === 'string' && v.length > 0,
+        ) as string[])
+      : [];
     const scrubLogs = (log: string) => {
       let cleaned = log;
       for (const secret of secrets) {
@@ -54,8 +67,8 @@ const worker = new Worker(
         Entrypoint: ['sleep', '3600'],
         HostConfig: {
           AutoRemove: true,
-          Binds: ['/var/run/docker.sock:/var/run/docker.sock']
-        }
+          Binds: ['/var/run/docker.sock:/var/run/docker.sock'],
+        },
       });
       await builder.start();
 
@@ -96,7 +109,7 @@ const worker = new Worker(
         Cmd: ['sh', '-c', buildScript],
         AttachStdout: true,
         AttachStderr: true,
-        Tty: true
+        Tty: true,
       });
 
       const stream = await exec.start({ hijack: true, stdin: false });
@@ -144,13 +157,15 @@ const worker = new Worker(
           'traefik.enable': 'true',
           [`traefik.http.routers.${serviceName}.rule`]: traefikRule,
           [`traefik.http.routers.${serviceName}.entrypoints`]: 'web',
-          [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: (port || 3000).toString(),
+          [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: (
+            port || 3000
+          ).toString(),
         },
         HostConfig: {
           NetworkMode: 'helvetia-net',
           RestartPolicy: { Name: 'always' },
           Memory: 512 * 1024 * 1024, // 512MB limit
-          NanoCpus: 1000000000,      // 1 CPU core limit
+          NanoCpus: 1000000000, // 1 CPU core limit
           LogConfig: {
             Type: 'json-file',
             Config: {},
@@ -164,17 +179,18 @@ const worker = new Worker(
       // 5. Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
       console.log(`Cleaning up old containers for ${serviceName}...`);
       const containers = await docker.listContainers({ all: true });
-      const oldContainers = containers.filter(c =>
-        c.Labels['helvetia.serviceId'] === serviceId &&
-        c.Names.some(name => !name.includes(postfix))
+      const oldContainers = containers.filter(
+        (c) =>
+          c.Labels['helvetia.serviceId'] === serviceId &&
+          c.Names.some((name) => !name.includes(postfix)),
       );
 
       for (const old of oldContainers) {
         const container = docker.getContainer(old.Id);
         // Wait a small grace period for Traefik to switch traffic if needed
         // In a more robust system, we would check health here.
-        await container.stop().catch(() => { });
-        await container.remove().catch(() => { });
+        await container.stop().catch(() => {});
+        await container.remove().catch(() => {});
       }
 
       await prisma.deployment.update({
@@ -188,7 +204,6 @@ const worker = new Worker(
       });
 
       console.log(`Deployment ${deploymentId} successful!`);
-
     } catch (error: any) {
       console.error(`Deployment ${deploymentId} failed:`, error);
       await prisma.deployment.update({
@@ -201,12 +216,11 @@ const worker = new Worker(
       });
     } finally {
       if (builder) {
-        await builder.remove({ force: true }).catch(() => { });
+        await builder.remove({ force: true }).catch(() => {});
       }
     }
-
   },
-  { connection: redisConnection }
+  { connection: redisConnection },
 );
 
 console.log('Worker started and listening for jobs...');
