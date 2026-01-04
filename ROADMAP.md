@@ -54,6 +54,21 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [ ] **Marketplace**: One-click catalog for deploying popular open-source applications (e.g., WordPress, Ghost, Plausible).
 - [ ] **CLI Tool**: specialized command-line tool for Helvetia Cloud.
 
+## 🛠 Code Quality & Technical Debt
+
+### Dashboard (`apps/dashboard`)
+
+- [ ] **Environment Configuration**: Extract hardcoded `http://localhost:3001` in `src/app/page.tsx` to an environment variable.
+- [ ] **React State Management**: Fix `useEffect` dependency issue in `src/app/page.tsx` (potential infinite loop with `services` dependency).
+- [ ] **UI/UX**: Restore multi-line formatting for delete confirmation message in `src/app/page.tsx`.
+- [ ] **Styling**: Refactor inline styles to Tailwind CSS classes in `src/components/LandingPage.tsx`.
+- [ ] **Modal Accessibility**: Implement proper focus trapping and Escape key handling for modals in `src/app/page.tsx`.
+- [ ] **Logo Accessibility**: Add `alt` text or ARIA attributes to the logo in `src/components/Navigation.tsx`.
+- [ ] **Hydration**: Remove `suppressHydrationWarning` from `src/app/layout.tsx` and fix the underlying hydration mismatches.
+- [ ] **Input Accessibility**: Add ARIA labels to the search input in `src/app/page.tsx`.
+- [ ] **Dependency Cleanup**: Remove unused `tailwind-merge` dependency in `package.json` if not needed.
+- [ ] **Code Cleanup**: Remove unused `Settings` import in `src/components/Navigation.tsx`.
+
 ## 🔭 Future Horizon
 
 - **Multi-Region & Cluster Mode**: Kubernetes-based orchestration for high availability.
