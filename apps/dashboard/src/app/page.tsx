@@ -12,6 +12,8 @@ interface Service {
   port: number;
   status: string;
   envVars?: Record<string, string>;
+  customDomain?: string;
+  metrics?: { cpu: number; memory: number; memoryLimit: number };
   deployments: { id: string; status: string; createdAt: string }[];
 }
 
@@ -37,6 +39,21 @@ export default function Dashboard() {
     return () => socket.close();
   }, [activeDeploymentId]);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+    }
+  }, []);
+
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+  };
+
   const updateService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingService) return;
@@ -44,7 +61,7 @@ export default function Dashboard() {
     try {
       const res = await fetch(`http://localhost:3001/services/${editingService.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({
           name: editingService.name,
           repoUrl: editingService.repoUrl,
@@ -53,6 +70,7 @@ export default function Dashboard() {
           startCommand: editingService.startCommand,
           port: editingService.port,
           envVars: editingService.envVars,
+          customDomain: editingService.customDomain,
         }),
       });
 
@@ -69,10 +87,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchServices = () => {
-      fetch('http://localhost:3001/services')
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      fetch('http://localhost:3001/services', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
         .then(res => res.json())
         .then(data => {
-          setServices(data);
+          if (Array.isArray(data)) {
+            setServices(data);
+          }
           setLoading(false);
         })
         .catch(err => {
@@ -82,22 +107,52 @@ export default function Dashboard() {
     };
 
     fetchServices();
-    const interval = setInterval(fetchServices, 5000); // Poll for status updates
+    const interval = setInterval(fetchServices, 10000); // Poll for service updates every 10s
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (services.length === 0) return;
+
+    const fetchMetrics = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const updatedServices = await Promise.all(services.map(async (service) => {
+        try {
+          const res = await fetch(`http://localhost:3001/services/${service.id}/metrics`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const metrics = await res.json();
+          return { ...service, metrics };
+        } catch (err) {
+          return service;
+        }
+      }));
+      setServices(updatedServices);
+    };
+
+    const interval = setInterval(fetchMetrics, 5000); // Poll metrics every 5s
+    return () => clearInterval(interval);
+  }, [services.length]); // Re-run if service count changes
+
   const triggerDeploy = async (serviceId: string) => {
     try {
-      const res = await fetch(`http://localhost:3001/services/${serviceId}/deploy`, { method: 'POST' });
+      const res = await fetch(`http://localhost:3001/services/${serviceId}/deploy`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       const deployment = await res.json();
 
       // Open logs immediately for the new deployment
       fetchLogs(deployment.id);
 
       // Refresh status
-      const servicesRes = await fetch('http://localhost:3001/services');
+      const servicesRes = await fetch('http://localhost:3001/services', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       const data = await servicesRes.json();
-      setServices(data);
+      if (Array.isArray(data)) setServices(data);
     } catch (err) {
       alert('Failed to trigger deployment');
     }
@@ -107,7 +162,10 @@ export default function Dashboard() {
     if (!confirm('Are you sure you want to delete this service? This will stop the app and remove all data.')) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/services/${serviceId}`, { method: 'DELETE' });
+      const res = await fetch(`http://localhost:3001/services/${serviceId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       if (res.ok) {
         setServices(services.filter(s => s.id !== serviceId));
       } else {
@@ -121,7 +179,9 @@ export default function Dashboard() {
   const fetchLogs = async (deploymentId: string) => {
     setActiveDeploymentId(deploymentId);
     try {
-      const res = await fetch(`http://localhost:3001/deployments/${deploymentId}/logs`);
+      const res = await fetch(`http://localhost:3001/deployments/${deploymentId}/logs`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       const data = await res.json();
       setSelectedLogs(data.logs || 'No logs available.');
     } catch (err) {
@@ -197,6 +257,17 @@ export default function Dashboard() {
                     View Logs
                   </button>
                 </div>
+                <div style={{ display: 'flex', gap: '1rem', background: '#0d1117', padding: '0.6rem', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>CPU</div>
+                    <div style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{service.metrics?.cpu || 0}%</div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>RAM</div>
+                    <div style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{service.metrics?.memory || 0} MB</div>
+                  </div>
+                </div>
+
                 <a
                   href={`http://${service.name}.localhost`}
                   target="_blank"
@@ -324,6 +395,15 @@ export default function Dashboard() {
                     value={editingService.port || 3000}
                     onChange={e => setEditingService({ ...editingService, port: parseInt(e.target.value) })}
                     placeholder="3000"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Custom Domain (optional)</label>
+                  <input
+                    type="text"
+                    value={editingService.customDomain || ''}
+                    onChange={e => setEditingService({ ...editingService, customDomain: e.target.value })}
+                    placeholder="app.example.com"
                   />
                 </div>
               </div>

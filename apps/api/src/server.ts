@@ -35,6 +35,19 @@ fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'secret',
 });
 
+// Auth Hook
+fastify.addHook('preHandler', async (request, reply) => {
+  const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
+  if (publicRoutes.includes((request as any).routerPath) || request.url.includes('/logs/stream')) {
+    return;
+  }
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.status(401).send({ error: 'Unauthorized' });
+  }
+});
+
 // Routes
 fastify.get('/health', async () => {
   return { status: 'ok' };
@@ -42,19 +55,74 @@ fastify.get('/health', async () => {
 
 // Auth Routes (Simplified for MVP)
 fastify.post('/auth/github', async (request, reply) => {
-  // In a real app, we would exchange code for token
-  // For MVP, we'll assume the frontend sends user info after GitHub OAuth
-  const { githubId, username, avatarUrl } = request.body as any;
+  const { code } = request.body as any;
 
-  let user = await prisma.user.findUnique({ where: { githubId } });
-  if (!user) {
-    user = await prisma.user.create({
-      data: { githubId, username, avatarUrl },
-    });
+  if (!code) {
+    return reply.status(400).send({ error: 'Code is required' });
   }
 
-  const token = fastify.jwt.sign({ id: user.id, username: user.username });
-  return { token, user };
+  try {
+    // 1. Exchange code for access token
+    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      }),
+    });
+
+    const tokenData = await tokenRes.json() as any;
+    if (tokenData.error) {
+      return reply.status(400).send({ error: tokenData.error_description || tokenData.error });
+    }
+
+    const accessToken = tokenData.access_token;
+
+    // 2. Fetch user profile
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+        'User-Agent': 'Helvetia-Cloud',
+      },
+    });
+
+    const userData = await userRes.json() as any;
+
+    // 3. Create or update user in database
+    let user = await prisma.user.findUnique({
+      where: { githubId: userData.id.toString() }
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          githubId: userData.id.toString(),
+          username: userData.login,
+          avatarUrl: userData.avatar_url,
+        },
+      });
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          username: userData.login,
+          avatarUrl: userData.avatar_url,
+        },
+      });
+    }
+
+    const token = fastify.jwt.sign({ id: user.id, username: user.username });
+    return { token, user, accessToken };
+  } catch (err: any) {
+    fastify.log.error(err);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
 });
 
 // Service Routes
@@ -67,7 +135,7 @@ fastify.get('/services', async (request) => {
 
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
-  const { name, repoUrl, branch, buildCommand, startCommand, port, envVars } = request.body as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, port, envVars, customDomain } = request.body as any;
 
   const service = await prisma.service.update({
     where: { id },
@@ -79,14 +147,15 @@ fastify.patch('/services/:id', async (request, reply) => {
       startCommand,
       port: port ? parseInt(port) : undefined,
       envVars,
-    },
+      customDomain,
+    } as any,
   });
 
   return service;
 });
 
 fastify.post('/services', async (request, reply) => {
-  const { name, repoUrl, branch, buildCommand, startCommand, userId, port } = request.body as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, userId, port, customDomain } = request.body as any;
 
   // Ensure user exists for MVP/Mock purposes
   const existingUser = await prisma.user.findUnique({ where: { id: userId } });
@@ -109,7 +178,8 @@ fastify.post('/services', async (request, reply) => {
       startCommand,
       port: port ? parseInt(port) : 3000,
       userId,
-    },
+      customDomain,
+    } as any,
     create: {
       name,
       repoUrl,
@@ -118,7 +188,8 @@ fastify.post('/services', async (request, reply) => {
       startCommand,
       port: port ? parseInt(port) : 3000,
       userId,
-    },
+      customDomain,
+    } as any,
   });
 
   return service;
@@ -173,6 +244,40 @@ fastify.get('/services/:id/health', async (request, reply) => {
   };
 });
 
+fastify.get('/services/:id/metrics', async (request, reply) => {
+  const { id } = request.params as any;
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+
+  const containers = await docker.listContainers({ all: true });
+  const serviceContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === id && c.State === 'running');
+
+  if (serviceContainers.length === 0) {
+    return { cpu: 0, memory: 0, memoryLimit: 0 };
+  }
+
+  const containerInfo = serviceContainers[0];
+  const container = docker.getContainer(containerInfo.Id);
+
+  // Get single stats snapshot
+  const stats = await container.stats({ stream: false });
+
+  // Calculate CPU percentage (simplified)
+  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+  const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+  const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
+
+  // Calculate Memory usage in MB
+  const memoryUsage = (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
+  const memoryLimit = stats.memory_stats.limit / 1024 / 1024;
+
+  return {
+    cpu: parseFloat(cpuPercent.toFixed(2)),
+    memory: parseFloat(memoryUsage.toFixed(2)),
+    memoryLimit: parseFloat(memoryLimit.toFixed(2)),
+  };
+});
+
 // Deployment Routes
 fastify.post('/services/:id/deploy', async (request, reply) => {
   const { id } = request.params as any;
@@ -197,6 +302,7 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
     serviceName: service.name,
     port: service.port,
     envVars: service.envVars,
+    customDomain: (service as any).customDomain,
   });
 
   return deployment;
@@ -249,6 +355,7 @@ fastify.post('/webhooks/github', async (request, reply) => {
       serviceName: service.name,
       port: service.port,
       envVars: service.envVars,
+      customDomain: (service as any).customDomain,
     });
   }
 
