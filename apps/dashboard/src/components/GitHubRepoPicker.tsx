@@ -84,14 +84,11 @@ export default function GitHubRepoPicker({
       const data = await res.json();
       setBranches(data.map((b: { name: string }) => b.name));
       setSelectedBranch(repo.default_branch);
-      // Trigger update immediately with default branch
-      onSelect(repo.html_url, repo.default_branch, repo.name);
     } catch (err) {
       console.error(err);
       // Fallback to default branch if api fails
       setBranches([repo.default_branch]);
       setSelectedBranch(repo.default_branch);
-      onSelect(repo.html_url, repo.default_branch, repo.name);
     } finally {
       setLoadingBranches(false);
     }
@@ -101,6 +98,8 @@ export default function GitHubRepoPicker({
     setSelectedRepo(repo);
     setView('config');
     fetchBranches(repo);
+    // Notify parent of the selection with default branch
+    onSelect(repo.html_url, repo.default_branch, repo.name);
   };
 
   const handleBranchChange = (branch: string) => {
