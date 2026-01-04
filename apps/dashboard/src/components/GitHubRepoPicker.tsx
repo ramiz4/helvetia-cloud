@@ -160,6 +160,7 @@ export default function GitHubRepoPicker({
             <input
               type="text"
               placeholder="Search repositories..."
+              aria-label="Search repositories"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-white/30 transition-all font-sans"
