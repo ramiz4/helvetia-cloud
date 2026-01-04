@@ -20,6 +20,7 @@ export default function NewService() {
     port: 3000,
   });
   const [repoSelected, setRepoSelected] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -57,6 +58,7 @@ export default function NewService() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage(null); // Clear any previous errors
 
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
@@ -87,10 +89,14 @@ export default function NewService() {
         router.push('/');
       } else {
         const errorData = await res.json();
-        alert(`Failed to create service: ${errorData.error || 'Unknown error'}`);
+        // Sanitize error message by converting to string and escaping HTML
+        const errorMsg = errorData.error || 'Unknown error';
+        const sanitizedError = String(errorMsg).replace(/[<>]/g, '');
+        setErrorMessage(`Failed to create service: ${sanitizedError}`);
       }
-    } catch {
-      alert('Error connecting to API');
+    } catch (error) {
+      console.error('API connection error:', error);
+      setErrorMessage('Error connecting to API. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -304,6 +310,42 @@ export default function NewService() {
                     className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
                   />
                 </div>
+
+                {errorMessage && (
+                  <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 flex items-start gap-3">
+                    <svg
+                      width="20"
+                      height="20"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      className="text-red-400 mt-0.5 flex-shrink-0"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm text-red-200 font-medium">{errorMessage}</p>
+                    </div>
+                    <button
+                      onClick={() => setErrorMessage(null)}
+                      className="text-red-300 hover:text-red-100 transition-colors"
+                      aria-label="Dismiss error"
+                    >
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
 
                 <div className="pt-4">
                   <button
