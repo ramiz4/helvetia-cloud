@@ -301,7 +301,7 @@ export default function NewService() {
                   <input
                     type="number"
                     value={formData.port}
-                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value, 10) })}
                     className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
                   />
                 </div>
