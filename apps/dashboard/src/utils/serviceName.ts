@@ -8,7 +8,13 @@
  * - Must be between 1 and 63 characters
  * 
  * @param repoName - The repository name to sanitize
- * @returns A DNS-compliant service name
+ * @returns A DNS-compliant service name, or empty string if input is empty
+ * 
+ * @example
+ * sanitizeServiceName('my___repo')     // 'my-repo'
+ * sanitizeServiceName('_myrepo_')      // 'myrepo'
+ * sanitizeServiceName('___')           // 'service' (fallback)
+ * sanitizeServiceName('')              // '' (empty input)
  */
 export function sanitizeServiceName(repoName: string): string {
   if (!repoName) {
@@ -26,7 +32,7 @@ export function sanitizeServiceName(repoName: string): string {
   // Remove leading and trailing hyphens
   sanitized = sanitized.replace(/^-+|-+$/g, '');
 
-  // Ensure it's not empty after sanitization
+  // Ensure it's not empty after sanitization (e.g., input was all special chars)
   if (!sanitized) {
     return 'service';
   }
