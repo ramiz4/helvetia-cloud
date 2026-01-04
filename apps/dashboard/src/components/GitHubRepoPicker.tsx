@@ -328,6 +328,7 @@ export default function GitHubRepoPicker({
                     href={selectedRepo.html_url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`View ${selectedRepo.full_name} on GitHub (opens in new tab)`}
                     className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1 font-medium transition-colors"
                   >
                     View on GitHub
