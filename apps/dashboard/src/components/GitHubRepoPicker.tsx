@@ -47,20 +47,44 @@ export default function GitHubRepoPicker({
     }
 
     try {
-      const res = await fetch(
-        'https://api.github.com/user/repos?sort=updated&per_page=100&type=all',
-        {
+      const allRepos: Repo[] = [];
+      let page = 1;
+      const perPage = 100;
+
+      // Fetch all pages of repositories until a page returns fewer than perPage items
+      // to ensure users with more than perPage repositories see all of them.
+      // This relies on GitHub's guarantee of a maximum of `per_page` items per page.
+      // See: https://docs.github.com/en/rest/repos/repos#list-repositories-for-the-authenticated-user
+      // for pagination details.
+      // We intentionally keep requests sequential to avoid hitting rate limits too aggressively.
+      // If needed, this could be optimized with concurrency and Link header parsing.
+      // For now, sequential fetching is sufficient and simple.
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const url = `https://api.github.com/user/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
+
+        const res = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/vnd.github.v3+json',
           },
-        },
-      );
+        });
 
-      if (!res.ok) throw new Error('Failed to fetch repositories');
+        if (!res.ok) {
+          throw new Error('Failed to fetch repositories');
+        }
 
-      const data = await res.json();
-      setRepos(data);
+        const pageData: Repo[] = await res.json();
+        allRepos.push(...pageData);
+
+        if (pageData.length < perPage) {
+          break;
+        }
+
+        page += 1;
+      }
+
+      setRepos(allRepos);
     } catch {
       setError('Could not load repositories.');
     } finally {
