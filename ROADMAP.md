@@ -69,6 +69,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [ ] **Code Cleanup**: Remove unused `Settings` import in `src/components/Navigation.tsx`.
 - [ ] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
 - [ ] **Documentation Maintenance**: Review and update all project documentation (README.md, ARCHITECTURE.md, and all other .md files) to ensure they are accurate and up-to-date with the current implementation.
+- [ ] **CODEOWNERS**: Add a CODEOWNERS file to define repository ownership and streamline the PR review process.
 
 ## 🔭 Future Horizon
 
