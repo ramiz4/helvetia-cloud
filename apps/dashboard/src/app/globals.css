@@ -297,10 +297,18 @@ label {
   border-color: rgba(245, 158, 11, 0.2);
 }
 
-.status-failed {
+.status-failed,
+.status-crashing,
+.status-error {
   background: var(--error-bg);
   color: #f87171;
   border-color: rgba(239, 68, 68, 0.2);
+}
+
+.status-stopped {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.2);
 }
 
 .status-idle {

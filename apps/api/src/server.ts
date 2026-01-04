@@ -42,10 +42,8 @@ fastify.register(jwt, {
 fastify.addHook('preHandler', async (request, reply) => {
   const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
   // WebSocket routes handle auth via query parameter, not header
-  const wsRoutes = ['/deployments/'];
-  const isWsLogStream = wsRoutes.some(
-    (route) => request.url.startsWith(route) && request.url.includes('/logs/stream'),
-  );
+  const isWsLogStream = request.url.includes('/logs/stream');
+
   // Check if it's a public route, WS route, or an OPTIONS request (CORS)
   if (
     publicRoutes.some((route) => request.url.startsWith(route)) ||
@@ -165,15 +163,34 @@ fastify.get('/services', async (request) => {
       (c) => c.Labels['helvetia.serviceId'] === service.id,
     );
 
-    let containerStatus = 'IDLE';
+    const latestDeployment = service.deployments[0];
+    let status = 'IDLE';
+
     if (serviceContainers.length > 0) {
       const container = serviceContainers[0];
-      containerStatus = container.State === 'running' ? 'RUNNING' : 'STOPPED';
+      // States: created, restarting, running, removing, paused, exited, dead
+      if (container.State === 'running') {
+        status = 'RUNNING';
+      } else if (container.State === 'restarting') {
+        status = 'CRASHING';
+      } else if (container.State === 'exited' || container.State === 'dead') {
+        status = 'STOPPED';
+      } else {
+        status = container.State.toUpperCase();
+      }
+    } else if (latestDeployment) {
+      if (['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
+        status = 'DEPLOYING';
+      } else if (latestDeployment.status === 'FAILED') {
+        status = 'FAILED';
+      } else if (latestDeployment.status === 'SUCCESS') {
+        status = 'IDLE'; // No container but last deploy was successful
+      }
     }
 
     return {
       ...service,
-      status: containerStatus,
+      status: status,
     };
   });
 
@@ -566,13 +583,14 @@ fastify.get('/deployments/:id/logs/stream', { websocket: true }, (connection, re
   const { id } = req.params as any;
   const { token } = req.query as any;
 
+  console.log(`WebSocket connection attempt for deployment: ${id}`);
+
   // Auth check for WS
   try {
+    if (!token) throw new Error('No token provided');
     (req.server as any).jwt.verify(token);
-    // Ideally check ownership of deployment here via DB, but for streaming speed/simplicity
-    // we can rely on knowledge of ID + valid token.
-    // To be strict: await prisma.deployment.findFirst({ where: { id, service: { userId: decoded.id } } })
-  } catch {
+  } catch (err: any) {
+    console.error(`WS Auth Failed for deployment ${id}:`, err.message);
     connection.socket.close();
     return;
   }

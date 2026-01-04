@@ -106,9 +106,27 @@ new Worker(
 
             echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
 
+            # Debugging: List files after build to help user find the correct output directory
+            echo "RUN ls -R /app | grep ': ' || true" >> Dockerfile
+
+            # Create SPA-friendly Nginx config
+            echo 'server {
+              listen 80;
+              location / {
+                root /usr/share/nginx/html;
+                index index.html index.htm;
+                try_files $uri $uri/ /index.html;
+              }
+            }' > nginx.conf
+
             echo "" >> Dockerfile
             echo "FROM nginx:alpine" >> Dockerfile
+            # Remove default Nginx content to avoid conflicts
+            echo "RUN rm -rf /usr/share/nginx/html/*" >> Dockerfile
+            # Copy build artifacts
             echo "COPY --from=builder /app/${staticOutputDir || 'dist'} /usr/share/nginx/html" >> Dockerfile
+            # Copy custom nginx config
+            echo "COPY nginx.conf /etc/nginx/conf.d/default.conf" >> Dockerfile
             echo "EXPOSE 80" >> Dockerfile
             echo 'CMD ["nginx", "-g", "daemon off;"]' >> Dockerfile
           else
@@ -142,7 +160,8 @@ new Worker(
           echo "node_modules" > .dockerignore
           echo ".git" >> .dockerignore
           echo ".next" >> .dockerignore
-          echo "dist" >> .dockerignore
+          # We don't ignore 'dist' here because it might be the target
+          # output directory for static sites in some configurations
           echo "temp" >> .dockerignore
         fi
         docker build -t ${imageTag} .

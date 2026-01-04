@@ -68,16 +68,17 @@ export default function Home() {
       setSelectedLogs((prev) => (prev === 'No logs available.' ? '' : prev || '') + event.data);
     };
     socket.onerror = (error) => console.error('WebSocket error:', error);
-    socket.onclose = () => console.log('WebSocket disconnected');
+    socket.onclose = () => {
+      console.log('WebSocket disconnected');
+      fetchServices(true); // Silent refresh when deployment ends
+    };
 
     return () => socket.close();
-  }, [activeDeploymentId]);
+  }, [activeDeploymentId]); // Re-run when target deployment changes
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchServices();
-      const interval = setInterval(fetchServices, 10000); // Poll for service updates every 10s
-      return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
 
@@ -130,7 +131,9 @@ export default function Home() {
           branch: editingService.branch,
           buildCommand: editingService.buildCommand,
           startCommand: editingService.startCommand,
-          port: editingService.port,
+          port: editingService.type === 'STATIC' ? 80 : editingService.port,
+          type: editingService.type,
+          staticOutputDir: editingService.staticOutputDir,
           envVars: editingService.envVars,
           customDomain: editingService.customDomain,
         }),
@@ -149,11 +152,11 @@ export default function Home() {
     }
   };
 
-  const fetchServices = () => {
+  const fetchServices = (silent = false) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     fetch('http://localhost:3001/services', {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -255,7 +258,7 @@ export default function Home() {
   // Note: Status values - Worker sets 'ACTIVE' on successful deployment, 'FAILED' on failure
   // API may also return 'RUNNING', 'STOPPED', 'IDLE' based on Docker container state
   const activeServices = services.filter(
-    (s) => s.status === 'ACTIVE' || s.status === 'RUNNING',
+    (s) => s.status === 'ACTIVE' || s.status === 'RUNNING' || s.status === 'DEPLOYING',
   ).length;
   const failingServices = services.filter(
     (s) => s.status === 'FAILED' || s.status === 'ERROR',
@@ -283,7 +286,7 @@ export default function Home() {
           <p style={{ color: 'var(--text-secondary)' }}>Manage your deployments and services</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button onClick={fetchServices} className="btn btn-ghost" title="Refresh">
+          <button onClick={() => fetchServices()} className="btn btn-ghost" title="Refresh">
             <RefreshCw size={18} />
           </button>
         </div>
