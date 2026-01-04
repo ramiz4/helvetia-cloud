@@ -193,7 +193,20 @@ export default function Dashboard() {
     <main>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Services</h1>
-        <button onClick={() => window.location.reload()} className="btn" style={{ background: '#30363d' }}>Refresh</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={() => window.location.reload()} className="btn" style={{ background: '#30363d' }}>Refresh</button>
+          <button
+            onClick={() => {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              window.location.href = '/login';
+            }}
+            className="btn"
+            style={{ background: '#da3633' }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {loading ? (

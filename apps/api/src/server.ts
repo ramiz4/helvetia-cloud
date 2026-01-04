@@ -7,7 +7,8 @@ import IORedis from 'ioredis';
 import fastifyWebsocket from '@fastify/websocket';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: require('path').resolve(__dirname, '../../.env'), override: true });
+dotenv.config({ override: true }); // Prefer local .env if it exists
 
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
@@ -38,12 +39,19 @@ fastify.register(jwt, {
 // Auth Hook
 fastify.addHook('preHandler', async (request, reply) => {
   const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
-  if (publicRoutes.includes((request as any).routerPath) || request.url.includes('/logs/stream')) {
+  // Check if it's a public route or an OPTIONS request (CORS)
+  if (
+    publicRoutes.some(route => request.url.startsWith(route)) ||
+    request.url.includes('/logs/stream') ||
+    request.method === 'OPTIONS'
+  ) {
     return;
   }
   try {
     await request.jwtVerify();
   } catch (err) {
+    console.error('Auth Error:', err);
+    console.log('Failed Route:', request.url, request.method);
     reply.status(401).send({ error: 'Unauthorized' });
   }
 });
@@ -63,6 +71,7 @@ fastify.post('/auth/github', async (request, reply) => {
 
   try {
     // 1. Exchange code for access token
+    console.log(`Exchanging code for token with Client ID: ${process.env.GITHUB_CLIENT_ID?.slice(0, 5)}...`);
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
@@ -78,7 +87,8 @@ fastify.post('/auth/github', async (request, reply) => {
 
     const tokenData = await tokenRes.json() as any;
     if (tokenData.error) {
-      return reply.status(400).send({ error: tokenData.error_description || tokenData.error });
+      console.error('GitHub Token Error:', tokenData);
+      return reply.status(400).send({ error: tokenData.error_description || tokenData.error, details: tokenData });
     }
 
     const accessToken = tokenData.access_token;

@@ -30,8 +30,8 @@ function CallbackContent() {
           localStorage.setItem('user', JSON.stringify(data.user));
           router.push('/');
         } else {
-          console.error('Auth failed', data);
-          router.push('/login?error=auth_failed');
+          console.error('Auth failed response:', JSON.stringify(data, null, 2));
+          router.push(`/login?error=auth_failed&details=${encodeURIComponent(data.error || 'unknown')}`);
         }
       } catch (err) {
         console.error('Network error', err);

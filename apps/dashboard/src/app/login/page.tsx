@@ -1,8 +1,14 @@
 'use client';
 
-export default function LoginPage() {
-  const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'Ov23liYf6U0gE1X6pE5r'; // Default for local dev if not set
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+function LoginContent() {
+  const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
   const REDIRECT_URI = 'http://localhost:3000/auth/callback';
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
+  const errorDetails = searchParams.get('details');
 
   const loginWithGitHub = () => {
     const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=user,repo`;
@@ -13,6 +19,12 @@ export default function LoginPage() {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
       <div className="card" style={{ maxWidth: '400px', width: '100%', textAlign: 'center', padding: '3rem' }}>
         <h1 style={{ marginBottom: '1rem' }}>Welcome</h1>
+        {error && (
+          <div style={{ color: 'red', marginBottom: '1rem', background: '#ffebee', padding: '0.5rem', borderRadius: '4px' }}>
+            Auth Error: {error} <br />
+            {errorDetails && <small>{errorDetails}</small>}
+          </div>
+        )}
         <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
           Sign in to Helvetia Cloud to manage your deployments.
         </p>
@@ -24,5 +36,13 @@ export default function LoginPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
