@@ -183,10 +183,11 @@ export default function NewService() {
                 {importMethod === 'manual' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-white/5">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-white/60 mb-2">
+                      <label htmlFor="repoUrl" className="block text-sm font-medium text-white/60 mb-2">
                         Git Repository URL
                       </label>
                       <input
+                        id="repoUrl"
                         type="text"
                         name="repoUrl"
                         placeholder="https://github.com/username/repo"
@@ -197,8 +198,9 @@ export default function NewService() {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-white/60 mb-2">Branch</label>
+                      <label htmlFor="branch" className="block text-sm font-medium text-white/60 mb-2">Branch</label>
                       <input
+                        id="branch"
                         type="text"
                         name="branch"
                         placeholder="main"
@@ -211,10 +213,11 @@ export default function NewService() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-white/60 mb-2">
+                  <label htmlFor="projectName" className="block text-sm font-medium text-white/60 mb-2">
                     Project Name
                   </label>
                   <input
+                    id="projectName"
                     type="text"
                     required
                     value={formData.name}
@@ -228,7 +231,7 @@ export default function NewService() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">
+                    <label htmlFor="buildCommand" className="block text-sm font-medium text-white/60 mb-2">
                       Build Command
                     </label>
                     <div className="relative">
@@ -255,6 +258,7 @@ export default function NewService() {
                         </svg>
                       </div>
                       <input
+                        id="buildCommand"
                         type="text"
                         value={formData.buildCommand}
                         onChange={(e) => setFormData({ ...formData, buildCommand: e.target.value })}
@@ -264,7 +268,7 @@ export default function NewService() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">
+                    <label htmlFor="startCommand" className="block text-sm font-medium text-white/60 mb-2">
                       Start Command
                     </label>
                     <div className="relative">
@@ -285,6 +289,7 @@ export default function NewService() {
                         </svg>
                       </div>
                       <input
+                        id="startCommand"
                         type="text"
                         value={formData.startCommand}
                         onChange={(e) => setFormData({ ...formData, startCommand: e.target.value })}
@@ -296,8 +301,9 @@ export default function NewService() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white/60 mb-2">Port</label>
+                  <label htmlFor="port" className="block text-sm font-medium text-white/60 mb-2">Port</label>
                   <input
+                    id="port"
                     type="number"
                     value={formData.port}
                     onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value, 10) })}
