@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import './globals.css';
 import Navigation from '../components/Navigation';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Helvetia Cloud | Platform-as-a-Service',
@@ -25,9 +25,7 @@ export default function RootLayout({
       <body suppressHydrationWarning={true}>
         <div className="app-shell">
           <Navigation />
-          <main className="main-content container animate-fade-in">
-            {children}
-          </main>
+          <main className="main-content container animate-fade-in">{children}</main>
         </div>
       </body>
     </html>

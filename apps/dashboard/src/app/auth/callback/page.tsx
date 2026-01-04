@@ -31,7 +31,6 @@ function CallbackContent() {
           }
           localStorage.setItem('user', JSON.stringify(data.user));
           router.push('/');
-
         } else {
           console.error('Auth failed response:', JSON.stringify(data, null, 2));
           router.push(

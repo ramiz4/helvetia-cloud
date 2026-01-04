@@ -68,6 +68,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [ ] **Input Accessibility**: Add ARIA labels to the search input in `src/app/page.tsx`.
 - [ ] **Dependency Cleanup**: Remove unused `tailwind-merge` dependency in `package.json` if not needed.
 - [ ] **Code Cleanup**: Remove unused `Settings` import in `src/components/Navigation.tsx`.
+- [ ] **Documentation Maintenance**: Review and update all project documentation (README.md, ARCHITECTURE.md, and all other .md files) to ensure they are accurate and up-to-date with the current implementation.
 
 ## 🔭 Future Horizon
 

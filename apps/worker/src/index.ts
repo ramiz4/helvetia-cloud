@@ -1,20 +1,17 @@
 import { Job, Worker } from 'bullmq';
-import { exec } from 'child_process';
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
-import { promisify } from 'util';
 
 dotenv.config();
 
-const execAsync = promisify(exec);
 const docker = new Docker();
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
 
-const worker = new Worker(
+new Worker(
   'deployments',
   async (job: Job) => {
     const {
@@ -30,13 +27,11 @@ const worker = new Worker(
       customDomain,
     } = job.data;
 
-    let builder: any = null;
+    let builder: Docker.Container | null = null;
 
     // Prepare secrets for scrubbing
     const secrets = envVars
-      ? (Object.values(envVars).filter(
-          (v: any) => typeof v === 'string' && v.length > 0,
-        ) as string[])
+      ? (Object.values(envVars).filter((v) => typeof v === 'string' && v.length > 0) as string[])
       : [];
     const scrubLogs = (log: string) => {
       let cleaned = log;
@@ -204,11 +199,12 @@ const worker = new Worker(
       });
 
       console.log(`Deployment ${deploymentId} successful!`);
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Deployment ${deploymentId} failed:`, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       await prisma.deployment.update({
         where: { id: deploymentId },
-        data: { status: 'FAILED', logs: error.message },
+        data: { status: 'FAILED', logs: errorMessage },
       });
       await prisma.service.update({
         where: { id: serviceId },

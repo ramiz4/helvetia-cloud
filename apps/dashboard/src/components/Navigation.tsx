@@ -1,15 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { BookOpen, Github, LayoutDashboard, LogOut, Plus } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Plus,
-  Settings,
-  BookOpen,
-  LogOut,
-  Github
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -54,7 +47,10 @@ export default function Navigation() {
                 <LayoutDashboard size={18} />
                 <span>Dashboard</span>
               </a>
-              <a href="/deployments" className={`nav-item ${pathname === '/deployments' ? 'active' : ''}`}>
+              <a
+                href="/deployments"
+                className={`nav-item ${pathname === '/deployments' ? 'active' : ''}`}
+              >
                 <BookOpen size={18} />
                 <span>Deployments</span>
               </a>
@@ -67,7 +63,13 @@ export default function Navigation() {
             </div>
 
             <div className="nav-actions">
-              <a href="https://github.com/ramiz4/helvetia-cloud" target="_blank" rel="noopener noreferrer" className="btn-icon" title="GitHub">
+              <a
+                href="https://github.com/ramiz4/helvetia-cloud"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-icon"
+                title="GitHub"
+              >
                 <Github size={20} />
               </a>
               <a href="/new" className="btn btn-primary btn-sm">
@@ -83,7 +85,13 @@ export default function Navigation() {
 
         {!isLoggedIn && (
           <div className="nav-actions">
-            <a href="https://github.com/ramiz4/helvetia-cloud" target="_blank" rel="noopener noreferrer" className="btn-icon" title="GitHub">
+            <a
+              href="https://github.com/ramiz4/helvetia-cloud"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-icon"
+              title="GitHub"
+            >
               <Github size={20} />
             </a>
           </div>

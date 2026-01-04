@@ -1,21 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import LandingPage from '../components/LandingPage';
 import {
-  RefreshCw,
-  Trash2,
+  AlertCircle,
+  CheckCircle2,
+  Cpu,
   Edit2,
   ExternalLink,
-  Play,
   FileText,
-  Cpu,
-  Zap,
-  CheckCircle2,
-  AlertCircle,
+  Play,
+  RefreshCw,
   Search,
-  X
+  Trash2,
+  X,
+  Zap,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import LandingPage from '../components/LandingPage';
 
 interface Service {
   id: string;
@@ -86,7 +86,7 @@ export default function Home() {
               });
               const metrics = await res.json();
               return { ...service, metrics };
-            } catch (err) {
+            } catch {
               return service;
             }
           }),
@@ -135,7 +135,7 @@ export default function Home() {
       } else {
         alert('Failed to update service');
       }
-    } catch (err) {
+    } catch {
       alert('Error connecting to API');
     }
   };
@@ -174,13 +174,17 @@ export default function Home() {
 
       // Refresh services
       fetchServices();
-    } catch (err) {
+    } catch {
       alert('Failed to trigger deployment');
     }
   };
 
   const deleteService = async (serviceId: string) => {
-    if (!confirm('Are you sure you want to delete this service? This will stop the app and remove all data.'))
+    if (
+      !confirm(
+        'Are you sure you want to delete this service? This will stop the app and remove all data.',
+      )
+    )
       return;
 
     try {
@@ -193,7 +197,7 @@ export default function Home() {
       } else {
         alert('Failed to delete service');
       }
-    } catch (err) {
+    } catch {
       alert('Error connecting to API');
     }
   };
@@ -206,7 +210,7 @@ export default function Home() {
       });
       const data = await res.json();
       setSelectedLogs(data.logs || 'No logs available.');
-    } catch (err) {
+    } catch {
       alert('Failed to fetch logs');
     }
   };
@@ -220,17 +224,28 @@ export default function Home() {
   }
 
   // Dashboard View
-  const activeServices = services.filter(s => s.status === 'Running' || s.status === 'Active').length;
-  const failingServices = services.filter(s => s.status === 'Failed').length;
+  const activeServices = services.filter(
+    (s) => s.status === 'Running' || s.status === 'Active',
+  ).length;
+  const failingServices = services.filter((s) => s.status === 'Failed').length;
 
-  const filteredServices = services.filter(s =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.repoUrl.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredServices = services.filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.repoUrl.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <div className="section">
-      <div className="header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div
+        className="header-actions"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2rem',
+        }}
+      >
         <div>
           <h1>Dashboard</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Manage your deployments and services</p>
@@ -243,36 +258,71 @@ export default function Home() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid" style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+      <div
+        className="grid"
+        style={{
+          marginBottom: '2rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        }}
+      >
         <div className="card glass">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="logo-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', boxShadow: 'none' }}>
+            <div
+              className="logo-icon"
+              style={{
+                background: 'rgba(99, 102, 241, 0.1)',
+                color: 'var(--primary)',
+                boxShadow: 'none',
+              }}
+            >
               <Zap size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>{services.length}</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Services</div>
+              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
+                {services.length}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Total Services
+              </div>
             </div>
           </div>
         </div>
         <div className="card glass">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="logo-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', boxShadow: 'none' }}>
+            <div
+              className="logo-icon"
+              style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: 'var(--success)',
+                boxShadow: 'none',
+              }}
+            >
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>{activeServices}</div>
+              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
+                {activeServices}
+              </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Active</div>
             </div>
           </div>
         </div>
         <div className="card glass">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="logo-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', boxShadow: 'none' }}>
+            <div
+              className="logo-icon"
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: 'var(--error)',
+                boxShadow: 'none',
+              }}
+            >
               <AlertCircle size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>{failingServices}</div>
+              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
+                {failingServices}
+              </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Failed</div>
             </div>
           </div>
@@ -282,7 +332,16 @@ export default function Home() {
       {/* Search Bar */}
       <div className="search-bar" style={{ marginBottom: '2rem' }}>
         <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <Search
+            size={18}
+            style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--text-secondary)',
+            }}
+          />
           <input
             type="text"
             placeholder="Search services..."
@@ -298,14 +357,26 @@ export default function Home() {
           <div className="spinner"></div>
         </div>
       ) : filteredServices.length === 0 ? (
-        <div className="card glass" style={{ textAlign: 'center', padding: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+        <div
+          className="card glass"
+          style={{
+            textAlign: 'center',
+            padding: '4rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+          }}
+        >
           <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '50%' }}>
             <Zap size={32} color="var(--text-secondary)" />
           </div>
           <div>
             <h3 style={{ marginBottom: '0.5rem' }}>No services found</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-              {searchQuery ? 'Try adjusting your search query.' : 'Get started by deploying your first service.'}
+              {searchQuery
+                ? 'Try adjusting your search query.'
+                : 'Get started by deploying your first service.'}
             </p>
           </div>
         </div>
@@ -313,7 +384,14 @@ export default function Home() {
         <div className="grid">
           {filteredServices.map((service) => (
             <div key={service.id} className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'flex-start' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '1rem',
+                  alignItems: 'flex-start',
+                }}
+              >
                 <div>
                   <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{service.name}</h3>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -321,50 +399,119 @@ export default function Home() {
                       {service.status}
                     </span>
                     {service.customDomain && (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{service.customDomain}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {service.customDomain}
+                      </span>
                     )}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={() => setEditingService(service)} className="btn-icon" title="Edit">
+                  <button
+                    onClick={() => setEditingService(service)}
+                    className="btn-icon"
+                    title="Edit"
+                  >
                     <Edit2 size={16} />
                   </button>
-                  <button onClick={() => deleteService(service.id)} className="btn-icon" style={{ color: 'var(--error)' }} title="Delete">
+                  <button
+                    onClick={() => deleteService(service.id)}
+                    className="btn-icon"
+                    style={{ color: 'var(--error)' }}
+                    title="Delete"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
 
-              <div style={{
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '1.5rem',
-                paddingBottom: '1rem',
-                borderBottom: '1px solid var(--border-subtle)'
-              }}>
+              <div
+                style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  marginBottom: '1.5rem',
+                  paddingBottom: '1rem',
+                  borderBottom: '1px solid var(--border-subtle)',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ width: '8px', height: '8px', background: 'var(--text-muted)', borderRadius: '50%' }}></div>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{service.repoUrl}</span>
+                  <div
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      background: 'var(--text-muted)',
+                      borderRadius: '50%',
+                    }}
+                  ></div>
+                  <span
+                    style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {service.repoUrl}
+                  </span>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'var(--bg-glass)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '1rem',
+                  marginBottom: '1.5rem',
+                }}
+              >
+                <div
+                  style={{
+                    background: 'var(--bg-glass)',
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.25rem',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.8rem',
+                    }}
+                  >
                     <Cpu size={14} /> CPU
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{service.metrics?.cpu || 0}%</div>
+                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                    {service.metrics?.cpu || 0}%
+                  </div>
                 </div>
-                <div style={{ background: 'var(--bg-glass)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                <div
+                  style={{
+                    background: 'var(--bg-glass)',
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.25rem',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.8rem',
+                    }}
+                  >
                     <Zap size={14} /> RAM
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{service.metrics?.memory || 0} MB</div>
+                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                    {service.metrics?.memory || 0} MB
+                  </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                <button onClick={() => triggerDeploy(service.id)} className="btn btn-primary" style={{ flex: 1 }}>
+                <button
+                  onClick={() => triggerDeploy(service.id)}
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                >
                   <Play size={16} /> Redeploy
                 </button>
                 <button
@@ -392,34 +539,75 @@ export default function Home() {
 
       {/* Logs Modal */}
       {selectedLogs !== null && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 100, padding: '2rem'
-        }}>
-          <div className="card glass active-logs" style={{ width: '100%', maxWidth: '900px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 0 }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '2rem',
+          }}
+        >
+          <div
+            className="card glass active-logs"
+            style={{
+              width: '100%',
+              maxWidth: '900px',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 0,
+            }}
+          >
+            <div
+              style={{
+                padding: '1.5rem',
+                borderBottom: '1px solid var(--border-light)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <FileText size={20} className="text-primary" />
                 <h2 style={{ fontSize: '1.25rem' }}>Build Logs</h2>
               </div>
               <button
-                onClick={() => { setSelectedLogs(null); setActiveDeploymentId(null); }}
+                onClick={() => {
+                  setSelectedLogs(null);
+                  setActiveDeploymentId(null);
+                }}
                 className="btn-icon"
               >
                 <X size={20} />
               </button>
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem', background: '#000' }}>
-              <pre style={{
-                fontFamily: 'monospace', fontSize: '0.9rem', color: '#c9d1d9',
-                whiteSpace: 'pre-wrap', lineHeight: 1.5
-              }}>
+              <pre
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: '0.9rem',
+                  color: '#c9d1d9',
+                  whiteSpace: 'pre-wrap',
+                  lineHeight: 1.5,
+                }}
+              >
                 {selectedLogs}
               </pre>
             </div>
-            <div style={{ padding: '1rem', borderTop: '1px solid var(--border-light)', background: 'var(--bg-surface)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <div
+              style={{
+                padding: '1rem',
+                borderTop: '1px solid var(--border-light)',
+                background: 'var(--bg-surface)',
+                fontSize: '0.85rem',
+                color: 'var(--text-secondary)',
+              }}
+            >
               {activeDeploymentId ? 'Streaming logs...' : 'Logs ended.'}
             </div>
           </div>
@@ -428,19 +616,43 @@ export default function Home() {
 
       {/* Edit Service Modal */}
       {editingService !== null && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 100, padding: '2rem'
-        }}>
-          <div className="card glass" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}>
-            <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '2rem',
+          }}
+        >
+          <div
+            className="card glass"
+            style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}
+          >
+            <div
+              style={{
+                marginBottom: '1.5rem',
+                borderBottom: '1px solid var(--border-light)',
+                paddingBottom: '1rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <h2>Edit Service</h2>
-              <button onClick={() => setEditingService(null)} className="btn-icon"><X size={20} /></button>
+              <button onClick={() => setEditingService(null)} className="btn-icon">
+                <X size={20} />
+              </button>
             </div>
 
-            <form onSubmit={updateService} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <form
+              onSubmit={updateService}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}
+            >
               <div>
                 <label>Service Name</label>
                 <input
@@ -469,7 +681,9 @@ export default function Home() {
                   <input
                     type="text"
                     value={editingService.branch || ''}
-                    onChange={(e) => setEditingService({ ...editingService, branch: e.target.value })}
+                    onChange={(e) =>
+                      setEditingService({ ...editingService, branch: e.target.value })
+                    }
                   />
                 </div>
                 <div>
@@ -513,7 +727,7 @@ export default function Home() {
                 <label>Environment Variables</label>
                 <textarea
                   style={{ minHeight: '120px', fontFamily: 'monospace', fontSize: '0.85rem' }}
-                  value={Object.entries((editingService as any).envVars || {})
+                  value={Object.entries(editingService.envVars || {})
                     .map(([k, v]) => `${k}=${v}`)
                     .join('\n')}
                   onChange={(e) => {
@@ -526,15 +740,23 @@ export default function Home() {
                           return [k.trim(), v.join('=').trim()];
                         }),
                     );
-                    setEditingService({ ...editingService, envVars } as any);
+                    setEditingService({ ...editingService, envVars });
                   }}
                   placeholder="DATABASE_URL=postgres://..."
                 />
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save Changes</button>
-                <button type="button" onClick={() => setEditingService(null)} className="btn btn-ghost">Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingService(null)}
+                  className="btn btn-ghost"
+                >
+                  Cancel
+                </button>
               </div>
             </form>
           </div>

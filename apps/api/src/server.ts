@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import fastifyWebsocket from '@fastify/websocket';
@@ -6,8 +7,9 @@ import { prisma } from 'database';
 import dotenv from 'dotenv';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
+import path from 'path';
 
-dotenv.config({ path: require('path').resolve(__dirname, '../../.env'), override: true });
+dotenv.config({ path: path.resolve(__dirname, '../../.env'), override: true });
 dotenv.config({ override: true }); // Prefer local .env if it exists
 
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
@@ -339,7 +341,7 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
   return deployment;
 });
 
-fastify.post('/webhooks/github', async (request, reply) => {
+fastify.post('/webhooks/github', async (request) => {
   const payload = request.body as any;
 
   // Basic check for push event
@@ -428,11 +430,11 @@ fastify.get('/deployments/:id/logs/stream', { websocket: true }, (connection, re
 
   // Auth check for WS
   try {
-    const decoded = (req.server as any).jwt.verify(token);
+    (req.server as any).jwt.verify(token);
     // Ideally check ownership of deployment here via DB, but for streaming speed/simplicity
     // we can rely on knowledge of ID + valid token.
     // To be strict: await prisma.deployment.findFirst({ where: { id, service: { userId: decoded.id } } })
-  } catch (err) {
+  } catch {
     connection.socket.close();
     return;
   }
