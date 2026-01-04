@@ -51,8 +51,14 @@ export default function Home() {
   useEffect(() => {
     if (!activeDeploymentId) return;
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token available for WebSocket connection');
+      return;
+    }
+
     const socket = new WebSocket(
-      `ws://localhost:3001/deployments/${activeDeploymentId}/logs/stream`,
+      `ws://localhost:3001/deployments/${activeDeploymentId}/logs/stream?token=${token}`,
     );
 
     socket.onopen = () => console.log('WebSocket connected');
@@ -526,39 +532,44 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                {/* Primary action - full width */}
                 <button
                   onClick={() => triggerDeploy(service.id)}
                   className="btn btn-primary"
-                  style={{ flex: 1 }}
+                  style={{ width: '100%' }}
                 >
                   <Play size={16} /> Redeploy
                 </button>
-                <button
-                  onClick={() => restartService(service.id)}
-                  className="btn btn-ghost"
-                  style={{ flex: 1 }}
-                  title="Restart container with updated config"
-                >
-                  <RotateCw size={16} /> Restart
-                </button>
-                <button
-                  onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
-                  className="btn btn-ghost"
-                  style={{ flex: 1 }}
-                  disabled={!service.deployments[0]}
-                >
-                  <FileText size={16} /> Logs
-                </button>
-                <a
-                  href={`http://${service.name}.localhost`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-ghost"
-                  title="Visit App"
-                >
-                  <ExternalLink size={16} />
-                </a>
+
+                {/* Secondary actions - responsive grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => restartService(service.id)}
+                    className="btn btn-ghost"
+                    title="Restart container with updated config"
+                  >
+                    <RotateCw size={16} />
+                  </button>
+                  <button
+                    onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
+                    className="btn btn-ghost"
+                    disabled={!service.deployments[0]}
+                    title="View deployment logs"
+                  >
+                    <FileText size={16} />
+                  </button>
+                  <a
+                    href={`http://${service.name}.localhost`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost"
+                    title="Visit App"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
               </div>
             </div>
           ))}
