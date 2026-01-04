@@ -22,12 +22,11 @@ export default function NewService() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const ghToken = localStorage.getItem('gh_token');
     if (!token) {
       router.push('/login');
     }
     // If no GitHub token is present, default to manual
-    if (!ghToken) {
+    if (!localStorage.getItem('gh_token')) {
       setImportMethod('manual');
     }
   }, [router]);
