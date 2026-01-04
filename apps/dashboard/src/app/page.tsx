@@ -1,6 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import {
+  RefreshCw,
+  Trash2,
+  Edit2,
+  ExternalLink,
+  Play,
+  FileText,
+  Cpu,
+  Zap,
+  CheckCircle2,
+  AlertCircle,
+  Search,
+  X
+} from 'lucide-react';
 
 interface Service {
   id: string;
@@ -23,6 +37,7 @@ export default function Dashboard() {
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!activeDeploymentId) return;
@@ -89,27 +104,28 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    const fetchServices = () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+  const fetchServices = () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-      fetch('http://localhost:3001/services', {
-        headers: { Authorization: `Bearer ${token}` },
+    setLoading(true);
+    fetch('http://localhost:3001/services', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setServices(data);
+        }
+        setLoading(false);
       })
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setServices(data);
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          setLoading(false);
-        });
-    };
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  };
 
+  useEffect(() => {
     fetchServices();
     const interval = setInterval(fetchServices, 10000); // Poll for service updates every 10s
     return () => clearInterval(interval);
@@ -140,7 +156,7 @@ export default function Dashboard() {
 
     const interval = setInterval(fetchMetrics, 5000); // Poll metrics every 5s
     return () => clearInterval(interval);
-  }, [services.length]); // Re-run if service count changes
+  }, [services.length]);
 
   const triggerDeploy = async (serviceId: string) => {
     try {
@@ -153,23 +169,15 @@ export default function Dashboard() {
       // Open logs immediately for the new deployment
       fetchLogs(deployment.id);
 
-      // Refresh status
-      const servicesRes = await fetch('http://localhost:3001/services', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      const data = await servicesRes.json();
-      if (Array.isArray(data)) setServices(data);
+      // Refresh services
+      fetchServices();
     } catch (err) {
       alert('Failed to trigger deployment');
     }
   };
 
   const deleteService = async (serviceId: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this service? This will stop the app and remove all data.',
-      )
-    )
+    if (!confirm('Are you sure you want to delete this service? This will stop the app and remove all data.'))
       return;
 
     try {
@@ -200,36 +208,77 @@ export default function Dashboard() {
     }
   };
 
+  // Stats
+  const activeServices = services.filter(s => s.status === 'Running' || s.status === 'Active').length;
+  const failingServices = services.filter(s => s.status === 'Failed').length;
+
+  const filteredServices = services.filter(s =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.repoUrl.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <main>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem',
-        }}
-      >
-        <h1>Services</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn"
-            style={{ background: '#30363d' }}
-          >
-            Refresh
+    <div className="section">
+      <div className="header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <h1>Dashboard</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Manage your deployments and services</p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={fetchServices} className="btn btn-ghost" title="Refresh">
+            <RefreshCw size={18} />
           </button>
-          <button
-            onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              window.location.href = '/login';
-            }}
-            className="btn"
-            style={{ background: '#da3633' }}
-          >
-            Logout
-          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid" style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+        <div className="card glass">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="logo-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', boxShadow: 'none' }}>
+              <Zap size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>{services.length}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Services</div>
+            </div>
+          </div>
+        </div>
+        <div className="card glass">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="logo-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', boxShadow: 'none' }}>
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>{activeServices}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Active</div>
+            </div>
+          </div>
+        </div>
+        <div className="card glass">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="logo-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', boxShadow: 'none' }}>
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>{failingServices}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Failed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="search-bar" style={{ marginBottom: '2rem' }}>
+        <div style={{ position: 'relative', maxWidth: '400px' }}>
+          <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <input
+            type="text"
+            placeholder="Search services..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ paddingLeft: '2.5rem' }}
+          />
         </div>
       </div>
 
@@ -237,294 +286,163 @@ export default function Dashboard() {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
           <div className="spinner"></div>
         </div>
-      ) : services.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '4rem' }}>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>No services yet.</p>
-          <a href="/new" className="btn btn-primary">
-            Connect your first repository
-          </a>
+      ) : filteredServices.length === 0 ? (
+        <div className="card glass" style={{ textAlign: 'center', padding: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '50%' }}>
+            <Zap size={32} color="var(--text-secondary)" />
+          </div>
+          <div>
+            <h3 style={{ marginBottom: '0.5rem' }}>No services found</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+              {searchQuery ? 'Try adjusting your search query.' : 'Get started by deploying your first service.'}
+            </p>
+            {/*
+            // Removed redundant button, users can use the sidebar or navbar 'New Service'
+            {!searchQuery && (
+              <a href="/new" className="btn btn-primary">
+                <Plus size={18} />
+                Connect Repository
+              </a>
+            )}
+            // wait, Plus is not imported, I should check if I imported Plus.
+            // I removed Plus from imports in the top block of this write_file command.
+            // so I must NOT use it here.
+            */}
+          </div>
         </div>
       ) : (
         <div className="grid">
-          {services.map((service) => (
+          {filteredServices.map((service) => (
             <div key={service.id} className="card">
-              <div
-                style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}
-              >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'flex-start' }}>
                 <div>
-                  <h3 style={{ fontSize: '1.2rem' }}>{service.name}</h3>
-                  <span
-                    className={`status-badge status-${service.status.toLowerCase()}`}
-                    style={{ marginTop: '0.5rem', display: 'inline-block' }}
-                  >
-                    {service.status}
-                  </span>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{service.name}</h3>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span className={`status-badge status-${service.status.toLowerCase()}`}>
+                      {service.status}
+                    </span>
+                    {service.customDomain && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{service.customDomain}</span>
+                    )}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => setEditingService(service)}
-                    className="btn"
-                    style={{
-                      background: 'transparent',
-                      color: 'var(--text-secondary)',
-                      padding: '0.4rem',
-                      border: '1px solid var(--border-color)',
-                    }}
-                  >
-                    Edit
+                  <button onClick={() => setEditingService(service)} className="btn-icon" title="Edit">
+                    <Edit2 size={16} />
                   </button>
-                  <button
-                    onClick={() => deleteService(service.id)}
-                    className="btn"
-                    style={{
-                      background: 'transparent',
-                      color: '#da3633',
-                      padding: '0.4rem',
-                      border: '1px solid #da3633',
-                    }}
-                    title="Delete Service"
-                  >
-                    Delete
+                  <button onClick={() => deleteService(service.id)} className="btn-icon" style={{ color: 'var(--error)' }} title="Delete">
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
 
-              <p
-                style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.9rem',
-                  marginBottom: '1.5rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {service.repoUrl}
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                <div style={{ display: 'flex', gap: '0.8rem' }}>
-                  <button
-                    onClick={() => triggerDeploy(service.id)}
-                    className="btn btn-primary"
-                    style={{ flex: 1 }}
-                  >
-                    Redeploy
-                  </button>
-                  <button
-                    onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
-                    className="btn"
-                    style={{ background: '#30363d', flex: 1 }}
-                    disabled={!service.deployments[0]}
-                  >
-                    View Logs
-                  </button>
+              <div style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.9rem',
+                marginBottom: '1.5rem',
+                paddingBottom: '1rem',
+                borderBottom: '1px solid var(--border-subtle)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: '8px', height: '8px', background: 'var(--text-muted)', borderRadius: '50%' }}></div>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{service.repoUrl}</span>
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    background: '#0d1117',
-                    padding: '0.6rem',
-                    borderRadius: '6px',
-                    fontSize: '0.8rem',
-                    marginBottom: '1rem',
-                  }}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: 'var(--bg-glass)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                    <Cpu size={14} /> CPU
+                  </div>
+                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{service.metrics?.cpu || 0}%</div>
+                </div>
+                <div style={{ background: 'var(--bg-glass)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                    <Zap size={14} /> RAM
+                  </div>
+                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{service.metrics?.memory || 0} MB</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+                <button onClick={() => triggerDeploy(service.id)} className="btn btn-primary" style={{ flex: 1 }}>
+                  <Play size={16} /> Redeploy
+                </button>
+                <button
+                  onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
+                  className="btn btn-ghost"
+                  style={{ flex: 1 }}
+                  disabled={!service.deployments[0]}
                 >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
-                      CPU
-                    </div>
-                    <div style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>
-                      {service.metrics?.cpu || 0}%
-                    </div>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
-                      RAM
-                    </div>
-                    <div style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>
-                      {service.metrics?.memory || 0} MB
-                    </div>
-                  </div>
-                </div>
-
+                  <FileText size={16} /> Logs
+                </button>
                 <a
                   href={`http://${service.name}.localhost`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn"
-                  style={{ background: '#30363d', textAlign: 'center' }}
+                  className="btn btn-ghost"
+                  title="Visit App"
                 >
-                  Visit App
+                  <ExternalLink size={16} />
                 </a>
-              </div>
-
-              <div
-                style={{
-                  marginTop: '1.5rem',
-                  borderTop: '1px solid var(--border-color)',
-                  paddingTop: '1rem',
-                }}
-              >
-                <h4
-                  style={{
-                    fontSize: '0.85rem',
-                    color: 'var(--text-secondary)',
-                    marginBottom: '0.8rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  Recent Deployments
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {service.deployments.length === 0 ? (
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                      No deployments yet.
-                    </p>
-                  ) : (
-                    service.deployments.slice(0, 5).map((dep) => (
-                      <div
-                        key={dep.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span
-                            className={`status-badge status-${dep.status.toLowerCase()}`}
-                            style={{ width: '8px', height: '8px', borderRadius: '50%', padding: 0 }}
-                          ></span>
-                          <span style={{ color: 'var(--text-main)' }}>
-                            {new Date(dep.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => fetchLogs(dep.id)}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--accent-color)',
-                            cursor: 'pointer',
-                            fontSize: '0.8rem',
-                          }}
-                        >
-                          Logs
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Logs Modal */}
       {selectedLogs !== null && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '2rem',
-          }}
-        >
-          <div
-            className="card"
-            style={{ width: '100%', maxWidth: '900px', maxHeight: '80vh', overflow: 'auto' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '1rem',
-                borderBottom: '1px solid var(--border-color)',
-                paddingBottom: '1rem',
-              }}
-            >
-              <h2>Deployment Logs</h2>
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 100, padding: '2rem'
+        }}>
+          <div className="card glass active-logs" style={{ width: '100%', maxWidth: '900px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 0 }}>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <FileText size={20} className="text-primary" />
+                <h2 style={{ fontSize: '1.25rem' }}>Build Logs</h2>
+              </div>
               <button
-                onClick={() => {
-                  setSelectedLogs(null);
-                  setActiveDeploymentId(null);
-                }}
-                className="btn"
-                style={{ background: '#da3633' }}
+                onClick={() => { setSelectedLogs(null); setActiveDeploymentId(null); }}
+                className="btn-icon"
               >
-                Close
+                <X size={20} />
               </button>
             </div>
-            <pre
-              style={{
-                background: '#0d1117',
-                padding: '1rem',
-                borderRadius: '6px',
-                fontSize: '0.85rem',
-                color: '#8b949e',
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {selectedLogs}
-            </pre>
+            <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem', background: '#000' }}>
+              <pre style={{
+                fontFamily: 'monospace', fontSize: '0.9rem', color: '#c9d1d9',
+                whiteSpace: 'pre-wrap', lineHeight: 1.5
+              }}>
+                {selectedLogs}
+              </pre>
+            </div>
+            <div style={{ padding: '1rem', borderTop: '1px solid var(--border-light)', background: 'var(--bg-surface)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              {activeDeploymentId ? 'Streaming logs...' : 'Logs ended.'}
+            </div>
           </div>
         </div>
       )}
 
+      {/* Edit Service Modal */}
       {editingService !== null && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '2rem',
-          }}
-        >
-          <div
-            className="card"
-            style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem',
-                borderBottom: '1px solid var(--border-color)',
-                paddingBottom: '1rem',
-              }}
-            >
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 100, padding: '2rem'
+        }}>
+          <div className="card glass" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}>
+            <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2>Edit Service</h2>
-              <button
-                onClick={() => setEditingService(null)}
-                className="btn"
-                style={{ background: '#30363d' }}
-              >
-                Cancel
-              </button>
+              <button onClick={() => setEditingService(null)} className="btn-icon"><X size={20} /></button>
             </div>
 
-            <form
-              onSubmit={updateService}
-              style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}
-            >
-              <div className="form-group">
+            <form onSubmit={updateService} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <div>
                 <label>Service Name</label>
                 <input
                   type="text"
@@ -534,7 +452,7 @@ export default function Dashboard() {
                 />
               </div>
 
-              <div className="form-group">
+              <div>
                 <label>Repository URL</label>
                 <input
                   type="url"
@@ -546,17 +464,29 @@ export default function Dashboard() {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Branch</label>
-                <input
-                  type="text"
-                  value={editingService.branch || ''}
-                  onChange={(e) => setEditingService({ ...editingService, branch: e.target.value })}
-                />
+              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label>Branch</label>
+                  <input
+                    type="text"
+                    value={editingService.branch || ''}
+                    onChange={(e) => setEditingService({ ...editingService, branch: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label>Port</label>
+                  <input
+                    type="number"
+                    value={editingService.port || 3000}
+                    onChange={(e) =>
+                      setEditingService({ ...editingService, port: parseInt(e.target.value) })
+                    }
+                  />
+                </div>
               </div>
 
-              <div className="grid" style={{ gap: '1rem' }}>
-                <div className="form-group">
+              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
                   <label>Build Command</label>
                   <input
                     type="text"
@@ -567,7 +497,7 @@ export default function Dashboard() {
                     placeholder="e.g. npm run build"
                   />
                 </div>
-                <div className="form-group">
+                <div>
                   <label>Start Command</label>
                   <input
                     type="text"
@@ -578,43 +508,12 @@ export default function Dashboard() {
                     placeholder="e.g. npm start"
                   />
                 </div>
-                <div className="form-group">
-                  <label>Port</label>
-                  <input
-                    type="number"
-                    value={editingService.port || 3000}
-                    onChange={(e) =>
-                      setEditingService({ ...editingService, port: parseInt(e.target.value) })
-                    }
-                    placeholder="3000"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Custom Domain (optional)</label>
-                  <input
-                    type="text"
-                    value={editingService.customDomain || ''}
-                    onChange={(e) =>
-                      setEditingService({ ...editingService, customDomain: e.target.value })
-                    }
-                    placeholder="app.example.com"
-                  />
-                </div>
               </div>
 
-              <div className="form-group">
-                <label>Environment Variables (KEY=VALUE, one per line)</label>
+              <div>
+                <label>Environment Variables</label>
                 <textarea
-                  style={{
-                    width: '100%',
-                    minHeight: '120px',
-                    background: 'var(--input-bg)',
-                    color: 'var(--text-main)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    padding: '0.8rem',
-                    fontFamily: 'monospace',
-                  }}
+                  style={{ minHeight: '120px', fontFamily: 'monospace', fontSize: '0.85rem' }}
                   value={Object.entries((editingService as any).envVars || {})
                     .map(([k, v]) => `${k}=${v}`)
                     .join('\n')}
@@ -634,13 +533,14 @@ export default function Dashboard() {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                Save Changes
-              </button>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save Changes</button>
+                <button type="button" onClick={() => setEditingService(null)} className="btn btn-ghost">Cancel</button>
+              </div>
             </form>
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
