@@ -344,11 +344,12 @@ export default function GitHubRepoPicker({
 
             <div className="space-y-4 relative z-10">
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">
+                <label htmlFor="branch-select" className="block text-sm font-medium text-white/60 mb-2">
                   Branch to Deploy
                 </label>
                 <div className="relative">
                   <select
+                    id="branch-select"
                     value={selectedBranch}
                     onChange={(e) => handleBranchChange(e.target.value)}
                     disabled={loadingBranches}
