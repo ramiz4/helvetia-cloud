@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GitHubRepoPicker from '../../components/GitHubRepoPicker';
+import { sanitizeServiceName } from '../../utils/serviceName';
 
 type ImportMethod = 'github' | 'manual';
 
@@ -38,7 +39,7 @@ export default function NewService() {
       repoUrl,
       branch,
       // Auto-suggest service name from repo name if empty
-      name: prev.name || repoName.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase(),
+      name: prev.name || sanitizeServiceName(repoName),
     }));
     setRepoSelected(true);
   };
