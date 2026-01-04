@@ -250,10 +250,12 @@ export default function Home() {
   }
 
   // Dashboard View
+  // Note: Status values - Worker sets 'ACTIVE' on successful deployment, 'FAILED' on failure
+  // API may also return 'RUNNING', 'STOPPED', 'IDLE' based on Docker container state
   const activeServices = services.filter(
-    (s) => s.status === 'Running' || s.status === 'Active',
+    (s) => s.status === 'ACTIVE' || s.status === 'RUNNING',
   ).length;
-  const failingServices = services.filter((s) => s.status === 'Failed').length;
+  const failingServices = services.filter((s) => s.status === 'FAILED' || s.status === 'ERROR').length;
 
   const filteredServices = services.filter(
     (s) =>

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GitHubRepoPicker from '../../components/GitHubRepoPicker';
+import { sanitizeServiceName } from '../../utils/serviceName';
 
 type ImportMethod = 'github' | 'manual';
 
@@ -19,15 +20,15 @@ export default function NewService() {
     port: 3000,
   });
   const [repoSelected, setRepoSelected] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const ghToken = localStorage.getItem('gh_token');
     if (!token) {
       router.push('/login');
     }
     // If no GitHub token is present, default to manual
-    if (!ghToken) {
+    if (!localStorage.getItem('gh_token')) {
       setImportMethod('manual');
     }
   }, [router]);
@@ -38,7 +39,7 @@ export default function NewService() {
       repoUrl,
       branch,
       // Auto-suggest service name from repo name if empty
-      name: prev.name || repoName.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase(),
+      name: prev.name || sanitizeServiceName(repoName),
     }));
     setRepoSelected(true);
   };
@@ -57,6 +58,7 @@ export default function NewService() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage(null); // Clear any previous errors
 
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
@@ -87,10 +89,14 @@ export default function NewService() {
         router.push('/');
       } else {
         const errorData = await res.json();
-        alert(`Failed to create service: ${errorData.error || 'Unknown error'}`);
+        // Sanitize error message by converting to string and escaping HTML/special characters
+        const errorMsg = errorData.error || 'Unknown error';
+        const sanitizedError = String(errorMsg).replace(/[<>&"']/g, '');
+        setErrorMessage(`Failed to create service: ${sanitizedError}`);
       }
-    } catch {
-      alert('Error connecting to API');
+    } catch (error) {
+      console.error('API connection error:', error);
+      setErrorMessage('Error connecting to API. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -118,7 +124,7 @@ export default function NewService() {
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
             </svg>
             GitHub Import
@@ -183,10 +189,11 @@ export default function NewService() {
                 {importMethod === 'manual' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-white/5">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-white/60 mb-2">
+                      <label htmlFor="repoUrl" className="block text-sm font-medium text-white/60 mb-2">
                         Git Repository URL
                       </label>
                       <input
+                        id="repoUrl"
                         type="text"
                         name="repoUrl"
                         placeholder="https://github.com/username/repo"
@@ -197,8 +204,9 @@ export default function NewService() {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-white/60 mb-2">Branch</label>
+                      <label htmlFor="branch" className="block text-sm font-medium text-white/60 mb-2">Branch</label>
                       <input
+                        id="branch"
                         type="text"
                         name="branch"
                         placeholder="main"
@@ -211,10 +219,11 @@ export default function NewService() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-white/60 mb-2">
+                  <label htmlFor="projectName" className="block text-sm font-medium text-white/60 mb-2">
                     Project Name
                   </label>
                   <input
+                    id="projectName"
                     type="text"
                     required
                     value={formData.name}
@@ -228,7 +237,7 @@ export default function NewService() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">
+                    <label htmlFor="buildCommand" className="block text-sm font-medium text-white/60 mb-2">
                       Build Command
                     </label>
                     <div className="relative">
@@ -255,6 +264,7 @@ export default function NewService() {
                         </svg>
                       </div>
                       <input
+                        id="buildCommand"
                         type="text"
                         value={formData.buildCommand}
                         onChange={(e) => setFormData({ ...formData, buildCommand: e.target.value })}
@@ -264,7 +274,7 @@ export default function NewService() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">
+                    <label htmlFor="startCommand" className="block text-sm font-medium text-white/60 mb-2">
                       Start Command
                     </label>
                     <div className="relative">
@@ -285,6 +295,7 @@ export default function NewService() {
                         </svg>
                       </div>
                       <input
+                        id="startCommand"
                         type="text"
                         value={formData.startCommand}
                         onChange={(e) => setFormData({ ...formData, startCommand: e.target.value })}
@@ -296,14 +307,51 @@ export default function NewService() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white/60 mb-2">Port</label>
+                  <label htmlFor="port" className="block text-sm font-medium text-white/60 mb-2">Port</label>
                   <input
+                    id="port"
                     type="number"
                     value={formData.port}
-                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value, 10) })}
                     className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
                   />
                 </div>
+
+                {errorMessage && (
+                  <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 flex items-start gap-3">
+                    <svg
+                      width="20"
+                      height="20"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      className="text-red-400 mt-0.5 flex-shrink-0"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm text-red-200 font-medium">{errorMessage}</p>
+                    </div>
+                    <button
+                      onClick={() => setErrorMessage(null)}
+                      className="text-red-300 hover:text-red-100 transition-colors"
+                      aria-label="Dismiss error"
+                    >
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
 
                 <div className="pt-4">
                   <button
