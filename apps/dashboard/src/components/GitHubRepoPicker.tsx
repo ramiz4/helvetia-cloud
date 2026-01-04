@@ -12,6 +12,15 @@ interface Repo {
   updated_at: string;
 }
 
+interface GitHubBranch {
+  name: string;
+  commit: {
+    sha: string;
+    url: string;
+  };
+  protected: boolean;
+}
+
 interface GitHubRepoPickerProps {
   onSelect: (repoUrl: string, branch: string, name: string) => void;
   selectedRepoUrl?: string;
@@ -106,8 +115,8 @@ export default function GitHubRepoPicker({
 
       if (!res.ok) throw new Error('Failed to fetch branches');
 
-      const data = await res.json();
-      setBranches(data.map((b: { name: string }) => b.name));
+      const data: GitHubBranch[] = await res.json();
+      setBranches(data.map((b) => b.name));
       setSelectedBranch(repo.default_branch);
     } catch (err) {
       console.error(err);
