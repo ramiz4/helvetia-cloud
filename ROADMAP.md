@@ -43,6 +43,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Interactive Logs**: Advanced log viewer with search, filtering, and live-tailing capabilities.
 - [x] **Mobile Responsiveness**: Full mobile support for monitoring and management on the go.
 - [x] **Dark/Light Mode**: System-aware theming support.
+- [x] **GitHub Repository Picker**: Allow users to select repositories and branches directly from their GitHub account when creating a service. Ensure the "Connect a Repository" form features a premium, fancy, and user-friendly UX/UI for a seamless experience.
 
 ## 🔮 Phase 6: Advanced Ecosystem & Growth
 
