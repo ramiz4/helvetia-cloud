@@ -1,11 +1,11 @@
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
-import { prisma } from 'database';
-import { Queue } from 'bullmq';
-import IORedis from 'ioredis';
 import fastifyWebsocket from '@fastify/websocket';
+import { Queue } from 'bullmq';
+import { prisma } from 'database';
 import dotenv from 'dotenv';
+import Fastify from 'fastify';
+import IORedis from 'ioredis';
 
 dotenv.config({ path: require('path').resolve(__dirname, '../../.env'), override: true });
 dotenv.config({ override: true }); // Prefer local .env if it exists
@@ -40,10 +40,7 @@ fastify.register(jwt, {
 fastify.addHook('preHandler', async (request, reply) => {
   const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
   // Check if it's a public route or an OPTIONS request (CORS)
-  if (
-    publicRoutes.some(route => request.url.startsWith(route)) ||
-    request.method === 'OPTIONS'
-  ) {
+  if (publicRoutes.some((route) => request.url.startsWith(route)) || request.method === 'OPTIONS') {
     return;
   }
   try {
@@ -70,12 +67,14 @@ fastify.post('/auth/github', async (request, reply) => {
 
   try {
     // 1. Exchange code for access token
-    console.log(`Exchanging code for token with Client ID: ${process.env.GITHUB_CLIENT_ID?.slice(0, 5)}...`);
+    console.log(
+      `Exchanging code for token with Client ID: ${process.env.GITHUB_CLIENT_ID?.slice(0, 5)}...`,
+    );
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         client_id: process.env.GITHUB_CLIENT_ID,
@@ -84,10 +83,12 @@ fastify.post('/auth/github', async (request, reply) => {
       }),
     });
 
-    const tokenData = await tokenRes.json() as any;
+    const tokenData = (await tokenRes.json()) as any;
     if (tokenData.error) {
       console.error('GitHub Token Error:', tokenData);
-      return reply.status(400).send({ error: tokenData.error_description || tokenData.error, details: tokenData });
+      return reply
+        .status(400)
+        .send({ error: tokenData.error_description || tokenData.error, details: tokenData });
     }
 
     const accessToken = tokenData.access_token;
@@ -95,17 +96,17 @@ fastify.post('/auth/github', async (request, reply) => {
     // 2. Fetch user profile
     const userRes = await fetch('https://api.github.com/user', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
         'User-Agent': 'Helvetia-Cloud',
       },
     });
 
-    const userData = await userRes.json() as any;
+    const userData = (await userRes.json()) as any;
 
     // 3. Create or update user in database
     let user = await prisma.user.findUnique({
-      where: { githubId: userData.id.toString() }
+      where: { githubId: userData.id.toString() },
     });
 
     if (!user) {
@@ -146,7 +147,8 @@ fastify.get('/services', async (request) => {
 
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
-  const { name, repoUrl, branch, buildCommand, startCommand, port, envVars, customDomain } = request.body as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, port, envVars, customDomain } =
+    request.body as any;
 
   const user = (request as any).user;
   const service = await prisma.service.updateMany({
@@ -163,7 +165,8 @@ fastify.patch('/services/:id', async (request, reply) => {
     } as any,
   });
 
-  if (service.count === 0) return reply.status(404).send({ error: 'Service not found or unauthorized' });
+  if (service.count === 0)
+    return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
   return prisma.service.findUnique({ where: { id } });
 
@@ -171,7 +174,8 @@ fastify.patch('/services/:id', async (request, reply) => {
 });
 
 fastify.post('/services', async (request, reply) => {
-  const { name, repoUrl, branch, buildCommand, startCommand, port, customDomain } = request.body as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, port, customDomain } =
+    request.body as any;
   const user = (request as any).user;
   const userId = user.id;
 
@@ -217,12 +221,12 @@ fastify.delete('/services/:id', async (request, reply) => {
   const Docker = (await import('dockerode')).default;
   const docker = new Docker();
   const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === id);
+  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
 
   for (const containerInfo of serviceContainers) {
     const container = docker.getContainer(containerInfo.Id);
-    await container.stop().catch(() => { });
-    await container.remove().catch(() => { });
+    await container.stop().catch(() => {});
+    await container.remove().catch(() => {});
   }
 
   // 2. Delete deployments and service from DB
@@ -243,7 +247,7 @@ fastify.get('/services/:id/health', async (request, reply) => {
   const docker = new Docker();
 
   const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === id);
+  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
 
   if (serviceContainers.length === 0) {
     return { status: 'NOT_RUNNING' };
@@ -272,7 +276,9 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
   const docker = new Docker();
 
   const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === id && c.State === 'running');
+  const serviceContainers = containers.filter(
+    (c) => c.Labels['helvetia.serviceId'] === id && c.State === 'running',
+  );
 
   if (serviceContainers.length === 0) {
     return { cpu: 0, memory: 0, memoryLimit: 0 };
@@ -287,10 +293,12 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
   // Calculate CPU percentage (simplified)
   const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
   const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-  const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
+  const cpuPercent =
+    systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
 
   // Calculate Memory usage in MB
-  const memoryUsage = (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
+  const memoryUsage =
+    (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
   const memoryLimit = stats.memory_stats.limit / 1024 / 1024;
 
   return {
@@ -405,7 +413,7 @@ fastify.get('/deployments/:id/logs', async (request, reply) => {
 
   const deployment = await prisma.deployment.findUnique({
     where: { id },
-    include: { service: true }
+    include: { service: true },
   });
 
   if (!deployment || deployment.service.userId !== user.id) {

@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 
 function CallbackContent() {
   const router = useRouter();
@@ -31,7 +30,9 @@ function CallbackContent() {
           router.push('/');
         } else {
           console.error('Auth failed response:', JSON.stringify(data, null, 2));
-          router.push(`/login?error=auth_failed&details=${encodeURIComponent(data.error || 'unknown')}`);
+          router.push(
+            `/login?error=auth_failed&details=${encodeURIComponent(data.error || 'unknown')}`,
+          );
         }
       } catch (err) {
         console.error('Network error', err);
@@ -43,9 +44,19 @@ function CallbackContent() {
   }, [code, router]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+      }}
+    >
       <div className="spinner"></div>
-      <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Authenticating with GitHub...</p>
+      <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
+        Authenticating with GitHub...
+      </p>
     </div>
   );
 }

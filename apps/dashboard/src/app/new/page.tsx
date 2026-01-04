@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function NewService() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function NewService() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ ...formData, userId: user.id }),
       });
@@ -50,7 +50,7 @@ export default function NewService() {
         // Trigger initial deploy
         await fetch(`http://localhost:3001/services/${service.id}/deploy`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         router.push('/');
       } else {
@@ -74,7 +74,7 @@ export default function NewService() {
           placeholder="my-awesome-app"
           required
           value={formData.name}
-          onChange={e => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
         />
 
         <label>GitHub Repository URL</label>
@@ -83,7 +83,7 @@ export default function NewService() {
           placeholder="https://github.com/user/repo"
           required
           value={formData.repoUrl}
-          onChange={e => setFormData({ ...formData, repoUrl: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, repoUrl: e.target.value })}
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -92,7 +92,7 @@ export default function NewService() {
             <input
               type="text"
               value={formData.branch}
-              onChange={e => setFormData({ ...formData, branch: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
             />
           </div>
         </div>
@@ -101,21 +101,21 @@ export default function NewService() {
         <input
           type="text"
           value={formData.buildCommand}
-          onChange={e => setFormData({ ...formData, buildCommand: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, buildCommand: e.target.value })}
         />
 
         <label>Start Command</label>
         <input
           type="text"
           value={formData.startCommand}
-          onChange={e => setFormData({ ...formData, startCommand: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, startCommand: e.target.value })}
         />
 
         <label>Port</label>
         <input
           type="number"
           value={formData.port}
-          onChange={e => setFormData({ ...formData, port: parseInt(e.target.value) })}
+          onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
         />
 
         <button
