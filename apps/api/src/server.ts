@@ -42,10 +42,8 @@ fastify.register(jwt, {
 fastify.addHook('preHandler', async (request, reply) => {
   const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
   // WebSocket routes handle auth via query parameter, not header
-  const wsRoutes = ['/deployments/'];
-  const isWsLogStream = wsRoutes.some(
-    (route) => request.url.startsWith(route) && request.url.includes('/logs/stream'),
-  );
+  const isWsLogStream = request.url.includes('/logs/stream');
+
   // Check if it's a public route, WS route, or an OPTIONS request (CORS)
   if (
     publicRoutes.some((route) => request.url.startsWith(route)) ||
@@ -165,15 +163,34 @@ fastify.get('/services', async (request) => {
       (c) => c.Labels['helvetia.serviceId'] === service.id,
     );
 
-    let containerStatus = 'IDLE';
+    const latestDeployment = service.deployments[0];
+    let status = 'IDLE';
+
     if (serviceContainers.length > 0) {
       const container = serviceContainers[0];
-      containerStatus = container.State === 'running' ? 'RUNNING' : 'STOPPED';
+      // States: created, restarting, running, removing, paused, exited, dead
+      if (container.State === 'running') {
+        status = 'RUNNING';
+      } else if (container.State === 'restarting') {
+        status = 'CRASHING';
+      } else if (container.State === 'exited' || container.State === 'dead') {
+        status = 'STOPPED';
+      } else {
+        status = container.State.toUpperCase();
+      }
+    } else if (latestDeployment) {
+      if (['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
+        status = 'DEPLOYING';
+      } else if (latestDeployment.status === 'FAILED') {
+        status = 'FAILED';
+      } else if (latestDeployment.status === 'SUCCESS') {
+        status = 'IDLE'; // No container but last deploy was successful
+      }
     }
 
     return {
       ...service,
-      status: containerStatus,
+      status: status,
     };
   });
 
@@ -182,9 +199,22 @@ fastify.get('/services', async (request) => {
 
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
-  const { name, repoUrl, branch, buildCommand, startCommand, port, envVars, customDomain } =
-    request.body as any;
+  const {
+    name,
+    repoUrl,
+    branch,
+    buildCommand,
+    startCommand,
+    port,
+    envVars,
+    customDomain,
+    type,
+    staticOutputDir,
+  } = request.body as any;
 
+  if (type !== undefined && !['DOCKER', 'STATIC'].includes(type)) {
+    return reply.status(400).send({ error: 'Invalid service type' });
+  }
   const user = (request as any).user;
   const service = await prisma.service.updateMany({
     where: { id, userId: user.id },
@@ -194,9 +224,11 @@ fastify.patch('/services/:id', async (request, reply) => {
       branch,
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : undefined,
+      port: port ? parseInt(port) : type ? (type === 'STATIC' ? 80 : 3000) : undefined,
       envVars,
       customDomain,
+      type,
+      staticOutputDir,
     } as any,
   });
 
@@ -209,8 +241,21 @@ fastify.patch('/services/:id', async (request, reply) => {
 });
 
 fastify.post('/services', async (request, reply) => {
-  const { name, repoUrl, branch, buildCommand, startCommand, port, customDomain } =
-    request.body as any;
+  const {
+    name,
+    repoUrl,
+    branch,
+    buildCommand,
+    startCommand,
+    port,
+    customDomain,
+    type,
+    staticOutputDir,
+  } = request.body as any;
+
+  if (type && !['DOCKER', 'STATIC'].includes(type)) {
+    return reply.status(400).send({ error: 'Invalid service type' });
+  }
   const user = (request as any).user;
   const userId = user.id;
 
@@ -220,6 +265,9 @@ fastify.post('/services', async (request, reply) => {
     return reply.status(403).send({ error: 'Service name taken by another user' });
   }
 
+  const finalType = type || 'DOCKER';
+  const finalPort = port ? parseInt(port) : finalType === 'STATIC' ? 80 : 3000;
+
   const service = await prisma.service.upsert({
     where: { name },
     update: {
@@ -227,8 +275,10 @@ fastify.post('/services', async (request, reply) => {
       branch: branch || 'main',
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : 3000,
+      port: finalPort,
       customDomain,
+      type: finalType,
+      staticOutputDir: staticOutputDir || 'dist',
     } as any,
     create: {
       name,
@@ -236,9 +286,11 @@ fastify.post('/services', async (request, reply) => {
       branch: branch || 'main',
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : 3000,
+      port: finalPort,
       userId,
       customDomain,
+      type: finalType,
+      staticOutputDir: staticOutputDir || 'dist',
     } as any,
   });
 
@@ -369,6 +421,8 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
     port: service.port,
     envVars: service.envVars,
     customDomain: (service as any).customDomain,
+    type: (service as any).type,
+    staticOutputDir: (service as any).staticOutputDir,
   });
 
   return deployment;
@@ -414,11 +468,12 @@ fastify.post('/services/:id/restart', async (request, reply) => {
       Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
       Labels: {
         'helvetia.serviceId': service.id,
+        'helvetia.type': (service as any).type || 'DOCKER',
         'traefik.enable': 'true',
         [`traefik.http.routers.${service.name}.rule`]: traefikRule,
         [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
         [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
-          service.port || 3000
+          service.port || ((service as any).type === 'STATIC' ? 80 : 3000)
         ).toString(),
       },
       HostConfig: {
@@ -497,6 +552,8 @@ fastify.post('/webhooks/github', async (request) => {
       port: service.port,
       envVars: service.envVars,
       customDomain: (service as any).customDomain,
+      type: (service as any).type,
+      staticOutputDir: (service as any).staticOutputDir,
     });
   }
 
@@ -536,13 +593,14 @@ fastify.get('/deployments/:id/logs/stream', { websocket: true }, (connection, re
   const { id } = req.params as any;
   const { token } = req.query as any;
 
+  console.log(`WebSocket connection attempt for deployment: ${id}`);
+
   // Auth check for WS
   try {
+    if (!token) throw new Error('No token provided');
     (req.server as any).jwt.verify(token);
-    // Ideally check ownership of deployment here via DB, but for streaming speed/simplicity
-    // we can rely on knowledge of ID + valid token.
-    // To be strict: await prisma.deployment.findFirst({ where: { id, service: { userId: decoded.id } } })
-  } catch {
+  } catch (err: any) {
+    console.error(`WS Auth Failed for deployment ${id}:`, err.message);
     connection.socket.close();
     return;
   }

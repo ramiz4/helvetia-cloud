@@ -35,7 +35,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **API Authentication**: Secure all API endpoints with JWT. (Partially done in Phase 3)
 - [x] **Sensitive Data Scrubbing**: Ensure secrets are redacted from build/runtime logs.
 
-## 🚧 Phase 5: UI/UX & Developer Experience
+## ✅ Phase 5: UI/UX & Developer Experience
 
 - [x] **Landing Page**: A modern, engaging landing page that highlights the platform's key features and benefits.
 - [x] **Main Menu**: A global menu bar that provides quick access to key features and actions.
@@ -44,6 +44,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Mobile Responsiveness**: Full mobile support for monitoring and management on the go.
 - [x] **Dark/Light Mode**: System-aware theming support.
 - [x] **GitHub Repository Picker**: Allow users to select repositories and branches directly from their GitHub account when creating a service. Ensure the "Connect a Repository" form features a premium, fancy, and user-friendly UX/UI for a seamless experience.
+- [x] **Static Site Service**: Dedicated support for deploying static applications (Angular, React, Vue) using optimized multi-stage Docker builds and Nginx for high performance.
 
 ## 🔮 Phase 6: Advanced Ecosystem & Growth
 
@@ -68,6 +69,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [ ] **Code Cleanup**: Remove unused `Settings` import in `src/components/Navigation.tsx`.
 - [ ] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
 - [ ] **Documentation Maintenance**: Review and update all project documentation (README.md, ARCHITECTURE.md, and all other .md files) to ensure they are accurate and up-to-date with the current implementation.
+- [ ] **CODEOWNERS**: Add a CODEOWNERS file to define repository ownership and streamline the PR review process.
 
 ## 🔭 Future Horizon
 

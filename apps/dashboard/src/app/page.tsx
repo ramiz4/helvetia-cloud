@@ -27,6 +27,8 @@ interface Service {
   startCommand: string;
   port: number;
   status: string;
+  type: string;
+  staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;
   metrics?: { cpu: number; memory: number; memoryLimit: number };
@@ -66,16 +68,17 @@ export default function Home() {
       setSelectedLogs((prev) => (prev === 'No logs available.' ? '' : prev || '') + event.data);
     };
     socket.onerror = (error) => console.error('WebSocket error:', error);
-    socket.onclose = () => console.log('WebSocket disconnected');
+    socket.onclose = () => {
+      console.log('WebSocket disconnected');
+      fetchServices(true); // Silent refresh when deployment ends
+    };
 
     return () => socket.close();
-  }, [activeDeploymentId]);
+  }, [activeDeploymentId]); // Re-run when target deployment changes
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchServices();
-      const interval = setInterval(fetchServices, 10000); // Poll for service updates every 10s
-      return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
 
@@ -128,7 +131,9 @@ export default function Home() {
           branch: editingService.branch,
           buildCommand: editingService.buildCommand,
           startCommand: editingService.startCommand,
-          port: editingService.port,
+          port: editingService.type === 'STATIC' ? 80 : editingService.port,
+          type: editingService.type,
+          staticOutputDir: editingService.staticOutputDir,
           envVars: editingService.envVars,
           customDomain: editingService.customDomain,
         }),
@@ -147,11 +152,11 @@ export default function Home() {
     }
   };
 
-  const fetchServices = () => {
+  const fetchServices = (silent = false) => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     fetch('http://localhost:3001/services', {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -253,7 +258,7 @@ export default function Home() {
   // Note: Status values - Worker sets 'ACTIVE' on successful deployment, 'FAILED' on failure
   // API may also return 'RUNNING', 'STOPPED', 'IDLE' based on Docker container state
   const activeServices = services.filter(
-    (s) => s.status === 'ACTIVE' || s.status === 'RUNNING',
+    (s) => s.status === 'ACTIVE' || s.status === 'RUNNING' || s.status === 'DEPLOYING',
   ).length;
   const failingServices = services.filter(
     (s) => s.status === 'FAILED' || s.status === 'ERROR',
@@ -281,7 +286,7 @@ export default function Home() {
           <p style={{ color: 'var(--text-secondary)' }}>Manage your deployments and services</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button onClick={fetchServices} className="btn btn-ghost" title="Refresh">
+          <button onClick={() => fetchServices()} className="btn btn-ghost" title="Refresh">
             <RefreshCw size={18} />
           </button>
         </div>
@@ -427,6 +432,15 @@ export default function Home() {
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <span className={`status-badge status-${service.status.toLowerCase()}`}>
                       {service.status}
+                    </span>
+                    <span
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
+                        service.type === 'STATIC'
+                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
+                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                      }`}
+                    >
+                      {service.type || 'DOCKER'}
                     </span>
                     {service.customDomain && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -728,6 +742,23 @@ export default function Home() {
               </div>
 
               <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label>Service Type</label>
+                  <select
+                    value={editingService.type || 'DOCKER'}
+                    onChange={(e) =>
+                      setEditingService({
+                        ...editingService,
+                        type: e.target.value,
+                        port: e.target.value === 'STATIC' ? 80 : editingService.port,
+                      })
+                    }
+                    className="w-full"
+                  >
+                    <option value="DOCKER">Docker Service</option>
+                    <option value="STATIC">Static Site</option>
+                  </select>
+                </div>
                 <div>
                   <label>Branch</label>
                   <input
@@ -742,7 +773,8 @@ export default function Home() {
                   <label>Port</label>
                   <input
                     type="number"
-                    value={editingService.port || 3000}
+                    disabled={editingService.type === 'STATIC'}
+                    value={editingService.type === 'STATIC' ? 80 : editingService.port || 3000}
                     onChange={(e) =>
                       setEditingService({ ...editingService, port: parseInt(e.target.value) })
                     }
@@ -763,15 +795,37 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <label>Start Command</label>
-                  <input
-                    type="text"
-                    value={editingService.startCommand || ''}
-                    onChange={(e) =>
-                      setEditingService({ ...editingService, startCommand: e.target.value })
-                    }
-                    placeholder="e.g. npm start"
-                  />
+                  {editingService.type === 'STATIC' ? (
+                    <>
+                      <label>Output Directory</label>
+                      <input
+                        type="text"
+                        value={editingService.staticOutputDir || ''}
+                        onChange={(e) =>
+                          setEditingService({
+                            ...editingService,
+                            staticOutputDir: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. dist"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <label>Start Command</label>
+                      <input
+                        type="text"
+                        value={editingService.startCommand || ''}
+                        onChange={(e) =>
+                          setEditingService({
+                            ...editingService,
+                            startCommand: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. npm start"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 

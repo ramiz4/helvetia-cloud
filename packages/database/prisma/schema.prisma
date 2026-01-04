@@ -26,6 +26,8 @@ model Service {
   startCommand String?
   port         Int          @default(3000)
   status       String       @default("IDLE")
+  type         String       @default("DOCKER") // DOCKER or STATIC
+  staticOutputDir String?    @default("dist")
   userId       String
   envVars      Json?
   customDomain String?
