@@ -20,7 +20,10 @@ const fastify = Fastify({
   logger: true,
 });
 
-fastify.register(cors);
+fastify.register(cors, {
+  origin: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+});
 fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'secret',
 });
@@ -55,21 +58,87 @@ fastify.get('/services', async (request) => {
   });
 });
 
-fastify.post('/services', async (request, reply) => {
-  const { name, repoUrl, branch, buildCommand, startCommand, userId } = request.body as any;
+fastify.patch('/services/:id', async (request, reply) => {
+  const { id } = request.params as any;
+  const { name, repoUrl, branch, buildCommand, startCommand, port } = request.body as any;
 
-  const service = await prisma.service.create({
+  const service = await prisma.service.update({
+    where: { id },
     data: {
+      name,
+      repoUrl,
+      branch,
+      buildCommand,
+      startCommand,
+      port: port ? parseInt(port) : undefined,
+    },
+  });
+
+  return service;
+});
+
+fastify.post('/services', async (request, reply) => {
+  const { name, repoUrl, branch, buildCommand, startCommand, userId, port } = request.body as any;
+
+  // Ensure user exists for MVP/Mock purposes
+  const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existingUser) {
+    await prisma.user.create({
+      data: {
+        id: userId,
+        githubId: `github-${userId}`,
+        username: 'mock-user',
+      }
+    });
+  }
+
+  const service = await prisma.service.upsert({
+    where: { name },
+    update: {
+      repoUrl,
+      branch: branch || 'main',
+      buildCommand,
+      startCommand,
+      port: port ? parseInt(port) : 3000,
+      userId,
+    },
+    create: {
       name,
       repoUrl,
       branch: branch || 'main',
       buildCommand,
       startCommand,
+      port: port ? parseInt(port) : 3000,
       userId,
     },
   });
 
   return service;
+});
+
+fastify.delete('/services/:id', async (request, reply) => {
+  const { id } = request.params as any;
+
+  const service = await prisma.service.findUnique({ where: { id } });
+  if (!service) return reply.status(404).send({ error: 'Service not found' });
+
+  // 1. Stop and remove containers if they exist
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+  const containers = await docker.listContainers({ all: true });
+  const serviceContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === id);
+
+  for (const containerInfo of serviceContainers) {
+    const container = docker.getContainer(containerInfo.Id);
+    await container.stop().catch(() => { });
+    await container.remove().catch(() => { });
+  }
+
+  // 2. Delete deployments and service from DB
+  await prisma.deployment.deleteMany({ where: { serviceId: id } });
+  await prisma.service.delete({ where: { id } });
+
+  return { success: true };
 });
 
 // Deployment Routes
@@ -94,6 +163,7 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
     buildCommand: service.buildCommand,
     startCommand: service.startCommand,
     serviceName: service.name,
+    port: service.port,
   });
 
   return deployment;

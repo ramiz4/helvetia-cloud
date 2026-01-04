@@ -12,6 +12,7 @@ export default function NewService() {
     branch: 'main',
     buildCommand: 'npm install && npm run build',
     startCommand: 'npm run start',
+    port: 3000,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +88,13 @@ export default function NewService() {
           type="text"
           value={formData.startCommand}
           onChange={e => setFormData({ ...formData, startCommand: e.target.value })}
+        />
+
+        <label>Port</label>
+        <input
+          type="number"
+          value={formData.port}
+          onChange={e => setFormData({ ...formData, port: parseInt(e.target.value) })}
         />
 
         <button

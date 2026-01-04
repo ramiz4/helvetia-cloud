@@ -19,7 +19,7 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 const worker = new Worker(
   'deployments',
   async (job: Job) => {
-    const { deploymentId, serviceId, repoUrl, branch, buildCommand, startCommand, serviceName } = job.data;
+    const { deploymentId, serviceId, repoUrl, branch, buildCommand, startCommand, serviceName, port } = job.data;
     const workDir = path.join(__dirname, '../temp', deploymentId);
 
     console.log(`Starting deployment ${deploymentId} for service ${serviceName}`);
@@ -42,11 +42,13 @@ const worker = new Worker(
         // Generate a basic Node.js Dockerfile
         const content = `
 FROM node:22-alpine
+RUN apk add --no-cache git build-base python3
+RUN npm install -g pnpm
 WORKDIR /app
 COPY . .
-RUN ${buildCommand || 'npm install'}
-EXPOSE 3000
-CMD [${(startCommand || 'npm start').split(' ').map((s: string) => `"${s}"`).join(', ')}]
+RUN ${buildCommand || 'pnpm install'}
+EXPOSE ${port || 3000}
+CMD ${startCommand || 'npm start'}
 `;
         await fs.writeFile(dockerfilePath, content);
       }
@@ -55,6 +57,8 @@ CMD [${(startCommand || 'npm start').split(' ').map((s: string) => `"${s}"`).joi
       const imageTag = `helvetia/${serviceName}:latest`;
       console.log(`Building image ${imageTag}...`);
 
+      let buildLogs = '';
+
       const stream = await docker.buildImage(
         { context: workDir, src: ['.'] },
         { t: imageTag }
@@ -62,39 +66,65 @@ CMD [${(startCommand || 'npm start').split(' ').map((s: string) => `"${s}"`).joi
 
       await new Promise((resolve, reject) => {
         docker.modem.followProgress(stream, (err, res) => {
-          if (err) reject(err);
-          else resolve(res);
-        }, (event) => {
-          console.log(event.stream);
-          // Pipe logs to DB in a real app, for MVP we'll just log to console
+          if (err) return reject(err);
+          const lastRes = res && res[res.length - 1];
+          if (lastRes && lastRes.error) return reject(new Error(lastRes.error));
+          resolve(res);
+        }, async (event) => {
+          if (event.stream) {
+            buildLogs += event.stream;
+            console.log(event.stream);
+            // Periodically update logs in DB for longer builds
+            // For MVP, we'll update the final log at the end, but let's keep it in memory for now
+          }
+          if (event.error) {
+            buildLogs += `\nERROR: ${event.error}\n`;
+            console.error('Build error:', event.error);
+          }
         });
+      });
+
+      // Update logs in DB
+      await prisma.deployment.update({
+        where: { id: deploymentId },
+        data: { logs: buildLogs },
       });
 
       // 4. Run Container (and stop old one)
       console.log(`Starting container for ${serviceName}...`);
 
-      // Stop existing container if any
+      // Generate a random postfix
+      const postfix = Math.random().toString(36).substring(2, 8);
+      const containerName = `${serviceName}-${postfix}`;
+
+      // Stop existing containers for this service if any (using label for better accuracy)
       const containers = await docker.listContainers({ all: true });
-      const oldContainer = containers.find(c => c.Names.includes(`/${serviceName}`));
-      if (oldContainer) {
-        const container = docker.getContainer(oldContainer.Id);
+      const oldContainers = containers.filter(c => c.Labels['helvetia.serviceId'] === serviceId);
+
+      for (const old of oldContainers) {
+        const container = docker.getContainer(old.Id);
         await container.stop().catch(() => { });
         await container.remove().catch(() => { });
       }
 
       await docker.createContainer({
         Image: imageTag,
-        name: serviceName,
+        name: containerName,
         Env: job.data.envVars ? Object.entries(job.data.envVars).map(([k, v]) => `${k}=${v}`) : [],
         Labels: {
+          'helvetia.serviceId': serviceId,
           'traefik.enable': 'true',
-          [`traefik.http.routers.${serviceName}.rule`]: `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'localhost'}\`)`,
+          [`traefik.http.routers.${serviceName}.rule`]: `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`,
           [`traefik.http.routers.${serviceName}.entrypoints`]: 'web',
-          [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: '3000',
+          [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: (port || 3000).toString(),
         },
         HostConfig: {
           NetworkMode: 'helvetia-net',
           RestartPolicy: { Name: 'always' },
+          LogConfig: {
+            Type: 'json-file',
+            Config: {},
+          },
         },
       }).then(container => container.start());
 

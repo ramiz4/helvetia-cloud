@@ -12,9 +12,9 @@ model User {
   githubId  String    @unique
   username  String
   avatarUrl String?
-  services  Service[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  services  Service[]
 }
 
 model Service {
@@ -25,23 +25,23 @@ model Service {
   buildCommand String?
   startCommand String?
   port         Int          @default(3000)
-  status       String       @default("IDLE") // IDLE, DEPLOYING, ACTIVE, FAILED
+  status       String       @default("IDLE")
   userId       String
-  user         User         @relation(fields: [userId], references: [id])
-  deployments  Deployment[]
-  envVars      Json?        // Key-value pairs
+  envVars      Json?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+  deployments  Deployment[]
+  user         User         @relation(fields: [userId], references: [id])
 }
 
 model Deployment {
   id         String   @id @default(uuid())
   serviceId  String
-  service    Service  @relation(fields: [serviceId], references: [id])
-  status     String   @default("QUEUED") // QUEUED, BUILDING, SUCCESS, FAILED
-  logs       String?  @db.Text
+  status     String   @default("QUEUED")
+  logs       String?
   commitHash String?
   imageTag   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  service    Service  @relation(fields: [serviceId], references: [id])
 }

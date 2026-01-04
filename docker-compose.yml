@@ -1,19 +1,20 @@
 services:
   # Reverse Proxy
   traefik:
-    image: traefik:v3.1
+    image: traefik:v2.11
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--log.level=DEBUG"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
     ports:
       - "80:80"
-      - "443:443"
-      - "8080:8080" # Dashboard
+      - "8080:8080"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
     networks:
       - helvetia-net
 
@@ -66,7 +67,7 @@ services:
     volumes:
       - ./worker:/app
       - /app/node_modules
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /Users/ramizloki/.docker/run/docker.sock:/var/run/docker.sock
     environment:
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
