@@ -189,7 +189,10 @@ export default function NewService() {
                 {importMethod === 'manual' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-white/5">
                     <div className="md:col-span-2">
-                      <label htmlFor="repoUrl" className="block text-sm font-medium text-white/60 mb-2">
+                      <label
+                        htmlFor="repoUrl"
+                        className="block text-sm font-medium text-white/60 mb-2"
+                      >
                         Git Repository URL
                       </label>
                       <input
@@ -204,7 +207,12 @@ export default function NewService() {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label htmlFor="branch" className="block text-sm font-medium text-white/60 mb-2">Branch</label>
+                      <label
+                        htmlFor="branch"
+                        className="block text-sm font-medium text-white/60 mb-2"
+                      >
+                        Branch
+                      </label>
                       <input
                         id="branch"
                         type="text"
@@ -219,7 +227,10 @@ export default function NewService() {
                 )}
 
                 <div>
-                  <label htmlFor="projectName" className="block text-sm font-medium text-white/60 mb-2">
+                  <label
+                    htmlFor="projectName"
+                    className="block text-sm font-medium text-white/60 mb-2"
+                  >
                     Project Name
                   </label>
                   <input
@@ -237,7 +248,10 @@ export default function NewService() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="buildCommand" className="block text-sm font-medium text-white/60 mb-2">
+                    <label
+                      htmlFor="buildCommand"
+                      className="block text-sm font-medium text-white/60 mb-2"
+                    >
                       Build Command
                     </label>
                     <div className="relative">
@@ -274,7 +288,10 @@ export default function NewService() {
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="startCommand" className="block text-sm font-medium text-white/60 mb-2">
+                    <label
+                      htmlFor="startCommand"
+                      className="block text-sm font-medium text-white/60 mb-2"
+                    >
                       Start Command
                     </label>
                     <div className="relative">
@@ -307,12 +324,16 @@ export default function NewService() {
                 </div>
 
                 <div>
-                  <label htmlFor="port" className="block text-sm font-medium text-white/60 mb-2">Port</label>
+                  <label htmlFor="port" className="block text-sm font-medium text-white/60 mb-2">
+                    Port
+                  </label>
                   <input
                     id="port"
                     type="number"
                     value={formData.port}
-                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value, 10) })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, port: parseInt(e.target.value, 10) })
+                    }
                     className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
                   />
                 </div>
@@ -341,7 +362,13 @@ export default function NewService() {
                       className="text-red-300 hover:text-red-100 transition-colors"
                       aria-label="Dismiss error"
                     >
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"

@@ -255,7 +255,9 @@ export default function Home() {
   const activeServices = services.filter(
     (s) => s.status === 'ACTIVE' || s.status === 'RUNNING',
   ).length;
-  const failingServices = services.filter((s) => s.status === 'FAILED' || s.status === 'ERROR').length;
+  const failingServices = services.filter(
+    (s) => s.status === 'FAILED' || s.status === 'ERROR',
+  ).length;
 
   const filteredServices = services.filter(
     (s) =>
@@ -534,7 +536,14 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  marginTop: 'auto',
+                }}
+              >
                 {/* Primary action - full width */}
                 <button
                   onClick={() => triggerDeploy(service.id)}
@@ -545,7 +554,9 @@ export default function Home() {
                 </button>
 
                 {/* Secondary actions - responsive grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                <div
+                  style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}
+                >
                   <button
                     onClick={() => restartService(service.id)}
                     className="btn btn-ghost"
@@ -771,8 +782,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                        .map(([k, v]) => `${k}=${v}`)
-                        .join('\n')
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join('\n')
                       : ''
                   }
                   onChange={(e) => {

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { getValidatedGitHubToken } from '@/lib/github';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -70,7 +69,7 @@ export default function GitHubRepoPicker({
       // We intentionally keep requests sequential to avoid hitting rate limits too aggressively.
       // If needed, this could be optimized with concurrency and Link header parsing.
       // For now, sequential fetching is sufficient and simple.
-      // eslint-disable-next-line no-constant-condition
+
       while (true) {
         const url = `https://api.github.com/user/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
 
@@ -106,7 +105,9 @@ export default function GitHubRepoPicker({
     } catch (err) {
       console.error('Failed to load GitHub repositories', err);
       const errorMessage =
-        err instanceof Error ? err.message : 'Could not load repositories. Please check your network connection and GitHub token.';
+        err instanceof Error
+          ? err.message
+          : 'Could not load repositories. Please check your network connection and GitHub token.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -408,7 +409,10 @@ export default function GitHubRepoPicker({
 
             <div className="space-y-4 relative z-10">
               <div>
-                <label htmlFor="branch-select" className="block text-sm font-medium text-white/60 mb-2">
+                <label
+                  htmlFor="branch-select"
+                  className="block text-sm font-medium text-white/60 mb-2"
+                >
                   Branch to Deploy
                 </label>
                 <div className="relative">
