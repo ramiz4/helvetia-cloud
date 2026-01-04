@@ -82,11 +82,28 @@ new Worker(
           echo "RUN apk add --no-cache git build-base python3" >> Dockerfile
           echo "RUN npm install -g pnpm" >> Dockerfile
           echo "WORKDIR /app" >> Dockerfile
+
+          # Add ARG declarations for build-time env vars (needed for Vite/static apps)
+          if [ -n "${envVars}" ]; then
+            echo '${Object.keys(envVars || {})
+              .map((key) => `ARG ${key}`)
+              .join('\\n')}' >> Dockerfile
+          fi
+
           echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
-          echo "RUN ${buildCommand || 'pnpm install --frozen-lockfile'}" >> Dockerfile
+          echo "RUN pnpm install --frozen-lockfile" >> Dockerfile
           echo "COPY . ." >> Dockerfile
+
+          # Set env vars before build (for Vite to embed them)
+          if [ -n "${envVars}" ]; then
+            echo '${Object.entries(envVars || {})
+              .map(([k, v]) => `ENV ${k}="${v}"`)
+              .join('\\n')}' >> Dockerfile
+          fi
+
+          echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
           echo "EXPOSE ${port || 3000}" >> Dockerfile
-          echo "CMD ${startCommand || 'npm start'}" >> Dockerfile
+          echo 'CMD ["sh", "-c", "${startCommand || 'pnpm start'}"]' >> Dockerfile
 
           echo "node_modules" > .dockerignore
           echo ".git" >> .dockerignore
@@ -126,10 +143,17 @@ new Worker(
         throw new Error(`Build failed with exit code ${execResult.ExitCode}`);
       }
 
+      // Sanitize logs for PostgreSQL (remove null bytes and invalid UTF8)
+      /* eslint-disable no-control-regex */
+      const sanitizedLogs = buildLogs
+        .replace(/\0/g, '')
+        .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+      /* eslint-enable no-control-regex */
+
       // Update logs in DB
       await prisma.deployment.update({
         where: { id: deploymentId },
-        data: { logs: buildLogs },
+        data: { logs: sanitizedLogs },
       });
 
       // 4. Run Container (and stop old one)

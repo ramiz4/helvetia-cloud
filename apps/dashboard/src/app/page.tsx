@@ -9,6 +9,7 @@ import {
   FileText,
   Play,
   RefreshCw,
+  RotateCw,
   Search,
   Trash2,
   X,
@@ -212,6 +213,25 @@ export default function Home() {
       setSelectedLogs(data.logs || 'No logs available.');
     } catch {
       alert('Failed to fetch logs');
+    }
+  };
+
+  const restartService = async (serviceId: string) => {
+    try {
+      const res = await fetch(`http://localhost:3001/services/${serviceId}/restart`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+
+      if (res.ok) {
+        alert('Container restarted successfully!');
+        fetchServices();
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Failed to restart container');
+      }
+    } catch {
+      alert('Error connecting to API');
     }
   };
 
@@ -515,6 +535,14 @@ export default function Home() {
                   <Play size={16} /> Redeploy
                 </button>
                 <button
+                  onClick={() => restartService(service.id)}
+                  className="btn btn-ghost"
+                  style={{ flex: 1 }}
+                  title="Restart container with updated config"
+                >
+                  <RotateCw size={16} /> Restart
+                </button>
+                <button
                   onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
                   className="btn btn-ghost"
                   style={{ flex: 1 }}
@@ -727,14 +755,18 @@ export default function Home() {
                 <label>Environment Variables</label>
                 <textarea
                   style={{ minHeight: '120px', fontFamily: 'monospace', fontSize: '0.85rem' }}
-                  value={Object.entries(editingService.envVars || {})
-                    .map(([k, v]) => `${k}=${v}`)
-                    .join('\n')}
+                  value={
+                    editingService.envVars
+                      ? Object.entries(editingService.envVars)
+                        .map(([k, v]) => `${k}=${v}`)
+                        .join('\n')
+                      : ''
+                  }
                   onChange={(e) => {
                     const lines = e.target.value.split('\n');
                     const envVars = Object.fromEntries(
                       lines
-                        .filter((l) => l.includes('='))
+                        .filter((l) => l.trim() && l.includes('='))
                         .map((l) => {
                           const [k, ...v] = l.split('=');
                           return [k.trim(), v.join('=').trim()];

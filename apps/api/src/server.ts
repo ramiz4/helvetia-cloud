@@ -41,8 +41,17 @@ fastify.register(jwt, {
 // Auth Hook
 fastify.addHook('preHandler', async (request, reply) => {
   const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
-  // Check if it's a public route or an OPTIONS request (CORS)
-  if (publicRoutes.some((route) => request.url.startsWith(route)) || request.method === 'OPTIONS') {
+  // WebSocket routes handle auth via query parameter, not header
+  const wsRoutes = ['/deployments/'];
+  const isWsLogStream = wsRoutes.some(
+    (route) => request.url.startsWith(route) && request.url.includes('/logs/stream'),
+  );
+  // Check if it's a public route, WS route, or an OPTIONS request (CORS)
+  if (
+    publicRoutes.some((route) => request.url.startsWith(route)) ||
+    isWsLogStream ||
+    request.method === 'OPTIONS'
+  ) {
     return;
   }
   try {
@@ -339,6 +348,81 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
   });
 
   return deployment;
+});
+
+// Restart container without rebuilding
+fastify.post('/services/:id/restart', async (request, reply) => {
+  const { id } = request.params as any;
+  const user = (request as any).user;
+
+  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  if (!service) return reply.status(404).send({ error: 'Service not found' });
+
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+
+  try {
+    // Find existing containers for this service
+    const containers = await docker.listContainers({ all: true });
+    const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+
+    if (serviceContainers.length === 0) {
+      return reply.status(404).send({ error: 'No running container found. Please deploy first.' });
+    }
+
+    // Get the image tag from the first container
+    const existingContainer = docker.getContainer(serviceContainers[0].Id);
+    const containerInfo = await existingContainer.inspect();
+    const imageTag = containerInfo.Config.Image;
+
+    // Generate new container name
+    const postfix = Math.random().toString(36).substring(2, 8);
+    const containerName = `${service.name}-${postfix}`;
+
+    const traefikRule = (service as any).customDomain
+      ? `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`) || Host(\`${(service as any).customDomain}\`)`
+      : `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`)`;
+
+    // Create new container with updated config
+    const newContainer = await docker.createContainer({
+      Image: imageTag,
+      name: containerName,
+      Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
+      Labels: {
+        'helvetia.serviceId': service.id,
+        'traefik.enable': 'true',
+        [`traefik.http.routers.${service.name}.rule`]: traefikRule,
+        [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
+        [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
+          service.port || 3000
+        ).toString(),
+      },
+      HostConfig: {
+        NetworkMode: 'helvetia-net',
+        RestartPolicy: { Name: 'always' },
+        Memory: 512 * 1024 * 1024,
+        NanoCpus: 1000000000,
+        LogConfig: {
+          Type: 'json-file',
+          Config: {},
+        },
+      },
+    });
+
+    await newContainer.start();
+
+    // Stop and remove old containers
+    for (const old of serviceContainers) {
+      const container = docker.getContainer(old.Id);
+      await container.stop().catch(() => {});
+      await container.remove().catch(() => {});
+    }
+
+    return { success: true, message: 'Container restarted successfully' };
+  } catch (error) {
+    console.error('Restart error:', error);
+    return reply.status(500).send({ error: 'Failed to restart container' });
+  }
 });
 
 fastify.post('/webhooks/github', async (request) => {
