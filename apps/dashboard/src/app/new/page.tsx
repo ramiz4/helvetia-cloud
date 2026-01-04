@@ -18,6 +18,8 @@ export default function NewService() {
     buildCommand: 'npm install && npm run build',
     startCommand: 'npm run start',
     port: 3000,
+    type: 'DOCKER',
+    staticOutputDir: 'dist',
   });
   const [repoSelected, setRepoSelected] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -118,11 +120,10 @@ export default function NewService() {
         <div className="flex gap-4 p-1 bg-white/5 rounded-2xl w-fit mx-auto mb-10 border border-white/5 backdrop-blur-sm">
           <button
             onClick={() => setImportMethod('github')}
-            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
-              importMethod === 'github'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
+            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${importMethod === 'github'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
           >
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
@@ -134,11 +135,10 @@ export default function NewService() {
               setImportMethod('manual');
               setRepoSelected(false);
             }}
-            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
-              importMethod === 'manual'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
+            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${importMethod === 'manual'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
           >
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -246,23 +246,76 @@ export default function NewService() {
                   </p>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-3">Service Type</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, type: 'DOCKER' })}
+                      className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${formData.type === 'DOCKER'
+                        ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
+                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                    >
+                      <div
+                        className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${formData.type === 'DOCKER' ? 'bg-blue-500 text-white' : 'bg-white/10 text-white/40'
+                          }`}
+                      >
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-white">Docker Service</div>
+                        <p className="text-xs text-white/40 mt-1">
+                          For Node.js, Python, or custom Docker projects.
+                        </p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, type: 'STATIC' })}
+                      className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${formData.type === 'STATIC'
+                        ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
+                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                    >
+                      <div
+                        className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${formData.type === 'STATIC' ? 'bg-blue-500 text-white' : 'bg-white/10 text-white/40'
+                          }`}
+                      >
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-white">Static Site</div>
+                        <p className="text-xs text-white/40 mt-1">
+                          For Angular, React, Vue, or static HTML (via Nginx).
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label
-                      htmlFor="buildCommand"
-                      className="block text-sm font-medium text-white/60 mb-2"
-                    >
+                    <label htmlFor="buildCommand" className="block text-sm font-medium text-white/60 mb-2">
                       Build Command
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -287,40 +340,55 @@ export default function NewService() {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label
-                      htmlFor="startCommand"
-                      className="block text-sm font-medium text-white/60 mb-2"
-                    >
-                      Start Command
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
-                        <svg
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
+
+                  {formData.type === 'DOCKER' ? (
+                    <div>
+                      <label htmlFor="startCommand" className="block text-sm font-medium text-white/60 mb-2">
+                        Start Command
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
+                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        </div>
+                        <input
+                          id="startCommand"
+                          type="text"
+                          value={formData.startCommand}
+                          onChange={(e) => setFormData({ ...formData, startCommand: e.target.value })}
+                          placeholder="npm run start"
+                          className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                        />
                       </div>
-                      <input
-                        id="startCommand"
-                        type="text"
-                        value={formData.startCommand}
-                        onChange={(e) => setFormData({ ...formData, startCommand: e.target.value })}
-                        placeholder="npm run start"
-                        className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
-                      />
                     </div>
-                  </div>
+                  ) : (
+                    <div>
+                      <label htmlFor="staticOutputDir" className="block text-sm font-medium text-white/60 mb-2">
+                        Output Directory
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
+                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                            />
+                          </svg>
+                        </div>
+                        <input
+                          id="staticOutputDir"
+                          type="text"
+                          value={formData.staticOutputDir}
+                          onChange={(e) => setFormData({ ...formData, staticOutputDir: e.target.value })}
+                          placeholder="dist"
+                          className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -330,12 +398,14 @@ export default function NewService() {
                   <input
                     id="port"
                     type="number"
-                    value={formData.port}
-                    onChange={(e) =>
-                      setFormData({ ...formData, port: parseInt(e.target.value, 10) })
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                    value={formData.type === 'STATIC' ? 80 : formData.port}
+                    disabled={formData.type === 'STATIC'}
+                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value, 10) })}
+                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20 disabled:opacity-50"
                   />
+                  {formData.type === 'STATIC' && (
+                    <p className="text-xs text-white/30 mt-2">Static sites are served on port 80 via Nginx.</p>
+                  )}
                 </div>
 
                 {errorMessage && (
@@ -345,7 +415,7 @@ export default function NewService() {
                       height="20"
                       fill="currentColor"
                       viewBox="0 0 20 20"
-                      className="text-red-400 mt-0.5 flex-shrink-0"
+                      className="text-red-400 mt-0.5 shrink-0"
                       aria-hidden="true"
                     >
                       <path
@@ -358,23 +428,13 @@ export default function NewService() {
                       <p className="text-sm text-red-200 font-medium">{errorMessage}</p>
                     </div>
                     <button
+                      type="button"
                       onClick={() => setErrorMessage(null)}
                       className="text-red-300 hover:text-red-100 transition-colors"
                       aria-label="Dismiss error"
                     >
-                      <svg
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>

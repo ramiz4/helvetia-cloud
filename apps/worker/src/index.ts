@@ -25,6 +25,8 @@ new Worker(
       port,
       envVars,
       customDomain,
+      type,
+      staticOutputDir,
     } = job.data;
 
     let builder: Docker.Container | null = null;
@@ -77,33 +79,65 @@ new Worker(
         git clone --depth 1 --branch ${branch} ${repoUrl} /app
         cd /app
         if [ ! -f Dockerfile ]; then
-          echo "Generating Dockerfile..."
-          echo "FROM node:22-alpine" > Dockerfile
-          echo "RUN apk add --no-cache git build-base python3" >> Dockerfile
-          echo "RUN npm install -g pnpm" >> Dockerfile
-          echo "WORKDIR /app" >> Dockerfile
+          echo "Generating Dockerfile for ${type === 'STATIC' ? 'Static Site' : 'Docker Service'}..."
 
-          # Add ARG declarations for build-time env vars (needed for Vite/static apps)
-          if [ -n "${envVars}" ]; then
-            echo '${Object.keys(envVars || {})
-              .map((key) => `ARG ${key}`)
-              .join('\\n')}' >> Dockerfile
+          if [ "${type}" = "STATIC" ]; then
+            # Multi-stage build for static sites
+            echo "FROM node:22-alpine AS builder" > Dockerfile
+            echo "RUN apk add --no-cache git" >> Dockerfile
+            echo "RUN npm install -g pnpm" >> Dockerfile
+            echo "WORKDIR /app" >> Dockerfile
+
+            if [ -n "${envVars}" ]; then
+              echo '${Object.keys(envVars || {})
+                .map((key) => `ARG ${key}`)
+                .join('\\n')}' >> Dockerfile
+            fi
+
+            echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
+            echo "RUN pnpm install" >> Dockerfile
+            echo "COPY . ." >> Dockerfile
+
+            if [ -n "${envVars}" ]; then
+              echo '${Object.entries(envVars || {})
+                .map(([k, v]) => `ENV ${k}="${v}"`)
+                .join('\\n')}' >> Dockerfile
+            fi
+
+            echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
+
+            echo "" >> Dockerfile
+            echo "FROM nginx:alpine" >> Dockerfile
+            echo "COPY --from=builder /app/${staticOutputDir || 'dist'} /usr/share/nginx/html" >> Dockerfile
+            echo "EXPOSE 80" >> Dockerfile
+            echo 'CMD ["nginx", "-g", "daemon off;"]' >> Dockerfile
+          else
+            # Standard Docker build
+            echo "FROM node:22-alpine" > Dockerfile
+            echo "RUN apk add --no-cache git build-base python3" >> Dockerfile
+            echo "RUN npm install -g pnpm" >> Dockerfile
+            echo "WORKDIR /app" >> Dockerfile
+
+            if [ -n "${envVars}" ]; then
+              echo '${Object.keys(envVars || {})
+                .map((key) => `ARG ${key}`)
+                .join('\\n')}' >> Dockerfile
+            fi
+
+            echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
+            echo "RUN pnpm install" >> Dockerfile
+            echo "COPY . ." >> Dockerfile
+
+            if [ -n "${envVars}" ]; then
+              echo '${Object.entries(envVars || {})
+                .map(([k, v]) => `ENV ${k}="${v}"`)
+                .join('\\n')}' >> Dockerfile
+            fi
+
+            echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
+            echo "EXPOSE ${port || 3000}" >> Dockerfile
+            echo 'CMD ["sh", "-c", "${startCommand || 'pnpm start'}"]' >> Dockerfile
           fi
-
-          echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
-          echo "RUN pnpm install --frozen-lockfile" >> Dockerfile
-          echo "COPY . ." >> Dockerfile
-
-          # Set env vars before build (for Vite to embed them)
-          if [ -n "${envVars}" ]; then
-            echo '${Object.entries(envVars || {})
-              .map(([k, v]) => `ENV ${k}="${v}"`)
-              .join('\\n')}' >> Dockerfile
-          fi
-
-          echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
-          echo "EXPOSE ${port || 3000}" >> Dockerfile
-          echo 'CMD ["sh", "-c", "${startCommand || 'pnpm start'}"]' >> Dockerfile
 
           echo "node_modules" > .dockerignore
           echo ".git" >> .dockerignore
@@ -173,11 +207,12 @@ new Worker(
         Env: envVars ? Object.entries(envVars).map(([k, v]) => `${k}=${v}`) : [],
         Labels: {
           'helvetia.serviceId': serviceId,
+          'helvetia.type': type || 'DOCKER',
           'traefik.enable': 'true',
           [`traefik.http.routers.${serviceName}.rule`]: traefikRule,
           [`traefik.http.routers.${serviceName}.entrypoints`]: 'web',
           [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: (
-            port || 3000
+            port || (type === 'STATIC' ? 80 : 3000)
           ).toString(),
         },
         HostConfig: {

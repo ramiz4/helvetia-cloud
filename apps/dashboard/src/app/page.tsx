@@ -27,6 +27,8 @@ interface Service {
   startCommand: string;
   port: number;
   status: string;
+  type: string;
+  staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;
   metrics?: { cpu: number; memory: number; memoryLimit: number };
@@ -428,6 +430,20 @@ export default function Home() {
                     <span className={`status-badge status-${service.status.toLowerCase()}`}>
                       {service.status}
                     </span>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '0.1rem 0.5rem',
+                        borderRadius: '0.5rem',
+                        background: service.type === 'STATIC' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                        color: service.type === 'STATIC' ? '#38bdf8' : '#a855f7',
+                        border: service.type === 'STATIC' ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(168, 85, 247, 0.2)',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {service.type || 'DOCKER'}
+                    </span>
                     {service.customDomain && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {service.customDomain}
@@ -728,6 +744,19 @@ export default function Home() {
               </div>
 
               <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label>Service Type</label>
+                  <select
+                    value={editingService.type || 'DOCKER'}
+                    onChange={(e) =>
+                      setEditingService({ ...editingService, type: e.target.value })
+                    }
+                    className="w-full"
+                  >
+                    <option value="DOCKER">Docker Service</option>
+                    <option value="STATIC">Static Site</option>
+                  </select>
+                </div>
                 <div>
                   <label>Branch</label>
                   <input
@@ -742,7 +771,8 @@ export default function Home() {
                   <label>Port</label>
                   <input
                     type="number"
-                    value={editingService.port || 3000}
+                    disabled={editingService.type === 'STATIC'}
+                    value={editingService.type === 'STATIC' ? 80 : editingService.port || 3000}
                     onChange={(e) =>
                       setEditingService({ ...editingService, port: parseInt(e.target.value) })
                     }
@@ -763,15 +793,37 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <label>Start Command</label>
-                  <input
-                    type="text"
-                    value={editingService.startCommand || ''}
-                    onChange={(e) =>
-                      setEditingService({ ...editingService, startCommand: e.target.value })
-                    }
-                    placeholder="e.g. npm start"
-                  />
+                  {editingService.type === 'STATIC' ? (
+                    <>
+                      <label>Output Directory</label>
+                      <input
+                        type="text"
+                        value={editingService.staticOutputDir || ''}
+                        onChange={(e) =>
+                          setEditingService({
+                            ...editingService,
+                            staticOutputDir: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. dist"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <label>Start Command</label>
+                      <input
+                        type="text"
+                        value={editingService.startCommand || ''}
+                        onChange={(e) =>
+                          setEditingService({
+                            ...editingService,
+                            startCommand: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. npm start"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -782,8 +834,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                          .map(([k, v]) => `${k}=${v}`)
-                          .join('\n')
+                        .map(([k, v]) => `${k}=${v}`)
+                        .join('\n')
                       : ''
                   }
                   onChange={(e) => {

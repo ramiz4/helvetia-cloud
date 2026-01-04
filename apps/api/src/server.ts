@@ -182,8 +182,18 @@ fastify.get('/services', async (request) => {
 
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
-  const { name, repoUrl, branch, buildCommand, startCommand, port, envVars, customDomain } =
-    request.body as any;
+  const {
+    name,
+    repoUrl,
+    branch,
+    buildCommand,
+    startCommand,
+    port,
+    envVars,
+    customDomain,
+    type,
+    staticOutputDir,
+  } = request.body as any;
 
   const user = (request as any).user;
   const service = await prisma.service.updateMany({
@@ -197,6 +207,8 @@ fastify.patch('/services/:id', async (request, reply) => {
       port: port ? parseInt(port) : undefined,
       envVars,
       customDomain,
+      type,
+      staticOutputDir,
     } as any,
   });
 
@@ -209,8 +221,17 @@ fastify.patch('/services/:id', async (request, reply) => {
 });
 
 fastify.post('/services', async (request, reply) => {
-  const { name, repoUrl, branch, buildCommand, startCommand, port, customDomain } =
-    request.body as any;
+  const {
+    name,
+    repoUrl,
+    branch,
+    buildCommand,
+    startCommand,
+    port,
+    customDomain,
+    type,
+    staticOutputDir,
+  } = request.body as any;
   const user = (request as any).user;
   const userId = user.id;
 
@@ -229,6 +250,8 @@ fastify.post('/services', async (request, reply) => {
       startCommand,
       port: port ? parseInt(port) : 3000,
       customDomain,
+      type: type || 'DOCKER',
+      staticOutputDir: staticOutputDir || 'dist',
     } as any,
     create: {
       name,
@@ -239,6 +262,8 @@ fastify.post('/services', async (request, reply) => {
       port: port ? parseInt(port) : 3000,
       userId,
       customDomain,
+      type: type || 'DOCKER',
+      staticOutputDir: staticOutputDir || 'dist',
     } as any,
   });
 
@@ -369,6 +394,8 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
     port: service.port,
     envVars: service.envVars,
     customDomain: (service as any).customDomain,
+    type: (service as any).type,
+    staticOutputDir: (service as any).staticOutputDir,
   });
 
   return deployment;
@@ -414,11 +441,12 @@ fastify.post('/services/:id/restart', async (request, reply) => {
       Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
       Labels: {
         'helvetia.serviceId': service.id,
+        'helvetia.type': (service as any).type || 'DOCKER',
         'traefik.enable': 'true',
         [`traefik.http.routers.${service.name}.rule`]: traefikRule,
         [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
         [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
-          service.port || 3000
+          service.port || (service.type === 'STATIC' ? 80 : 3000)
         ).toString(),
       },
       HostConfig: {
@@ -497,6 +525,8 @@ fastify.post('/webhooks/github', async (request) => {
       port: service.port,
       envVars: service.envVars,
       customDomain: (service as any).customDomain,
+      type: (service as any).type,
+      staticOutputDir: (service as any).staticOutputDir,
     });
   }
 
