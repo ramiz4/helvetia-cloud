@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
-import fastifyWebsocket from '@fastify/websocket';
 import rateLimit from '@fastify/rate-limit';
+import fastifyWebsocket from '@fastify/websocket';
 import { Queue } from 'bullmq';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
@@ -39,6 +39,28 @@ fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'secret',
 });
 
+fastify.register(rateLimit, {
+  max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+  timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
+  redis: redisConnection,
+  namespace: 'rate-limit:',
+  skipOnError: false,
+  allowList: (request) => {
+    // Exclude health check endpoints from rate limiting
+    return request.url.startsWith('/health');
+  },
+  keyGenerator: (request) => {
+    // Use IP address as the key for rate limiting
+    return request.ip;
+  },
+  onExceeding: (request) => {
+    fastify.log.warn(`Rate limit approaching for IP: ${request.ip}, URL: ${request.url}`);
+  },
+  onExceeded: (request) => {
+    fastify.log.error(`Rate limit exceeded for IP: ${request.ip}, URL: ${request.url}`);
+  },
+});
+
 // Auth Hook
 fastify.addHook('preHandler', async (request, reply) => {
   const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
@@ -68,82 +90,93 @@ fastify.get('/health', async () => {
 });
 
 // Auth Routes (Simplified for MVP)
-fastify.post('/auth/github', async (request, reply) => {
-  const { code } = request.body as any;
-
-  if (!code) {
-    return reply.status(400).send({ error: 'Code is required' });
-  }
-
-  try {
-    // 1. Exchange code for access token
-    console.log(
-      `Exchanging code for token with Client ID: ${process.env.GITHUB_CLIENT_ID?.slice(0, 5)}...`,
-    );
-    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+fastify.post(
+  '/auth/github',
+  {
+    config: {
+      rateLimit: {
+        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
+        timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',
       },
-      body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code,
-      }),
-    });
+    },
+  },
+  async (request, reply) => {
+    const { code } = request.body as any;
 
-    const tokenData = (await tokenRes.json()) as any;
-    if (tokenData.error) {
-      console.error('GitHub Token Error:', tokenData);
-      return reply
-        .status(400)
-        .send({ error: tokenData.error_description || tokenData.error, details: tokenData });
+    if (!code) {
+      return reply.status(400).send({ error: 'Code is required' });
     }
 
-    const accessToken = tokenData.access_token;
+    try {
+      // 1. Exchange code for access token
+      console.log(
+        `Exchanging code for token with Client ID: ${process.env.GITHUB_CLIENT_ID?.slice(0, 5)}...`,
+      );
+      const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: process.env.GITHUB_CLIENT_ID,
+          client_secret: process.env.GITHUB_CLIENT_SECRET,
+          code,
+        }),
+      });
 
-    // 2. Fetch user profile
-    const userRes = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/json',
-        'User-Agent': 'Helvetia-Cloud',
-      },
-    });
+      const tokenData = (await tokenRes.json()) as any;
+      if (tokenData.error) {
+        console.error('GitHub Token Error:', tokenData);
+        return reply
+          .status(400)
+          .send({ error: tokenData.error_description || tokenData.error, details: tokenData });
+      }
 
-    const userData = (await userRes.json()) as any;
+      const accessToken = tokenData.access_token;
 
-    // 3. Create or update user in database
-    let user = await prisma.user.findUnique({
-      where: { githubId: userData.id.toString() },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          githubId: userData.id.toString(),
-          username: userData.login,
-          avatarUrl: userData.avatar_url,
+      // 2. Fetch user profile
+      const userRes = await fetch('https://api.github.com/user', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/json',
+          'User-Agent': 'Helvetia-Cloud',
         },
       });
-    } else {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          username: userData.login,
-          avatarUrl: userData.avatar_url,
-        },
+
+      const userData = (await userRes.json()) as any;
+
+      // 3. Create or update user in database
+      let user = await prisma.user.findUnique({
+        where: { githubId: userData.id.toString() },
       });
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            githubId: userData.id.toString(),
+            username: userData.login,
+            avatarUrl: userData.avatar_url,
+          },
+        });
+      } else {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            username: userData.login,
+            avatarUrl: userData.avatar_url,
+          },
+        });
+      }
+
+      const token = fastify.jwt.sign({ id: user.id, username: user.username });
+      return { token, user, accessToken };
+    } catch (err: any) {
+      fastify.log.error(err);
+      return reply.status(500).send({ error: 'Internal Server Error' });
     }
-
-    const token = fastify.jwt.sign({ id: user.id, username: user.username });
-    return { token, user, accessToken };
-  } catch (err: any) {
-    fastify.log.error(err);
-    return reply.status(500).send({ error: 'Internal Server Error' });
-  }
-});
+  },
+);
 
 // Service Routes
 fastify.get('/services', async (request) => {
@@ -597,8 +630,8 @@ fastify.get(
     // Apply rate limiting to prevent abuse of authenticated log streaming
     config: {
       rateLimit: {
-        max: 10,
-        timeWindow: '1 minute',
+        max: parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
+        timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
       },
     },
   },
@@ -638,7 +671,7 @@ fastify.get(
       // However, we only have one subConnection. Let's just remove the listener.
       subConnection.removeListener('message', onMessage);
     });
-  }
+  },
 );
 
 const start = async () => {
