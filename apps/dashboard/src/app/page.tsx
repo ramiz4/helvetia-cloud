@@ -205,7 +205,7 @@ export default function Home() {
         toast.error('Failed to update service');
       }
     } catch {
-      toast('Error connecting to API');
+      toast.error('Error connecting to API');
     }
   };
 
