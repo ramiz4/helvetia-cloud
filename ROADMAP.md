@@ -72,6 +72,18 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
 - [x] **CODEOWNERS**: Add a CODEOWNERS file to define repository ownership and streamline the PR review process.
 
+### 🕵️ Code Review Findings
+
+- [ ] **API Documentation**: Add JSDoc/comments for GitHub proxy routes in `apps/api/src/server.ts` explaining security considerations (lines 207-242).
+- [ ] **API Security**: Add `jwtVerify()` check before GitHub token check in proxy endpoints to prevent unauthorized access (`apps/api/src/server.ts` lines 208-210).
+- [ ] **Input Validation**: Sanitize `owner` and `repo` parameters in GitHub proxy routes to prevent path traversal (`apps/api/src/server.ts` lines 244-248).
+- [ ] **Cookie Cleanup**: Ensure `clearCookie` calls match original path (`/`) and attributes for proper cleanup in `apps/api/src/server.ts` (lines 231-232, 261-262).
+- [ ] **CSRF Protection**: Upgrade cookie `sameSite` policy to `strict` and ensure logout logic matches all cookie attributes for security (`apps/api/src/server.ts`).
+- [ ] **Dashboard Logic**: Optimize 401 check in `apps/dashboard/src/app/page.tsx` to check status before parsing JSON (lines 55-58).
+- [ ] **CORS Security**: Fix insecure `origin: true` with `credentials: true` configuration; use explicit allowlist to prevent unauthorized cross-origin access.
+- [ ] **Logout UX**: Add user notification for failed logout requests in Dashboard instead of just logging to console.
+- [ ] **WebSocket Security**: Authenticate WebSocket connections using cookies or explicit tokens to prevent unauthorized connections.
+
 ## Marketing & PR
 
 - [x] **Landing Page**: Switzerland hosting platform. All services and databases are hosted in Switzerland.
