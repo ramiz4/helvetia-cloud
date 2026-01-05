@@ -43,12 +43,11 @@ fastify.register(rateLimit, {
   max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
   timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
   redis: redisConnection,
-  nameSpace: 'rate-limit:',
+  namespace: 'rate-limit:',
   skipOnError: false,
   allowList: (request) => {
-    const url = request.raw?.url ?? request.url;
     // Exclude health check endpoints from rate limiting
-    return url.startsWith('/health');
+    return request.url.startsWith('/health');
   },
   keyGenerator: (request) => {
     // Use IP address as the key for rate limiting
