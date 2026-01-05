@@ -271,9 +271,13 @@ export default function Home() {
       if (res.ok) {
         const updatedService = await res.json();
         setServices((prev) => prev.map((s) => (s.id === serviceId ? updatedService : s)));
+      } else {
+        console.error('Failed to fetch service details', res.status);
+        toast.error('Failed to refresh service details');
       }
     } catch (err) {
       console.error(err);
+      toast.error('Error refreshing service details');
     }
   };
 
@@ -487,10 +491,11 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${service.type === 'STATIC'
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
+                        service.type === 'STATIC'
                           ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
                           : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
-                        }`}
+                      }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
@@ -900,8 +905,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                        .map(([k, v]) => `${k}=${v}`)
-                        .join('\n')
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join('\n')
                       : ''
                   }
                   onChange={(e) => {
