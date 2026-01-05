@@ -453,10 +453,10 @@ fastify.post('/services', async (request, reply) => {
     // Generate default credentials if not provided
     if (!finalEnvVars.POSTGRES_PASSWORD) {
       finalEnvVars = {
+        ...finalEnvVars,
         POSTGRES_USER: 'postgres',
         POSTGRES_PASSWORD: crypto.randomBytes(16).toString('hex'),
         POSTGRES_DB: 'app',
-        ...finalEnvVars,
       };
     }
   }
@@ -474,9 +474,9 @@ fastify.post('/services', async (request, reply) => {
     finalPort = 3306;
     if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
       finalEnvVars = {
+        ...finalEnvVars,
         MYSQL_ROOT_PASSWORD: crypto.randomBytes(16).toString('hex'),
         MYSQL_DATABASE: 'app',
-        ...finalEnvVars,
       };
     }
   }
@@ -696,8 +696,13 @@ fastify.post('/services/:id/restart', async (request, reply) => {
       name: containerName,
       Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
       Cmd:
-        (service as any).type === 'REDIS' && service.envVars?.REDIS_PASSWORD
-          ? ['redis-server', '--requirepass', service.envVars.REDIS_PASSWORD]
+        (service as any).type === 'REDIS' &&
+        (service.envVars as Record<string, any>)?.REDIS_PASSWORD
+          ? [
+              'redis-server',
+              '--requirepass',
+              (service.envVars as Record<string, any>).REDIS_PASSWORD,
+            ]
           : undefined,
       Labels: {
         'helvetia.serviceId': service.id,
