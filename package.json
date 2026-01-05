@@ -9,7 +9,7 @@
     "generate": "pnpm --filter database generate",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "pnpm --filter '*' --parallel test",
     "prepare": "husky",
     "semantic-release": "semantic-release"
   },
@@ -36,6 +36,7 @@
     "prettier": "^3.7.4",
     "prettier-plugin-organize-imports": "^4.3.0",
     "semantic-release": "^25.0.2",
-    "typescript-eslint": "^8.51.0"
+    "typescript-eslint": "^8.51.0",
+    "vitest": "^4.0.16"
   }
 }

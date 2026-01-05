@@ -70,3 +70,14 @@ Helvetia Cloud is a production-realistic Platform-as-a-Service (PaaS) architecte
 4. **Deploy**: Runtime Manager starts the new container with health checks enabled.
 5. **Rollover**: Traefik waits for the new container to pass health checks before routing traffic and decommissioning the old instance (Zero-Downtime).
 6. **Observability**: Live logs and performance metrics are streamed back to the Dashboard via SSE/WebSockets.
+
+## 🛠️ Quality Assurance & CI/CD
+
+- **Automated Pipeline**: GitHub Actions workflow orchestrates the development lifecycle.
+- **Verification**:
+  - **Linting**: Consistent code style enforced with ESLint and Prettier.
+  - **Testing**: Unit tests across the monorepo powered by Vitest.
+  - **Security**:
+    - **CodeQL**: Automated static analysis for security vulnerabilities.
+    - **Dependency Audit**: Regular audits for outdated or insecure packages via `pnpm audit`.
+  - **Build Verification**: Ensures the dashboard and other components build successfully before merging.
