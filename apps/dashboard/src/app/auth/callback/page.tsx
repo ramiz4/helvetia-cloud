@@ -20,6 +20,7 @@ function CallbackContent() {
         const res = await fetch(`${API_BASE_URL}/auth/github`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ code }),
         });
 
