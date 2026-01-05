@@ -70,7 +70,7 @@ fastify.register(rateLimit, {
 
 // Auth Hook
 fastify.addHook('preHandler', async (request, reply) => {
-  const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
+  const publicRoutes = ['/auth/github', '/health', '/webhooks/github', '/auth/logout'];
   // WebSocket routes handle auth via query parameter, not header
   const isWsLogStream = request.url.includes('/logs/stream');
 
@@ -218,12 +218,6 @@ fastify.post('/auth/logout', async (request, reply) => {
  * Input Validation: None required for global repo list.
  */
 fastify.get('/github/repos', async (request, reply) => {
-  try {
-    await request.jwtVerify();
-  } catch {
-    return reply.status(401).send({ error: 'Unauthorized' });
-  }
-
   const ghToken = request.cookies.gh_token;
   if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
 
@@ -272,12 +266,6 @@ fastify.get('/github/repos', async (request, reply) => {
  * Input Validation: Sanitizes owner and repo to prevent path traversal.
  */
 fastify.get('/github/repos/:owner/:repo/branches', async (request, reply) => {
-  try {
-    await request.jwtVerify();
-  } catch {
-    return reply.status(401).send({ error: 'Unauthorized' });
-  }
-
   const ghToken = request.cookies.gh_token;
   if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
 
