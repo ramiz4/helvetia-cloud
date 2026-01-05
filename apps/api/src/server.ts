@@ -40,8 +40,31 @@ fastify.register(jwt, {
 });
 
 fastify.register(rateLimit, {
-  max: 100,
-  timeWindow: '1 minute',
+  max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+  timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
+  redis: redisConnection,
+  nameSpace: 'rate-limit:',
+  skipOnError: false,
+  allowList: (request) => {
+    const url = request.raw?.url ?? request.url;
+
+    // Exclude health check endpoints from rate limiting
+    if (url.startsWith('/health')) {
+      return true;
+    }
+
+    return false;
+  },
+  keyGenerator: (request) => {
+    // Use IP address as the key for rate limiting
+    return request.ip;
+  },
+  onExceeding: (request) => {
+    fastify.log.warn(`Rate limit exceeding for IP: ${request.ip}, URL: ${request.url}`);
+  },
+  onExceeded: (request) => {
+    fastify.log.error(`Rate limit exceeded for IP: ${request.ip}, URL: ${request.url}`);
+  },
 });
 
 // Auth Hook
@@ -73,7 +96,17 @@ fastify.get('/health', async () => {
 });
 
 // Auth Routes (Simplified for MVP)
-fastify.post('/auth/github', async (request, reply) => {
+fastify.post(
+  '/auth/github',
+  {
+    config: {
+      rateLimit: {
+        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
+        timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',
+      },
+    },
+  },
+  async (request, reply) => {
   const { code } = request.body as any;
 
   if (!code) {
@@ -148,7 +181,8 @@ fastify.post('/auth/github', async (request, reply) => {
     fastify.log.error(err);
     return reply.status(500).send({ error: 'Internal Server Error' });
   }
-});
+},
+);
 
 // Service Routes
 fastify.get('/services', async (request) => {
