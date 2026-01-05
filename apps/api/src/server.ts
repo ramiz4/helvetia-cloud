@@ -39,6 +39,11 @@ fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'secret',
 });
 
+fastify.register(rateLimit, {
+  max: 100,
+  timeWindow: '1 minute',
+});
+
 // Auth Hook
 fastify.addHook('preHandler', async (request, reply) => {
   const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
