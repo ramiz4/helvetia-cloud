@@ -62,14 +62,13 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Comprehensive Testing**: Add robust unit, integration, and E2E tests across all services (API, Worker, Dashboard) to achieve high code coverage.
 - [x] **Environment Configuration**: Extract hardcoded `http://localhost:3001` in `src/app/page.tsx` to an environment variable.
 - [x] **React State Management**: Fix `useEffect` dependency issue in `src/app/page.tsx` (potential infinite loop with `services` dependency).
-- [ ] **UI/UX**: Restore multi-line formatting for delete confirmation message in `src/app/page.tsx`.
-- [ ] **Styling**: Refactor inline styles to Tailwind CSS classes in `src/components/LandingPage.tsx`.
-- [ ] **Modal Accessibility**: Implement proper focus trapping and Escape key handling for modals in `src/app/page.tsx`.
-- [ ] **Logo Accessibility**: Add `alt` text or ARIA attributes to the logo in `src/components/Navigation.tsx`.
-- [ ] **Hydration**: Remove `suppressHydrationWarning` from `src/app/layout.tsx` and fix the underlying hydration mismatches.
-- [ ] **Input Accessibility**: Add ARIA labels to the search input in `src/app/page.tsx`.
-- [ ] **Dependency Cleanup**: Remove unused `tailwind-merge` dependency in `package.json` if not needed.
-- [ ] **Code Cleanup**: Remove unused `Settings` import in `src/components/Navigation.tsx`.
+- [x] **UI/UX**: Restore multi-line formatting for delete confirmation message in `src/app/page.tsx`.
+- [x] **Styling**: Refactor inline styles to Tailwind CSS classes in `src/components/LandingPage.tsx`.
+- [x] **Modal Accessibility**: Implement proper focus trapping and Escape key handling for modals in `src/app/page.tsx`.
+- [x] **Logo Accessibility**: Add `alt` text or ARIA attributes to the logo in `src/components/Navigation.tsx`.
+- [x] **Hydration**: Remove `suppressHydrationWarning` from `src/app/layout.tsx` and fix the underlying hydration mismatches.
+- [x] **Input Accessibility**: Add ARIA labels to the search input in `src/app/page.tsx`.
+- [x] **Dependency Cleanup**: Remove unused `tailwind-merge` dependency in `package.json` if not needed.
 - [ ] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
 - [x] **CODEOWNERS**: Add a CODEOWNERS file to define repository ownership and streamline the PR review process.
 

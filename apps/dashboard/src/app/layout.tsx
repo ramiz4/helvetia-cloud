@@ -22,7 +22,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body suppressHydrationWarning={true}>
+      <body>
         <div className="app-shell">
           <Navigation />
           <main className="main-content container animate-fade-in">{children}</main>

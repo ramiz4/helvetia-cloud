@@ -111,6 +111,27 @@ export default function Home() {
     servicesRef.current = services;
   }, [services]);
 
+  // Modal accessibility
+  const logsModalRef = useRef<HTMLDivElement>(null);
+  const editModalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedLogs(null);
+        setActiveDeploymentId(null);
+        setEditingService(null);
+      }
+    };
+    if (selectedLogs !== null || editingService !== null) {
+      window.addEventListener('keydown', handleEsc);
+      // Focus the modal for accessibility
+      if (selectedLogs !== null) logsModalRef.current?.focus();
+      if (editingService !== null) editModalRef.current?.focus();
+    }
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [selectedLogs, editingService]);
+
   useEffect(() => {
     if (isAuthenticated) {
       const fetchMetrics = async () => {
@@ -211,7 +232,7 @@ export default function Home() {
   const deleteService = async (serviceId: string) => {
     if (
       !confirm(
-        'Are you sure you want to delete this service? This will stop the app and remove all data.',
+        'Are you sure you want to delete this service?\n\nThis will stop the app and remove all data.',
       )
     )
       return;
@@ -400,6 +421,7 @@ export default function Home() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ paddingLeft: '2.5rem' }}
+            aria-label="Search services"
           />
         </div>
       </div>
@@ -636,7 +658,12 @@ export default function Home() {
           }}
         >
           <div
-            className="card glass active-logs"
+            ref={logsModalRef}
+            tabIndex={-1}
+            className="card glass active-logs focus:outline-none"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logs-modal-title"
             style={{
               width: '100%',
               maxWidth: '900px',
@@ -657,7 +684,9 @@ export default function Home() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <FileText size={20} className="text-primary" />
-                <h2 style={{ fontSize: '1.25rem' }}>Build Logs</h2>
+                <h2 id="logs-modal-title" style={{ fontSize: '1.25rem' }}>
+                  Build Logs
+                </h2>
               </div>
               <button
                 onClick={() => {
@@ -713,7 +742,12 @@ export default function Home() {
           }}
         >
           <div
-            className="card glass"
+            ref={editModalRef}
+            tabIndex={-1}
+            className="card glass focus:outline-none"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-modal-title"
             style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}
           >
             <div
@@ -726,7 +760,7 @@ export default function Home() {
                 alignItems: 'center',
               }}
             >
-              <h2>Edit Service</h2>
+              <h2 id="edit-modal-title">Edit Service</h2>
               <button onClick={() => setEditingService(null)} className="btn-icon">
                 <X size={20} />
               </button>
