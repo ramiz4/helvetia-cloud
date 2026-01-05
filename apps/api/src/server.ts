@@ -1,19 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import cookie from '@fastify/cookie';
+import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
-import jwt from '@fastify/jwt';
-import rateLimit from '@fastify/rate-limit';
-import fastifyWebsocket from '@fastify/websocket';
+import fastifyJwt from '@fastify/jwt';
+import fastifyWebsocket, { WebSocket } from '@fastify/websocket';
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
-import Fastify from 'fastify';
+import Fastify, { FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env'), override: true });
-dotenv.config({ override: true }); // Prefer local .env if it exists
+dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
@@ -30,12 +28,41 @@ const deploymentQueue = new Queue('deployments', {
 function getDefaultPortForServiceType(serviceType: string): number {
   const portMap: Record<string, number> = {
     STATIC: 80,
-    POSTGRES: 5432,
+    POSTGRES: 5444,
     REDIS: 6379,
     MYSQL: 3306,
     DOCKER: 3000,
   };
   return portMap[serviceType] || 3000;
+}
+
+// Helper to determine service status
+function determineServiceStatus(service: any, containers: any[]): string {
+  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === service.id);
+  const latestDeployment = service.deployments[0];
+  let status = 'IDLE';
+
+  if (serviceContainers.length > 0) {
+    const container = serviceContainers[0];
+    if (container.State === 'running') {
+      status = 'RUNNING';
+    } else if (container.State === 'restarting') {
+      status = 'CRASHING';
+    } else if (container.State === 'exited' || container.State === 'dead') {
+      status = 'STOPPED';
+    } else {
+      status = container.State.toUpperCase();
+    }
+  } else if (latestDeployment) {
+    if (['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
+      status = 'DEPLOYING';
+    } else if (latestDeployment.status === 'FAILED') {
+      status = 'FAILED';
+    } else if (latestDeployment.status === 'SUCCESS') {
+      status = 'IDLE';
+    }
+  }
+  return status;
 }
 
 export const fastify = Fastify({
@@ -48,277 +75,30 @@ fastify.register(cors, {
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 
-fastify.register(cookie);
-
 fastify.register(fastifyWebsocket);
-
-fastify.register(jwt, {
-  secret: process.env.JWT_SECRET || 'secret',
-  cookie: {
-    cookieName: 'token',
-    signed: false,
-  },
+fastify.register(fastifyCookie);
+fastify.register(fastifyJwt, {
+  secret: process.env.JWT_SECRET || 'supersecret',
 });
 
-fastify.register(rateLimit, {
-  max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
-  timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
-  redis: redisConnection,
-  skipOnError: false,
-  allowList: (request) => {
-    // Exclude health check endpoints from rate limiting
-    return request.url.startsWith('/health');
-  },
-  keyGenerator: (request) => {
-    // Use IP address as the key for rate limiting
-    return request.ip;
-  },
-  onExceeding: (request) => {
-    fastify.log.warn(`Rate limit approaching for IP: ${request.ip}, URL: ${request.url}`);
-  },
-  onExceeded: (request) => {
-    fastify.log.error(`Rate limit exceeded for IP: ${request.ip}, URL: ${request.url}`);
-  },
-});
-
-// Auth Hook
-fastify.addHook('preHandler', async (request, reply) => {
-  const publicRoutes = ['/auth/github', '/health', '/webhooks/github', '/auth/logout'];
-  // WebSocket routes handle auth via query parameter, not header
-  const isWsLogStream = request.url.includes('/logs/stream');
-
-  // Check if it's a public route, WS route, or an OPTIONS request (CORS)
+// Auth hook
+fastify.addHook('onRequest', async (request, reply) => {
+  const publicRoutes = ['/health', '/webhooks/github'];
   if (
-    publicRoutes.some((route) => request.url.startsWith(route)) ||
-    isWsLogStream ||
-    request.method === 'OPTIONS'
+    publicRoutes.includes(request.routeOptions?.url || '') ||
+    request.url.includes('/logs/stream')
   ) {
     return;
   }
   try {
     await request.jwtVerify();
   } catch (err) {
-    console.error('Auth Error:', err);
-    console.log('Failed Route:', request.url, request.method);
-    reply.status(401).send({ error: 'Unauthorized' });
+    reply.send(err);
   }
 });
 
-// Routes
 fastify.get('/health', async () => {
   return { status: 'ok' };
-});
-
-// Auth Routes (Simplified for MVP)
-fastify.post(
-  '/auth/github',
-  {
-    config: {
-      rateLimit: {
-        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
-        timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',
-      },
-    },
-  },
-  async (request, reply) => {
-    const { code } = request.body as any;
-
-    if (!code) {
-      return reply.status(400).send({ error: 'Code is required' });
-    }
-
-    try {
-      // 1. Exchange code for access token
-      console.log(
-        `Exchanging code for token with Client ID: ${process.env.GITHUB_CLIENT_ID?.slice(0, 5)}...`,
-      );
-      const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          client_id: process.env.GITHUB_CLIENT_ID,
-          client_secret: process.env.GITHUB_CLIENT_SECRET,
-          code,
-        }),
-      });
-
-      const tokenData = (await tokenRes.json()) as any;
-      if (tokenData.error) {
-        console.error('GitHub Token Error:', tokenData);
-        return reply
-          .status(400)
-          .send({ error: tokenData.error_description || tokenData.error, details: tokenData });
-      }
-
-      const accessToken = tokenData.access_token;
-
-      // 2. Fetch user profile
-      const userRes = await fetch('https://api.github.com/user', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
-          'User-Agent': 'Helvetia-Cloud',
-        },
-      });
-
-      const userData = (await userRes.json()) as any;
-
-      // 3. Create or update user in database
-      let user = await prisma.user.findUnique({
-        where: { githubId: userData.id.toString() },
-      });
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            githubId: userData.id.toString(),
-            username: userData.login,
-            avatarUrl: userData.avatar_url,
-          },
-        });
-      } else {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            username: userData.login,
-            avatarUrl: userData.avatar_url,
-          },
-        });
-      }
-
-      const token = fastify.jwt.sign({ id: user.id, username: user.username });
-
-      const isProd = process.env.NODE_ENV === 'production';
-      const cookieOptions = {
-        path: '/',
-        httpOnly: true,
-        secure: isProd,
-        sameSite: 'strict' as const,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      };
-
-      reply.setCookie('token', token, cookieOptions);
-      reply.setCookie('gh_token', accessToken, cookieOptions);
-
-      return { user };
-    } catch (err: any) {
-      fastify.log.error(err);
-      return reply.status(500).send({ error: 'Internal Server Error' });
-    }
-  },
-);
-
-fastify.post('/auth/logout', async (request, reply) => {
-  const isProd = process.env.NODE_ENV === 'production';
-  const cookieOptions = {
-    path: '/',
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'strict' as const,
-  };
-  reply.clearCookie('token', cookieOptions);
-  reply.clearCookie('gh_token', cookieOptions);
-  return { success: true };
-});
-
-// GitHub Proxy Routes
-/**
- * Proxy to fetch repositories from GitHub.
- * Security: Verifies JWT via verifyJwt() before accessing GitHub token.
- * Input Validation: None required for global repo list.
- */
-fastify.get('/github/repos', async (request, reply) => {
-  const ghToken = request.cookies.gh_token;
-  if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
-
-  const { page, per_page, sort, type } = request.query as any;
-  const query = new URLSearchParams({
-    sort: sort || 'updated',
-    per_page: per_page || '100',
-    type: type || 'all',
-    page: page || '1',
-  });
-
-  try {
-    const res = await fetch(`https://api.github.com/user/repos?${query}`, {
-      headers: {
-        Authorization: `Bearer ${ghToken}`,
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'Helvetia-Cloud',
-      },
-    });
-
-    if (!res.ok) {
-      if (res.status === 401) {
-        const isProd = process.env.NODE_ENV === 'production';
-        const cookieOptions = {
-          path: '/',
-          httpOnly: true,
-          secure: isProd,
-          sameSite: 'strict' as const,
-        };
-        reply.clearCookie('token', cookieOptions);
-        reply.clearCookie('gh_token', cookieOptions);
-      }
-      return reply.status(res.status).send(await res.json());
-    }
-
-    return res.json();
-  } catch (err) {
-    fastify.log.error(err);
-    return reply.status(500).send({ error: 'Failed to fetch repositories' });
-  }
-});
-
-/**
- * Proxy to fetch branches for a specific repository.
- * Security: Verifies JWT.
- * Input Validation: Sanitizes owner and repo to prevent path traversal.
- */
-fastify.get('/github/repos/:owner/:repo/branches', async (request, reply) => {
-  const ghToken = request.cookies.gh_token;
-  if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
-
-  const { owner, repo } = request.params as any;
-
-  // Input Validation
-  const safePattern = /^[a-zA-Z0-9._-]+$/;
-  if (!safePattern.test(owner) || !safePattern.test(repo)) {
-    return reply.status(400).send({ error: 'Invalid owner or repo parameters' });
-  }
-
-  try {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches`, {
-      headers: {
-        Authorization: `Bearer ${ghToken}`,
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'Helvetia-Cloud',
-      },
-    });
-
-    if (!res.ok) {
-      if (res.status === 401) {
-        const isProd = process.env.NODE_ENV === 'production';
-        const cookieOptions = {
-          path: '/',
-          httpOnly: true,
-          secure: isProd,
-          sameSite: 'strict' as const,
-        };
-        reply.clearCookie('token', cookieOptions);
-        reply.clearCookie('gh_token', cookieOptions);
-      }
-      return reply.status(res.status).send(await res.json());
-    }
-
-    return res.json();
-  } catch (err) {
-    fastify.log.error(err);
-    return reply.status(500).send({ error: 'Failed to fetch branches' });
-  }
 });
 
 // Service Routes
@@ -335,43 +115,34 @@ fastify.get('/services', async (request) => {
   const docker = new Docker();
   const containers = await docker.listContainers({ all: true });
 
-  const enrichedServices = services.map((service) => {
-    const serviceContainers = containers.filter(
-      (c) => c.Labels['helvetia.serviceId'] === service.id,
-    );
-
-    const latestDeployment = service.deployments[0];
-    let status = 'IDLE';
-
-    if (serviceContainers.length > 0) {
-      const container = serviceContainers[0];
-      // States: created, restarting, running, removing, paused, exited, dead
-      if (container.State === 'running') {
-        status = 'RUNNING';
-      } else if (container.State === 'restarting') {
-        status = 'CRASHING';
-      } else if (container.State === 'exited' || container.State === 'dead') {
-        status = 'STOPPED';
-      } else {
-        status = container.State.toUpperCase();
-      }
-    } else if (latestDeployment) {
-      if (['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
-        status = 'DEPLOYING';
-      } else if (latestDeployment.status === 'FAILED') {
-        status = 'FAILED';
-      } else if (latestDeployment.status === 'SUCCESS') {
-        status = 'IDLE'; // No container but last deploy was successful
-      }
-    }
-
-    return {
-      ...service,
-      status: status,
-    };
-  });
+  const enrichedServices = services.map((service) => ({
+    ...service,
+    status: determineServiceStatus(service, containers),
+  }));
 
   return enrichedServices;
+});
+
+fastify.get('/services/:id', async (request, reply) => {
+  const { id } = request.params as any;
+  const user = (request as any).user;
+
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id },
+    include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  });
+
+  if (!service) return reply.status(404).send({ error: 'Service not found' });
+
+  // Enrich service with actual Docker container status
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+  const containers = await docker.listContainers({ all: true });
+
+  return {
+    ...service,
+    status: determineServiceStatus(service, containers),
+  };
 });
 
 fastify.patch('/services/:id', async (request, reply) => {
@@ -449,7 +220,7 @@ fastify.post('/services', async (request, reply) => {
 
   if (finalType === 'STATIC') finalPort = 80;
   if (finalType === 'POSTGRES') {
-    finalPort = 5432;
+    finalPort = 5444;
     // Generate default credentials if not provided
     if (!finalEnvVars.POSTGRES_PASSWORD) {
       finalEnvVars = {
@@ -847,7 +618,7 @@ fastify.get(
       },
     },
   },
-  (connection, req) => {
+  (connection: WebSocket, req: FastifyRequest) => {
     const { id } = req.params as any;
     const { token } = req.query as any;
 
@@ -862,7 +633,7 @@ fastify.get(
       (req.server as any).jwt.verify(tokenToVerify);
     } catch (err: any) {
       console.error(`WS Auth Failed for deployment ${id}:`, err.message);
-      connection.socket.close();
+      connection.close();
       return;
     }
 
@@ -872,14 +643,14 @@ fastify.get(
 
     const onMessage = (chan: string, message: string) => {
       if (chan === channel) {
-        connection.socket.send(message);
+        connection.send(message);
       }
     };
 
     subConnection.subscribe(channel);
     subConnection.on('message', onMessage);
 
-    connection.socket.on('close', () => {
+    connection.on('close', () => {
       console.log(`Client disconnected from live logs: ${id}`);
       // We shouldn't unsubscribe from the channel globally if other clients are listening
       // But for MVP, simple is fine. Actually, ioredis handles multiple subscribers on the same connection.

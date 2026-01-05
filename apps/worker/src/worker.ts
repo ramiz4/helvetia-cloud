@@ -3,9 +3,10 @@ import { prisma } from 'database';
 import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
+import path from 'path';
 import { createScrubber } from './utils/logs';
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 // Type for Docker pull progress events
 interface DockerPullProgressEvent {

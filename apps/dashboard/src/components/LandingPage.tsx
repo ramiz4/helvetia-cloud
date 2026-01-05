@@ -1,14 +1,12 @@
 'use client';
 
-import { translations, type Language } from '@/lib/translations';
+import { useLanguage } from '@/lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
-import { useState } from 'react';
 import CookieBanner from './CookieBanner';
 
 export default function LandingPage() {
-  const [lang, setLang] = useState<Language>('en');
-  const t = translations[lang];
+  const { t } = useLanguage();
 
   const features = [
     {
@@ -43,36 +41,8 @@ export default function LandingPage() {
     },
   ];
 
-  const languages: { code: Language; label: string }[] = [
-    { code: 'en', label: 'English' },
-    { code: 'de', label: 'Deutsch' },
-    { code: 'gsw', label: 'Schwiizerdütsch' },
-    { code: 'fr', label: 'Français' },
-    { code: 'it', label: 'Italiano' },
-  ];
-
   return (
     <div className="landing-page">
-      {/* Language Switcher */}
-      <div className="absolute top-4 right-4 z-50">
-        <div className="glass rounded-lg p-1 flex gap-1">
-          {languages.map((l) => (
-            <button
-              key={l.code}
-              onClick={() => setLang(l.code)}
-              aria-label={`Switch to ${l.label}`}
-              className={`px-3 py-1 rounded-md text-sm transition-all ${
-                lang === l.code
-                  ? 'bg-(--primary) text-white shadow-md'
-                  : 'hover:bg-white/10 text-[--text-secondary]'
-              }`}
-            >
-              {l.label === 'Schwiizerdütsch' ? 'CH' : l.code.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Hero Section */}
       <section className="min-h-[80vh] flex items-center justify-center text-center p-8 relative overflow-hidden">
         {/* Background Gradients */}

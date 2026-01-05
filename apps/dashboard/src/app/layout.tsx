@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Toaster } from 'react-hot-toast';
 import Navigation from '../components/Navigation';
 import { LanguageProvider } from '../lib/LanguageContext';
 import './globals.css';
@@ -29,6 +30,29 @@ export default function RootLayout({
             <Navigation />
             <main className="main-content container animate-fade-in">{children}</main>
           </div>
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: 'var(--bg-glass)',
+                color: 'var(--text-primary)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid var(--border-light)',
+              },
+              success: {
+                iconTheme: {
+                  primary: 'var(--success)',
+                  secondary: 'white',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: 'var(--error)',
+                  secondary: 'white',
+                },
+              },
+            }}
+          />
         </LanguageProvider>
       </body>
     </html>

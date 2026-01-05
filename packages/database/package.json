@@ -1,11 +1,20 @@
 {
   "name": "database",
   "version": "1.0.0",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "build": "tsc"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1"
@@ -13,6 +22,7 @@
   "devDependencies": {
     "@types/node": "^25.0.3",
     "dotenv": "^17.2.3",
-    "prisma": "^6.2.1"
+    "prisma": "^6.2.1",
+    "typescript": "^5.9.3"
   }
 }

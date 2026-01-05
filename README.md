@@ -104,7 +104,23 @@ pnpm dev
 
 - **Dashboard**: [http://localhost:3000](http://localhost:3000)
 - **API Engine**: [http://localhost:3001](http://localhost:3001)
-- **Traefik Dashboard**: [http://localhost:8080](http://localhost:8080)
+- **Traefik Dashboard**: [http://localhost:8090](http://localhost:8090)
+
+### 6. Running in Production Mode
+
+To run the optimized, built version of the application:
+
+1.  **Build the application**:
+
+    ```bash
+    pnpm build
+    ```
+
+2.  **Start the production server**:
+    ```bash
+    pnpm start
+    ```
+    This will start all services (`api`, `worker`, `dashboard`) using their built artifacts in `dist/` folders. It ensures better performance and mimics a real production environment.
 
 ---
 

@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "pnpm --filter '*' --parallel dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter '*' --parallel start",
     "db:push": "pnpm --filter database db:push",
     "generate": "pnpm --filter database generate",
     "lint": "eslint .",

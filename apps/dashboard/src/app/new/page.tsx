@@ -370,7 +370,7 @@ export default function NewService() {
                             setFormData({
                               ...formData,
                               type: dbType,
-                              port: dbType === 'POSTGRES' ? 5432 : dbType === 'REDIS' ? 6379 : 3306,
+                              port: dbType === 'POSTGRES' ? 5444 : dbType === 'REDIS' ? 6379 : 3306,
                             })
                           }
                           className={`p-4 rounded-xl border transition-all text-left flex flex-col gap-3 ${
