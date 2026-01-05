@@ -37,7 +37,9 @@ export default function Navigation() {
           <div className="logo-icon" role="img" aria-label="Helvetia Logo">
             <div className="logo-inner"></div>
           </div>
-          <span className="brand-name" aria-hidden="true">HELVETIA</span>
+          <span className="brand-name" aria-hidden="true">
+            HELVETIA
+          </span>
         </a>
 
         {isLoggedIn && (

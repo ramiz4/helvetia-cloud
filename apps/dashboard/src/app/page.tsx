@@ -473,10 +473,11 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${service.type === 'STATIC'
-                        ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
-                        : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
-                        }`}
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
+                        service.type === 'STATIC'
+                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
+                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                      }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
@@ -683,7 +684,9 @@ export default function Home() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <FileText size={20} className="text-primary" />
-                <h2 id="logs-modal-title" style={{ fontSize: '1.25rem' }}>Build Logs</h2>
+                <h2 id="logs-modal-title" style={{ fontSize: '1.25rem' }}>
+                  Build Logs
+                </h2>
               </div>
               <button
                 onClick={() => {
@@ -884,8 +887,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                        .map(([k, v]) => `${k}=${v}`)
-                        .join('\n')
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join('\n')
                       : ''
                   }
                   onChange={(e) => {
