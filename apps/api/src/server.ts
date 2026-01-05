@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
+import fastifyJwt from '@fastify/jwt';
+import fastifyWebsocket, { WebSocket } from '@fastify/websocket';
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
-import Fastify from 'fastify';
+import Fastify, { FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 
@@ -72,7 +75,31 @@ fastify.register(cors, {
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 
-// ... (skipping middleware setup for brevity)
+fastify.register(fastifyWebsocket);
+fastify.register(fastifyCookie);
+fastify.register(fastifyJwt, {
+  secret: process.env.JWT_SECRET || 'supersecret',
+});
+
+// Auth hook
+fastify.addHook('onRequest', async (request, reply) => {
+  const publicRoutes = ['/health', '/webhooks/github'];
+  if (
+    publicRoutes.includes(request.routeOptions?.url || '') ||
+    request.url.includes('/logs/stream')
+  ) {
+    return;
+  }
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.send(err);
+  }
+});
+
+fastify.get('/health', async () => {
+  return { status: 'ok' };
+});
 
 // Service Routes
 fastify.get('/services', async (request) => {
@@ -591,7 +618,7 @@ fastify.get(
       },
     },
   },
-  (connection, req) => {
+  (connection: WebSocket, req: FastifyRequest) => {
     const { id } = req.params as any;
     const { token } = req.query as any;
 
@@ -606,7 +633,7 @@ fastify.get(
       (req.server as any).jwt.verify(tokenToVerify);
     } catch (err: any) {
       console.error(`WS Auth Failed for deployment ${id}:`, err.message);
-      connection.socket.close();
+      connection.close();
       return;
     }
 
@@ -616,14 +643,14 @@ fastify.get(
 
     const onMessage = (chan: string, message: string) => {
       if (chan === channel) {
-        connection.socket.send(message);
+        connection.send(message);
       }
     };
 
     subConnection.subscribe(channel);
     subConnection.on('message', onMessage);
 
-    connection.socket.on('close', () => {
+    connection.on('close', () => {
       console.log(`Client disconnected from live logs: ${id}`);
       // We shouldn't unsubscribe from the channel globally if other clients are listening
       // But for MVP, simple is fine. Actually, ioredis handles multiple subscribers on the same connection.
