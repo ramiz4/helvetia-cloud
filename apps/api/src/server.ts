@@ -67,9 +67,14 @@ function determineServiceStatus(service: any, containers: any[]): string {
 }
 
 // Helper to delete a service and its resources
-async function deleteService(id: string) {
+async function deleteService(id: string, userId?: string) {
   const service = await prisma.service.findUnique({ where: { id } });
   if (!service) return;
+
+  // Verify ownership if userId is provided (skip for system operations like webhooks)
+  if (userId && service.userId !== userId) {
+    throw new Error('Unauthorized: User does not own this service');
+  }
 
   // 1. Stop and remove containers if they exist
   const Docker = (await import('dockerode')).default;
@@ -398,9 +403,12 @@ fastify.delete('/services/:id', async (request, reply) => {
   const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
-  await deleteService(id);
-
-  return { success: true };
+  try {
+    await deleteService(id, user.id);
+    return { success: true };
+  } catch (error: any) {
+    return reply.status(403).send({ error: error.message });
+  }
 });
 
 fastify.get('/services/:id/health', async (request, reply) => {
@@ -601,104 +609,109 @@ fastify.post('/services/:id/restart', async (request, reply) => {
   }
 });
 
-fastify.post('/webhooks/github', async (request) => {
+fastify.post('/webhooks/github', async (request, reply) => {
   const payload = request.body as any;
 
   // Handle Pull Request events
   if (payload.pull_request) {
-    const pr = payload.pull_request;
-    const action = payload.action;
-    const prNumber = payload.number;
-    const repoUrl = pr.base.repo.html_url;
-    const headBranch = pr.head.ref;
+    try {
+      const pr = payload.pull_request;
+      const action = payload.action;
+      const prNumber = payload.number;
+      const repoUrl = pr.base.repo.html_url;
+      const headBranch = pr.head.ref;
 
-    console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
+      console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
 
-    if (['opened', 'synchronize'].includes(action)) {
-      // Find the base service for this repo (the one that isn't a preview)
-      const baseService = await prisma.service.findFirst({
-        where: {
-          repoUrl: { contains: repoUrl },
-          isPreview: false,
-        },
-      });
+      if (['opened', 'synchronize'].includes(action)) {
+        // Find the base service for this repo (the one that isn't a preview)
+        const baseService = await prisma.service.findFirst({
+          where: {
+            repoUrl: { contains: repoUrl },
+            isPreview: false,
+          },
+        });
 
-      if (!baseService) {
-        console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
-        return { skipped: 'No base service found' };
-      }
+        if (!baseService) {
+          console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
+          return { skipped: 'No base service found' };
+        }
 
-      const previewName = `${baseService.name}-pr-${prNumber}`;
+        const previewName = `${baseService.name}-pr-${prNumber}`;
 
-      // Upsert the preview service
-      const service = await prisma.service.upsert({
-        where: { name: previewName },
-        update: {
-          branch: headBranch,
-          status: 'IDLE',
-        },
-        create: {
-          name: previewName,
-          repoUrl: baseService.repoUrl,
-          branch: headBranch,
-          buildCommand: baseService.buildCommand,
-          startCommand: baseService.startCommand,
-          port: baseService.port,
-          type: baseService.type,
-          staticOutputDir: baseService.staticOutputDir,
-          envVars: baseService.envVars || {},
-          userId: baseService.userId,
-          isPreview: true,
-          prNumber: prNumber,
-        },
-      });
+        // Upsert the preview service
+        const service = await prisma.service.upsert({
+          where: { name: previewName },
+          update: {
+            branch: headBranch,
+            status: 'IDLE',
+          },
+          create: {
+            name: previewName,
+            repoUrl: baseService.repoUrl,
+            branch: headBranch,
+            buildCommand: baseService.buildCommand,
+            startCommand: baseService.startCommand,
+            port: baseService.port,
+            type: baseService.type,
+            staticOutputDir: baseService.staticOutputDir,
+            envVars: baseService.envVars || {},
+            userId: baseService.userId,
+            isPreview: true,
+            prNumber: prNumber,
+          },
+        });
 
-      console.log(`Triggering preview deployment for ${service.name}`);
+        console.log(`Triggering preview deployment for ${service.name}`);
 
-      const deployment = await prisma.deployment.create({
-        data: {
+        const deployment = await prisma.deployment.create({
+          data: {
+            serviceId: service.id,
+            status: 'QUEUED',
+            commitHash: pr.head.sha,
+          },
+        });
+
+        await deploymentQueue.add('build', {
+          deploymentId: deployment.id,
           serviceId: service.id,
-          status: 'QUEUED',
-          commitHash: pr.head.sha,
-        },
-      });
+          repoUrl: service.repoUrl,
+          branch: service.branch,
+          buildCommand: service.buildCommand,
+          startCommand: service.startCommand,
+          serviceName: service.name,
+          port: service.port,
+          envVars: service.envVars,
+          customDomain: (service as any).customDomain,
+          type: (service as any).type,
+          staticOutputDir: (service as any).staticOutputDir,
+        });
 
-      await deploymentQueue.add('build', {
-        deploymentId: deployment.id,
-        serviceId: service.id,
-        repoUrl: service.repoUrl,
-        branch: service.branch,
-        buildCommand: service.buildCommand,
-        startCommand: service.startCommand,
-        serviceName: service.name,
-        port: service.port,
-        envVars: service.envVars,
-        customDomain: (service as any).customDomain,
-        type: (service as any).type,
-        staticOutputDir: (service as any).staticOutputDir,
-      });
-
-      return { success: true, previewService: service.name };
-    }
-
-    if (action === 'closed') {
-      const previewService = await prisma.service.findFirst({
-        where: {
-          prNumber: prNumber,
-          repoUrl: { contains: repoUrl },
-          isPreview: true,
-        },
-      });
-
-      if (previewService) {
-        console.log(`Cleaning up preview environment for PR #${prNumber}`);
-        await deleteService(previewService.id);
-        return { success: true, deletedService: previewService.name };
+        return { success: true, previewService: service.name };
       }
-      return { skipped: 'No preview service found to delete' };
-    }
 
-    return { skipped: `Action ${action} not handled` };
+      if (action === 'closed') {
+        const previewService = await prisma.service.findFirst({
+          where: {
+            prNumber: prNumber,
+            repoUrl: { contains: repoUrl },
+            isPreview: true,
+          },
+        });
+
+        if (previewService) {
+          console.log(`Cleaning up preview environment for PR #${prNumber}`);
+          await deleteService(previewService.id);
+          return { success: true, deletedService: previewService.name };
+        }
+        return { skipped: 'No preview service found to delete' };
+      }
+
+      return { skipped: `Action ${action} not handled` };
+    } catch (error) {
+      console.error('Error handling GitHub PR webhook:', error);
+      return reply.status(500).send({ error: 'Internal server error while processing webhook' });
+    }
   }
 
   // Basic check for push event

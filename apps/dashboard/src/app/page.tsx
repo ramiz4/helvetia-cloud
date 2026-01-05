@@ -509,9 +509,15 @@ export default function Home() {
                     {service.isPreview && (
                       <span
                         className="text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border bg-yellow-500/15 text-yellow-500 border-yellow-500/20"
-                        title={`Preview Environment for PR #${service.prNumber}`}
+                        title={
+                          service.prNumber != null
+                            ? `Preview Environment for PR #${service.prNumber}`
+                            : 'Preview Environment'
+                        }
                       >
-                        PR #{service.prNumber} PREVIEW
+                        {service.prNumber != null
+                          ? `PR #${service.prNumber} PREVIEW`
+                          : 'PREVIEW ENVIRONMENT'}
                       </span>
                     )}
                   </div>

@@ -37,6 +37,9 @@ model Service {
   updatedAt    DateTime     @updatedAt
   deployments  Deployment[]
   user         User         @relation(fields: [userId], references: [id])
+
+  @@index([prNumber, isPreview])
+  @@index([repoUrl, prNumber, isPreview])
 }
 
 model Deployment {
