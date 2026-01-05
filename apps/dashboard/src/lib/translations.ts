@@ -47,6 +47,7 @@ export const translations = {
       rights: 'Helvetia Cloud. Open source under MIT License.',
     },
     cookie: {
+      title: 'DSGVO / GDPR Compliance',
       text: 'We use cookies to ensure you get the best experience on our website. This includes compliance with DSGVO/GDPR.',
       accept: 'Accept',
     },
@@ -142,6 +143,7 @@ export const translations = {
       rights: 'Helvetia Cloud. Open Source unter MIT Lizenz.',
     },
     cookie: {
+      title: 'DSGVO / GDPR Konformität',
       text: 'Wir verwenden Cookies, um das beste Erlebnis auf unserer Website zu gewährleisten (DSGVO-konform).',
       accept: 'Akzeptieren',
     },
@@ -237,6 +239,7 @@ export const translations = {
       rights: 'Helvetia Cloud. Open source sous licence MIT.',
     },
     cookie: {
+      title: 'Conformité RGPD / DSGVO',
       text: 'Nous utilisons des cookies pour garantir la meilleure expérience (conforme RGPD).',
       accept: 'Accepter',
     },
@@ -332,6 +335,7 @@ export const translations = {
       rights: 'Helvetia Cloud. Open source sotto licenza MIT.',
     },
     cookie: {
+      title: 'Conformità GDPR / DSGVO',
       text: 'Utilizziamo i cookie per garantire la migliore esperienza (conforme DSGVO).',
       accept: 'Accetta',
     },
@@ -424,6 +428,7 @@ export const translations = {
       rights: 'Helvetia Cloud. Open Source under MIT Lizenz.',
     },
     cookie: {
+      title: 'DSGVO / GDPR Konformität',
       text: "Mir bruuche Cookies für s'bescht Erlebnis (DSGVO konform).",
       accept: 'Akzeptiere',
     },

@@ -158,7 +158,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      <CookieBanner text={t.cookie.text} acceptText={t.cookie.accept} />
+      <CookieBanner title={t.cookie.title} text={t.cookie.text} acceptText={t.cookie.accept} />
     </div>
   );
 }
