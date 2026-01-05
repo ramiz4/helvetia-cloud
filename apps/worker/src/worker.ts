@@ -54,10 +54,26 @@ export const worker = new Worker(
         else if (type === 'REDIS') imageTag = 'redis:7-alpine';
         else if (type === 'MYSQL') imageTag = 'mysql:8';
 
-        console.log(`Managed service ${type} detected. Using image ${imageTag}. Skipping build.`);
+        console.log(`Managed service ${type} detected. Using image ${imageTag}. Pulling image...`);
+
+        // Explicitly pull the database image
+        try {
+          const stream = await docker.pull(imageTag);
+          await new Promise((resolve, reject) => {
+            docker.modem.followProgress(stream, (err: Error | null, res: any[]) => {
+              if (err) reject(err);
+              else resolve(res);
+            });
+          });
+          console.log(`Successfully pulled ${imageTag}`);
+        } catch (pullError) {
+          console.error(`Failed to pull image ${imageTag}:`, pullError);
+          throw new Error(`Failed to pull database image: ${pullError}`);
+        }
+
         await prisma.deployment.update({
           where: { id: deploymentId },
-          data: { logs: 'Managed service deployment. Using official image.' },
+          data: { logs: `Managed service deployment. Pulled official image ${imageTag}.` },
         });
       } else {
         // 1. Start Builder (Isolated Environment)
@@ -231,6 +247,10 @@ export const worker = new Worker(
         Image: imageTag,
         name: containerName,
         Env: envVars ? Object.entries(envVars).map(([k, v]) => `${k}=${v}`) : [],
+        Cmd:
+          type === 'REDIS' && envVars?.REDIS_PASSWORD
+            ? ['redis-server', '--requirepass', envVars.REDIS_PASSWORD]
+            : undefined,
         Labels: {
           'helvetia.serviceId': serviceId,
           'helvetia.type': type || 'DOCKER',
