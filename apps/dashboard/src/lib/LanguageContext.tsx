@@ -12,14 +12,18 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
-  const [mounted, setMounted] = useState(false);
+const isValidLanguage = (value: string): value is Language => {
+  return ['en', 'de', 'fr', 'it', 'gsw'].includes(value as Language);
+};
 
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguage] = useState<Language>('en');
   useEffect(() => {
-    setMounted(true);
     // Load from local storage if available
-    const saved = localStorage.getItem('helvetia-lang') as Language;
-    if (saved && translations[saved]) {
+    const saved = localStorage.getItem('helvetia-lang');
+    if (saved && isValidLanguage(saved) && translations[saved]) {
       setLanguage(saved);
     }
   }, []);
