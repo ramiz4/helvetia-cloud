@@ -7,6 +7,17 @@ import { createScrubber } from './utils/logs';
 
 dotenv.config();
 
+// Type for Docker pull progress events
+interface DockerPullProgressEvent {
+  status?: string;
+  id?: string;
+  progress?: string;
+  progressDetail?: {
+    current?: number;
+    total?: number;
+  };
+}
+
 const docker = new Docker();
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
@@ -46,26 +57,58 @@ export const worker = new Worker(
         data: { status: 'BUILDING' },
       });
 
-      // 1. Start Builder (Isolated Environment)
-      const builderName = `builder-${deploymentId}`;
-      const imageTag = `helvetia/${serviceName}:latest`;
+      let imageTag = `helvetia/${serviceName}:latest`;
+      const isDatabase = ['POSTGRES', 'REDIS', 'MYSQL'].includes(type);
 
-      // Ensure docker:cli is present (pulled in setup or earlier)
-      builder = await docker.createContainer({
-        Image: 'docker:cli',
-        name: builderName,
-        Entrypoint: ['sleep', '3600'],
-        HostConfig: {
-          AutoRemove: true,
-          Binds: ['/var/run/docker.sock:/var/run/docker.sock'],
-        },
-      });
-      await builder.start();
+      if (isDatabase) {
+        if (type === 'POSTGRES') imageTag = 'postgres:15-alpine';
+        else if (type === 'REDIS') imageTag = 'redis:7-alpine';
+        else if (type === 'MYSQL') imageTag = 'mysql:8';
 
-      console.log(`Building image ${imageTag} in isolated environment...`);
+        console.log(`Managed service ${type} detected. Using image ${imageTag}. Pulling image...`);
 
-      // 2. Prepare Build Script
-      const buildScript = `
+        // Explicitly pull the database image
+        try {
+          const stream = await docker.pull(imageTag);
+          await new Promise((resolve, reject) => {
+            docker.modem.followProgress(
+              stream,
+              (err: Error | null, res: DockerPullProgressEvent[]) => {
+                if (err) reject(err);
+                else resolve(res);
+              },
+            );
+          });
+          console.log(`Successfully pulled ${imageTag}`);
+        } catch (pullError) {
+          console.error(`Failed to pull image ${imageTag}:`, pullError);
+          throw new Error(`Failed to pull database image: ${pullError}`);
+        }
+
+        await prisma.deployment.update({
+          where: { id: deploymentId },
+          data: { logs: `Managed service deployment. Pulled official image ${imageTag}.` },
+        });
+      } else {
+        // 1. Start Builder (Isolated Environment)
+        const builderName = `builder-${deploymentId}`;
+
+        // Ensure docker:cli is present (pulled in setup or earlier)
+        builder = await docker.createContainer({
+          Image: 'docker:cli',
+          name: builderName,
+          Entrypoint: ['sleep', '3600'],
+          HostConfig: {
+            AutoRemove: true,
+            Binds: ['/var/run/docker.sock:/var/run/docker.sock'],
+          },
+        });
+        await builder.start();
+
+        console.log(`Building image ${imageTag} in isolated environment...`);
+
+        // 2. Prepare Build Script
+        const buildScript = `
         set -e
         apk add --no-cache git
         mkdir -p /app
@@ -160,47 +203,48 @@ export const worker = new Worker(
         docker build -t ${imageTag} .
       `;
 
-      let buildLogs = '';
+        let buildLogs = '';
 
-      // 3. Execute Build
-      const exec = await builder.exec({
-        Cmd: ['sh', '-c', buildScript],
-        AttachStdout: true,
-        AttachStderr: true,
-        Tty: true,
-      });
-
-      const stream = await exec.start({ hijack: true, stdin: false });
-
-      await new Promise((resolve, reject) => {
-        stream.on('data', async (chunk: Buffer) => {
-          const text = chunk.toString();
-          const clean = scrubLogs(text);
-          buildLogs += clean;
-          console.log(clean);
-          await redisConnection.publish(`deployment-logs:${deploymentId}`, clean);
+        // 3. Execute Build
+        const exec = await builder.exec({
+          Cmd: ['sh', '-c', buildScript],
+          AttachStdout: true,
+          AttachStderr: true,
+          Tty: true,
         });
-        stream.on('end', resolve);
-        stream.on('error', reject);
-      });
 
-      const execResult = await exec.inspect();
-      if (execResult.ExitCode !== 0) {
-        throw new Error(`Build failed with exit code ${execResult.ExitCode}`);
+        const stream = await exec.start({ hijack: true, stdin: false });
+
+        await new Promise((resolve, reject) => {
+          stream.on('data', async (chunk: Buffer) => {
+            const text = chunk.toString();
+            const clean = scrubLogs(text);
+            buildLogs += clean;
+            console.log(clean);
+            await redisConnection.publish(`deployment-logs:${deploymentId}`, clean);
+          });
+          stream.on('end', resolve);
+          stream.on('error', reject);
+        });
+
+        const execResult = await exec.inspect();
+        if (execResult.ExitCode !== 0) {
+          throw new Error(`Build failed with exit code ${execResult.ExitCode}`);
+        }
+
+        // Sanitize logs for PostgreSQL (remove null bytes and invalid UTF8)
+        /* eslint-disable no-control-regex */
+        const sanitizedLogs = buildLogs
+          .replace(/\0/g, '')
+          .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+        /* eslint-enable no-control-regex */
+
+        // Update logs in DB
+        await prisma.deployment.update({
+          where: { id: deploymentId },
+          data: { logs: sanitizedLogs },
+        });
       }
-
-      // Sanitize logs for PostgreSQL (remove null bytes and invalid UTF8)
-      /* eslint-disable no-control-regex */
-      const sanitizedLogs = buildLogs
-        .replace(/\0/g, '')
-        .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
-      /* eslint-enable no-control-regex */
-
-      // Update logs in DB
-      await prisma.deployment.update({
-        where: { id: deploymentId },
-        data: { logs: sanitizedLogs },
-      });
 
       // 4. Run Container (and stop old one)
       console.log(`Starting container for ${serviceName}...`);
@@ -217,6 +261,10 @@ export const worker = new Worker(
         Image: imageTag,
         name: containerName,
         Env: envVars ? Object.entries(envVars).map(([k, v]) => `${k}=${v}`) : [],
+        Cmd:
+          type === 'REDIS' && envVars?.REDIS_PASSWORD
+            ? ['redis-server', '--requirepass', envVars.REDIS_PASSWORD]
+            : undefined,
         Labels: {
           'helvetia.serviceId': serviceId,
           'helvetia.type': type || 'DOCKER',
@@ -232,6 +280,14 @@ export const worker = new Worker(
           RestartPolicy: { Name: 'always' },
           Memory: 512 * 1024 * 1024, // 512MB limit
           NanoCpus: 1000000000, // 1 CPU core limit
+          Binds:
+            type === 'POSTGRES'
+              ? [`helvetia-data-${serviceName}:/var/lib/postgresql/data`]
+              : type === 'REDIS'
+                ? [`helvetia-data-${serviceName}:/data`]
+                : type === 'MYSQL'
+                  ? [`helvetia-data-${serviceName}:/var/lib/mysql`]
+                  : [],
           LogConfig: {
             Type: 'json-file',
             Config: {},

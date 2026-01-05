@@ -5,6 +5,7 @@ import jwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
 import fastifyWebsocket from '@fastify/websocket';
 import { Queue } from 'bullmq';
+import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
 import Fastify from 'fastify';
@@ -24,6 +25,18 @@ const subConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:63
 const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
 });
+
+// Helper function to get default port for service type
+function getDefaultPortForServiceType(serviceType: string): number {
+  const portMap: Record<string, number> = {
+    STATIC: 80,
+    POSTGRES: 5432,
+    REDIS: 6379,
+    MYSQL: 3306,
+    DOCKER: 3000,
+  };
+  return portMap[serviceType] || 3000;
+}
 
 export const fastify = Fastify({
   logger: true,
@@ -376,7 +389,7 @@ fastify.patch('/services/:id', async (request, reply) => {
     staticOutputDir,
   } = request.body as any;
 
-  if (type !== undefined && !['DOCKER', 'STATIC'].includes(type)) {
+  if (type !== undefined && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(type)) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -388,7 +401,7 @@ fastify.patch('/services/:id', async (request, reply) => {
       branch,
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : type ? (type === 'STATIC' ? 80 : 3000) : undefined,
+      port: port ? parseInt(port) : type ? getDefaultPortForServiceType(type) : undefined,
       envVars,
       customDomain,
       type,
@@ -415,9 +428,10 @@ fastify.post('/services', async (request, reply) => {
     customDomain,
     type,
     staticOutputDir,
+    envVars,
   } = request.body as any;
 
-  if (type && !['DOCKER', 'STATIC'].includes(type)) {
+  if (type && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(type)) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -430,7 +444,42 @@ fastify.post('/services', async (request, reply) => {
   }
 
   const finalType = type || 'DOCKER';
-  const finalPort = port ? parseInt(port) : finalType === 'STATIC' ? 80 : 3000;
+  let finalPort = port ? parseInt(port) : 3000;
+  let finalEnvVars = envVars || {};
+
+  if (finalType === 'STATIC') finalPort = 80;
+  if (finalType === 'POSTGRES') {
+    finalPort = 5432;
+    // Generate default credentials if not provided
+    if (!finalEnvVars.POSTGRES_PASSWORD) {
+      finalEnvVars = {
+        ...finalEnvVars,
+        POSTGRES_USER: 'postgres',
+        POSTGRES_PASSWORD: crypto.randomBytes(16).toString('hex'),
+        POSTGRES_DB: 'app',
+      };
+    }
+  }
+  if (finalType === 'REDIS') {
+    finalPort = 6379;
+    // Generate default Redis password if not provided
+    if (!finalEnvVars.REDIS_PASSWORD) {
+      finalEnvVars = {
+        ...finalEnvVars,
+        REDIS_PASSWORD: crypto.randomBytes(16).toString('hex'),
+      };
+    }
+  }
+  if (finalType === 'MYSQL') {
+    finalPort = 3306;
+    if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
+      finalEnvVars = {
+        ...finalEnvVars,
+        MYSQL_ROOT_PASSWORD: crypto.randomBytes(16).toString('hex'),
+        MYSQL_DATABASE: 'app',
+      };
+    }
+  }
 
   const service = await prisma.service.upsert({
     where: { name },
@@ -443,10 +492,11 @@ fastify.post('/services', async (request, reply) => {
       customDomain,
       type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
+      envVars: finalEnvVars,
     } as any,
     create: {
       name,
-      repoUrl,
+      repoUrl: repoUrl || null,
       branch: branch || 'main',
       buildCommand,
       startCommand,
@@ -455,6 +505,7 @@ fastify.post('/services', async (request, reply) => {
       customDomain,
       type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
+      envVars: finalEnvVars,
     } as any,
   });
 
@@ -478,6 +529,20 @@ fastify.delete('/services/:id', async (request, reply) => {
     const container = docker.getContainer(containerInfo.Id);
     await container.stop().catch(() => {});
     await container.remove().catch(() => {});
+  }
+
+  // Clean up associated volumes for database services
+  const serviceType = (service as any).type;
+  if (serviceType && ['POSTGRES', 'REDIS', 'MYSQL'].includes(serviceType)) {
+    const volumeName = `helvetia-data-${service.name}`;
+    try {
+      const volume = docker.getVolume(volumeName);
+      await volume.remove();
+      console.log(`Removed volume ${volumeName} for database service ${service.name}`);
+    } catch (err) {
+      console.error(`Failed to remove volume ${volumeName}:`, err);
+      // Continue with deletion even if volume removal fails
+    }
   }
 
   // 2. Delete deployments and service from DB
@@ -630,6 +695,15 @@ fastify.post('/services/:id/restart', async (request, reply) => {
       Image: imageTag,
       name: containerName,
       Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
+      Cmd:
+        (service as any).type === 'REDIS' &&
+        (service.envVars as Record<string, any>)?.REDIS_PASSWORD
+          ? [
+              'redis-server',
+              '--requirepass',
+              (service.envVars as Record<string, any>).REDIS_PASSWORD,
+            ]
+          : undefined,
       Labels: {
         'helvetia.serviceId': service.id,
         'helvetia.type': (service as any).type || 'DOCKER',
@@ -637,7 +711,7 @@ fastify.post('/services/:id/restart', async (request, reply) => {
         [`traefik.http.routers.${service.name}.rule`]: traefikRule,
         [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
         [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
-          service.port || ((service as any).type === 'STATIC' ? 80 : 3000)
+          service.port || getDefaultPortForServiceType((service as any).type || 'DOCKER')
         ).toString(),
       },
       HostConfig: {
@@ -645,6 +719,14 @@ fastify.post('/services/:id/restart', async (request, reply) => {
         RestartPolicy: { Name: 'always' },
         Memory: 512 * 1024 * 1024,
         NanoCpus: 1000000000,
+        Binds:
+          (service as any).type === 'POSTGRES'
+            ? [`helvetia-data-${service.name}:/var/lib/postgresql/data`]
+            : (service as any).type === 'REDIS'
+              ? [`helvetia-data-${service.name}:/data`]
+              : (service as any).type === 'MYSQL'
+                ? [`helvetia-data-${service.name}:/var/lib/mysql`]
+                : [],
         LogConfig: {
           Type: 'json-file',
           Config: {},

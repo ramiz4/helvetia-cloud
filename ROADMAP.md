@@ -48,7 +48,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 
 ## 🔮 Phase 6: Advanced Ecosystem & Growth
 
-- [ ] **Database-as-a-Service**: One-click provisioning of managed databases (Postgres, Redis, MySQL).
+- [x] **Database-as-a-Service**: One-click provisioning of managed databases (Postgres, Redis, MySQL).
 - [ ] **Preview Environments**: Automatic ephemeral deployments for Pull Requests.
 - [ ] **Team Collaboration**: Organizations, member management, and RBAC (Role-Based Access Control).
 - [ ] **Billing Integration**: Stripe integration for implementation of usage-based pricing and subscription tiers.
