@@ -69,7 +69,7 @@ export const translations = {
       },
       gitIntegrated: {
         title: 'Git Integriert',
-        desc: 'Pushen Sie zu Ihrem Branch und sehen Sie zu, wie automatisch deployed wird.',
+        desc: 'Pushen Sie auf Ihren Branch und sehen Sie zu, wie Ihre Anwendung automatisch bereitgestellt wird.',
       },
       secure: {
         title: 'Sicher im Design',
@@ -119,7 +119,7 @@ export const translations = {
       },
       gitIntegrated: {
         title: 'Git Intégré',
-        desc: 'Poussez vers votre branche et regardez le déploiement automatique.',
+        desc: 'Poussez vers votre branche et il se déploie automatiquement.',
       },
       secure: {
         title: 'Conception sécurisée',
@@ -198,7 +198,7 @@ export const translations = {
     },
     cookie: {
       text: 'Utilizziamo i cookie per garantire la migliore esperienza (conforme DSGVO).',
-      accept: 'Accettare',
+      accept: 'Accetta',
     },
   },
   gsw: {
