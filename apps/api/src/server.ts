@@ -408,7 +408,11 @@ fastify.delete('/services/:id', async (request, reply) => {
     return { success: true };
   } catch (error: any) {
     console.error('Error deleting service:', error);
-    return reply.status(403).send({ error: 'Unauthorized to delete this service' });
+    // Check if it's an authorization error specifically
+    if (error.message && error.message.includes('Unauthorized')) {
+      return reply.status(403).send({ error: 'Unauthorized to delete this service' });
+    }
+    return reply.status(500).send({ error: 'Failed to delete service' });
   }
 });
 
@@ -635,7 +639,7 @@ fastify.post('/webhooks/github', async (request, reply) => {
 
         if (!baseService) {
           console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
-          return { skipped: 'No base service found' };
+          return reply.send({ skipped: 'No base service found' });
         }
 
         const previewName = `${baseService.name}-pr-${prNumber}`;
@@ -688,7 +692,7 @@ fastify.post('/webhooks/github', async (request, reply) => {
           staticOutputDir: (service as any).staticOutputDir,
         });
 
-        return { success: true, previewService: service.name };
+        return reply.send({ success: true, previewService: service.name });
       }
 
       if (action === 'closed') {
@@ -703,17 +707,17 @@ fastify.post('/webhooks/github', async (request, reply) => {
         if (previewService) {
           console.log(`Cleaning up preview environment for PR #${prNumber}`);
           await deleteService(previewService.id);
-          return { success: true, deletedService: previewService.name };
+          return reply.send({ success: true, deletedService: previewService.name });
         }
-        return { skipped: 'No preview service found to delete' };
+        return reply.send({ skipped: 'No preview service found to delete' });
       }
 
-      return { skipped: `Action ${action} not handled` };
+      return reply.send({ skipped: `Action ${action} not handled` });
     }
 
     // Basic check for push event
     if (!payload.repository || !payload.ref) {
-      return { skipped: 'Not a push or PR event' };
+      return reply.send({ skipped: 'Not a push or PR event' });
     }
 
     const repoUrl = payload.repository.html_url;
@@ -732,7 +736,7 @@ fastify.post('/webhooks/github', async (request, reply) => {
 
     if (services.length === 0) {
       console.log(`No service found for ${repoUrl} on branch ${branch}`);
-      return { skipped: 'No matching service found' };
+      return reply.send({ skipped: 'No matching service found' });
     }
 
     for (const service of services) {
@@ -762,7 +766,7 @@ fastify.post('/webhooks/github', async (request, reply) => {
       });
     }
 
-    return { success: true, servicesTriggered: services.length };
+    return reply.send({ success: true, servicesTriggered: services.length });
   } catch (error) {
     console.error('Error handling GitHub webhook:', error);
     return reply.status(500).send({ error: 'Internal server error while processing webhook' });
