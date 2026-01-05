@@ -39,7 +39,40 @@ Clone the repository and copy the example environment variables:
 cp .env.example .env
 ```
 
-_Ensure you configure your `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` for GitHub OAuth._
+#### Required Configuration
+
+**GitHub OAuth** (Required):
+
+- `GITHUB_CLIENT_ID`: Your GitHub OAuth App Client ID
+- `GITHUB_CLIENT_SECRET`: Your GitHub OAuth App Client Secret
+
+**Core Services** (Required):
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_URL`: Redis connection string
+- `JWT_SECRET`: Secret key for JWT token signing
+- `PLATFORM_DOMAIN`: Your platform's domain (e.g., `helvetia.cloud`)
+
+#### Rate Limiting Configuration (Optional)
+
+The API includes production-ready rate limiting with Redis-backed distributed storage. Configure these values to adjust rate limits based on your deployment needs:
+
+**Global Rate Limiting**:
+
+- `RATE_LIMIT_MAX`: Maximum requests per time window (default: `100`)
+- `RATE_LIMIT_WINDOW`: Time window for rate limiting (default: `1 minute`)
+
+**Authentication Endpoint** (stricter to prevent brute force):
+
+- `AUTH_RATE_LIMIT_MAX`: Maximum auth requests per time window (default: `10`)
+- `AUTH_RATE_LIMIT_WINDOW`: Time window for auth rate limiting (default: `1 minute`)
+
+**WebSocket Log Streaming** (prevents connection abuse):
+
+- `WS_RATE_LIMIT_MAX`: Maximum WebSocket connections per time window (default: `10`)
+- `WS_RATE_LIMIT_WINDOW`: Time window for WebSocket rate limiting (default: `1 minute`)
+
+> **Note**: Health check endpoints (`/health`) are automatically excluded from rate limiting for monitoring purposes.
 
 ### 3. Launch Infrastructure
 
