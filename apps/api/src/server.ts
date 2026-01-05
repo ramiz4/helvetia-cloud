@@ -116,6 +116,10 @@ fastify.register(fastifyWebsocket);
 fastify.register(fastifyCookie);
 fastify.register(fastifyJwt, {
   secret: process.env.JWT_SECRET || 'supersecret',
+  cookie: {
+    cookieName: 'token',
+    signed: false,
+  },
 });
 
 // Auth hook
