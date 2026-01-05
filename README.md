@@ -52,6 +52,8 @@ cp .env.example .env
 - `REDIS_URL`: Redis connection string
 - `JWT_SECRET`: Secret key for JWT token signing
 - `PLATFORM_DOMAIN`: Your platform's domain (e.g., `helvetia.cloud`)
+- `APP_BASE_URL`: The base URL of the application, used for CORS configuration (e.g., `http://localhost:3000`)
+- `NODE_ENV`: The environment mode (e.g., `development` or `production`)
 
   **Dashboard Configuration** (Next.js):
 

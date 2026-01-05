@@ -30,7 +30,7 @@ export const fastify = Fastify({
 });
 
 fastify.register(cors, {
-  origin: true,
+  origin: [process.env.APP_BASE_URL || 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
@@ -183,7 +183,7 @@ fastify.post(
         path: '/',
         httpOnly: true,
         secure: isProd,
-        sameSite: 'lax' as const,
+        sameSite: 'strict' as const,
         maxAge: 60 * 60 * 24 * 7, // 7 days
       };
 
@@ -199,13 +199,31 @@ fastify.post(
 );
 
 fastify.post('/auth/logout', async (request, reply) => {
-  reply.clearCookie('token', { path: '/' });
-  reply.clearCookie('gh_token', { path: '/' });
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookieOptions = {
+    path: '/',
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'strict' as const,
+  };
+  reply.clearCookie('token', cookieOptions);
+  reply.clearCookie('gh_token', cookieOptions);
   return { success: true };
 });
 
 // GitHub Proxy Routes
+/**
+ * Proxy to fetch repositories from GitHub.
+ * Security: Verifies JWT via verifyJwt() before accessing GitHub token.
+ * Input Validation: None required for global repo list.
+ */
 fastify.get('/github/repos', async (request, reply) => {
+  try {
+    await request.jwtVerify();
+  } catch {
+    return reply.status(401).send({ error: 'Unauthorized' });
+  }
+
   const ghToken = request.cookies.gh_token;
   if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
 
@@ -228,8 +246,15 @@ fastify.get('/github/repos', async (request, reply) => {
 
     if (!res.ok) {
       if (res.status === 401) {
-        reply.clearCookie('token');
-        reply.clearCookie('gh_token');
+        const isProd = process.env.NODE_ENV === 'production';
+        const cookieOptions = {
+          path: '/',
+          httpOnly: true,
+          secure: isProd,
+          sameSite: 'strict' as const,
+        };
+        reply.clearCookie('token', cookieOptions);
+        reply.clearCookie('gh_token', cookieOptions);
       }
       return reply.status(res.status).send(await res.json());
     }
@@ -241,11 +266,28 @@ fastify.get('/github/repos', async (request, reply) => {
   }
 });
 
+/**
+ * Proxy to fetch branches for a specific repository.
+ * Security: Verifies JWT.
+ * Input Validation: Sanitizes owner and repo to prevent path traversal.
+ */
 fastify.get('/github/repos/:owner/:repo/branches', async (request, reply) => {
+  try {
+    await request.jwtVerify();
+  } catch {
+    return reply.status(401).send({ error: 'Unauthorized' });
+  }
+
   const ghToken = request.cookies.gh_token;
   if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
 
   const { owner, repo } = request.params as any;
+
+  // Input Validation
+  const safePattern = /^[a-zA-Z0-9._-]+$/;
+  if (!safePattern.test(owner) || !safePattern.test(repo)) {
+    return reply.status(400).send({ error: 'Invalid owner or repo parameters' });
+  }
 
   try {
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches`, {
@@ -258,8 +300,15 @@ fastify.get('/github/repos/:owner/:repo/branches', async (request, reply) => {
 
     if (!res.ok) {
       if (res.status === 401) {
-        reply.clearCookie('token');
-        reply.clearCookie('gh_token');
+        const isProd = process.env.NODE_ENV === 'production';
+        const cookieOptions = {
+          path: '/',
+          httpOnly: true,
+          secure: isProd,
+          sameSite: 'strict' as const,
+        };
+        reply.clearCookie('token', cookieOptions);
+        reply.clearCookie('gh_token', cookieOptions);
       }
       return reply.status(res.status).send(await res.json());
     }

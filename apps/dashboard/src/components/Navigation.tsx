@@ -30,12 +30,16 @@ export default function Navigation() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      const res = await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
+      if (!res.ok) {
+        alert('Logout failed on server, but you will be logged out locally.');
+      }
     } catch (e) {
       console.error('Logout failed', e);
+      alert('Network error during logout, but you will be logged out locally.');
     } finally {
       localStorage.removeItem('user');
       // Remove legacy tokens just in case
