@@ -1,27 +1,24 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Language, translations } from './translations';
 
 type LanguageContextType = {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: typeof translations['en'];
+  t: (typeof translations)['en'];
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
-  const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     // Load from local storage if available
     const saved = localStorage.getItem('helvetia-lang') as Language;
     if (saved && translations[saved]) {
       setLanguage(saved);
     }
-    setMounted(true);
   }, []);
 
   const handleSetLanguage = (lang: Language) => {
