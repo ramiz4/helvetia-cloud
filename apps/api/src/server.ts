@@ -24,7 +24,7 @@ const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
 });
 
-const fastify = Fastify({
+export const fastify = Fastify({
   logger: true,
 });
 
@@ -673,13 +673,14 @@ fastify.get(
   },
 );
 
-const start = async () => {
-  try {
-    await fastify.listen({ port: 3001, host: '0.0.0.0' });
-  } catch (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
-};
-
-start();
+// Removed auto-start for testing
+// const start = async () => {
+//   try {
+//     await fastify.listen({ port: 3001, host: '0.0.0.0' });
+//   } catch (err) {
+//     fastify.log.error(err);
+//     process.exit(1);
+//   }
+// };
+//
+// start();
