@@ -3,6 +3,7 @@ import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import fastifyWebsocket, { WebSocket } from '@fastify/websocket';
+import axios from 'axios';
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
@@ -119,7 +120,7 @@ fastify.register(fastifyJwt, {
 
 // Auth hook
 fastify.addHook('onRequest', async (request, reply) => {
-  const publicRoutes = ['/health', '/webhooks/github'];
+  const publicRoutes = ['/health', '/webhooks/github', '/auth/github'];
   if (
     publicRoutes.includes(request.routeOptions?.url || '') ||
     request.url.includes('/logs/stream')
@@ -135,6 +136,73 @@ fastify.addHook('onRequest', async (request, reply) => {
 
 fastify.get('/health', async () => {
   return { status: 'ok' };
+});
+
+fastify.post('/auth/github', async (request, reply) => {
+  const { code } = request.body as any;
+
+  if (!code) {
+    return reply.status(400).send({ error: 'Code is required' });
+  }
+
+  try {
+    // 1. Exchange code for access token
+    const tokenRes = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      },
+      {
+        headers: { Accept: 'application/json' },
+      },
+    );
+
+    const { access_token, error } = tokenRes.data;
+
+    if (error) {
+      return reply.status(401).send({ error });
+    }
+
+    // 2. Fetch user info
+    const userRes = await axios.get('https://api.github.com/user', {
+      headers: { Authorization: `token ${access_token}` },
+    });
+
+    const githubUser = userRes.data;
+
+    // 3. Upsert user in DB
+    const user = await prisma.user.upsert({
+      where: { githubId: githubUser.id.toString() },
+      update: {
+        username: githubUser.login,
+        avatarUrl: githubUser.avatar_url,
+      },
+      create: {
+        githubId: githubUser.id.toString(),
+        username: githubUser.login,
+        avatarUrl: githubUser.avatar_url,
+      },
+    });
+
+    // 4. Generate JWT
+    const token = fastify.jwt.sign({ id: user.id, username: user.username });
+
+    // 5. Set cookie and return user
+    reply.setCookie('token', token, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+    });
+
+    return { user, token };
+  } catch (err: any) {
+    console.error('Auth error:', err.response?.data || err.message);
+    return reply.status(500).send({ error: 'Authentication failed' });
+  }
 });
 
 // Service Routes

@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { APP_BASE_URL } from '../../lib/config';
 
 function LoginContent() {
-  const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
   const REDIRECT_URI = `${APP_BASE_URL}/auth/callback`;
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
