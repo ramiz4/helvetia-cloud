@@ -169,7 +169,7 @@ describe('API Server', () => {
       name: 'my-postgres',
       userId: 'user-1',
       type: 'POSTGRES',
-      port: 5432,
+      port: 5444,
     };
 
     const { prisma } = await import('database');
@@ -197,7 +197,7 @@ describe('API Server', () => {
     // Verify upsert was called with correct port and credentials
     const upsertCall = vi.mocked(prisma.service.upsert).mock.calls[0][0];
     const envVars = upsertCall.create.envVars as Record<string, string>;
-    expect(upsertCall.create.port).toBe(5432);
+    expect(upsertCall.create.port).toBe(5444);
     expect(upsertCall.create.type).toBe('POSTGRES');
     expect(envVars).toHaveProperty('POSTGRES_USER', 'postgres');
     expect(envVars).toHaveProperty('POSTGRES_PASSWORD');
@@ -298,7 +298,7 @@ describe('API Server', () => {
       name: 'my-postgres-custom',
       userId: 'user-1',
       type: 'POSTGRES',
-      port: 5432,
+      port: 5444,
     };
 
     const { prisma } = await import('database');
