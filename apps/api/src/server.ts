@@ -65,6 +65,42 @@ function determineServiceStatus(service: any, containers: any[]): string {
   return status;
 }
 
+// Helper to delete a service and its resources
+async function deleteService(id: string) {
+  const service = await prisma.service.findUnique({ where: { id } });
+  if (!service) return;
+
+  // 1. Stop and remove containers if they exist
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+  const containers = await docker.listContainers({ all: true });
+  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+
+  for (const containerInfo of serviceContainers) {
+    const container = docker.getContainer(containerInfo.Id);
+    await container.stop().catch(() => {});
+    await container.remove().catch(() => {});
+  }
+
+  // Clean up associated volumes for database services
+  const serviceType = (service as any).type;
+  if (serviceType && ['POSTGRES', 'REDIS', 'MYSQL'].includes(serviceType)) {
+    const volumeName = `helvetia-data-${service.name}`;
+    try {
+      const volume = docker.getVolume(volumeName);
+      await volume.remove();
+      console.log(`Removed volume ${volumeName} for database service ${service.name}`);
+    } catch (err) {
+      console.error(`Failed to remove volume ${volumeName}:`, err);
+      // Continue with deletion even if volume removal fails
+    }
+  }
+
+  // 2. Delete deployments and service from DB
+  await prisma.deployment.deleteMany({ where: { serviceId: id } });
+  await prisma.service.delete({ where: { id } });
+}
+
 export const fastify = Fastify({
   logger: true,
 });
@@ -290,35 +326,7 @@ fastify.delete('/services/:id', async (request, reply) => {
   const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
-  // 1. Stop and remove containers if they exist
-  const Docker = (await import('dockerode')).default;
-  const docker = new Docker();
-  const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
-
-  for (const containerInfo of serviceContainers) {
-    const container = docker.getContainer(containerInfo.Id);
-    await container.stop().catch(() => {});
-    await container.remove().catch(() => {});
-  }
-
-  // Clean up associated volumes for database services
-  const serviceType = (service as any).type;
-  if (serviceType && ['POSTGRES', 'REDIS', 'MYSQL'].includes(serviceType)) {
-    const volumeName = `helvetia-data-${service.name}`;
-    try {
-      const volume = docker.getVolume(volumeName);
-      await volume.remove();
-      console.log(`Removed volume ${volumeName} for database service ${service.name}`);
-    } catch (err) {
-      console.error(`Failed to remove volume ${volumeName}:`, err);
-      // Continue with deletion even if volume removal fails
-    }
-  }
-
-  // 2. Delete deployments and service from DB
-  await prisma.deployment.deleteMany({ where: { serviceId: id } });
-  await prisma.service.delete({ where: { id } });
+  await deleteService(id);
 
   return { success: true };
 });
@@ -524,21 +532,119 @@ fastify.post('/services/:id/restart', async (request, reply) => {
 fastify.post('/webhooks/github', async (request) => {
   const payload = request.body as any;
 
+  // Handle Pull Request events
+  if (payload.pull_request) {
+    const pr = payload.pull_request;
+    const action = payload.action;
+    const prNumber = payload.number;
+    const repoUrl = pr.base.repo.html_url;
+    const headBranch = pr.head.ref;
+
+    console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
+
+    if (['opened', 'synchronize'].includes(action)) {
+      // Find the base service for this repo (the one that isn't a preview)
+      const baseService = await prisma.service.findFirst({
+        where: {
+          repoUrl: { contains: repoUrl },
+          isPreview: false,
+        },
+      });
+
+      if (!baseService) {
+        console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
+        return { skipped: 'No base service found' };
+      }
+
+      const previewName = `${baseService.name}-pr-${prNumber}`;
+
+      // Upsert the preview service
+      const service = await prisma.service.upsert({
+        where: { name: previewName },
+        update: {
+          branch: headBranch,
+          status: 'IDLE',
+        },
+        create: {
+          name: previewName,
+          repoUrl: baseService.repoUrl,
+          branch: headBranch,
+          buildCommand: baseService.buildCommand,
+          startCommand: baseService.startCommand,
+          port: baseService.port,
+          type: baseService.type,
+          staticOutputDir: baseService.staticOutputDir,
+          envVars: baseService.envVars || {},
+          userId: baseService.userId,
+          isPreview: true,
+          prNumber: prNumber,
+        } as any,
+      });
+
+      console.log(`Triggering preview deployment for ${service.name}`);
+
+      const deployment = await prisma.deployment.create({
+        data: {
+          serviceId: service.id,
+          status: 'QUEUED',
+          commitHash: pr.head.sha,
+        },
+      });
+
+      await deploymentQueue.add('build', {
+        deploymentId: deployment.id,
+        serviceId: service.id,
+        repoUrl: service.repoUrl,
+        branch: service.branch,
+        buildCommand: service.buildCommand,
+        startCommand: service.startCommand,
+        serviceName: service.name,
+        port: service.port,
+        envVars: service.envVars,
+        customDomain: (service as any).customDomain,
+        type: (service as any).type,
+        staticOutputDir: (service as any).staticOutputDir,
+      });
+
+      return { success: true, previewService: service.name };
+    }
+
+    if (action === 'closed') {
+      const previewService = await prisma.service.findFirst({
+        where: {
+          prNumber: prNumber,
+          repoUrl: { contains: repoUrl },
+          isPreview: true,
+        },
+      });
+
+      if (previewService) {
+        console.log(`Cleaning up preview environment for PR #${prNumber}`);
+        await deleteService(previewService.id);
+        return { success: true, deletedService: previewService.name };
+      }
+      return { skipped: 'No preview service found to delete' };
+    }
+
+    return { skipped: `Action ${action} not handled` };
+  }
+
   // Basic check for push event
   if (!payload.repository || !payload.ref) {
-    return { skipped: 'Not a push event' };
+    return { skipped: 'Not a push or PR event' };
   }
 
   const repoUrl = payload.repository.html_url;
   const branch = payload.ref.replace('refs/heads/', '');
 
-  console.log(`Received GitHub webhook for ${repoUrl} on branch ${branch}`);
+  console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
 
   // Find service(s) matching this repo and branch
   const services = await prisma.service.findMany({
     where: {
       repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
       branch,
+      isPreview: false, // Only trigger non-preview services for push events
     },
   });
 

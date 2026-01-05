@@ -34,6 +34,8 @@ interface Service {
   staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;
+  isPreview?: boolean;
+  prNumber?: number;
   metrics?: { cpu: number; memory: number; memoryLimit: number };
   deployments: { id: string; status: string; createdAt: string }[];
 }
@@ -491,17 +493,24 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
-                        service.type === 'STATIC'
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${service.type === 'STATIC'
                           ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
                           : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
-                      }`}
+                        }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
                     {service.customDomain && (
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         {service.customDomain}
+                      </span>
+                    )}
+                    {service.isPreview && (
+                      <span
+                        className="text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border bg-yellow-500/15 text-yellow-500 border-yellow-500/20"
+                        title={`Preview Environment for PR #${service.prNumber}`}
+                      >
+                        PR #{service.prNumber} PREVIEW
                       </span>
                     )}
                   </div>
@@ -905,8 +914,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                          .map(([k, v]) => `${k}=${v}`)
-                          .join('\n')
+                        .map(([k, v]) => `${k}=${v}`)
+                        .join('\n')
                       : ''
                   }
                   onChange={(e) => {

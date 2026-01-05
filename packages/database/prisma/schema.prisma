@@ -28,6 +28,8 @@ model Service {
   status       String       @default("IDLE")
   type         String       @default("DOCKER") // DOCKER or STATIC
   staticOutputDir String?    @default("dist")
+  isPreview    Boolean      @default(false)
+  prNumber     Int?
   userId       String
   envVars      Json?
   customDomain String?
