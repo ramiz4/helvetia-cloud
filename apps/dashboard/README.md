@@ -33,6 +33,8 @@ Create a `.env.local` file with the following:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_WS_URL=ws://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ### 3. Run Development Server

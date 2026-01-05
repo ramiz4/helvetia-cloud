@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GitHubRepoPicker from '../../components/GitHubRepoPicker';
+import { API_BASE_URL } from '../../lib/config';
 import { sanitizeServiceName } from '../../utils/serviceName';
 
 type ImportMethod = 'github' | 'manual';
@@ -72,7 +73,7 @@ export default function NewService() {
     }
 
     try {
-      const res = await fetch('http://localhost:3001/services', {
+      const res = await fetch(`${API_BASE_URL}/services`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ export default function NewService() {
       if (res.ok) {
         const service = await res.json();
         // Trigger initial deploy
-        await fetch(`http://localhost:3001/services/${service.id}/deploy`, {
+        await fetch(`${API_BASE_URL}/services/${service.id}/deploy`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         });
