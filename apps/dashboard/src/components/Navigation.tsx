@@ -2,7 +2,16 @@
 
 import { API_BASE_URL } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
-import { BookOpen, ChevronDown, Github, Globe, LayoutDashboard, LogIn, LogOut, Plus } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronDown,
+  Github,
+  Globe,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Plus,
+} from 'lucide-react';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -79,7 +88,10 @@ export default function Navigation() {
         <span className="text-sm font-medium uppercase min-w-[1.2rem]">
           {languages.find((l) => l.code === language)?.short || 'EN'}
         </span>
-        <ChevronDown size={14} className={`transition-transform duration-200 ${isLangMenuOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          size={14}
+          className={`transition-transform duration-200 ${isLangMenuOpen ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {isLangMenuOpen && (
@@ -91,8 +103,9 @@ export default function Navigation() {
                 setLanguage(l.code);
                 setIsLangMenuOpen(false);
               }}
-              className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors ${language === l.code ? 'bg-white/5 text-(--primary)' : 'text-(--text-secondary)'
-                }`}
+              className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors ${
+                language === l.code ? 'bg-white/5 text-(--primary)' : 'text-(--text-secondary)'
+              }`}
             >
               <span>{l.label}</span>
               <span className="text-xs opacity-50 uppercase">{l.short}</span>

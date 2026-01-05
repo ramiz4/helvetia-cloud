@@ -1,9 +1,8 @@
 'use client';
 
-import { Language, translations } from '@/lib/translations';
+import { useLanguage } from '@/lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
-import { useState } from 'react';
 import CookieBanner from './CookieBanner';
 
 export default function LandingPage() {
@@ -152,7 +151,7 @@ export default function LandingPage() {
       <footer className="border-t border-(--border-light) py-8 text-center text-(--text-muted) text-sm">
         <div className="container">
           <p>
-            {t.footer.rights.replace('{year}', new Date().getFullYear().toString())}{' '}
+            &copy; {new Date().getFullYear()} {t.footer.rights}{' '}
             <span>🇨🇭 Hosted in Switzerland</span>
           </p>
         </div>
