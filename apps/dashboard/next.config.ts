@@ -1,9 +1,10 @@
 import type { NextConfig } from 'next';
 
+import { config } from 'dotenv';
 import path from 'path';
 
 const envPath = path.resolve(__dirname, '../../.env');
-require('dotenv').config({ path: envPath });
+config({ path: envPath });
 
 const nextConfig: NextConfig = {
   env: {
