@@ -1,9 +1,9 @@
 'use client';
 
+import { Language, translations } from '@/lib/translations';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { Language, translations } from '@/lib/translations';
 import CookieBanner from './CookieBanner';
 
 export default function LandingPage() {
@@ -60,10 +60,11 @@ export default function LandingPage() {
             <button
               key={l.code}
               onClick={() => setLang(l.code)}
-              className={`px-3 py-1 rounded-md text-sm transition-all ${lang === l.code
-                ? 'bg-(--primary) text-white shadow-md'
-                : 'hover:bg-white/10 text-(--text-secondary)'
-                }`}
+              className={`px-3 py-1 rounded-md text-sm transition-all ${
+                lang === l.code
+                  ? 'bg-(--primary) text-white shadow-md'
+                  : 'hover:bg-white/10 text-(--text-secondary)'
+              }`}
             >
               {l.label === 'Schwiizerdütsch' ? 'CH' : l.code.toUpperCase()}
             </button>
@@ -135,9 +136,7 @@ export default function LandingPage() {
         <div className="card bg-linear-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 py-16 px-8 text-center relative overflow-hidden">
           <div className="relative z-10">
             <h2 className="text-4xl mb-4">{t.ctaSection.title}</h2>
-            <p className="text-(--text-secondary) mb-8 text-[1.1rem]">
-              {t.ctaSection.subtitle}
-            </p>
+            <p className="text-(--text-secondary) mb-8 text-[1.1rem]">{t.ctaSection.subtitle}</p>
             <a href="/login" className="btn btn-primary">
               {t.ctaSection.button} <ArrowUpRight size={18} />
             </a>
@@ -147,7 +146,10 @@ export default function LandingPage() {
 
       <footer className="border-t border-(--border-light) py-8 text-center text-(--text-muted) text-sm">
         <div className="container">
-          <p>&copy; {new Date().getFullYear()} {t.footer.rights} <span>🇨🇭 Hosted in Switzerland</span></p>
+          <p>
+            &copy; {new Date().getFullYear()} {t.footer.rights}{' '}
+            <span>🇨🇭 Hosted in Switzerland</span>
+          </p>
         </div>
       </footer>
 
@@ -155,4 +157,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
