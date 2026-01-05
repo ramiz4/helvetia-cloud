@@ -33,11 +33,11 @@ export default function Navigation() {
   return (
     <nav className="main-nav glass">
       <div className="nav-container">
-        <a href="/" className="brand">
-          <div className="logo-icon">
+        <a href="/" className="brand" aria-label="Helvetia Cloud Home">
+          <div className="logo-icon" role="img" aria-label="Helvetia Logo">
             <div className="logo-inner"></div>
           </div>
-          <span className="brand-name">HELVETIA</span>
+          <span className="brand-name" aria-hidden="true">HELVETIA</span>
         </a>
 
         {isLoggedIn && (
