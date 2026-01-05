@@ -1,6 +1,6 @@
 'use client';
 
-import { getValidatedGitHubToken } from '@/lib/github';
+import { API_BASE_URL } from '@/lib/config';
 import { useCallback, useEffect, useState } from 'react';
 
 interface Repo {
@@ -47,46 +47,22 @@ export default function GitHubRepoPicker({
     setLoading(true);
     setError(null);
 
-    // Validate token before making API calls
-    const { token, error: validationError } = await getValidatedGitHubToken();
-
-    if (!token) {
-      setError(validationError || 'GitHub token not found. Please log in again.');
-      setLoading(false);
-      return;
-    }
-
     try {
       const allRepos: Repo[] = [];
       let page = 1;
       const perPage = 100;
 
-      // Fetch all pages of repositories until a page returns fewer than perPage items
-      // to ensure users with more than perPage repositories see all of them.
-      // This relies on GitHub's guarantee of a maximum of `per_page` items per page.
-      // See: https://docs.github.com/en/rest/repos/repos#list-repositories-for-the-authenticated-user
-      // for pagination details.
-      // We intentionally keep requests sequential to avoid hitting rate limits too aggressively.
-      // If needed, this could be optimized with concurrency and Link header parsing.
-      // For now, sequential fetching is sufficient and simple.
-
       while (true) {
-        const url = `https://api.github.com/user/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
+        const url = `${API_BASE_URL}/github/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
 
         const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github.v3+json',
-          },
+          credentials: 'include',
         });
 
         if (!res.ok) {
-          // Handle token expiration during API call
           if (res.status === 401) {
-            localStorage.removeItem('gh_token');
-            localStorage.removeItem('token');
             localStorage.removeItem('user');
-            throw new Error('Token expired or invalid. Please log in again.');
+            throw new Error('Session expired. Please log in again.');
           }
           throw new Error('Failed to fetch repositories');
         }
@@ -121,43 +97,16 @@ export default function GitHubRepoPicker({
   const fetchBranches = async (repo: Repo) => {
     setLoadingBranches(true);
 
-    // Validate token before making API calls
-    const { token, error: validationError } = await getValidatedGitHubToken();
-
-    if (!token) {
-      console.error('Token validation failed:', validationError);
-      // Clear tokens and surface an explicit error instead of silently falling back
-      try {
-        localStorage.removeItem('gh_token');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      } catch (storageError) {
-        console.error('Failed to clear auth tokens from localStorage:', storageError);
-      }
-
-      setError('Token expired or invalid. Please log in again.');
-      setBranches([]);
-      setSelectedBranch('');
-      setSelectedRepo(null);
-      setLoadingBranches(false);
-      return;
-    }
-
     try {
-      const res = await fetch(`https://api.github.com/repos/${repo.full_name}/branches`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
+      const [owner, name] = repo.full_name.split('/');
+      const res = await fetch(`${API_BASE_URL}/github/repos/${owner}/${name}/branches`, {
+        credentials: 'include',
       });
 
       if (!res.ok) {
-        // Handle token expiration during API call
         if (res.status === 401) {
-          localStorage.removeItem('gh_token');
-          localStorage.removeItem('token');
           localStorage.removeItem('user');
-          throw new Error('Token expired or invalid. Please log in again.');
+          throw new Error('Session expired. Please log in again.');
         }
         throw new Error('Failed to fetch branches');
       }

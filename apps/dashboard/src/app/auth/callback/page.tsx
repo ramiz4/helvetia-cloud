@@ -20,16 +20,13 @@ function CallbackContent() {
         const res = await fetch(`${API_BASE_URL}/auth/github`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ code }),
         });
 
         const data = await res.json();
 
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          if (data.accessToken) {
-            localStorage.setItem('gh_token', data.accessToken);
-          }
+        if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
           router.push('/');
         } else {

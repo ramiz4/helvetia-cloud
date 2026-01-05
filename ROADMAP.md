@@ -69,8 +69,20 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Hydration**: Remove `suppressHydrationWarning` from `src/app/layout.tsx` and fix the underlying hydration mismatches.
 - [x] **Input Accessibility**: Add ARIA labels to the search input in `src/app/page.tsx`.
 - [x] **Dependency Cleanup**: Remove unused `tailwind-merge` dependency in `package.json` if not needed.
-- [ ] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
+- [x] **Token Security**: The GitHub token is stored in localStorage without encryption or additional security measures. localStorage is vulnerable to XSS attacks and the token persists across sessions. Implement more secure storage mechanisms like HTTP-only cookies for sensitive tokens, or implement token expiration and refresh mechanisms.
 - [x] **CODEOWNERS**: Add a CODEOWNERS file to define repository ownership and streamline the PR review process.
+
+## Marketing & PR
+
+- [ ] **Landing Page**: Switzerland hosting platform. All services and databases are hosted in Switzerland.
+- [ ] **Logo**: Create a premium, glassmorphic logo for the platform.
+- [ ] **Typography**: Choose a premium, glassmorphic typography for the platform.
+- [ ] **DSGVO**: Implement DSGVO compliance for the platform.
+- [ ] **GDPR**: Implement GDPR compliance for the platform.
+- [ ] **Privacy Policy**: Create a privacy policy for the platform.
+- [ ] **Terms of Service**: Create a terms of service for the platform.
+- [ ] **FAQ**: Create a FAQ for the platform.
+- [ ] **Blog**: Create a blog for the platform.
 
 ## 🔭 Future Horizon
 

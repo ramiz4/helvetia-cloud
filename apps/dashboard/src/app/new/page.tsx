@@ -26,13 +26,9 @@ export default function NewService() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    const user = localStorage.getItem('user');
+    if (!user) {
       router.push('/login');
-    }
-    // If no GitHub token is present, default to manual
-    if (!localStorage.getItem('gh_token')) {
-      setImportMethod('manual');
     }
   }, [router]);
 
@@ -63,11 +59,10 @@ export default function NewService() {
     setLoading(true);
     setErrorMessage(null); // Clear any previous errors
 
-    const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
 
-    if (!token || !user) {
+    if (!user) {
       router.push('/login');
       return;
     }
@@ -77,8 +72,8 @@ export default function NewService() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({ ...formData, userId: user.id }),
       });
 
@@ -87,7 +82,7 @@ export default function NewService() {
         // Trigger initial deploy
         await fetch(`${API_BASE_URL}/services/${service.id}/deploy`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         router.push('/');
       } else {
