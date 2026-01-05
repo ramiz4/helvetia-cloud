@@ -46,16 +46,20 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchServices = useCallback((silent = false) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     if (!silent) setLoading(true);
     fetch(`${API_BASE_URL}/services`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          setIsAuthenticated(false);
+          localStorage.removeItem('user');
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (Array.isArray(data)) {
+        if (data && Array.isArray(data)) {
           setServices(data);
         }
         setLoading(false);
@@ -68,21 +72,15 @@ export default function Home() {
 
   useEffect(() => {
     // Check authentication status
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    const user = localStorage.getItem('user');
+    setIsAuthenticated(!!user);
   }, []);
 
   useEffect(() => {
     if (!activeDeploymentId) return;
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No token available for WebSocket connection');
-      return;
-    }
-
     const socket = new WebSocket(
-      `${WS_BASE_URL}/deployments/${activeDeploymentId}/logs/stream?token=${token}`,
+      `${WS_BASE_URL}/deployments/${activeDeploymentId}/logs/stream`,
     );
 
     socket.onopen = () => console.log('WebSocket connected');
@@ -135,16 +133,13 @@ export default function Home() {
   useEffect(() => {
     if (isAuthenticated) {
       const fetchMetrics = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
         const currentServices = servicesRef.current;
         if (currentServices.length === 0) return;
 
         const metricsPromises = currentServices.map(async (service) => {
           try {
             const res = await fetch(`${API_BASE_URL}/services/${service.id}/metrics`, {
-              headers: { Authorization: `Bearer ${token}` },
+              credentials: 'include',
             });
             const metrics = await res.json();
             return { id: service.id, metrics };
@@ -169,10 +164,8 @@ export default function Home() {
   }, [isAuthenticated]);
 
   const getHeaders = () => {
-    const token = localStorage.getItem('token');
     return {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
     };
   };
 
@@ -184,6 +177,7 @@ export default function Home() {
       const res = await fetch(`${API_BASE_URL}/services/${editingService.id}`, {
         method: 'PATCH',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           name: editingService.name,
           repoUrl: editingService.repoUrl,
@@ -215,7 +209,7 @@ export default function Home() {
     try {
       const res = await fetch(`${API_BASE_URL}/services/${serviceId}/deploy`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
       });
       const deployment = await res.json();
 
@@ -240,7 +234,7 @@ export default function Home() {
     try {
       const res = await fetch(`${API_BASE_URL}/services/${serviceId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
       });
       if (res.ok) {
         setServices(services.filter((s) => s.id !== serviceId));
@@ -256,7 +250,7 @@ export default function Home() {
     setActiveDeploymentId(deploymentId);
     try {
       const res = await fetch(`${API_BASE_URL}/deployments/${deploymentId}/logs`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
       });
       const data = await res.json();
       setSelectedLogs(data.logs || 'No logs available.');
@@ -269,7 +263,7 @@ export default function Home() {
     try {
       const res = await fetch(`${API_BASE_URL}/services/${serviceId}/restart`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
       });
 
       if (res.ok) {
@@ -473,11 +467,10 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
-                        service.type === 'STATIC'
-                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
-                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
-                      }`}
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${service.type === 'STATIC'
+                        ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
+                        : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                        }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
@@ -887,8 +880,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                          .map(([k, v]) => `${k}=${v}`)
-                          .join('\n')
+                        .map(([k, v]) => `${k}=${v}`)
+                        .join('\n')
                       : ''
                   }
                   onChange={(e) => {

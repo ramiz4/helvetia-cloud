@@ -1,5 +1,6 @@
 'use client';
 
+import { API_BASE_URL } from '@/lib/config';
 import { BookOpen, Github, LayoutDashboard, LogOut, Plus } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -12,8 +13,8 @@ export default function Navigation() {
   // Check login status on mount and when interactions occur
   useEffect(() => {
     const checkLogin = () => {
-      const token = localStorage.getItem('token');
-      setIsLoggedIn(!!token);
+      const user = localStorage.getItem('user');
+      setIsLoggedIn(!!user);
     };
 
     checkLogin();
@@ -23,11 +24,22 @@ export default function Navigation() {
     return () => window.removeEventListener('storage', checkLogin);
   }, [pathname]); // Also re-check on route change if needed
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (e) {
+      console.error('Logout failed', e);
+    } finally {
+      localStorage.removeItem('user');
+      // Remove legacy tokens just in case
+      localStorage.removeItem('token');
+      localStorage.removeItem('gh_token');
+      setIsLoggedIn(false);
+      router.push('/login');
+    }
   };
 
   return (

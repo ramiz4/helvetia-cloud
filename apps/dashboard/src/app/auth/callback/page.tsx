@@ -25,11 +25,7 @@ function CallbackContent() {
 
         const data = await res.json();
 
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          if (data.accessToken) {
-            localStorage.setItem('gh_token', data.accessToken);
-          }
+        if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
           router.push('/');
         } else {

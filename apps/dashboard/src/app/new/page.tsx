@@ -26,13 +26,9 @@ export default function NewService() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    const user = localStorage.getItem('user');
+    if (!user) {
       router.push('/login');
-    }
-    // If no GitHub token is present, default to manual
-    if (!localStorage.getItem('gh_token')) {
-      setImportMethod('manual');
     }
   }, [router]);
 
@@ -63,11 +59,10 @@ export default function NewService() {
     setLoading(true);
     setErrorMessage(null); // Clear any previous errors
 
-    const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
 
-    if (!token || !user) {
+    if (!user) {
       router.push('/login');
       return;
     }
@@ -77,8 +72,8 @@ export default function NewService() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({ ...formData, userId: user.id }),
       });
 
@@ -87,7 +82,7 @@ export default function NewService() {
         // Trigger initial deploy
         await fetch(`${API_BASE_URL}/services/${service.id}/deploy`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         router.push('/');
       } else {
@@ -121,11 +116,10 @@ export default function NewService() {
         <div className="flex gap-4 p-1 bg-white/5 rounded-2xl w-fit mx-auto mb-10 border border-white/5 backdrop-blur-sm">
           <button
             onClick={() => setImportMethod('github')}
-            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
-              importMethod === 'github'
+            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${importMethod === 'github'
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
@@ -137,11 +131,10 @@ export default function NewService() {
               setImportMethod('manual');
               setRepoSelected(false);
             }}
-            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
-              importMethod === 'manual'
+            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${importMethod === 'manual'
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -257,18 +250,16 @@ export default function NewService() {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type: 'DOCKER', port: 3000 })}
-                      className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${
-                        formData.type === 'DOCKER'
+                      className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${formData.type === 'DOCKER'
                           ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
                           : 'bg-white/5 border-white/10 hover:border-white/20'
-                      }`}
+                        }`}
                     >
                       <div
-                        className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${
-                          formData.type === 'DOCKER'
+                        className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${formData.type === 'DOCKER'
                             ? 'bg-blue-500 text-white'
                             : 'bg-white/10 text-white/40'
-                        }`}
+                          }`}
                       >
                         <svg
                           width="18"
@@ -295,18 +286,16 @@ export default function NewService() {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, type: 'STATIC', port: 80 })}
-                      className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${
-                        formData.type === 'STATIC'
+                      className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${formData.type === 'STATIC'
                           ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
                           : 'bg-white/5 border-white/10 hover:border-white/20'
-                      }`}
+                        }`}
                     >
                       <div
-                        className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${
-                          formData.type === 'STATIC'
+                        className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${formData.type === 'STATIC'
                             ? 'bg-blue-500 text-white'
                             : 'bg-white/10 text-white/40'
-                        }`}
+                          }`}
                       >
                         <svg
                           width="18"

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
@@ -30,13 +31,20 @@ export const fastify = Fastify({
 
 fastify.register(cors, {
   origin: true,
+  credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
+
+fastify.register(cookie);
 
 fastify.register(fastifyWebsocket);
 
 fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'secret',
+  cookie: {
+    cookieName: 'token',
+    signed: false,
+  },
 });
 
 fastify.register(rateLimit, {
@@ -169,13 +177,99 @@ fastify.post(
       }
 
       const token = fastify.jwt.sign({ id: user.id, username: user.username });
-      return { token, user, accessToken };
+
+      const isProd = process.env.NODE_ENV === 'production';
+      const cookieOptions = {
+        path: '/',
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'lax' as const,
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      };
+
+      reply.setCookie('token', token, cookieOptions);
+      reply.setCookie('gh_token', accessToken, cookieOptions);
+
+      return { user };
     } catch (err: any) {
       fastify.log.error(err);
       return reply.status(500).send({ error: 'Internal Server Error' });
     }
   },
 );
+
+fastify.post('/auth/logout', async (request, reply) => {
+  reply.clearCookie('token', { path: '/' });
+  reply.clearCookie('gh_token', { path: '/' });
+  return { success: true };
+});
+
+// GitHub Proxy Routes
+fastify.get('/github/repos', async (request, reply) => {
+  const ghToken = request.cookies.gh_token;
+  if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
+
+  const { page, per_page, sort, type } = request.query as any;
+  const query = new URLSearchParams({
+    sort: sort || 'updated',
+    per_page: per_page || '100',
+    type: type || 'all',
+    page: page || '1',
+  });
+
+  try {
+    const res = await fetch(`https://api.github.com/user/repos?${query}`, {
+      headers: {
+        Authorization: `Bearer ${ghToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'Helvetia-Cloud',
+      },
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        reply.clearCookie('token');
+        reply.clearCookie('gh_token');
+      }
+      return reply.status(res.status).send(await res.json());
+    }
+
+    return res.json();
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.status(500).send({ error: 'Failed to fetch repositories' });
+  }
+});
+
+fastify.get('/github/repos/:owner/:repo/branches', async (request, reply) => {
+  const ghToken = request.cookies.gh_token;
+  if (!ghToken) return reply.status(401).send({ error: 'GitHub token missing' });
+
+  const { owner, repo } = request.params as any;
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches`, {
+      headers: {
+        Authorization: `Bearer ${ghToken}`,
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'Helvetia-Cloud',
+      },
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        reply.clearCookie('token');
+        reply.clearCookie('gh_token');
+      }
+      return reply.status(res.status).send(await res.json());
+    }
+
+    return res.json();
+  } catch (err) {
+    fastify.log.error(err);
+    return reply.status(500).send({ error: 'Failed to fetch branches' });
+  }
+});
 
 // Service Routes
 fastify.get('/services', async (request) => {
@@ -642,8 +736,11 @@ fastify.get(
 
     // Auth check for WS
     try {
-      if (!token) throw new Error('No token provided');
-      (req.server as any).jwt.verify(token);
+      // Check query param first, then cookie
+      const tokenToVerify = token || (req as any).cookies.token;
+
+      if (!tokenToVerify) throw new Error('No token provided');
+      (req.server as any).jwt.verify(tokenToVerify);
     } catch (err: any) {
       console.error(`WS Auth Failed for deployment ${id}:`, err.message);
       connection.socket.close();
