@@ -61,7 +61,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **CI/CD Pipeline**: Add a GitHub Action workflow following best practices to automate linting, testing, and security scanning for the application.
 - [x] **Comprehensive Testing**: Add robust unit, integration, and E2E tests across all services (API, Worker, Dashboard) to achieve high code coverage.
 - [x] **Environment Configuration**: Extract hardcoded `http://localhost:3001` in `src/app/page.tsx` to an environment variable.
-- [ ] **React State Management**: Fix `useEffect` dependency issue in `src/app/page.tsx` (potential infinite loop with `services` dependency).
+- [x] **React State Management**: Fix `useEffect` dependency issue in `src/app/page.tsx` (potential infinite loop with `services` dependency).
 - [ ] **UI/UX**: Restore multi-line formatting for delete confirmation message in `src/app/page.tsx`.
 - [ ] **Styling**: Refactor inline styles to Tailwind CSS classes in `src/components/LandingPage.tsx`.
 - [ ] **Modal Accessibility**: Implement proper focus trapping and Escape key handling for modals in `src/app/page.tsx`.
