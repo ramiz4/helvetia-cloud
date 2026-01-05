@@ -213,7 +213,7 @@ fastify.patch('/services/:id', async (request, reply) => {
       customDomain,
       type,
       staticOutputDir,
-    } as any,
+    },
   });
 
   if (service.count === 0)
@@ -300,7 +300,7 @@ fastify.post('/services', async (request, reply) => {
       type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
       envVars: finalEnvVars,
-    } as any,
+    },
     create: {
       name,
       repoUrl: repoUrl || null,
@@ -313,7 +313,7 @@ fastify.post('/services', async (request, reply) => {
       type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
       envVars: finalEnvVars,
-    } as any,
+    },
   });
 
   return service;
@@ -578,7 +578,7 @@ fastify.post('/webhooks/github', async (request) => {
           userId: baseService.userId,
           isPreview: true,
           prNumber: prNumber,
-        } as any,
+        },
       });
 
       console.log(`Triggering preview deployment for ${service.name}`);
