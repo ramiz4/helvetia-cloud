@@ -13,7 +13,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     // Load from local storage if available
     const saved = localStorage.getItem('helvetia-lang') as Language;
     if (saved && translations[saved]) {
@@ -26,9 +29,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('helvetia-lang', lang);
   };
 
-  // Prevent hydration mismatch by using 'en' on server but switching on client
-  // or simply not rendering until mounted if critical, but for lang often default is fine
-  // We return provider with current state.
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <LanguageContext.Provider

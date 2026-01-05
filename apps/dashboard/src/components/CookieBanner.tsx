@@ -22,7 +22,7 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
     }
   }, []);
 
-  const accept = () => {
+  const handleAcceptCookies = () => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('cookie_consent', 'true');
     }
@@ -39,7 +39,10 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
             <span className="font-semibold block mb-1">{title}</span>
             {text}
           </div>
-          <button onClick={accept} className="btn btn-primary whitespace-nowrap min-w-[120px]">
+          <button
+            onClick={handleAcceptCookies}
+            className="btn btn-primary whitespace-nowrap min-w-[120px]"
+          >
             {acceptText}
           </button>
         </div>
