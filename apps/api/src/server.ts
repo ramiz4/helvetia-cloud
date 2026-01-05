@@ -70,7 +70,7 @@ fastify.register(rateLimit, {
 
 // Auth Hook
 fastify.addHook('preHandler', async (request, reply) => {
-  const publicRoutes = ['/auth/github', '/health', '/webhooks/github'];
+  const publicRoutes = ['/auth/github', '/health', '/webhooks/github', '/auth/logout'];
   // WebSocket routes handle auth via query parameter, not header
   const isWsLogStream = request.url.includes('/logs/stream');
 
