@@ -10,6 +10,12 @@ Helvetia Cloud is a production-realistic Platform-as-a-Service (PaaS) architecte
 
 - **Core Orchestrator**: Manages the lifecycle of users, services, and deployments.
 - **Security**: Implements JWT-based authentication and secure session management.
+- **Rate Limiting**: Production-grade rate limiting with Redis-backed distributed storage to prevent abuse and DoS attacks across multiple API instances.
+  - Global rate limits (100 req/min by default)
+  - Stricter limits for authentication endpoints (10 req/min)
+  - Connection limits for WebSocket log streaming (10 conn/min)
+  - Health check endpoints excluded for monitoring
+  - IP-based tracking with configurable limits via environment variables
 - **Source Integration**: Handles GitHub OAuth and processes Webhook events for automated CI/CD.
 - **Job Dispatcher**: Queues heavy tasks (builds/deployments) to Redis via BullMQ.
 
