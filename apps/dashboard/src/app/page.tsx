@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import LandingPage from '../components/LandingPage';
 import { API_BASE_URL, WS_BASE_URL } from '../lib/config';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Service {
   id: string;
@@ -37,6 +38,7 @@ interface Service {
 }
 
 export default function Home() {
+  const { t } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [selectedLogs, setSelectedLogs] = useState<string | null>(null);
@@ -312,8 +314,8 @@ export default function Home() {
         }}
       >
         <div>
-          <h1>Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage your deployments and services</p>
+          <h1>{t.dashboard.title}</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>{t.dashboard.subtitle}</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button onClick={() => fetchServices()} className="btn btn-ghost" title="Refresh">
@@ -347,7 +349,7 @@ export default function Home() {
                 {services.length}
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Total Services
+                {t.dashboard.stats.total}
               </div>
             </div>
           </div>
@@ -368,7 +370,9 @@ export default function Home() {
               <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
                 {activeServices}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Active</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {t.dashboard.stats.active}
+              </div>
             </div>
           </div>
         </div>
@@ -388,7 +392,9 @@ export default function Home() {
               <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
                 {failingServices}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Failed</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {t.dashboard.stats.failed}
+              </div>
             </div>
           </div>
         </div>
@@ -409,11 +415,11 @@ export default function Home() {
           />
           <input
             type="text"
-            placeholder="Search services..."
+            placeholder={t.dashboard.search.placeholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ paddingLeft: '2.5rem' }}
-            aria-label="Search services"
+            aria-label={t.dashboard.search.placeholder}
           />
         </div>
       </div>
@@ -438,11 +444,9 @@ export default function Home() {
             <Zap size={32} color="var(--text-secondary)" />
           </div>
           <div>
-            <h3 style={{ marginBottom: '0.5rem' }}>No services found</h3>
+            <h3 style={{ marginBottom: '0.5rem' }}>{t.dashboard.search.noResults}</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-              {searchQuery
-                ? 'Try adjusting your search query.'
-                : 'Get started by deploying your first service.'}
+              {searchQuery ? t.dashboard.search.tryAgain : t.dashboard.search.getStarted}
             </p>
           </div>
         </div>
@@ -484,7 +488,7 @@ export default function Home() {
                   <button
                     onClick={() => setEditingService(service)}
                     className="btn-icon"
-                    title="Edit"
+                    title={t.dashboard.actions.edit}
                   >
                     <Edit2 size={16} />
                   </button>
@@ -492,7 +496,7 @@ export default function Home() {
                     onClick={() => deleteService(service.id)}
                     className="btn-icon"
                     style={{ color: 'var(--error)' }}
-                    title="Delete"
+                    title={t.dashboard.actions.delete}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -550,7 +554,7 @@ export default function Home() {
                       fontSize: '0.8rem',
                     }}
                   >
-                    <Cpu size={14} /> CPU
+                    <Cpu size={14} /> {t.dashboard.labels.cpu}
                   </div>
                   <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
                     {service.metrics?.cpu || 0}%
@@ -573,7 +577,7 @@ export default function Home() {
                       fontSize: '0.8rem',
                     }}
                   >
-                    <Zap size={14} /> RAM
+                    <Zap size={14} /> {t.dashboard.labels.ram}
                   </div>
                   <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
                     {service.metrics?.memory || 0} MB
@@ -595,7 +599,7 @@ export default function Home() {
                   className="btn btn-primary"
                   style={{ width: '100%' }}
                 >
-                  <Play size={16} /> Redeploy
+                  <Play size={16} /> {t.dashboard.actions.redeploy}
                 </button>
 
                 {/* Secondary actions - responsive grid */}
@@ -605,7 +609,7 @@ export default function Home() {
                   <button
                     onClick={() => restartService(service.id)}
                     className="btn btn-ghost"
-                    title="Restart container with updated config"
+                    title={t.dashboard.actions.restart}
                   >
                     <RotateCw size={16} />
                   </button>
@@ -613,7 +617,7 @@ export default function Home() {
                     onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
                     className="btn btn-ghost"
                     disabled={!service.deployments[0]}
-                    title="View deployment logs"
+                    title={t.dashboard.actions.logs}
                   >
                     <FileText size={16} />
                   </button>
@@ -622,7 +626,7 @@ export default function Home() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-ghost"
-                    title="Visit App"
+                    title={t.dashboard.actions.visit}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <ExternalLink size={16} />
@@ -677,7 +681,7 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <FileText size={20} className="text-primary" />
                 <h2 id="logs-modal-title" style={{ fontSize: '1.25rem' }}>
-                  Build Logs
+                  {t.dashboard.modals.logsTitle}
                 </h2>
               </div>
               <button
@@ -712,7 +716,7 @@ export default function Home() {
                 color: 'var(--text-secondary)',
               }}
             >
-              {activeDeploymentId ? 'Streaming logs...' : 'Logs ended.'}
+              {activeDeploymentId ? t.dashboard.modals.streaming : t.dashboard.modals.ended}
             </div>
           </div>
         </div>
@@ -752,7 +756,7 @@ export default function Home() {
                 alignItems: 'center',
               }}
             >
-              <h2 id="edit-modal-title">Edit Service</h2>
+              <h2 id="edit-modal-title">{t.dashboard.modals.editTitle}</h2>
               <button onClick={() => setEditingService(null)} className="btn-icon">
                 <X size={20} />
               </button>
@@ -763,7 +767,7 @@ export default function Home() {
               style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}
             >
               <div>
-                <label>Service Name</label>
+                <label>{t.dashboard.labels.serviceName}</label>
                 <input
                   type="text"
                   value={editingService.name}
@@ -773,7 +777,7 @@ export default function Home() {
               </div>
 
               <div>
-                <label>Repository URL</label>
+                <label>{t.dashboard.labels.repoUrl}</label>
                 <input
                   type="url"
                   value={editingService.repoUrl}
@@ -786,7 +790,7 @@ export default function Home() {
 
               <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div style={{ gridColumn: 'span 2' }}>
-                  <label>Service Type</label>
+                  <label>{t.dashboard.labels.serviceType}</label>
                   <select
                     value={editingService.type || 'DOCKER'}
                     onChange={(e) =>
@@ -901,14 +905,14 @@ export default function Home() {
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  Save Changes
+                  {t.dashboard.actions.save}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingService(null)}
                   className="btn btn-ghost"
                 >
-                  Cancel
+                  {t.dashboard.actions.cancel}
                 </button>
               </div>
             </form>

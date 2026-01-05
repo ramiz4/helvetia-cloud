@@ -10,3 +10,4 @@ apps/worker/temp
 packages/database/node_modules
 .env
 *.log
+.idea
