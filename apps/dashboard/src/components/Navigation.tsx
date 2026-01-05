@@ -2,6 +2,7 @@
 
 import { API_BASE_URL } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
+import { type Language } from '@/lib/translations';
 import {
   BookOpen,
   ChevronDown,
@@ -24,13 +25,13 @@ export default function Navigation() {
   const { language, setLanguage, t } = useLanguage();
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  const languages = [
+  const languages: { code: Language; label: string; short: string }[] = [
     { code: 'en', label: 'English', short: 'EN' },
     { code: 'de', label: 'Deutsch', short: 'DE' },
     { code: 'gsw', label: 'Schwiizerdütsch', short: 'CH' },
     { code: 'fr', label: 'Français', short: 'FR' },
     { code: 'it', label: 'Italiano', short: 'IT' },
-  ] as const;
+  ];
 
   // Check login status on mount and when interactions occur
   useEffect(() => {
