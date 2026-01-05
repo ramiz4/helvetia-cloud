@@ -103,8 +103,9 @@ export default function Navigation() {
                 setLanguage(l.code);
                 setIsLangMenuOpen(false);
               }}
-              className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors ${language === l.code ? 'bg-white/5 text-(--primary)' : 'text-(--text-secondary)'
-                }`}
+              className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors ${
+                language === l.code ? 'bg-white/5 text-(--primary)' : 'text-(--text-secondary)'
+              }`}
             >
               <span>{l.label}</span>
               <span className="text-xs opacity-50 uppercase">{l.short}</span>

@@ -370,7 +370,9 @@ export default function Home() {
               <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
                 {activeServices}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t.dashboard.stats.active}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {t.dashboard.stats.active}
+              </div>
             </div>
           </div>
         </div>
@@ -390,7 +392,9 @@ export default function Home() {
               <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
                 {failingServices}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t.dashboard.stats.failed}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {t.dashboard.stats.failed}
+              </div>
             </div>
           </div>
         </div>
@@ -442,9 +446,7 @@ export default function Home() {
           <div>
             <h3 style={{ marginBottom: '0.5rem' }}>{t.dashboard.search.noResults}</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-              {searchQuery
-                ? t.dashboard.search.tryAgain
-                : t.dashboard.search.getStarted}
+              {searchQuery ? t.dashboard.search.tryAgain : t.dashboard.search.getStarted}
             </p>
           </div>
         </div>
@@ -467,10 +469,11 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${service.type === 'STATIC'
-                        ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
-                        : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
-                        }`}
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
+                        service.type === 'STATIC'
+                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
+                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                      }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
@@ -880,8 +883,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                        .map(([k, v]) => `${k}=${v}`)
-                        .join('\n')
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join('\n')
                       : ''
                   }
                   onChange={(e) => {

@@ -1,8 +1,9 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
+import { translations, type Language } from '@/lib/translations';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
+import { useState } from 'react';
 import CookieBanner from './CookieBanner';
 
 export default function LandingPage() {
@@ -62,8 +63,8 @@ export default function LandingPage() {
               aria-label={`Switch to ${l.label}`}
               className={`px-3 py-1 rounded-md text-sm transition-all ${
                 lang === l.code
-                  ? 'bg-[var(--primary)] text-white shadow-md'
-                  : 'hover:bg-white/10 text-[var(--text-secondary)]'
+                  ? 'bg-(--primary) text-white shadow-md'
+                  : 'hover:bg-white/10 text-[--text-secondary]'
               }`}
             >
               {l.label === 'Schwiizerdütsch' ? 'CH' : l.code.toUpperCase()}
