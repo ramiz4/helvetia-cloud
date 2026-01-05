@@ -16,6 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import LandingPage from '../components/LandingPage';
 import { API_BASE_URL, WS_BASE_URL } from '../lib/config';
 import { useLanguage } from '../lib/LanguageContext';
@@ -201,10 +202,10 @@ export default function Home() {
         );
         setEditingService(null);
       } else {
-        alert('Failed to update service');
+        toast.error('Failed to update service');
       }
     } catch {
-      alert('Error connecting to API');
+      toast('Error connecting to API');
     }
   };
 
@@ -222,7 +223,7 @@ export default function Home() {
       // Refresh services
       fetchServices();
     } catch {
-      alert('Failed to trigger deployment');
+      toast.error('Failed to trigger deployment');
     }
   };
 
@@ -242,10 +243,10 @@ export default function Home() {
       if (res.ok) {
         setServices(services.filter((s) => s.id !== serviceId));
       } else {
-        alert('Failed to delete service');
+        toast.error('Failed to delete service');
       }
     } catch {
-      alert('Error connecting to API');
+      toast('Error connecting to API');
     }
   };
 
@@ -258,7 +259,21 @@ export default function Home() {
       const data = await res.json();
       setSelectedLogs(data.logs || 'No logs available.');
     } catch {
-      alert('Failed to fetch logs');
+      toast.error('Failed to fetch logs');
+    }
+  };
+
+  const fetchService = async (serviceId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/services/${serviceId}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const updatedService = await res.json();
+        setServices((prev) => prev.map((s) => (s.id === serviceId ? updatedService : s)));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -270,14 +285,14 @@ export default function Home() {
       });
 
       if (res.ok) {
-        alert('Container restarted successfully!');
-        fetchServices();
+        toast.success('Container restarted successfully!');
+        fetchService(serviceId);
       } else {
         const error = await res.json();
-        alert(error.error || 'Failed to restart container');
+        toast.error(error.error || 'Failed to restart container');
       }
     } catch {
-      alert('Error connecting to API');
+      toast.error('Error connecting to API');
     }
   };
 
