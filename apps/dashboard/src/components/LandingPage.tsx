@@ -61,10 +61,11 @@ export default function LandingPage() {
               key={l.code}
               onClick={() => setLang(l.code)}
               aria-label={`Switch to ${l.label}`}
-              className={`px-3 py-1 rounded-md text-sm transition-all ${lang === l.code
+              className={`px-3 py-1 rounded-md text-sm transition-all ${
+                lang === l.code
                   ? 'bg-(--primary) text-white shadow-md'
                   : 'hover:bg-white/10 text-[--text-secondary]'
-                }`}
+              }`}
             >
               {l.label === 'Schwiizerdütsch' ? 'CH' : l.code.toUpperCase()}
             </button>
