@@ -63,8 +63,8 @@ export default function LandingPage() {
               aria-label={`Switch to ${l.label}`}
               className={`px-3 py-1 rounded-md text-sm transition-all ${
                 lang === l.code
-                  ? 'bg-(--primary) text-white shadow-md'
-                  : 'hover:bg-white/10 text-(--text-secondary)'
+                  ? 'bg-[var(--primary)] text-white shadow-md'
+                  : 'hover:bg-white/10 text-[var(--text-secondary)]'
               }`}
             >
               {l.label === 'Schwiizerdütsch' ? 'CH' : l.code.toUpperCase()}
@@ -152,7 +152,7 @@ export default function LandingPage() {
       <footer className="border-t border-(--border-light) py-8 text-center text-(--text-muted) text-sm">
         <div className="container">
           <p>
-            &copy; {new Date().getFullYear()} {t.footer.rights}{' '}
+            {t.footer.rights.replace('{year}', new Date().getFullYear().toString())}{' '}
             <span>🇨🇭 Hosted in Switzerland</span>
           </p>
         </div>

@@ -89,9 +89,9 @@ export const translations = {
       },
     },
     ctaSection: {
-      title: 'Bereit zum Deployen?',
+      title: 'Bereit zum Bereitstellen?',
       subtitle: 'Schließen Sie sich tausenden von Entwicklern an.',
-      button: 'Jetzt Deployen',
+      button: 'Jetzt bereitstellen',
     },
     footer: {
       rights: 'Helvetia Cloud. Open Source unter MIT Lizenz.',
