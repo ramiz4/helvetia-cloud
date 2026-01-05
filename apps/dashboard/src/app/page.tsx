@@ -79,9 +79,7 @@ export default function Home() {
   useEffect(() => {
     if (!activeDeploymentId) return;
 
-    const socket = new WebSocket(
-      `${WS_BASE_URL}/deployments/${activeDeploymentId}/logs/stream`,
-    );
+    const socket = new WebSocket(`${WS_BASE_URL}/deployments/${activeDeploymentId}/logs/stream`);
 
     socket.onopen = () => console.log('WebSocket connected');
     socket.onmessage = (event) => {
@@ -467,10 +465,11 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${service.type === 'STATIC'
-                        ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
-                        : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
-                        }`}
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
+                        service.type === 'STATIC'
+                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
+                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                      }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
@@ -880,8 +879,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                        .map(([k, v]) => `${k}=${v}`)
-                        .join('\n')
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join('\n')
                       : ''
                   }
                   onChange={(e) => {
