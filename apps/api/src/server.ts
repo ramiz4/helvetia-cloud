@@ -2,6 +2,7 @@
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import fastifyWebsocket from '@fastify/websocket';
+import rateLimit from '@fastify/rate-limit';
 import { Queue } from 'bullmq';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
@@ -589,43 +590,56 @@ fastify.get('/deployments/:id/logs', async (request, reply) => {
   return { logs: deployment?.logs };
 });
 
-fastify.get('/deployments/:id/logs/stream', { websocket: true }, (connection, req) => {
-  const { id } = req.params as any;
-  const { token } = req.query as any;
+fastify.get(
+  '/deployments/:id/logs/stream',
+  {
+    websocket: true,
+    // Apply rate limiting to prevent abuse of authenticated log streaming
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '1 minute',
+      },
+    },
+  },
+  (connection, req) => {
+    const { id } = req.params as any;
+    const { token } = req.query as any;
 
-  console.log(`WebSocket connection attempt for deployment: ${id}`);
+    console.log(`WebSocket connection attempt for deployment: ${id}`);
 
-  // Auth check for WS
-  try {
-    if (!token) throw new Error('No token provided');
-    (req.server as any).jwt.verify(token);
-  } catch (err: any) {
-    console.error(`WS Auth Failed for deployment ${id}:`, err.message);
-    connection.socket.close();
-    return;
-  }
-
-  const channel = `deployment-logs:${id}`;
-
-  console.log(`Client connected for live logs: ${id}`);
-
-  const onMessage = (chan: string, message: string) => {
-    if (chan === channel) {
-      connection.socket.send(message);
+    // Auth check for WS
+    try {
+      if (!token) throw new Error('No token provided');
+      (req.server as any).jwt.verify(token);
+    } catch (err: any) {
+      console.error(`WS Auth Failed for deployment ${id}:`, err.message);
+      connection.socket.close();
+      return;
     }
-  };
 
-  subConnection.subscribe(channel);
-  subConnection.on('message', onMessage);
+    const channel = `deployment-logs:${id}`;
 
-  connection.socket.on('close', () => {
-    console.log(`Client disconnected from live logs: ${id}`);
-    // We shouldn't unsubscribe from the channel globally if other clients are listening
-    // But for MVP, simple is fine. Actually, ioredis handles multiple subscribers on the same connection.
-    // However, we only have one subConnection. Let's just remove the listener.
-    subConnection.removeListener('message', onMessage);
-  });
-});
+    console.log(`Client connected for live logs: ${id}`);
+
+    const onMessage = (chan: string, message: string) => {
+      if (chan === channel) {
+        connection.socket.send(message);
+      }
+    };
+
+    subConnection.subscribe(channel);
+    subConnection.on('message', onMessage);
+
+    connection.socket.on('close', () => {
+      console.log(`Client disconnected from live logs: ${id}`);
+      // We shouldn't unsubscribe from the channel globally if other clients are listening
+      // But for MVP, simple is fine. Actually, ioredis handles multiple subscribers on the same connection.
+      // However, we only have one subConnection. Let's just remove the listener.
+      subConnection.removeListener('message', onMessage);
+    });
+  }
+);
 
 const start = async () => {
   try {
