@@ -101,7 +101,7 @@ export default function Navigation() {
             <button
               key={l.code}
               onClick={() => {
-                setLanguage(l.code);
+                setLanguage(l.code as Language);
                 setIsLangMenuOpen(false);
               }}
               className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors ${
