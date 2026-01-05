@@ -152,7 +152,6 @@ export default function NewService() {
             onClick={() => {
               setImportMethod('database');
               setRepoSelected(false);
-              setRepoUrl('');
               setFormData((prev) => ({ ...prev, repoUrl: '' }));
             }}
             className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${

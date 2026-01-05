@@ -7,6 +7,17 @@ import { createScrubber } from './utils/logs';
 
 dotenv.config();
 
+// Type for Docker pull progress events
+interface DockerPullProgressEvent {
+  status?: string;
+  id?: string;
+  progress?: string;
+  progressDetail?: {
+    current?: number;
+    total?: number;
+  };
+}
+
 const docker = new Docker();
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
@@ -60,10 +71,13 @@ export const worker = new Worker(
         try {
           const stream = await docker.pull(imageTag);
           await new Promise((resolve, reject) => {
-            docker.modem.followProgress(stream, (err: Error | null, res: any[]) => {
-              if (err) reject(err);
-              else resolve(res);
-            });
+            docker.modem.followProgress(
+              stream,
+              (err: Error | null, res: DockerPullProgressEvent[]) => {
+                if (err) reject(err);
+                else resolve(res);
+              },
+            );
           });
           console.log(`Successfully pulled ${imageTag}`);
         } catch (pullError) {
