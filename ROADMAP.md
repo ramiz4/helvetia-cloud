@@ -75,6 +75,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 ## Marketing & PR
 
 - [ ] **Landing Page**: Switzerland hosting platform. All services and databases are hosted in Switzerland.
+- [ ] **Multi-Language Support**: Add support for multiple languages. English, Swiss-German, German, French, Italian
 - [ ] **Logo**: Create a premium, glassmorphic logo for the platform.
 - [ ] **Typography**: Choose a premium, glassmorphic typography for the platform.
 - [ ] **DSGVO**: Implement DSGVO compliance for the platform.

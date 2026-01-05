@@ -2,46 +2,75 @@
 
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
+import { useState } from 'react';
+import { Language, translations } from '@/lib/translations';
+import CookieBanner from './CookieBanner';
 
 export default function LandingPage() {
+  const [lang, setLang] = useState<Language>('en');
+  const t = translations[lang];
+
   const features = [
     {
       icon: <Zap size={24} />,
-      title: 'Zero Downtime',
-      description:
-        'Deploy updates without dropping a single active connection. Seamless transitions every time.',
+      title: t.features.zeroDowntime.title,
+      description: t.features.zeroDowntime.desc,
     },
     {
       icon: <GitBranch size={24} />,
-      title: 'Git Integrated',
-      description:
-        'Push to your branch and watch it deploy automatically. Full support for GitHub webhooks.',
+      title: t.features.gitIntegrated.title,
+      description: t.features.gitIntegrated.desc,
     },
     {
       icon: <Shield size={24} />,
-      title: 'Secure by Design',
-      description:
-        'Isolated build environments and strict resource limits keep your applications safe.',
+      title: t.features.secure.title,
+      description: t.features.secure.desc,
     },
     {
       icon: <Globe size={24} />,
-      title: 'Global Edge',
-      description: 'Ready for global scale with integrated custom domain support and edge routing.',
+      title: t.features.global.title,
+      description: t.features.global.desc,
     },
     {
       icon: <Cpu size={24} />,
-      title: 'Resource Control',
-      description: 'Fine-grained control over CPU and memory allocation for each of your services.',
+      title: t.features.resource.title,
+      description: t.features.resource.desc,
     },
     {
       icon: <Box size={24} />,
-      title: 'Container Native',
-      description: 'Built on top of Docker for maximum compatibility and portability.',
+      title: t.features.container.title,
+      description: t.features.container.desc,
     },
+  ];
+
+  const languages: { code: Language; label: string }[] = [
+    { code: 'en', label: 'English' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'gsw', label: 'Schwiizerdütsch' },
+    { code: 'fr', label: 'Français' },
+    { code: 'it', label: 'Italiano' },
   ];
 
   return (
     <div className="landing-page">
+      {/* Language Switcher */}
+      <div className="absolute top-4 right-4 z-50">
+        <div className="glass rounded-lg p-1 flex gap-1">
+          {languages.map((l) => (
+            <button
+              key={l.code}
+              onClick={() => setLang(l.code)}
+              className={`px-3 py-1 rounded-md text-sm transition-all ${lang === l.code
+                ? 'bg-(--primary) text-white shadow-md'
+                : 'hover:bg-white/10 text-(--text-secondary)'
+                }`}
+            >
+              {l.label === 'Schwiizerdütsch' ? 'CH' : l.code.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Hero Section */}
       <section className="min-h-[80vh] flex items-center justify-center text-center p-8 relative overflow-hidden">
         {/* Background Gradients */}
@@ -53,19 +82,19 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="status-badge status-active mb-6 inline-block">v1.0 Public Beta</span>
+            <span className="status-badge status-active mb-6 inline-block">{t.hero.badge}</span>
             <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.1] mb-6 bg-linear-to-br from-white to-slate-400 bg-clip-text text-transparent italic font-bold">
-              Deploy with
-              <br />
-              <span className="text-primary">Complete Confidence</span>
+              {t.hero.title}
             </h1>
-            <p className="text-xl text-(--text-secondary) mb-10 leading-relaxed">
-              Helvetia Cloud is the modern Platform-as-a-Service for developers who want the power
-              of Kubernetes with the simplicity of Heroku.
+            <p className="text-xl text-(--text-primary) mb-4 leading-relaxed font-semibold">
+              {t.hero.subtitle}
+            </p>
+            <p className="text-lg text-(--text-secondary) mb-10 leading-relaxed max-w-2xl mx-auto">
+              {t.hero.description}
             </p>
             <div className="flex gap-4 justify-center">
               <a href="/login" className="btn btn-primary px-8 py-3 text-[1.1rem]">
-                Get Started <ArrowRight size={20} />
+                {t.hero.ctaPrimary} <ArrowRight size={20} />
               </a>
               <a
                 href="https://github.com/ramiz4/helvetia-cloud"
@@ -73,7 +102,7 @@ export default function LandingPage() {
                 rel="noopener noreferrer"
                 className="btn btn-ghost px-8 py-3 text-[1.1rem]"
               >
-                View Source
+                {t.hero.ctaSecondary}
               </a>
             </div>
           </motion.div>
@@ -105,12 +134,12 @@ export default function LandingPage() {
       <section className="container pb-16">
         <div className="card bg-linear-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 py-16 px-8 text-center relative overflow-hidden">
           <div className="relative z-10">
-            <h2 className="text-4xl mb-4">Ready to deploy?</h2>
+            <h2 className="text-4xl mb-4">{t.ctaSection.title}</h2>
             <p className="text-(--text-secondary) mb-8 text-[1.1rem]">
-              Join thousands of developers building on Helvetia Cloud.
+              {t.ctaSection.subtitle}
             </p>
             <a href="/login" className="btn btn-primary">
-              Start Deploys Now <ArrowUpRight size={18} />
+              {t.ctaSection.button} <ArrowUpRight size={18} />
             </a>
           </div>
         </div>
@@ -118,9 +147,12 @@ export default function LandingPage() {
 
       <footer className="border-t border-(--border-light) py-8 text-center text-(--text-muted) text-sm">
         <div className="container">
-          <p>&copy; {new Date().getFullYear()} Helvetia Cloud. Open source under MIT License.</p>
+          <p>&copy; {new Date().getFullYear()} {t.footer.rights} <span>🇨🇭 Hosted in Switzerland</span></p>
         </div>
       </footer>
+
+      <CookieBanner text={t.cookie.text} acceptText={t.cookie.accept} />
     </div>
   );
 }
+
