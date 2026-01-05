@@ -15,7 +15,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import LandingPage from '../components/LandingPage';
 import { API_BASE_URL, WS_BASE_URL } from '../lib/config';
 
@@ -44,6 +44,27 @@ export default function Home() {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchServices = useCallback((silent = false) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    if (!silent) setLoading(true);
+    fetch(`${API_BASE_URL}/services`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setServices(data);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     // Check authentication status
@@ -75,40 +96,56 @@ export default function Home() {
     };
 
     return () => socket.close();
-  }, [activeDeploymentId]); // Re-run when target deployment changes
+  }, [activeDeploymentId, fetchServices]); // Re-run when target deployment changes
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchServices();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchServices]);
+
+  // Use a ref to avoid stale closures in the metrics interval
+  // and to avoid unnecessary interval resets when services change.
+  const servicesRef = useRef(services);
+  useEffect(() => {
+    servicesRef.current = services;
+  }, [services]);
 
   useEffect(() => {
-    if (isAuthenticated && services.length > 0) {
+    if (isAuthenticated) {
       const fetchMetrics = async () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const updatedServices = await Promise.all(
-          services.map(async (service) => {
-            try {
-              const res = await fetch(`${API_BASE_URL}/services/${service.id}/metrics`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              const metrics = await res.json();
-              return { ...service, metrics };
-            } catch {
-              return service;
-            }
+        const currentServices = servicesRef.current;
+        if (currentServices.length === 0) return;
+
+        const metricsPromises = currentServices.map(async (service) => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/services/${service.id}/metrics`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const metrics = await res.json();
+            return { id: service.id, metrics };
+          } catch {
+            return { id: service.id, metrics: null };
+          }
+        });
+
+        const updates = await Promise.all(metricsPromises);
+
+        setServices((prev) =>
+          prev.map((service) => {
+            const update = updates.find((u) => u.id === service.id);
+            return update && update.metrics ? { ...service, metrics: update.metrics } : service;
           }),
         );
-        setServices(updatedServices);
       };
 
       const interval = setInterval(fetchMetrics, 5000); // Poll metrics every 5s
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated, services.length]);
+  }, [isAuthenticated]);
 
   const getHeaders = () => {
     const token = localStorage.getItem('token');
@@ -153,26 +190,7 @@ export default function Home() {
     }
   };
 
-  const fetchServices = (silent = false) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
 
-    if (!silent) setLoading(true);
-    fetch(`${API_BASE_URL}/services`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setServices(data);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  };
 
   const triggerDeploy = async (serviceId: string) => {
     try {
@@ -435,11 +453,10 @@ export default function Home() {
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
-                        service.type === 'STATIC'
-                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
-                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
-                      }`}
+                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${service.type === 'STATIC'
+                        ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
+                        : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                        }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
@@ -837,8 +854,8 @@ export default function Home() {
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
-                          .map(([k, v]) => `${k}=${v}`)
-                          .join('\n')
+                        .map(([k, v]) => `${k}=${v}`)
+                        .join('\n')
                       : ''
                   }
                   onChange={(e) => {
