@@ -103,9 +103,8 @@ export default function Navigation() {
                 setLanguage(l.code);
                 setIsLangMenuOpen(false);
               }}
-              className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors ${
-                language === l.code ? 'bg-white/5 text-(--primary)' : 'text-(--text-secondary)'
-              }`}
+              className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors ${language === l.code ? 'bg-white/5 text-(--primary)' : 'text-(--text-secondary)'
+                }`}
             >
               <span>{l.label}</span>
               <span className="text-xs opacity-50 uppercase">{l.short}</span>
@@ -137,14 +136,14 @@ export default function Navigation() {
             <div className="nav-links">
               <a href="/" className={`nav-item ${pathname === '/' ? 'active' : ''}`}>
                 <LayoutDashboard size={18} />
-                <span>Dashboard</span>
+                <span>{t.nav.dashboard}</span>
               </a>
               <a
                 href="/deployments"
                 className={`nav-item ${pathname === '/deployments' ? 'active' : ''}`}
               >
                 <BookOpen size={18} />
-                <span>Deployments</span>
+                <span>{t.nav.deployments}</span>
               </a>
               {/* hidden until implemented
               <a href="/settings" className={`nav-item ${pathname === '/settings' ? 'active' : ''}`}>
@@ -168,9 +167,9 @@ export default function Navigation() {
               </a>
               <a href="/new" className="btn btn-primary btn-sm">
                 <Plus size={16} />
-                <span>New Service</span>
+                <span>{t.nav.newService}</span>
               </a>
-              <button onClick={handleLogout} className="btn-icon" title="Logout">
+              <button onClick={handleLogout} className="btn-icon" title={t.nav.logout}>
                 <LogOut size={18} />
               </button>
             </div>
