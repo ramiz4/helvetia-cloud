@@ -465,8 +465,8 @@ fastify.post('/services', async (request, reply) => {
     // Generate default Redis password if not provided
     if (!finalEnvVars.REDIS_PASSWORD) {
       finalEnvVars = {
-        REDIS_PASSWORD: crypto.randomBytes(16).toString('hex'),
         ...finalEnvVars,
+        REDIS_PASSWORD: crypto.randomBytes(16).toString('hex'),
       };
     }
   }
