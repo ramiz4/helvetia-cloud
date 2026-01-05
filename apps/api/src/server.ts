@@ -5,6 +5,7 @@ import jwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
 import fastifyWebsocket from '@fastify/websocket';
 import { Queue } from 'bullmq';
+import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
 import Fastify from 'fastify';
@@ -376,7 +377,7 @@ fastify.patch('/services/:id', async (request, reply) => {
     staticOutputDir,
   } = request.body as any;
 
-  if (type !== undefined && !['DOCKER', 'STATIC'].includes(type)) {
+  if (type !== undefined && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(type)) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -388,7 +389,19 @@ fastify.patch('/services/:id', async (request, reply) => {
       branch,
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : type ? (type === 'STATIC' ? 80 : 3000) : undefined,
+      port: port
+        ? parseInt(port)
+        : type
+          ? type === 'STATIC'
+            ? 80
+            : type === 'POSTGRES'
+              ? 5432
+              : type === 'REDIS'
+                ? 6379
+                : type === 'MYSQL'
+                  ? 3306
+                  : 3000
+          : undefined,
       envVars,
       customDomain,
       type,
@@ -415,9 +428,10 @@ fastify.post('/services', async (request, reply) => {
     customDomain,
     type,
     staticOutputDir,
+    envVars,
   } = request.body as any;
 
-  if (type && !['DOCKER', 'STATIC'].includes(type)) {
+  if (type && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(type)) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -430,7 +444,35 @@ fastify.post('/services', async (request, reply) => {
   }
 
   const finalType = type || 'DOCKER';
-  const finalPort = port ? parseInt(port) : finalType === 'STATIC' ? 80 : 3000;
+  let finalPort = port ? parseInt(port) : 3000;
+  let finalEnvVars = envVars || {};
+
+  if (finalType === 'STATIC') finalPort = 80;
+  if (finalType === 'POSTGRES') {
+    finalPort = 5432;
+    // Generate default credentials if not provided
+    if (!finalEnvVars.POSTGRES_PASSWORD) {
+      finalEnvVars = {
+        POSTGRES_USER: 'postgres',
+        POSTGRES_PASSWORD: crypto.randomBytes(16).toString('hex'),
+        POSTGRES_DB: 'app',
+        ...finalEnvVars,
+      };
+    }
+  }
+  if (finalType === 'REDIS') {
+    finalPort = 6379;
+  }
+  if (finalType === 'MYSQL') {
+    finalPort = 3306;
+    if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
+      finalEnvVars = {
+        MYSQL_ROOT_PASSWORD: crypto.randomBytes(16).toString('hex'),
+        MYSQL_DATABASE: 'app',
+        ...finalEnvVars,
+      };
+    }
+  }
 
   const service = await prisma.service.upsert({
     where: { name },
@@ -443,10 +485,11 @@ fastify.post('/services', async (request, reply) => {
       customDomain,
       type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
+      envVars: finalEnvVars,
     } as any,
     create: {
       name,
-      repoUrl,
+      repoUrl: repoUrl || null,
       branch: branch || 'main',
       buildCommand,
       startCommand,
@@ -455,6 +498,7 @@ fastify.post('/services', async (request, reply) => {
       customDomain,
       type: finalType,
       staticOutputDir: staticOutputDir || 'dist',
+      envVars: finalEnvVars,
     } as any,
   });
 
@@ -637,7 +681,16 @@ fastify.post('/services/:id/restart', async (request, reply) => {
         [`traefik.http.routers.${service.name}.rule`]: traefikRule,
         [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
         [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
-          service.port || ((service as any).type === 'STATIC' ? 80 : 3000)
+          service.port ||
+          ((service as any).type === 'STATIC'
+            ? 80
+            : (service as any).type === 'POSTGRES'
+              ? 5432
+              : (service as any).type === 'REDIS'
+                ? 6379
+                : (service as any).type === 'MYSQL'
+                  ? 3306
+                  : 3000)
         ).toString(),
       },
       HostConfig: {
