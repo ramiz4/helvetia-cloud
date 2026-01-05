@@ -65,7 +65,7 @@ vi.mock('dockerode', () => {
 // Mock process.exit
 vi.stubGlobal('process', {
   ...process,
-  exit: vi.fn() as any,
+  exit: vi.fn() as unknown as (code?: number) => never,
 });
 
 vi.mock('@fastify/rate-limit', () => {
@@ -107,7 +107,7 @@ describe('API Server', () => {
 
     // Mock Prisma
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findMany).mockResolvedValue(mockServices as any);
+    vi.mocked(prisma.service.findMany).mockResolvedValue(mockServices as unknown as never);
 
     // Generate a mock token
     const token = fastify.jwt.sign(mockUser);
@@ -136,7 +136,7 @@ describe('API Server', () => {
 
     const { prisma } = await import('database');
     vi.mocked(prisma.service.findUnique).mockResolvedValue(null); // Not taken
-    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as any);
+    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as unknown as never);
 
     const token = fastify.jwt.sign(mockUser);
 

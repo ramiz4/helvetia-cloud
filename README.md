@@ -53,6 +53,12 @@ cp .env.example .env
 - `JWT_SECRET`: Secret key for JWT token signing
 - `PLATFORM_DOMAIN`: Your platform's domain (e.g., `helvetia.cloud`)
 
+  **Dashboard Configuration** (Next.js):
+
+- `NEXT_PUBLIC_API_URL`: The URL of the API Service (e.g., `http://localhost:3001`)
+- `NEXT_PUBLIC_WS_URL`: The WebSocket URL for real-time logs (e.g., `ws://localhost:3001`)
+- `NEXT_PUBLIC_APP_URL`: The URL of the Dashboard itself (e.g., `http://localhost:3000`)
+
 #### Rate Limiting Configuration (Optional)
 
 The API includes production-ready rate limiting with Redis-backed distributed storage. Configure these values to adjust rate limits based on your deployment needs:

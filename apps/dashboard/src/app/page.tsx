@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import LandingPage from '../components/LandingPage';
+import { API_BASE_URL, WS_BASE_URL } from '../lib/config';
 
 interface Service {
   id: string;
@@ -60,7 +61,7 @@ export default function Home() {
     }
 
     const socket = new WebSocket(
-      `ws://localhost:3001/deployments/${activeDeploymentId}/logs/stream?token=${token}`,
+      `${WS_BASE_URL}/deployments/${activeDeploymentId}/logs/stream?token=${token}`,
     );
 
     socket.onopen = () => console.log('WebSocket connected');
@@ -91,7 +92,7 @@ export default function Home() {
         const updatedServices = await Promise.all(
           services.map(async (service) => {
             try {
-              const res = await fetch(`http://localhost:3001/services/${service.id}/metrics`, {
+              const res = await fetch(`${API_BASE_URL}/services/${service.id}/metrics`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               const metrics = await res.json();
@@ -122,7 +123,7 @@ export default function Home() {
     if (!editingService) return;
 
     try {
-      const res = await fetch(`http://localhost:3001/services/${editingService.id}`, {
+      const res = await fetch(`${API_BASE_URL}/services/${editingService.id}`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify({
@@ -157,7 +158,7 @@ export default function Home() {
     if (!token) return;
 
     if (!silent) setLoading(true);
-    fetch('http://localhost:3001/services', {
+    fetch(`${API_BASE_URL}/services`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -175,7 +176,7 @@ export default function Home() {
 
   const triggerDeploy = async (serviceId: string) => {
     try {
-      const res = await fetch(`http://localhost:3001/services/${serviceId}/deploy`, {
+      const res = await fetch(`${API_BASE_URL}/services/${serviceId}/deploy`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
@@ -200,7 +201,7 @@ export default function Home() {
       return;
 
     try {
-      const res = await fetch(`http://localhost:3001/services/${serviceId}`, {
+      const res = await fetch(`${API_BASE_URL}/services/${serviceId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
@@ -217,7 +218,7 @@ export default function Home() {
   const fetchLogs = async (deploymentId: string) => {
     setActiveDeploymentId(deploymentId);
     try {
-      const res = await fetch(`http://localhost:3001/deployments/${deploymentId}/logs`, {
+      const res = await fetch(`${API_BASE_URL}/deployments/${deploymentId}/logs`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       const data = await res.json();
@@ -229,7 +230,7 @@ export default function Home() {
 
   const restartService = async (serviceId: string) => {
     try {
-      const res = await fetch(`http://localhost:3001/services/${serviceId}/restart`, {
+      const res = await fetch(`${API_BASE_URL}/services/${serviceId}/restart`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
