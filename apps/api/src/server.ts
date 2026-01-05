@@ -220,7 +220,7 @@ fastify.post('/auth/logout', async (request, reply) => {
 fastify.get('/github/repos', async (request, reply) => {
   try {
     await request.jwtVerify();
-  } catch (err) {
+  } catch {
     return reply.status(401).send({ error: 'Unauthorized' });
   }
 
@@ -274,7 +274,7 @@ fastify.get('/github/repos', async (request, reply) => {
 fastify.get('/github/repos/:owner/:repo/branches', async (request, reply) => {
   try {
     await request.jwtVerify();
-  } catch (err) {
+  } catch {
     return reply.status(401).send({ error: 'Unauthorized' });
   }
 
