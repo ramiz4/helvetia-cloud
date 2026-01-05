@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GitHubRepoPicker from '../../components/GitHubRepoPicker';
+import { useLanguage } from '../../lib/LanguageContext';
 import { API_BASE_URL } from '../../lib/config';
 import { sanitizeServiceName } from '../../utils/serviceName';
 
@@ -10,6 +11,7 @@ type ImportMethod = 'github' | 'manual' | 'database';
 
 export default function NewService() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [importMethod, setImportMethod] = useState<ImportMethod>('github');
   const [formData, setFormData] = useState({
@@ -90,11 +92,11 @@ export default function NewService() {
         // Sanitize error message by converting to string and escaping HTML/special characters
         const errorMsg = errorData.error || 'Unknown error';
         const sanitizedError = String(errorMsg).replace(/[<>&"']/g, '');
-        setErrorMessage(`Failed to create service: ${sanitizedError}`);
+        setErrorMessage(`${t.dashboard.newService.errorGeneric}${sanitizedError}`);
       }
     } catch (error) {
       console.error('API connection error:', error);
-      setErrorMessage('Error connecting to API. Please check your connection and try again.');
+      setErrorMessage(t.dashboard.newService.errorConnection);
     } finally {
       setLoading(false);
     }
@@ -105,11 +107,9 @@ export default function NewService() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-10 text-center">
           <h1 className="text-5xl font-bold bg-linear-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4 tracking-tight">
-            Deploy a new Project
+            {t.dashboard.newService.title}
           </h1>
-          <p className="text-white/60 text-lg">
-            Import a Git repository to get started with your deployment.
-          </p>
+          <p className="text-white/60 text-lg">{t.dashboard.newService.subtitle}</p>
         </div>
 
         {/* Import Method Toggle */}
@@ -125,7 +125,7 @@ export default function NewService() {
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
             </svg>
-            GitHub Import
+            {t.dashboard.newService.importGithub}
           </button>
           <button
             onClick={() => {
@@ -146,7 +146,7 @@ export default function NewService() {
                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
               />
             </svg>
-            Manual Import
+            {t.dashboard.newService.importManual}
           </button>
           <button
             onClick={() => {
@@ -167,7 +167,7 @@ export default function NewService() {
                 d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
               />
             </svg>
-            Database
+            {t.dashboard.newService.importDatabase}
           </button>
         </div>
 
@@ -180,7 +180,7 @@ export default function NewService() {
                   <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-black/40 text-white">
                     1
                   </span>
-                  Select Repository
+                  {t.dashboard.newService.step1}
                 </h2>
               </div>
               <div className="p-6">
@@ -200,7 +200,7 @@ export default function NewService() {
                   <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-black/40 text-white">
                     {importMethod === 'github' ? '2' : '1'}
                   </span>
-                  Configure Project
+                  {t.dashboard.newService.step2}
                 </h2>
               </div>
 
@@ -212,7 +212,7 @@ export default function NewService() {
                         htmlFor="repoUrl"
                         className="block text-sm font-medium text-white/60 mb-2"
                       >
-                        Git Repository URL
+                        {t.dashboard.newService.repoUrl}
                       </label>
                       <input
                         id="repoUrl"
@@ -230,7 +230,7 @@ export default function NewService() {
                         htmlFor="branch"
                         className="block text-sm font-medium text-white/60 mb-2"
                       >
-                        Branch
+                        {t.dashboard.newService.branch}
                       </label>
                       <input
                         id="branch"
@@ -250,7 +250,7 @@ export default function NewService() {
                     htmlFor="projectName"
                     className="block text-sm font-medium text-white/60 mb-2"
                   >
-                    Project Name
+                    {t.dashboard.newService.projectName}
                   </label>
                   <input
                     id="projectName"
@@ -261,14 +261,14 @@ export default function NewService() {
                     className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all hover:border-white/20"
                   />
                   <p className="text-xs text-white/30 mt-2">
-                    Used to identify your project in the dashboard and URL.
+                    {t.dashboard.newService.projectNameHint}
                   </p>
                 </div>
 
                 {importMethod !== 'database' && (
                   <div>
                     <label className="block text-sm font-medium text-white/60 mb-3">
-                      Service Type
+                      {t.dashboard.newService.serviceType}
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <button
@@ -303,9 +303,11 @@ export default function NewService() {
                           </svg>
                         </div>
                         <div>
-                          <div className="font-semibold text-white">Docker Service</div>
+                          <div className="font-semibold text-white">
+                            {t.dashboard.newService.dockerService}
+                          </div>
                           <p className="text-xs text-white/40 mt-1">
-                            For Node.js, Python, or custom Docker projects.
+                            {t.dashboard.newService.dockerServiceDesc}
                           </p>
                         </div>
                       </button>
@@ -341,9 +343,11 @@ export default function NewService() {
                           </svg>
                         </div>
                         <div>
-                          <div className="font-semibold text-white">Static Site</div>
+                          <div className="font-semibold text-white">
+                            {t.dashboard.newService.staticSite}
+                          </div>
                           <p className="text-xs text-white/40 mt-1">
-                            For Angular, React, Vue, or static HTML (via Nginx).
+                            {t.dashboard.newService.staticSiteDesc}
                           </p>
                         </div>
                       </button>
@@ -354,7 +358,7 @@ export default function NewService() {
                 {importMethod === 'database' && (
                   <div>
                     <label className="block text-sm font-medium text-white/60 mb-3">
-                      Database Engine
+                      {t.dashboard.newService.databaseEngine}
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {['POSTGRES', 'REDIS', 'MYSQL'].map((dbType) => (
@@ -406,10 +410,10 @@ export default function NewService() {
                             </div>
                             <p className="text-xs text-white/40 mt-1">
                               {dbType === 'POSTGRES'
-                                ? 'Version 15'
+                                ? `${t.dashboard.newService.version} 15`
                                 : dbType === 'MYSQL'
-                                  ? 'Version 8'
-                                  : 'Version 7'}
+                                  ? `${t.dashboard.newService.version} 8`
+                                  : `${t.dashboard.newService.version} 7`}
                             </p>
                           </div>
                         </button>
@@ -425,7 +429,7 @@ export default function NewService() {
                         htmlFor="buildCommand"
                         className="block text-sm font-medium text-white/60 mb-2"
                       >
-                        Build Command
+                        {t.dashboard.newService.buildCommand}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
@@ -469,7 +473,7 @@ export default function NewService() {
                           htmlFor="startCommand"
                           className="block text-sm font-medium text-white/60 mb-2"
                         >
-                          Start Command
+                          {t.dashboard.newService.startCommand}
                         </label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
@@ -506,7 +510,7 @@ export default function NewService() {
                           htmlFor="staticOutputDir"
                           className="block text-sm font-medium text-white/60 mb-2"
                         >
-                          Output Directory
+                          {t.dashboard.newService.outputDirectory}
                         </label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
@@ -543,7 +547,7 @@ export default function NewService() {
 
                 <div>
                   <label htmlFor="port" className="block text-sm font-medium text-white/60 mb-2">
-                    Port
+                    {t.dashboard.newService.port}
                   </label>
                   <input
                     id="port"
@@ -557,7 +561,7 @@ export default function NewService() {
                   />
                   {formData.type === 'STATIC' && (
                     <p className="text-xs text-white/30 mt-2">
-                      Static sites are served on port 80 via Nginx.
+                      {t.dashboard.newService.portStaticHint}
                     </p>
                   )}
                 </div>
@@ -614,10 +618,10 @@ export default function NewService() {
                     {loading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        Deploying Project...
+                        {t.dashboard.newService.deployingButton}
                       </>
                     ) : (
-                      'Deploy Project'
+                      t.dashboard.newService.deployButton
                     )}
                   </button>
                 </div>
