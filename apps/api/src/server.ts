@@ -47,20 +47,15 @@ fastify.register(rateLimit, {
   skipOnError: false,
   allowList: (request) => {
     const url = request.raw?.url ?? request.url;
-
     // Exclude health check endpoints from rate limiting
-    if (url.startsWith('/health')) {
-      return true;
-    }
-
-    return false;
+    return url.startsWith('/health');
   },
   keyGenerator: (request) => {
     // Use IP address as the key for rate limiting
     return request.ip;
   },
   onExceeding: (request) => {
-    fastify.log.warn(`Rate limit exceeding for IP: ${request.ip}, URL: ${request.url}`);
+    fastify.log.warn(`Rate limit approaching for IP: ${request.ip}, URL: ${request.url}`);
   },
   onExceeded: (request) => {
     fastify.log.error(`Rate limit exceeded for IP: ${request.ip}, URL: ${request.url}`);
