@@ -12,7 +12,7 @@ import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env'), override: true });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 dotenv.config({ override: true }); // Prefer local .env if it exists
 
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
@@ -30,7 +30,7 @@ const deploymentQueue = new Queue('deployments', {
 function getDefaultPortForServiceType(serviceType: string): number {
   const portMap: Record<string, number> = {
     STATIC: 80,
-    POSTGRES: 5432,
+    POSTGRES: 5444,
     REDIS: 6379,
     MYSQL: 3306,
     DOCKER: 3000,
@@ -374,6 +374,54 @@ fastify.get('/services', async (request) => {
   return enrichedServices;
 });
 
+fastify.get('/services/:id', async (request, reply) => {
+  const { id } = request.params as any;
+  const user = (request as any).user;
+
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id },
+    include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  });
+
+  if (!service) return reply.status(404).send({ error: 'Service not found' });
+
+  // Enrich service with actual Docker container status
+  const Docker = (await import('dockerode')).default;
+  const docker = new Docker();
+  const containers = await docker.listContainers({ all: true });
+
+  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === service.id);
+
+  const latestDeployment = service.deployments[0];
+  let status = 'IDLE';
+
+  if (serviceContainers.length > 0) {
+    const container = serviceContainers[0];
+    if (container.State === 'running') {
+      status = 'RUNNING';
+    } else if (container.State === 'restarting') {
+      status = 'CRASHING';
+    } else if (container.State === 'exited' || container.State === 'dead') {
+      status = 'STOPPED';
+    } else {
+      status = container.State.toUpperCase();
+    }
+  } else if (latestDeployment) {
+    if (['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
+      status = 'DEPLOYING';
+    } else if (latestDeployment.status === 'FAILED') {
+      status = 'FAILED';
+    } else if (latestDeployment.status === 'SUCCESS') {
+      status = 'IDLE';
+    }
+  }
+
+  return {
+    ...service,
+    status: status,
+  };
+});
+
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
   const {
@@ -449,7 +497,7 @@ fastify.post('/services', async (request, reply) => {
 
   if (finalType === 'STATIC') finalPort = 80;
   if (finalType === 'POSTGRES') {
-    finalPort = 5432;
+    finalPort = 5444;
     // Generate default credentials if not provided
     if (!finalEnvVars.POSTGRES_PASSWORD) {
       finalEnvVars = {
