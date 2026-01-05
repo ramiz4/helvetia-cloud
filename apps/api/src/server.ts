@@ -407,7 +407,8 @@ fastify.delete('/services/:id', async (request, reply) => {
     await deleteService(id, user.id);
     return { success: true };
   } catch (error: any) {
-    return reply.status(403).send({ error: error.message });
+    console.error('Error deleting service:', error);
+    return reply.status(403).send({ error: 'Unauthorized to delete this service' });
   }
 });
 
@@ -610,11 +611,11 @@ fastify.post('/services/:id/restart', async (request, reply) => {
 });
 
 fastify.post('/webhooks/github', async (request, reply) => {
-  const payload = request.body as any;
+  try {
+    const payload = request.body as any;
 
-  // Handle Pull Request events
-  if (payload.pull_request) {
-    try {
+    // Handle Pull Request events
+    if (payload.pull_request) {
       const pr = payload.pull_request;
       const action = payload.action;
       const prNumber = payload.number;
@@ -708,64 +709,64 @@ fastify.post('/webhooks/github', async (request, reply) => {
       }
 
       return { skipped: `Action ${action} not handled` };
-    } catch (error) {
-      console.error('Error handling GitHub PR webhook:', error);
-      return reply.status(500).send({ error: 'Internal server error while processing webhook' });
     }
-  }
 
-  // Basic check for push event
-  if (!payload.repository || !payload.ref) {
-    return { skipped: 'Not a push or PR event' };
-  }
+    // Basic check for push event
+    if (!payload.repository || !payload.ref) {
+      return { skipped: 'Not a push or PR event' };
+    }
 
-  const repoUrl = payload.repository.html_url;
-  const branch = payload.ref.replace('refs/heads/', '');
+    const repoUrl = payload.repository.html_url;
+    const branch = payload.ref.replace('refs/heads/', '');
 
-  console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
+    console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
 
-  // Find service(s) matching this repo and branch
-  const services = await prisma.service.findMany({
-    where: {
-      repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
-      branch,
-      isPreview: false, // Only trigger non-preview services for push events
-    },
-  });
-
-  if (services.length === 0) {
-    console.log(`No service found for ${repoUrl} on branch ${branch}`);
-    return { skipped: 'No matching service found' };
-  }
-
-  for (const service of services) {
-    console.log(`Triggering automated deployment for ${service.name}`);
-
-    const deployment = await prisma.deployment.create({
-      data: {
-        serviceId: service.id,
-        status: 'QUEUED',
-        commitHash: payload.after,
+    // Find service(s) matching this repo and branch
+    const services = await prisma.service.findMany({
+      where: {
+        repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
+        branch,
+        isPreview: false, // Only trigger non-preview services for push events
       },
     });
 
-    await deploymentQueue.add('build', {
-      deploymentId: deployment.id,
-      serviceId: service.id,
-      repoUrl: service.repoUrl,
-      branch: service.branch,
-      buildCommand: service.buildCommand,
-      startCommand: service.startCommand,
-      serviceName: service.name,
-      port: service.port,
-      envVars: service.envVars,
-      customDomain: (service as any).customDomain,
-      type: (service as any).type,
-      staticOutputDir: (service as any).staticOutputDir,
-    });
-  }
+    if (services.length === 0) {
+      console.log(`No service found for ${repoUrl} on branch ${branch}`);
+      return { skipped: 'No matching service found' };
+    }
 
-  return { success: true, servicesTriggered: services.length };
+    for (const service of services) {
+      console.log(`Triggering automated deployment for ${service.name}`);
+
+      const deployment = await prisma.deployment.create({
+        data: {
+          serviceId: service.id,
+          status: 'QUEUED',
+          commitHash: payload.after,
+        },
+      });
+
+      await deploymentQueue.add('build', {
+        deploymentId: deployment.id,
+        serviceId: service.id,
+        repoUrl: service.repoUrl,
+        branch: service.branch,
+        buildCommand: service.buildCommand,
+        startCommand: service.startCommand,
+        serviceName: service.name,
+        port: service.port,
+        envVars: service.envVars,
+        customDomain: (service as any).customDomain,
+        type: (service as any).type,
+        staticOutputDir: (service as any).staticOutputDir,
+      });
+    }
+
+    return { success: true, servicesTriggered: services.length };
+  } catch (error) {
+    console.error('Error handling GitHub webhook:', error);
+    return reply.status(500).send({ error: 'Internal server error while processing webhook' });
+  }
 });
 
 fastify.get('/services/:id/deployments', async (request, reply) => {
