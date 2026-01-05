@@ -11,14 +11,20 @@ export default function CookieBanner({ text, acceptText }: CookieBannerProps) {
   const [accepted, setAccepted] = useState(true); // Default to true to avoid flash, check useEffect
 
   useEffect(() => {
-    const consent = localStorage.getItem('cookie_consent');
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const consent = window.localStorage.getItem('cookie_consent');
     if (!consent) {
       setAccepted(false);
     }
   }, []);
 
   const accept = () => {
-    localStorage.setItem('cookie_consent', 'true');
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('cookie_consent', 'true');
+    }
     setAccepted(true);
   };
 
