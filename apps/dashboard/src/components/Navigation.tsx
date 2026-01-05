@@ -2,7 +2,7 @@
 
 import { API_BASE_URL } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
-import { BookOpen, ChevronDown, Github, Globe, LayoutDashboard, LogOut, Plus } from 'lucide-react';
+import { BookOpen, ChevronDown, Github, Globe, LayoutDashboard, LogIn, LogOut, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -12,7 +12,7 @@ export default function Navigation() {
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const langMenuRef = useRef<HTMLDivElement>(null);
 
   const languages = [
@@ -168,6 +168,10 @@ export default function Navigation() {
           <div className="nav-actions">
             <LanguageSwitcher />
             <div className="w-px h-6 bg-white/10 mx-1" />
+            <a href="/login" className="btn btn-primary btn-sm">
+              <LogIn size={16} />
+              <span>{t.nav.login}</span>
+            </a>
             <a
               href="https://github.com/ramiz4/helvetia-cloud"
               target="_blank"

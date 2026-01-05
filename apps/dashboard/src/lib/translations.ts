@@ -50,6 +50,9 @@ export const translations = {
       text: 'We use cookies to ensure you get the best experience on our website. This includes compliance with DSGVO/GDPR.',
       accept: 'Accept',
     },
+    nav: {
+      login: 'Login',
+    },
   },
   de: {
     hero: {
@@ -99,6 +102,9 @@ export const translations = {
     cookie: {
       text: 'Wir verwenden Cookies, um das beste Erlebnis auf unserer Website zu gewährleisten (DSGVO-konform).',
       accept: 'Akzeptieren',
+    },
+    nav: {
+      login: 'Anmelden',
     },
   },
   fr: {
@@ -150,6 +156,9 @@ export const translations = {
       text: 'Nous utilisons des cookies pour garantir la meilleure expérience (conforme RGPD).',
       accept: 'Accepter',
     },
+    nav: {
+      login: 'Connexion',
+    },
   },
   it: {
     hero: {
@@ -200,6 +209,9 @@ export const translations = {
       text: 'Utilizziamo i cookie per garantire la migliore esperienza (conforme DSGVO).',
       accept: 'Accetta',
     },
+    nav: {
+      login: 'Accedi',
+    },
   },
   gsw: {
     hero: {
@@ -246,6 +258,9 @@ export const translations = {
     cookie: {
       text: "Mir bruuche Cookies für s'bescht Erlebnis (DSGVO konform).",
       accept: 'Akzeptiere',
+    },
+    nav: {
+      login: 'Aamälde',
     },
   },
 };
