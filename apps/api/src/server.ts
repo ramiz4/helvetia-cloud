@@ -630,8 +630,8 @@ fastify.get(
     // Apply rate limiting to prevent abuse of authenticated log streaming
     config: {
       rateLimit: {
-        max: 10,
-        timeWindow: '1 minute',
+        max: parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
+        timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
       },
     },
   },
