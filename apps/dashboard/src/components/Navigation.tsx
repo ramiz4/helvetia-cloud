@@ -2,6 +2,7 @@
 
 import { API_BASE_URL } from '@/lib/config';
 import { BookOpen, Github, LayoutDashboard, LogOut, Plus } from 'lucide-react';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -46,7 +47,7 @@ export default function Navigation() {
     <nav className="main-nav glass">
       <div className="nav-container">
         <a href="/" className="brand" aria-label="Helvetia Cloud Home">
-          <img
+          <Image
             src="/logo.png"
             alt="Helvetia Cloud Logo"
             width={32}
