@@ -9,5 +9,4 @@ apps/worker/dist
 apps/worker/temp
 packages/database/node_modules
 .env
-.env.example
 *.log
