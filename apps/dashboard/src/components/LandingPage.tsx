@@ -60,6 +60,7 @@ export default function LandingPage() {
             <button
               key={l.code}
               onClick={() => setLang(l.code)}
+              aria-label={`Switch to ${l.label}`}
               className={`px-3 py-1 rounded-md text-sm transition-all ${
                 lang === l.code
                   ? 'bg-(--primary) text-white shadow-md'
@@ -84,8 +85,12 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
           >
             <span className="status-badge status-active mb-6 inline-block">{t.hero.badge}</span>
-            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.1] mb-6 bg-linear-to-br from-white to-slate-400 bg-clip-text text-transparent italic font-bold">
-              {t.hero.title}
+            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.1] mb-6 font-bold italic">
+              <span className="bg-linear-to-br from-white to-slate-400 bg-clip-text text-transparent">
+                {t.hero.titleLine1}
+              </span>
+              <br />
+              <span className="text-primary">{t.hero.titleLine2}</span>
             </h1>
             <p className="text-xl text-(--text-primary) mb-4 leading-relaxed font-semibold">
               {t.hero.subtitle}

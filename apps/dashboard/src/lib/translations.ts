@@ -4,7 +4,8 @@ export const translations = {
   en: {
     hero: {
       badge: 'v1.0 Public Beta',
-      title: 'Switzerland hosting platform',
+      titleLine1: 'Switzerland',
+      titleLine2: 'hosting platform',
       subtitle: 'All services and databases are hosted in Switzerland.',
       description:
         'Helvetia Cloud is the modern Platform-as-a-Service for developers who want the power of Kubernetes with the simplicity of Heroku.',
@@ -53,7 +54,8 @@ export const translations = {
   de: {
     hero: {
       badge: 'v1.0 Public Beta',
-      title: 'Schweizer Hosting-Plattform',
+      titleLine1: 'Schweizer',
+      titleLine2: 'Hosting-Plattform',
       subtitle: 'Alle Dienste und Datenbanken werden in der Schweiz gehostet.',
       description:
         'Helvetia Cloud ist die moderne Platform-as-a-Service für Entwickler, die die Leistung von Kubernetes mit der Einfachheit von Heroku wollen.',
@@ -102,7 +104,8 @@ export const translations = {
   fr: {
     hero: {
       badge: 'v1.0 Bêta Publique',
-      title: "Plateforme d'hébergement suisse",
+      titleLine1: 'Plateforme',
+      titleLine2: "d'hébergement suisse",
       subtitle: 'Tous les services et bases de données sont hébergés en Suisse.',
       description:
         "Helvetia Cloud est la plateforme as-a-service moderne pour les développeurs qui veulent la puissance de Kubernetes avec la simplicité d'Heroku.",
@@ -151,7 +154,8 @@ export const translations = {
   it: {
     hero: {
       badge: 'v1.0 Beta Pubblica',
-      title: 'Piattaforma di hosting svizzera',
+      titleLine1: 'Piattaforma',
+      titleLine2: 'di hosting svizzera',
       subtitle: 'Tutti i servizi e i database sono ospitati in Svizzera.',
       description:
         'Helvetia Cloud è la moderna Platform-as-a-Service per sviluppatori che vogliono la potenza di Kubernetes con la semplicità di Heroku.',
@@ -200,7 +204,8 @@ export const translations = {
   gsw: {
     hero: {
       badge: 'v1.0 Beta',
-      title: 'Schwiizer Hosting-Plattform',
+      titleLine1: 'Schwiizer',
+      titleLine2: 'Hosting-Plattform',
       subtitle: 'Alli Dienscht und Datebanke sind i de Schwiiz ghostet.',
       description:
         "Helvetia Cloud isch die moderni Platform-as-a-Service für Entwickler, wo d'Leichtig vo Kubernetes mit de Eifachheit vo Heroku wänd.",
