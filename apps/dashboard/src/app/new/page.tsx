@@ -103,7 +103,7 @@ export default function NewService() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-12 px-6">
+    <main className="min-h-screen text-white pt-24 pb-12 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-10 text-center">
           <h1 className="text-5xl font-bold bg-linear-to-r from-blue-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4 tracking-tight">
