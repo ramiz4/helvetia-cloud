@@ -109,7 +109,7 @@ async function deleteService(id: string, userId?: string) {
 }
 
 export const fastify = Fastify({
-  logger: true,
+  logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
 });
 
 fastify.register(cors, {
