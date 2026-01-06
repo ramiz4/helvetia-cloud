@@ -544,6 +544,12 @@ fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
 
   const { owner, name } = request.params as any;
 
+  // Validation: owner and name should only contain alphanumeric, hyphens, underscores, or dots
+  const validPattern = /^[a-zA-Z0-9-._]+$/;
+  if (!validPattern.test(owner) || !validPattern.test(name)) {
+    return reply.status(400).send({ error: 'Invalid repository owner or name format' });
+  }
+
   try {
     const decryptedToken = decrypt(dbUser.githubAccessToken);
     const res = await axios.get(`https://api.github.com/repos/${owner}/${name}/branches`, {
