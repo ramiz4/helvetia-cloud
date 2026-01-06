@@ -188,7 +188,7 @@ describe('GitHub Integration', () => {
       });
 
       expect(response.statusCode).toBe(401);
-      expect(response.json().error).toContain('GitHub account not linked');
+      expect(response.json().error).toContain('GitHub authentication required');
     });
   });
 

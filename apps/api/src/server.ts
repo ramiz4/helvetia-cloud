@@ -488,7 +488,10 @@ fastify.get('/github/repos', async (request, reply) => {
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
 
   if (!dbUser?.githubAccessToken) {
-    return reply.status(401).send({ error: 'GitHub account not linked or session expired' });
+    return reply.status(401).send({
+      error:
+        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
+    });
   }
 
   const { sort, per_page, type, page } = request.query as any;
@@ -530,7 +533,10 @@ fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
 
   if (!dbUser?.githubAccessToken) {
-    return reply.status(401).send({ error: 'GitHub account not linked or session expired' });
+    return reply.status(401).send({
+      error:
+        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
+    });
   }
 
   const { owner, name } = request.params as any;
