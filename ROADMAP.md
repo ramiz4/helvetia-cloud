@@ -102,7 +102,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 
 ## 🛠 Improvements
 
-- [ ] **Metrics**: Instead of pulling metrics from the API, the server should push metrics to the dashboard using WebSockets or Server-Sent Events (SSE).
+- [x] **Metrics**: Instead of pulling metrics from the API, the server should push metrics to the dashboard using WebSockets or Server-Sent Events (SSE).
 - [ ] **Logout**: Logout failed on server, but you will be logged out locally.
       Request URL POST http://localhost:3001/auth/logout -> 404 Not Found
       Response: { "message": "Route POST:/auth/logout not found", "error": "Not Found", "statusCode": 404 }
