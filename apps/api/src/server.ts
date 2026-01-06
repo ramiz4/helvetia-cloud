@@ -167,7 +167,7 @@ fastify.register(fastifyJwt, {
 
 // Auth hook
 fastify.addHook('onRequest', async (request, reply) => {
-  const publicRoutes = ['/health', '/webhooks/github', '/auth/github'];
+  const publicRoutes = ['/health', '/webhooks/github', '/auth/github', '/auth/logout'];
   if (publicRoutes.includes(request.routeOptions?.url || '')) {
     return;
   }
@@ -250,6 +250,16 @@ fastify.post('/auth/github', async (request, reply) => {
     console.error('Auth error:', err.response?.data || err.message);
     return reply.status(500).send({ error: 'Authentication failed' });
   }
+});
+
+fastify.post('/auth/logout', async (request, reply) => {
+  reply.clearCookie('token', {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+  return { message: 'Logged out successfully' };
 });
 
 // Service Routes

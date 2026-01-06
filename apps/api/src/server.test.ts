@@ -369,4 +369,38 @@ describe('API Server', () => {
     expect(upsertCall.create.port).toBe(80);
     expect(upsertCall.create.type).toBe('STATIC');
   });
+  it('should logout user and clear cookie', async () => {
+    const response = await fastify.inject({
+      method: 'POST',
+      url: '/auth/logout',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ message: 'Logged out successfully' });
+
+    // Check set-cookie header
+    // fastify-cookie sets headers as an array of strings in the response object for inject
+    const setCookie = response.headers['set-cookie'];
+    expect(setCookie).toBeDefined();
+
+    const cookieStr = Array.isArray(setCookie) ? setCookie.join('; ') : (setCookie as string);
+
+    // Verify cookie clearing attributes
+    expect(cookieStr).toContain('token=;');
+    expect(cookieStr).toContain('Max-Age=0');
+    expect(cookieStr).toContain('Path=/');
+    expect(cookieStr).toContain('HttpOnly');
+    expect(cookieStr).toContain('SameSite=Lax');
+  });
+
+  it('should allow logout without authentication', async () => {
+    // Even without a token, logout should succeed (idempotent/safe)
+    const response = await fastify.inject({
+      method: 'POST',
+      url: '/auth/logout',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ message: 'Logged out successfully' });
+  });
 });
