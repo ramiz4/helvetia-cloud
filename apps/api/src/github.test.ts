@@ -105,7 +105,7 @@ describe('GitHub Integration', () => {
 
       // Mock Prisma upsert
       const { prisma } = await import('database');
-      vi.mocked(prisma.user.upsert).mockResolvedValue(mockDbUser as any);
+      vi.mocked(prisma.user.upsert).mockResolvedValue(mockDbUser as never);
 
       const response = await fastify.inject({
         method: 'POST',
@@ -137,7 +137,7 @@ describe('GitHub Integration', () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         ...mockUser,
         githubAccessToken: mockAccessToken,
-      } as any);
+      } as never);
 
       // Mock GitHub API
       vi.mocked(axios.get).mockResolvedValueOnce({
@@ -175,7 +175,7 @@ describe('GitHub Integration', () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         ...mockUser,
         githubAccessToken: null,
-      } as any);
+      } as never);
 
       const token = fastify.jwt.sign(mockUser);
 
@@ -202,7 +202,7 @@ describe('GitHub Integration', () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         ...mockUser,
         githubAccessToken: mockAccessToken,
-      } as any);
+      } as never);
 
       vi.mocked(axios.get).mockResolvedValueOnce({
         data: mockBranches,
@@ -247,18 +247,18 @@ describe('GitHub Integration', () => {
         envVars: { KEY: 'VALUE' },
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockBaseService as any);
+      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockBaseService as never);
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: 'user-uuid',
         githubAccessToken: 'mock-token',
-      } as any);
+      } as never);
       vi.mocked(prisma.service.upsert).mockResolvedValue({
         id: 'preview-service-id',
         name: 'base-service-pr-123',
         repoUrl: mockBaseService.repoUrl,
         userId: 'user-uuid',
-      } as any);
-      vi.mocked(prisma.deployment.create).mockResolvedValue({ id: 'deployment-id' } as any);
+      } as never);
+      vi.mocked(prisma.deployment.create).mockResolvedValue({ id: 'deployment-id' } as never);
 
       const response = await fastify.inject({
         method: 'POST',
@@ -294,9 +294,9 @@ describe('GitHub Integration', () => {
         userId: 'user-uuid',
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockPreviewService as any);
-      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockPreviewService as any);
-      vi.mocked(prisma.service.delete).mockResolvedValue(mockPreviewService as any);
+      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockPreviewService as never);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockPreviewService as never);
+      vi.mocked(prisma.service.delete).mockResolvedValue(mockPreviewService as never);
 
       const response = await fastify.inject({
         method: 'POST',
