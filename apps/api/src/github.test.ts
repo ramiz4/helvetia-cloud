@@ -172,6 +172,65 @@ describe('GitHub Integration', () => {
       );
     });
 
+    it('should validate query parameters and use defaults for invalid values', async () => {
+      const mockUser = { id: 'user-uuid', username: 'testuser' };
+      const mockAccessToken = 'gh_access_token';
+
+      const { prisma } = await import('database');
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...mockUser,
+        githubAccessToken: mockAccessToken,
+      } as never);
+
+      vi.mocked(axios.get).mockResolvedValueOnce({ data: [] });
+
+      const token = fastify.jwt.sign(mockUser);
+
+      await fastify.inject({
+        method: 'GET',
+        url: '/github/repos?sort=invalid&per_page=999&page=-5',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      expect(axios.get).toHaveBeenCalledWith(
+        'https://api.github.com/user/repos',
+        expect.objectContaining({
+          params: {
+            sort: 'updated', // default for invalid
+            per_page: 100, // capped at 100
+            type: 'all',
+            page: 1, // min 1
+          },
+        }),
+      );
+    });
+
+    it('should handle GitHub API errors gracefully', async () => {
+      const mockUser = { id: 'user-uuid', username: 'testuser' };
+      const { prisma } = await import('database');
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...mockUser,
+        githubAccessToken: 'token',
+      } as never);
+
+      vi.mocked(axios.get).mockRejectedValueOnce({
+        response: {
+          status: 403,
+          data: { message: 'Rate limit exceeded' },
+        },
+      });
+
+      const token = fastify.jwt.sign(mockUser);
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/github/repos',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toEqual({ message: 'Rate limit exceeded' });
+    });
+
     it('should return 401 if user has no githubAccessToken', async () => {
       const mockUser = { id: 'user-uuid', username: 'testuser' };
 
@@ -232,6 +291,46 @@ describe('GitHub Integration', () => {
           }),
         }),
       );
+    });
+
+    it('should return 400 for invalid owner or name characters', async () => {
+      const mockUser = { id: 'user-uuid', username: 'testuser' };
+      const token = fastify.jwt.sign(mockUser);
+
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/github/repos/owner;rm -rf/repo/branches',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error).toContain('Invalid repository owner or name format');
+    });
+
+    it('should propagate GitHub API errors for branches', async () => {
+      const mockUser = { id: 'user-uuid', username: 'testuser' };
+      const { prisma } = await import('database');
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        ...mockUser,
+        githubAccessToken: 'token',
+      } as never);
+
+      vi.mocked(axios.get).mockRejectedValueOnce({
+        response: {
+          status: 404,
+          data: { message: 'Not Found' },
+        },
+      });
+
+      const token = fastify.jwt.sign(mockUser);
+      const response = await fastify.inject({
+        method: 'GET',
+        url: '/github/repos/owner/repo/branches',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({ message: 'Not Found' });
     });
   });
 
