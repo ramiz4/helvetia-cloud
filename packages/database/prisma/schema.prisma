@@ -13,7 +13,8 @@ model User {
   githubId          String    @unique
   username          String
   avatarUrl         String?
-  githubAccessToken String?
+  /// @sensitive - GitHub OAuth access token. Handle securely.
+  githubAccessToken String?   @sensitive
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   services          Service[]
