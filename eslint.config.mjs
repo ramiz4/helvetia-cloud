@@ -4,7 +4,14 @@ import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/build/**', '**/.next/**'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/build/**',
+      '**/.next/**',
+      '**/packages/database/generated-client/**',
+    ],
   },
   { files: ['**/*.{js,mjs,cjs,ts}'] },
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },

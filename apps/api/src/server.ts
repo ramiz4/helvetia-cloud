@@ -187,11 +187,13 @@ fastify.post('/auth/github', async (request, reply) => {
       update: {
         username: githubUser.login,
         avatarUrl: githubUser.avatar_url,
+        githubAccessToken: access_token,
       },
       create: {
         githubId: githubUser.id.toString(),
         username: githubUser.login,
         avatarUrl: githubUser.avatar_url,
+        githubAccessToken: access_token,
       },
     });
 
@@ -478,6 +480,67 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
     memory: parseFloat(memoryUsage.toFixed(2)),
     memoryLimit: parseFloat(memoryLimit.toFixed(2)),
   };
+});
+
+// GitHub Proxy Routes
+fastify.get('/github/repos', async (request, reply) => {
+  const user = (request as any).user;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+
+  if (!dbUser?.githubAccessToken) {
+    return reply.status(401).send({ error: 'GitHub account not linked or session expired' });
+  }
+
+  const { sort, per_page, type, page } = request.query as any;
+
+  try {
+    const res = await axios.get('https://api.github.com/user/repos', {
+      headers: {
+        Authorization: `token ${dbUser.githubAccessToken}`,
+        Accept: 'application/json',
+      },
+      params: {
+        sort: sort || 'updated',
+        per_page: per_page || 100,
+        type: type || 'all',
+        page: page || 1,
+      },
+    });
+
+    return res.data;
+  } catch (err: any) {
+    console.error('GitHub API error:', err.response?.data || err.message);
+    return reply
+      .status(err.response?.status || 500)
+      .send(err.response?.data || { error: 'Failed to fetch GitHub repositories' });
+  }
+});
+
+fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
+  const user = (request as any).user;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+
+  if (!dbUser?.githubAccessToken) {
+    return reply.status(401).send({ error: 'GitHub account not linked or session expired' });
+  }
+
+  const { owner, name } = request.params as any;
+
+  try {
+    const res = await axios.get(`https://api.github.com/repos/${owner}/${name}/branches`, {
+      headers: {
+        Authorization: `token ${dbUser.githubAccessToken}`,
+        Accept: 'application/json',
+      },
+    });
+
+    return res.data;
+  } catch (err: any) {
+    console.error('GitHub API error:', err.response?.data || err.message);
+    return reply
+      .status(err.response?.status || 500)
+      .send(err.response?.data || { error: 'Failed to fetch branches' });
+  }
 });
 
 // Deployment Routes
