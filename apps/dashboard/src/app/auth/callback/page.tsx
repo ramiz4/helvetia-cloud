@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../../lib/config';
 
 function CallbackContent() {
@@ -9,11 +9,15 @@ function CallbackContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
 
+  const called = useRef(false);
+
   useEffect(() => {
-    if (!code) {
-      router.push('/login');
+    if (!code || called.current) {
+      if (!code) router.push('/login');
       return;
     }
+
+    called.current = true;
 
     const exchangeCode = async () => {
       try {

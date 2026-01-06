@@ -28,6 +28,8 @@ model Service {
   status       String       @default("IDLE")
   type         String       @default("DOCKER") // DOCKER or STATIC
   staticOutputDir String?    @default("dist")
+  isPreview    Boolean      @default(false)
+  prNumber     Int?
   userId       String
   envVars      Json?
   customDomain String?
@@ -35,6 +37,8 @@ model Service {
   updatedAt    DateTime     @updatedAt
   deployments  Deployment[]
   user         User         @relation(fields: [userId], references: [id])
+
+  @@index([repoUrl, prNumber, isPreview])
 }
 
 model Deployment {
