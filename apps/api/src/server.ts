@@ -493,6 +493,15 @@ fastify.get('/github/repos', async (request, reply) => {
 
   const { sort, per_page, type, page } = request.query as any;
 
+  // Validation and Sanitization
+  const validSorts = ['updated', 'created', 'pushed', 'full_name'];
+  const validTypes = ['all', 'owner', 'member', 'public', 'private', 'forks', 'sources'];
+
+  const sanitizedSort = validSorts.includes(sort) ? sort : 'updated';
+  const sanitizedType = validTypes.includes(type) ? type : 'all';
+  const sanitizedPerPage = Math.max(1, Math.min(100, parseInt(per_page) || 100));
+  const sanitizedPage = Math.max(1, parseInt(page) || 1);
+
   try {
     const res = await axios.get('https://api.github.com/user/repos', {
       headers: {
@@ -500,10 +509,10 @@ fastify.get('/github/repos', async (request, reply) => {
         Accept: 'application/json',
       },
       params: {
-        sort: sort || 'updated',
-        per_page: per_page || 100,
-        type: type || 'all',
-        page: page || 1,
+        sort: sanitizedSort,
+        per_page: sanitizedPerPage,
+        type: sanitizedType,
+        page: sanitizedPage,
       },
     });
 
