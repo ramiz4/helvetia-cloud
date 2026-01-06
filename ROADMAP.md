@@ -45,6 +45,8 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Dark/Light Mode**: System-aware theming support.
 - [x] **GitHub Repository Picker**: Allow users to select repositories and branches directly from their GitHub account when creating a service. Ensure the "Connect a Repository" form features a premium, fancy, and user-friendly UX/UI for a seamless experience.
 - [x] **Static Site Service**: Dedicated support for deploying static applications (Angular, React, Vue) using optimized multi-stage Docker builds and Nginx for high performance.
+- [ ] **Theme switcher**: Allow users to switch between light and dark themes in the main menu.
+- [ ] **Login Page**: A modern, engaging login page.
 
 ## 🔮 Phase 6: Advanced Ecosystem & Growth
 
@@ -101,6 +103,9 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 ## 🛠 Improvements
 
 - [ ] **Metrics**: Instead of pulling metrics from the API, the server should push metrics to the dashboard using WebSockets or Server-Sent Events (SSE).
+- [ ] **Logout**: Logout failed on server, but you will be logged out locally.
+      Request URL POST http://localhost:3001/auth/logout -> 404 Not Found
+      Response: { "message": "Route POST:/auth/logout not found", "error": "Not Found", "statusCode": 404 }
 
 ## 📚 Documentation
 
