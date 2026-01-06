@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated-client"
 }
 
 datasource db {
@@ -8,13 +9,15 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  githubId  String    @unique
-  username  String
-  avatarUrl String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  services  Service[]
+  id                String    @id @default(uuid())
+  githubId          String    @unique
+  username          String
+  avatarUrl         String?
+  /// @sensitive - GitHub OAuth access token. Handle securely.
+  githubAccessToken String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  services          Service[]
 }
 
 model Service {

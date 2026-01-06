@@ -51,6 +51,7 @@ cp .env.example .env
 - `DATABASE_URL`: PostgreSQL connection string
 - `REDIS_URL`: Redis connection string
 - `JWT_SECRET`: Secret key for JWT token signing
+- `ENCRYPTION_KEY`: A 32-character key for encrypting sensitive data (e.g. GitHub tokens)
 - `PLATFORM_DOMAIN`: Your platform's domain (e.g., `helvetia.cloud`)
 - `APP_BASE_URL`: The base URL of the application, used for CORS configuration (e.g., `http://localhost:3000`)
 - `NODE_ENV`: The environment mode (e.g., `development` or `production`)

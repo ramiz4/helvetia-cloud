@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 import Fastify, { FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
+import { decrypt, encrypt } from './utils/crypto';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 
@@ -108,7 +109,7 @@ async function deleteService(id: string, userId?: string) {
 }
 
 export const fastify = Fastify({
-  logger: true,
+  logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
 });
 
 fastify.register(cors, {
@@ -182,16 +183,19 @@ fastify.post('/auth/github', async (request, reply) => {
     const githubUser = userRes.data;
 
     // 3. Upsert user in DB
+    const encryptedToken = encrypt(access_token);
     const user = await prisma.user.upsert({
       where: { githubId: githubUser.id.toString() },
       update: {
         username: githubUser.login,
         avatarUrl: githubUser.avatar_url,
+        githubAccessToken: encryptedToken,
       },
       create: {
         githubId: githubUser.id.toString(),
         username: githubUser.login,
         avatarUrl: githubUser.avatar_url,
+        githubAccessToken: encryptedToken,
       },
     });
 
@@ -480,6 +484,90 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
   };
 });
 
+// GitHub Proxy Routes
+fastify.get('/github/repos', async (request, reply) => {
+  const user = (request as any).user;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+
+  if (!dbUser?.githubAccessToken) {
+    return reply.status(401).send({
+      error:
+        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
+    });
+  }
+
+  const { sort, per_page, type, page } = request.query as any;
+
+  // Validation and Sanitization
+  const validSorts = ['updated', 'created', 'pushed', 'full_name'];
+  const validTypes = ['all', 'owner', 'member', 'public', 'private', 'forks', 'sources'];
+
+  const sanitizedSort = validSorts.includes(sort) ? sort : 'updated';
+  const sanitizedType = validTypes.includes(type) ? type : 'all';
+  const sanitizedPerPage = Math.max(1, Math.min(100, parseInt(per_page) || 100));
+  const sanitizedPage = Math.max(1, parseInt(page) || 1);
+
+  try {
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
+    const res = await axios.get('https://api.github.com/user/repos', {
+      headers: {
+        Authorization: `token ${decryptedToken}`,
+        Accept: 'application/json',
+      },
+      params: {
+        sort: sanitizedSort,
+        per_page: sanitizedPerPage,
+        type: sanitizedType,
+        page: sanitizedPage,
+      },
+    });
+
+    return res.data;
+  } catch (err: any) {
+    console.error('GitHub API error:', err.response?.data || err.message);
+    return reply
+      .status(err.response?.status || 500)
+      .send(err.response?.data || { error: 'Failed to fetch GitHub repositories' });
+  }
+});
+
+fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
+  const user = (request as any).user;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+
+  if (!dbUser?.githubAccessToken) {
+    return reply.status(401).send({
+      error:
+        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
+    });
+  }
+
+  const { owner, name } = request.params as any;
+
+  // Validation: owner and name should only contain alphanumeric, hyphens, underscores, or dots
+  const validPattern = /^[a-zA-Z0-9-._]+$/;
+  if (!validPattern.test(owner) || !validPattern.test(name)) {
+    return reply.status(400).send({ error: 'Invalid repository owner or name format' });
+  }
+
+  try {
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
+    const res = await axios.get(`https://api.github.com/repos/${owner}/${name}/branches`, {
+      headers: {
+        Authorization: `token ${decryptedToken}`,
+        Accept: 'application/json',
+      },
+    });
+
+    return res.data;
+  } catch (err: any) {
+    console.error('GitHub API error:', err.response?.data || err.message);
+    return reply
+      .status(err.response?.status || 500)
+      .send(err.response?.data || { error: 'Failed to fetch branches' });
+  }
+});
+
 // Deployment Routes
 fastify.post('/services/:id/deploy', async (request, reply) => {
   const { id } = request.params as any;
@@ -495,10 +583,18 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
     },
   });
 
+  // Inject token if available
+  let repoUrl = service.repoUrl;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  if (dbUser?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
+    repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
+  }
+
   await deploymentQueue.add('build', {
     deploymentId: deployment.id,
     serviceId: service.id,
-    repoUrl: service.repoUrl,
+    repoUrl,
     branch: service.branch,
     buildCommand: service.buildCommand,
     startCommand: service.startCommand,
@@ -669,10 +765,18 @@ fastify.post('/webhooks/github', async (request) => {
           },
         });
 
+        // Inject token if available
+        let repoUrlData = service.repoUrl;
+        const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+        if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+          const decryptedToken = decrypt(dbUser.githubAccessToken);
+          repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+        }
+
         await deploymentQueue.add('build', {
           deploymentId: deployment.id,
           serviceId: service.id,
-          repoUrl: service.repoUrl,
+          repoUrl: repoUrlData,
           branch: service.branch,
           buildCommand: service.buildCommand,
           startCommand: service.startCommand,
@@ -746,10 +850,18 @@ fastify.post('/webhooks/github', async (request) => {
       },
     });
 
+    // Inject token if available
+    let repoUrlData = service.repoUrl;
+    const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+    if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+      const decryptedToken = decrypt(dbUser.githubAccessToken);
+      repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+    }
+
     await deploymentQueue.add('build', {
       deploymentId: deployment.id,
       serviceId: service.id,
-      repoUrl: service.repoUrl,
+      repoUrl: repoUrlData,
       branch: service.branch,
       buildCommand: service.buildCommand,
       startCommand: service.startCommand,
