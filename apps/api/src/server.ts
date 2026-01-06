@@ -558,10 +558,17 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
     },
   });
 
+  // Inject token if available
+  let repoUrl = service.repoUrl;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  if (dbUser?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
+    repoUrl = repoUrl.replace('https://', `https://${dbUser.githubAccessToken}@`);
+  }
+
   await deploymentQueue.add('build', {
     deploymentId: deployment.id,
     serviceId: service.id,
-    repoUrl: service.repoUrl,
+    repoUrl,
     branch: service.branch,
     buildCommand: service.buildCommand,
     startCommand: service.startCommand,
@@ -732,10 +739,17 @@ fastify.post('/webhooks/github', async (request) => {
           },
         });
 
+        // Inject token if available
+        let repoUrlData = service.repoUrl;
+        const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+        if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+          repoUrlData = repoUrlData.replace('https://', `https://${dbUser.githubAccessToken}@`);
+        }
+
         await deploymentQueue.add('build', {
           deploymentId: deployment.id,
           serviceId: service.id,
-          repoUrl: service.repoUrl,
+          repoUrl: repoUrlData,
           branch: service.branch,
           buildCommand: service.buildCommand,
           startCommand: service.startCommand,
@@ -809,10 +823,17 @@ fastify.post('/webhooks/github', async (request) => {
       },
     });
 
+    // Inject token if available
+    let repoUrlData = service.repoUrl;
+    const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+    if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+      repoUrlData = repoUrlData.replace('https://', `https://${dbUser.githubAccessToken}@`);
+    }
+
     await deploymentQueue.add('build', {
       deploymentId: deployment.id,
       serviceId: service.id,
-      repoUrl: service.repoUrl,
+      repoUrl: repoUrlData,
       branch: service.branch,
       buildCommand: service.buildCommand,
       startCommand: service.startCommand,
