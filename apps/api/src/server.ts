@@ -67,9 +67,14 @@ function determineServiceStatus(service: any, containers: any[]): string {
 }
 
 // Helper to delete a service and its resources
-async function deleteService(id: string) {
+async function deleteService(id: string, userId?: string) {
   const service = await prisma.service.findUnique({ where: { id } });
   if (!service) return;
+
+  // Verify ownership if userId is provided
+  if (userId && service.userId !== userId) {
+    throw new Error('Unauthorized service deletion attempt');
+  }
 
   // 1. Stop and remove containers if they exist
   const Docker = (await import('dockerode')).default;
@@ -398,7 +403,7 @@ fastify.delete('/services/:id', async (request, reply) => {
   const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
-  await deleteService(id);
+  await deleteService(id, user.id);
 
   return { success: true };
 });
@@ -693,7 +698,7 @@ fastify.post('/webhooks/github', async (request) => {
 
         if (previewService) {
           console.log(`Cleaning up preview environment for PR #${prNumber}`);
-          await deleteService(previewService.id);
+          await deleteService(previewService.id, previewService.userId);
           return { success: true, deletedService: previewService.name };
         }
         return { skipped: 'No preview service found to delete' };
