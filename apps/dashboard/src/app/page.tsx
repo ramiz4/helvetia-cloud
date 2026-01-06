@@ -18,7 +18,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import LandingPage from '../components/LandingPage';
-import { API_BASE_URL, WS_BASE_URL } from '../lib/config';
+import { API_BASE_URL } from '../lib/config';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface Service {
@@ -87,19 +87,31 @@ export default function Home() {
   useEffect(() => {
     if (!activeDeploymentId) return;
 
-    const socket = new WebSocket(`${WS_BASE_URL}/deployments/${activeDeploymentId}/logs/stream`);
+    const eventSource = new EventSource(
+      `${API_BASE_URL}/deployments/${activeDeploymentId}/logs/stream`,
+      { withCredentials: true },
+    );
 
-    socket.onopen = () => console.log('WebSocket connected');
-    socket.onmessage = (event) => {
+    eventSource.onopen = () => console.log('SSE logs stream connected');
+
+    eventSource.onmessage = (event) => {
       setSelectedLogs((prev) => (prev === 'No logs available.' ? '' : prev || '') + event.data);
     };
-    socket.onerror = (error) => console.error('WebSocket error:', error);
-    socket.onclose = () => {
-      console.log('WebSocket disconnected');
-      fetchServices(true); // Silent refresh when deployment ends
+
+    eventSource.onerror = (_error) => {
+      // Check if stream ended permanently (deployment finished or failed)
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log('SSE logs stream ended - deployment finished');
+        fetchServices(true); // Silent refresh when deployment ends
+      } else {
+        console.log('SSE logs stream reconnecting...');
+      }
     };
 
-    return () => socket.close();
+    return () => {
+      console.log('Closing SSE logs stream');
+      eventSource.close();
+    };
   }, [activeDeploymentId, fetchServices]); // Re-run when target deployment changes
 
   useEffect(() => {
@@ -107,13 +119,6 @@ export default function Home() {
       fetchServices();
     }
   }, [isAuthenticated, fetchServices]);
-
-  // Use a ref to avoid stale closures in the metrics interval
-  // and to avoid unnecessary interval resets when services change.
-  const servicesRef = useRef(services);
-  useEffect(() => {
-    servicesRef.current = services;
-  }, [services]);
 
   // Modal accessibility
   const logsModalRef = useRef<HTMLDivElement>(null);
@@ -138,34 +143,42 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      const fetchMetrics = async () => {
-        const currentServices = servicesRef.current;
-        if (currentServices.length === 0) return;
+      const eventSource = new EventSource(`${API_BASE_URL}/services/metrics/stream`, {
+        withCredentials: true,
+      });
 
-        const metricsPromises = currentServices.map(async (service) => {
-          try {
-            const res = await fetch(`${API_BASE_URL}/services/${service.id}/metrics`, {
-              credentials: 'include',
-            });
-            const metrics = await res.json();
-            return { id: service.id, metrics };
-          } catch {
-            return { id: service.id, metrics: null };
+      eventSource.onopen = () => console.log('SSE metrics stream connected');
+
+      eventSource.onmessage = (event) => {
+        try {
+          const updates = JSON.parse(event.data);
+          if (Array.isArray(updates)) {
+            setServices((prev) =>
+              prev.map((service) => {
+                const update = updates.find((u) => u.id === service.id);
+                return update && update.metrics ? { ...service, metrics: update.metrics } : service;
+              }),
+            );
           }
-        });
-
-        const updates = await Promise.all(metricsPromises);
-
-        setServices((prev) =>
-          prev.map((service) => {
-            const update = updates.find((u) => u.id === service.id);
-            return update && update.metrics ? { ...service, metrics: update.metrics } : service;
-          }),
-        );
+        } catch (err) {
+          console.error('Error parsing metrics SSE message:', err);
+        }
       };
 
-      const interval = setInterval(fetchMetrics, 5000); // Poll metrics every 5s
-      return () => clearInterval(interval);
+      eventSource.onerror = (error) => {
+        // EventSource automatically reconnects on transient errors (network issues, server restart)
+        // Only log if it's a permanent failure (readyState === CLOSED)
+        if (eventSource.readyState === EventSource.CLOSED) {
+          console.error('SSE metrics stream closed permanently:', error);
+        } else {
+          console.log('SSE metrics stream reconnecting...');
+        }
+      };
+
+      return () => {
+        console.log('Closing SSE metrics stream');
+        eventSource.close();
+      };
     }
   }, [isAuthenticated]);
 

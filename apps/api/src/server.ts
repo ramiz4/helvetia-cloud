@@ -2,13 +2,13 @@
 import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
-import fastifyWebsocket, { WebSocket } from '@fastify/websocket';
+
 import axios from 'axios';
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
-import Fastify, { FastifyRequest } from 'fastify';
+import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 import { decrypt, encrypt } from './utils/crypto';
@@ -108,6 +108,44 @@ async function deleteService(id: string, userId?: string) {
   await prisma.service.delete({ where: { id } });
 }
 
+// Helper to get metrics for a service
+async function getServiceMetrics(id: string, dockerInstance?: any, containerList?: any[]) {
+  const Docker = (await import('dockerode')).default;
+  const docker = dockerInstance || new Docker();
+
+  const containers = containerList || (await docker.listContainers({ all: true }));
+  const serviceContainers = containers.filter(
+    (c: any) => c.Labels['helvetia.serviceId'] === id && c.State === 'running',
+  );
+
+  if (serviceContainers.length === 0) {
+    return { cpu: 0, memory: 0, memoryLimit: 0 };
+  }
+
+  const containerInfo = serviceContainers[0];
+  const container = docker.getContainer(containerInfo.Id);
+
+  // Get single stats snapshot
+  const stats = await container.stats({ stream: false });
+
+  // Calculate CPU percentage (simplified)
+  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+  const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+  const cpuPercent =
+    systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
+
+  // Calculate Memory usage in MB
+  const memoryUsage =
+    (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
+  const memoryLimit = stats.memory_stats.limit / 1024 / 1024;
+
+  return {
+    cpu: parseFloat(cpuPercent.toFixed(2)),
+    memory: parseFloat(memoryUsage.toFixed(2)),
+    memoryLimit: parseFloat(memoryLimit.toFixed(2)),
+  };
+}
+
 export const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
 });
@@ -118,7 +156,6 @@ fastify.register(cors, {
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 
-fastify.register(fastifyWebsocket);
 fastify.register(fastifyCookie);
 fastify.register(fastifyJwt, {
   secret: process.env.JWT_SECRET || 'supersecret',
@@ -131,10 +168,7 @@ fastify.register(fastifyJwt, {
 // Auth hook
 fastify.addHook('onRequest', async (request, reply) => {
   const publicRoutes = ['/health', '/webhooks/github', '/auth/github'];
-  if (
-    publicRoutes.includes(request.routeOptions?.url || '') ||
-    request.url.includes('/logs/stream')
-  ) {
+  if (publicRoutes.includes(request.routeOptions?.url || '')) {
     return;
   }
   try {
@@ -448,40 +482,65 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
   const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
 
-  const Docker = (await import('dockerode')).default;
-  const docker = new Docker();
+  return getServiceMetrics(id);
+});
 
-  const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter(
-    (c) => c.Labels['helvetia.serviceId'] === id && c.State === 'running',
-  );
+// SSE endpoint for real-time metrics streaming
+fastify.get('/services/metrics/stream', async (request, reply) => {
+  const user = (request as any).user;
 
-  if (serviceContainers.length === 0) {
-    return { cpu: 0, memory: 0, memoryLimit: 0 };
-  }
+  // Set SSE headers with CORS support
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no', // Disable nginx buffering
+    'Access-Control-Allow-Origin': request.headers.origin || '*',
+    'Access-Control-Allow-Credentials': 'true',
+  });
 
-  const containerInfo = serviceContainers[0];
-  const container = docker.getContainer(containerInfo.Id);
+  console.log(`SSE client connected for real-time metrics: ${user.id}`);
 
-  // Get single stats snapshot
-  const stats = await container.stats({ stream: false });
+  const sendMetrics = async () => {
+    try {
+      const Docker = (await import('dockerode')).default;
+      const docker = new Docker();
+      const containers = await docker.listContainers({ all: true });
 
-  // Calculate CPU percentage (simplified)
-  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-  const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-  const cpuPercent =
-    systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
+      const services = await prisma.service.findMany({
+        where: { userId: user.id },
+        select: { id: true },
+      });
 
-  // Calculate Memory usage in MB
-  const memoryUsage =
-    (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
-  const memoryLimit = stats.memory_stats.limit / 1024 / 1024;
+      const metricsPromises = services.map(async (s) => ({
+        id: s.id,
+        metrics: await getServiceMetrics(s.id, docker, containers),
+      }));
 
-  return {
-    cpu: parseFloat(cpuPercent.toFixed(2)),
-    memory: parseFloat(memoryUsage.toFixed(2)),
-    memoryLimit: parseFloat(memoryLimit.toFixed(2)),
+      const results = await Promise.all(metricsPromises);
+
+      // Send as SSE event
+      reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
+    } catch (err) {
+      console.error('Error sending metrics via SSE:', err);
+    }
   };
+
+  // Send immediate connection acknowledgment (makes it feel instant)
+  reply.raw.write(': connected\n\n');
+
+  // Fetch and send initial metrics asynchronously (non-blocking)
+  sendMetrics();
+  const interval = setInterval(sendMetrics, 5000);
+
+  // Clean up on client disconnect
+  request.raw.on('close', () => {
+    console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
+    clearInterval(interval);
+  });
+
+  // Keep the connection open
+  return reply;
 });
 
 // GitHub Proxy Routes
@@ -906,59 +965,54 @@ fastify.get('/deployments/:id/logs', async (request, reply) => {
   return { logs: deployment?.logs };
 });
 
-fastify.get(
-  '/deployments/:id/logs/stream',
-  {
-    websocket: true,
-    // Apply rate limiting to prevent abuse of authenticated log streaming
-    config: {
-      rateLimit: {
-        max: parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
-        timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
-      },
-    },
-  },
-  (connection: WebSocket, req: FastifyRequest) => {
-    const { id } = req.params as any;
-    const { token } = req.query as any;
+// SSE endpoint for real-time deployment logs
+fastify.get('/deployments/:id/logs/stream', async (request, reply) => {
+  const { id } = request.params as any;
+  const user = (request as any).user;
 
-    console.log(`WebSocket connection attempt for deployment: ${id}`);
+  // Verify deployment belongs to user
+  const deployment = await prisma.deployment.findUnique({
+    where: { id },
+    include: { service: true },
+  });
 
-    // Auth check for WS
-    try {
-      // Check query param first, then cookie
-      const tokenToVerify = token || (req as any).cookies.token;
+  if (!deployment || deployment.service.userId !== user.id) {
+    return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
+  }
 
-      if (!tokenToVerify) throw new Error('No token provided');
-      (req.server as any).jwt.verify(tokenToVerify);
-    } catch (err: any) {
-      console.error(`WS Auth Failed for deployment ${id}:`, err.message);
-      connection.close();
-      return;
+  // Set SSE headers with CORS support
+  reply.raw.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'Access-Control-Allow-Origin': request.headers.origin || '*',
+    'Access-Control-Allow-Credentials': 'true',
+  });
+
+  console.log(`SSE client connected for live logs: ${id}`);
+
+  const channel = `deployment-logs:${id}`;
+
+  const onMessage = (chan: string, message: string) => {
+    if (chan === channel) {
+      // Send log line as SSE event
+      reply.raw.write(`data: ${message}\n\n`);
     }
+  };
 
-    const channel = `deployment-logs:${id}`;
+  subConnection.subscribe(channel);
+  subConnection.on('message', onMessage);
 
-    console.log(`Client connected for live logs: ${id}`);
+  // Clean up on client disconnect
+  request.raw.on('close', () => {
+    console.log(`SSE client disconnected from live logs: ${id}`);
+    subConnection.removeListener('message', onMessage);
+  });
 
-    const onMessage = (chan: string, message: string) => {
-      if (chan === channel) {
-        connection.send(message);
-      }
-    };
-
-    subConnection.subscribe(channel);
-    subConnection.on('message', onMessage);
-
-    connection.on('close', () => {
-      console.log(`Client disconnected from live logs: ${id}`);
-      // We shouldn't unsubscribe from the channel globally if other clients are listening
-      // But for MVP, simple is fine. Actually, ioredis handles multiple subscribers on the same connection.
-      // However, we only have one subConnection. Let's just remove the listener.
-      subConnection.removeListener('message', onMessage);
-    });
-  },
-);
+  // Keep the connection open
+  return reply;
+});
 
 // Removed auto-start for testing
 // const start = async () => {
