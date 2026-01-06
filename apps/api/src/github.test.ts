@@ -70,6 +70,10 @@ vi.mock('dockerode', () => {
 });
 
 vi.mock('axios');
+vi.mock('./utils/crypto', () => ({
+  encrypt: vi.fn((val) => val),
+  decrypt: vi.fn((val) => val),
+}));
 
 import { fastify } from './server';
 

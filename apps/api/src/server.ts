@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 import Fastify, { FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
+import { decrypt, encrypt } from './utils/crypto';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 
@@ -182,18 +183,19 @@ fastify.post('/auth/github', async (request, reply) => {
     const githubUser = userRes.data;
 
     // 3. Upsert user in DB
+    const encryptedToken = encrypt(access_token);
     const user = await prisma.user.upsert({
       where: { githubId: githubUser.id.toString() },
       update: {
         username: githubUser.login,
         avatarUrl: githubUser.avatar_url,
-        githubAccessToken: access_token,
+        githubAccessToken: encryptedToken,
       },
       create: {
         githubId: githubUser.id.toString(),
         username: githubUser.login,
         avatarUrl: githubUser.avatar_url,
-        githubAccessToken: access_token,
+        githubAccessToken: encryptedToken,
       },
     });
 
@@ -506,9 +508,10 @@ fastify.get('/github/repos', async (request, reply) => {
   const sanitizedPage = Math.max(1, parseInt(page) || 1);
 
   try {
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
     const res = await axios.get('https://api.github.com/user/repos', {
       headers: {
-        Authorization: `token ${dbUser.githubAccessToken}`,
+        Authorization: `token ${decryptedToken}`,
         Accept: 'application/json',
       },
       params: {
@@ -542,9 +545,10 @@ fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
   const { owner, name } = request.params as any;
 
   try {
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
     const res = await axios.get(`https://api.github.com/repos/${owner}/${name}/branches`, {
       headers: {
-        Authorization: `token ${dbUser.githubAccessToken}`,
+        Authorization: `token ${decryptedToken}`,
         Accept: 'application/json',
       },
     });
@@ -577,7 +581,8 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
   let repoUrl = service.repoUrl;
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
   if (dbUser?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
-    repoUrl = repoUrl.replace('https://', `https://${dbUser.githubAccessToken}@`);
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
+    repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
   }
 
   await deploymentQueue.add('build', {
@@ -758,7 +763,8 @@ fastify.post('/webhooks/github', async (request) => {
         let repoUrlData = service.repoUrl;
         const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
         if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-          repoUrlData = repoUrlData.replace('https://', `https://${dbUser.githubAccessToken}@`);
+          const decryptedToken = decrypt(dbUser.githubAccessToken);
+          repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
         }
 
         await deploymentQueue.add('build', {
@@ -842,7 +848,8 @@ fastify.post('/webhooks/github', async (request) => {
     let repoUrlData = service.repoUrl;
     const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
     if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-      repoUrlData = repoUrlData.replace('https://', `https://${dbUser.githubAccessToken}@`);
+      const decryptedToken = decrypt(dbUser.githubAccessToken);
+      repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
     }
 
     await deploymentQueue.add('build', {
