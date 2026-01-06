@@ -98,6 +98,15 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [ ] **FAQ**: Create a FAQ for the platform.
 - [ ] **Blog**: Create a blog for the platform.
 
+## 🛠 Improvements
+
+- [ ] **Metrics**: Instead of pulling metrics from the API, the server should push metrics to the dashboard using WebSockets or Server-Sent Events (SSE).
+
+## 📚 Documentation
+
+- [ ] **API Documentation**: Create API documentation for the platform.
+- [ ] **User Documentation**: Create user documentation for the platform.
+
 ## 🔭 Future Horizon
 
 - **Multi-Region & Cluster Mode**: Kubernetes-based orchestration for high availability.
