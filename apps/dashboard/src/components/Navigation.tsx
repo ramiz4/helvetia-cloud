@@ -47,11 +47,14 @@ export default function Navigation() {
         credentials: 'include',
       });
       if (!res.ok) {
-        alert('Logout failed on server, but you will be logged out locally.');
+        alert(t.nav.logoutFailed || 'Logout failed on server, but you will be logged out locally.');
       }
     } catch (e) {
       console.error('Logout failed', e);
-      alert('Network error during logout, but you will be logged out locally.');
+      alert(
+        t.nav.logoutNetworkError ||
+          'Network error during logout, but you will be logged out locally.',
+      );
     } finally {
       localStorage.removeItem('user');
       // Remove legacy tokens just in case
@@ -84,17 +87,17 @@ export default function Navigation() {
         <a
           href="/"
           className="flex items-center gap-3 font-bold text-xl text-white font-display tracking-tight"
-          aria-label="Helvetia Cloud Home"
+          aria-label={t.nav.homeAria}
         >
           <Image
             src="/logo.png"
-            alt="Helvetia Cloud Logo"
+            alt={t.nav.logoAlt}
             width={32}
             height={32}
             className="rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.4)]"
           />
           <span className="flex items-center gap-2" aria-hidden="true">
-            HELVETIA
+            {t.nav.brand}
           </span>
         </a>
 

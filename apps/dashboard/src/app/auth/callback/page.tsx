@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from '@/lib/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../../lib/config';
@@ -8,6 +9,7 @@ function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
+  const { t } = useLanguage();
 
   const called = useRef(false);
 
@@ -59,16 +61,16 @@ function CallbackContent() {
       }}
     >
       <div className="spinner"></div>
-      <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
-        Authenticating with GitHub...
-      </p>
+      <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>{t.login.authenticating}</p>
     </div>
   );
 }
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}
+    >
       <CallbackContent />
     </Suspense>
   );

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -116,7 +116,7 @@ export default function LanguageSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
         className="btn-ghost flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-white/10 transition-colors"
-        aria-label="Select Language"
+        aria-label={t.nav.selectLanguage}
         aria-haspopup="true"
         aria-expanded={isOpen}
         aria-controls="language-menu"

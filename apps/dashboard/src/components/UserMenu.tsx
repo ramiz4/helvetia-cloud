@@ -50,7 +50,7 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             {user.username}
           </div>
           <div className="text-[10px] text-white/40 mt-1 uppercase tracking-wider font-bold flex items-center gap-1">
-            Free Plan
+            {t.common.freePlan}
           </div>
         </div>
         <ChevronDown
@@ -64,7 +64,9 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
           <div className="px-3 py-3 border-b border-white/10 mb-1.5">
             <div className="flex flex-col">
               <span className="font-semibold text-sm text-white">{user.username}</span>
-              <span className="text-[11px] text-slate-400 tracking-tight">Personal Account</span>
+              <span className="text-[11px] text-slate-400 tracking-tight">
+                {t.common.personalAccount}
+              </span>
             </div>
           </div>
 
@@ -77,27 +79,27 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
               size={16}
               className="text-slate-400 group-hover/item:text-indigo-400 transition-colors"
             />
-            <span>{t.nav.settings || 'Settings'}</span>
+            <span>{t.nav.settings}</span>
           </Link>
 
           <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item">
             <CreditCard size={16} />
-            <span>Billing</span>
+            <span>{t.userMenu.billing}</span>
             <span className="ml-auto text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 bg-white/5 rounded">
-              Pro
+              {t.userMenu.pro}
             </span>
           </button>
 
           <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item">
             <Shield size={16} />
-            <span>Security</span>
+            <span>{t.userMenu.security}</span>
           </button>
 
           <div className="h-px bg-white/10 my-1.5 mx-1"></div>
 
           <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item">
             <HelpCircle size={16} />
-            <span>Support</span>
+            <span>{t.userMenu.support}</span>
           </button>
 
           <div className="h-px bg-white/10 my-1.5 mx-1"></div>
