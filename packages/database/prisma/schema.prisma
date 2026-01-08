@@ -13,33 +13,33 @@ model User {
   githubId          String    @unique
   username          String
   avatarUrl         String?
-  /// @sensitive - GitHub OAuth access token. Handle securely.
-  githubAccessToken String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  /// @sensitive - GitHub OAuth access token. Handle securely.
+  githubAccessToken String?
   services          Service[]
 }
 
 model Service {
-  id           String       @id @default(uuid())
-  name         String       @unique
-  repoUrl      String?
-  branch       String       @default("main")
-  buildCommand String?
-  startCommand String?
-  port         Int          @default(3000)
-  status       String       @default("IDLE")
-  type         String       @default("DOCKER") // DOCKER or STATIC
-  staticOutputDir String?    @default("dist")
-  isPreview    Boolean      @default(false)
-  prNumber     Int?
-  userId       String
-  envVars      Json?
-  customDomain String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  deployments  Deployment[]
-  user         User         @relation(fields: [userId], references: [id])
+  id              String       @id @default(uuid())
+  name            String       @unique
+  repoUrl         String?
+  branch          String       @default("main")
+  buildCommand    String?
+  startCommand    String?
+  port            Int          @default(3000)
+  status          String       @default("IDLE")
+  userId          String
+  envVars         Json?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  customDomain    String?
+  staticOutputDir String?      @default("dist")
+  type            String       @default("DOCKER")
+  isPreview       Boolean      @default(false)
+  prNumber        Int?
+  deployments     Deployment[]
+  user            User         @relation(fields: [userId], references: [id])
 
   @@index([repoUrl, prNumber, isPreview])
 }

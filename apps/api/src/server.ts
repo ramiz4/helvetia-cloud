@@ -350,7 +350,10 @@ fastify.patch('/services/:id', async (request, reply) => {
     staticOutputDir,
   } = request.body as any;
 
-  if (type !== undefined && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(type)) {
+  if (
+    type !== undefined &&
+    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(type)
+  ) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -392,7 +395,7 @@ fastify.post('/services', async (request, reply) => {
     envVars,
   } = request.body as any;
 
-  if (type && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(type)) {
+  if (type && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(type)) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -755,6 +758,13 @@ fastify.post('/services/:id/restart', async (request, reply) => {
 
   const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
+
+  if ((service as any).type === 'COMPOSE') {
+    return reply.status(400).send({
+      error:
+        'Please use "Redeploy" for Docker Compose services to apply environment variables and configuration changes correctly.',
+    });
+  }
 
   const Docker = (await import('dockerode')).default;
   const docker = new Docker();

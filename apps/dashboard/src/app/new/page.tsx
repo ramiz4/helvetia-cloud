@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Zap } from 'lucide-react';
+import { Loader2, Plus, Trash2, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GitHubRepoPicker from '../../components/GitHubRepoPicker';
@@ -9,7 +9,7 @@ import { useLanguage } from '../../lib/LanguageContext';
 import { API_BASE_URL } from '../../lib/config';
 import { sanitizeServiceName } from '../../utils/serviceName';
 
-type ImportMethod = 'github' | 'manual' | 'database';
+type ImportMethod = 'github' | 'manual' | 'local' | 'compose' | 'database';
 
 export default function NewService() {
   const router = useRouter();
@@ -25,7 +25,9 @@ export default function NewService() {
     port: 3000,
     type: 'DOCKER',
     staticOutputDir: 'dist',
+    envVars: {} as Record<string, string>,
   });
+  const [envVarsList, setEnvVarsList] = useState<{ key: string; value: string }[]>([]);
   const [repoSelected, setRepoSelected] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -58,10 +60,34 @@ export default function NewService() {
     }
   };
 
+  const addEnvVar = () => {
+    setEnvVarsList([...envVarsList, { key: '', value: '' }]);
+  };
+
+  const removeEnvVar = (index: number) => {
+    const newList = [...envVarsList];
+    newList.splice(index, 1);
+    setEnvVarsList(newList);
+  };
+
+  const updateEnvVar = (index: number, field: 'key' | 'value', value: string) => {
+    const newList = [...envVarsList];
+    newList[index][field] = value;
+    setEnvVarsList(newList);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage(null); // Clear any previous errors
+
+    // Convert envVarsList to object
+    const envVarsObj: Record<string, string> = {};
+    envVarsList.forEach((item) => {
+      if (item.key.trim()) {
+        envVarsObj[item.key.trim()] = item.value;
+      }
+    });
 
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
@@ -78,7 +104,7 @@ export default function NewService() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ ...formData, userId: user.id }),
+        body: JSON.stringify({ ...formData, envVars: envVarsObj, userId: user.id }),
       });
 
       if (res.ok) {
@@ -150,6 +176,55 @@ export default function NewService() {
           </button>
           <button
             onClick={() => {
+              setImportMethod('local');
+              setRepoSelected(false);
+            }}
+            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
+              importMethod === 'local'
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+              />
+            </svg>
+            {t.dashboard.newService.importLocal}
+          </button>
+          <button
+            onClick={() => {
+              setImportMethod('compose');
+              setRepoSelected(false);
+              setFormData((prev) => ({
+                ...prev,
+                type: 'COMPOSE',
+                repoUrl: prev.repoUrl || '',
+                buildCommand: 'docker-compose.yml', // file path
+                startCommand: 'app', // main service name
+              }));
+            }}
+            className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
+              importMethod === 'compose'
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+              />
+            </svg>
+            {t.dashboard.newService.importCompose}
+          </button>
+          <button
+            onClick={() => {
               setImportMethod('database');
               setRepoSelected(false);
               setFormData((prev) => ({ ...prev, repoUrl: '' }));
@@ -191,7 +266,11 @@ export default function NewService() {
           )}
 
           {/* Configuration Section */}
-          {(importMethod === 'manual' || importMethod === 'database' || repoSelected) && (
+          {(importMethod === 'manual' ||
+            importMethod === 'local' ||
+            importMethod === 'compose' ||
+            importMethod === 'database' ||
+            repoSelected) && (
             <form
               onSubmit={handleSubmit}
               className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-2xl"
@@ -206,27 +285,225 @@ export default function NewService() {
               </div>
 
               <div className="p-8 space-y-8">
-                {importMethod === 'manual' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-white/5">
-                    <div className="md:col-span-2">
+                <div className="space-y-6">
+                  {/* 1. Service Name */}
+                  <div>
+                    <label
+                      htmlFor="projectName"
+                      className="block text-sm font-medium text-white/60 mb-2"
+                    >
+                      {t.dashboard.newService.projectName}
+                    </label>
+                    <input
+                      id="projectName"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all hover:border-white/20"
+                    />
+                    <p className="text-xs text-white/30 mt-2">
+                      {t.dashboard.newService.projectNameHint}
+                    </p>
+                  </div>
+
+                  {/* 2. Repository / Local Path */}
+                  {(importMethod === 'manual' ||
+                    importMethod === 'local' ||
+                    importMethod === 'compose') && (
+                    <div>
                       <label
                         htmlFor="repoUrl"
                         className="block text-sm font-medium text-white/60 mb-2"
                       >
-                        {t.dashboard.newService.repoUrl}
+                        {importMethod === 'local'
+                          ? t.dashboard.newService.localPath
+                          : t.dashboard.newService.repoUrl}
                       </label>
                       <input
                         id="repoUrl"
                         type="text"
                         name="repoUrl"
-                        placeholder="https://github.com/username/repo"
+                        placeholder={
+                          importMethod === 'local'
+                            ? '/Users/username/Projects/my-app'
+                            : 'https://github.com/username/repo'
+                        }
                         required
                         value={formData.repoUrl}
                         onChange={handleManualInput}
                         className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all hover:border-white/20"
                       />
+                      {(importMethod === 'local' || importMethod === 'compose') && (
+                        <p className="text-xs text-white/30 mt-2">
+                          {t.dashboard.newService.localPathHint}
+                        </p>
+                      )}
                     </div>
-                    <div className="md:col-span-2">
+                  )}
+
+                  {/* 3. Service Type */}
+                  {importMethod !== 'database' && importMethod !== 'compose' && (
+                    <div>
+                      <label className="block text-sm font-medium text-white/60 mb-3">
+                        {t.dashboard.newService.serviceType}
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, type: 'DOCKER', port: 3000 })}
+                          className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${
+                            formData.type === 'DOCKER'
+                              ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
+                              : 'bg-white/5 border-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <div
+                            className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${
+                              formData.type === 'DOCKER'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white/10 text-white/40'
+                            }`}
+                          >
+                            <svg
+                              width="18"
+                              height="18"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-white">
+                              {t.dashboard.newService.dockerService}
+                            </div>
+                            <p className="text-xs text-white/40 mt-1">
+                              {t.dashboard.newService.dockerServiceDesc}
+                            </p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, type: 'STATIC', port: 80 })}
+                          className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${
+                            formData.type === 'STATIC'
+                              ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
+                              : 'bg-white/5 border-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <div
+                            className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${
+                              formData.type === 'STATIC'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white/10 text-white/40'
+                            }`}
+                          >
+                            <svg
+                              width="18"
+                              height="18"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-white">
+                              {t.dashboard.newService.staticSite}
+                            </div>
+                            <p className="text-xs text-white/40 mt-1">
+                              {t.dashboard.newService.staticSiteDesc}
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {importMethod === 'database' && (
+                    <div>
+                      <label className="block text-sm font-medium text-white/60 mb-3">
+                        {t.dashboard.newService.databaseEngine}
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {['POSTGRES', 'REDIS', 'MYSQL'].map((dbType) => (
+                          <button
+                            key={dbType}
+                            type="button"
+                            onClick={() =>
+                              setFormData({
+                                ...formData,
+                                type: dbType,
+                                port:
+                                  dbType === 'POSTGRES' ? 5444 : dbType === 'REDIS' ? 6379 : 3306,
+                              })
+                            }
+                            className={`p-4 rounded-xl border transition-all text-left flex flex-col gap-3 ${
+                              formData.type === dbType
+                                ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
+                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            <div
+                              className={`flex items-center justify-center w-10 h-10 rounded-lg ${
+                                formData.type === dbType
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-white/10 text-white/40'
+                              }`}
+                            >
+                              <svg
+                                width="20"
+                                height="20"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                                />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="font-semibold text-white capitalize">
+                                {dbType === 'POSTGRES'
+                                  ? 'PostgreSQL'
+                                  : dbType === 'MYSQL'
+                                    ? 'MySQL'
+                                    : 'Redis'}
+                              </div>
+                              <p className="text-xs text-white/40 mt-1">
+                                {dbType === 'POSTGRES'
+                                  ? `${t.dashboard.newService.version} 15`
+                                  : dbType === 'MYSQL'
+                                    ? `${t.dashboard.newService.version} 8`
+                                    : `${t.dashboard.newService.version} 7`}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. Branch */}
+                  {importMethod !== 'local' && importMethod !== 'database' && (
+                    <div>
                       <label
                         htmlFor="branch"
                         className="block text-sm font-medium text-white/60 mb-2"
@@ -239,156 +516,27 @@ export default function NewService() {
                         name="branch"
                         placeholder="main"
                         value={formData.branch}
-                        onChange={handleManualInput}
+                        onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                         className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all hover:border-white/20"
                       />
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <div>
-                  <label
-                    htmlFor="projectName"
-                    className="block text-sm font-medium text-white/60 mb-2"
-                  >
-                    {t.dashboard.newService.projectName}
-                  </label>
-                  <input
-                    id="projectName"
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all hover:border-white/20"
-                  />
-                  <p className="text-xs text-white/30 mt-2">
-                    {t.dashboard.newService.projectNameHint}
-                  </p>
-                </div>
-
-                {importMethod !== 'database' && (
-                  <div>
-                    <label className="block text-sm font-medium text-white/60 mb-3">
-                      {t.dashboard.newService.serviceType}
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, type: 'DOCKER', port: 3000 })}
-                        className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${
-                          formData.type === 'DOCKER'
-                            ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
-                            : 'bg-white/5 border-white/10 hover:border-white/20'
-                        }`}
-                      >
-                        <div
-                          className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${
-                            formData.type === 'DOCKER'
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-white/10 text-white/40'
-                          }`}
+                  {/* 5. Commands / Output Dir */}
+                  {importMethod !== 'database' && importMethod !== 'compose' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label
+                          htmlFor="buildCommand"
+                          className="block text-sm font-medium text-white/60 mb-2"
                         >
-                          <svg
-                            width="18"
-                            height="18"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-white">
-                            {t.dashboard.newService.dockerService}
-                          </div>
-                          <p className="text-xs text-white/40 mt-1">
-                            {t.dashboard.newService.dockerServiceDesc}
-                          </p>
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, type: 'STATIC', port: 80 })}
-                        className={`p-4 rounded-xl border transition-all text-left flex items-start gap-4 ${
-                          formData.type === 'STATIC'
-                            ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
-                            : 'bg-white/5 border-white/10 hover:border-white/20'
-                        }`}
-                      >
-                        <div
-                          className={`mt-1 flex items-center justify-center w-8 h-8 rounded-lg ${
-                            formData.type === 'STATIC'
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-white/10 text-white/40'
-                          }`}
-                        >
-                          <svg
-                            width="18"
-                            height="18"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-white">
-                            {t.dashboard.newService.staticSite}
-                          </div>
-                          <p className="text-xs text-white/40 mt-1">
-                            {t.dashboard.newService.staticSiteDesc}
-                          </p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {importMethod === 'database' && (
-                  <div>
-                    <label className="block text-sm font-medium text-white/60 mb-3">
-                      {t.dashboard.newService.databaseEngine}
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {['POSTGRES', 'REDIS', 'MYSQL'].map((dbType) => (
-                        <button
-                          key={dbType}
-                          type="button"
-                          onClick={() =>
-                            setFormData({
-                              ...formData,
-                              type: dbType,
-                              port: dbType === 'POSTGRES' ? 5444 : dbType === 'REDIS' ? 6379 : 3306,
-                            })
-                          }
-                          className={`p-4 rounded-xl border transition-all text-left flex flex-col gap-3 ${
-                            formData.type === dbType
-                              ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50'
-                              : 'bg-white/5 border-white/10 hover:border-white/20'
-                          }`}
-                        >
-                          <div
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg ${
-                              formData.type === dbType
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white/10 text-white/40'
-                            }`}
-                          >
+                          {t.dashboard.newService.buildCommand}
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
                             <svg
-                              width="20"
-                              height="20"
+                              width="16"
+                              height="16"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -397,174 +545,217 @@ export default function NewService() {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                               />
                             </svg>
                           </div>
-                          <div>
-                            <div className="font-semibold text-white capitalize">
-                              {dbType === 'POSTGRES'
-                                ? 'PostgreSQL'
-                                : dbType === 'MYSQL'
-                                  ? 'MySQL'
-                                  : 'Redis'}
-                            </div>
-                            <p className="text-xs text-white/40 mt-1">
-                              {dbType === 'POSTGRES'
-                                ? `${t.dashboard.newService.version} 15`
-                                : dbType === 'MYSQL'
-                                  ? `${t.dashboard.newService.version} 8`
-                                  : `${t.dashboard.newService.version} 7`}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {importMethod !== 'database' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label
-                        htmlFor="buildCommand"
-                        className="block text-sm font-medium text-white/60 mb-2"
-                      >
-                        {t.dashboard.newService.buildCommand}
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
-                          <svg
-                            width="16"
-                            height="16"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
+                          <input
+                            id="buildCommand"
+                            type="text"
+                            value={formData.buildCommand}
+                            onChange={(e) =>
+                              setFormData({ ...formData, buildCommand: e.target.value })
+                            }
+                            placeholder="npm run build"
+                            className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                          />
                         </div>
+                      </div>
+
+                      {formData.type === 'DOCKER' ? (
+                        <div>
+                          <label
+                            htmlFor="startCommand"
+                            className="block text-sm font-medium text-white/60 mb-2"
+                          >
+                            {t.dashboard.newService.startCommand}
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
+                              <svg
+                                width="16"
+                                height="16"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                                />
+                              </svg>
+                            </div>
+                            <input
+                              id="startCommand"
+                              type="text"
+                              value={formData.startCommand}
+                              onChange={(e) =>
+                                setFormData({ ...formData, startCommand: e.target.value })
+                              }
+                              placeholder="npm run start"
+                              className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label
+                            htmlFor="staticOutputDir"
+                            className="block text-sm font-medium text-white/60 mb-2"
+                          >
+                            {t.dashboard.newService.outputDirectory}
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
+                              <svg
+                                width="16"
+                                height="16"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                                />
+                              </svg>
+                            </div>
+                            <input
+                              id="staticOutputDir"
+                              type="text"
+                              value={formData.staticOutputDir}
+                              onChange={(e) =>
+                                setFormData({ ...formData, staticOutputDir: e.target.value })
+                              }
+                              placeholder="dist"
+                              className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {importMethod === 'compose' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-white/60 mb-2">
+                          Compose File
+                        </label>
                         <input
-                          id="buildCommand"
                           type="text"
                           value={formData.buildCommand}
                           onChange={(e) =>
                             setFormData({ ...formData, buildCommand: e.target.value })
                           }
-                          placeholder="npm run build"
-                          className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                          placeholder="docker-compose.yml"
+                          className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
                         />
                       </div>
-                    </div>
-
-                    {formData.type === 'DOCKER' ? (
                       <div>
-                        <label
-                          htmlFor="startCommand"
-                          className="block text-sm font-medium text-white/60 mb-2"
-                        >
-                          {t.dashboard.newService.startCommand}
+                        <label className="block text-sm font-medium text-white/60 mb-2">
+                          Main Service Name
                         </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
-                            <svg
-                              width="16"
-                              height="16"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13 10V3L4 14h7v7l9-11h-7z"
-                              />
-                            </svg>
-                          </div>
-                          <input
-                            id="startCommand"
-                            type="text"
-                            value={formData.startCommand}
-                            onChange={(e) =>
-                              setFormData({ ...formData, startCommand: e.target.value })
-                            }
-                            placeholder="npm run start"
-                            className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          value={formData.startCommand}
+                          onChange={(e) =>
+                            setFormData({ ...formData, startCommand: e.target.value })
+                          }
+                          placeholder="app"
+                          className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                        />
+                        <p className="text-xs text-white/30 mt-2">
+                          The service name in docker-compose.yml that receives HTTP traffic
+                        </p>
                       </div>
-                    ) : (
-                      <div>
-                        <label
-                          htmlFor="staticOutputDir"
-                          className="block text-sm font-medium text-white/60 mb-2"
+                    </div>
+                  )}
+
+                  {/* 7. Port */}
+                  <div>
+                    <label htmlFor="port" className="block text-sm font-medium text-white/60 mb-2">
+                      {t.dashboard.newService.port}
+                    </label>
+                    <input
+                      id="port"
+                      type="number"
+                      value={formData.port}
+                      disabled={['STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(formData.type)}
+                      onChange={(e) =>
+                        setFormData({ ...formData, port: parseInt(e.target.value, 10) })
+                      }
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20 disabled:opacity-50"
+                    />
+                    {formData.type === 'STATIC' && (
+                      <p className="text-xs text-white/30 mt-2">
+                        {t.dashboard.newService.portStaticHint}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Environment Variables Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-medium text-white/60">
+                      Environment Variables
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addEnvVar}
+                      className="text-xs flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+                    >
+                      <Plus size={14} />
+                      Add Variable
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {envVarsList.map((env, index) => (
+                      <div
+                        key={index}
+                        className="flex gap-3 animate-in fade-in slide-in-from-left-4 duration-300"
+                      >
+                        <input
+                          type="text"
+                          placeholder="KEY"
+                          value={env.key}
+                          onChange={(e) => updateEnvVar(index, 'key', e.target.value)}
+                          className="flex-1 px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                        />
+                        <input
+                          type="text"
+                          placeholder="VALUE"
+                          value={env.value}
+                          onChange={(e) => updateEnvVar(index, 'value', e.target.value)}
+                          className="flex-1 px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeEnvVar(index)}
+                          className="p-3 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                          aria-label="Remove variable"
                         >
-                          {t.dashboard.newService.outputDirectory}
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20">
-                            <svg
-                              width="16"
-                              height="16"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                              />
-                            </svg>
-                          </div>
-                          <input
-                            id="staticOutputDir"
-                            type="text"
-                            value={formData.staticOutputDir}
-                            onChange={(e) =>
-                              setFormData({ ...formData, staticOutputDir: e.target.value })
-                            }
-                            placeholder="dist"
-                            className="w-full pl-11 pr-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20"
-                          />
-                        </div>
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ))}
+                    {envVarsList.length === 0 && (
+                      <div className="text-sm text-white/20 italic p-4 text-center border border-white/5 rounded-xl border-dashed">
+                        No environment variables configuration
                       </div>
                     )}
                   </div>
-                )}
-
-                <div>
-                  <label htmlFor="port" className="block text-sm font-medium text-white/60 mb-2">
-                    {t.dashboard.newService.port}
-                  </label>
-                  <input
-                    id="port"
-                    type="number"
-                    value={formData.port}
-                    disabled={['STATIC', 'POSTGRES', 'REDIS', 'MYSQL'].includes(formData.type)}
-                    onChange={(e) =>
-                      setFormData({ ...formData, port: parseInt(e.target.value, 10) })
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white transition-all font-mono text-sm hover:border-white/20 disabled:opacity-50"
-                  />
-                  {formData.type === 'STATIC' && (
-                    <p className="text-xs text-white/30 mt-2">
-                      {t.dashboard.newService.portStaticHint}
-                    </p>
-                  )}
                 </div>
 
                 {errorMessage && (
