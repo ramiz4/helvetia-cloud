@@ -1,6 +1,7 @@
 'use client';
 
 import { API_BASE_URL } from '@/lib/config';
+import { useLanguage } from '@/lib/LanguageContext';
 import {
   AlertCircle,
   ArrowUpRight,
@@ -25,6 +26,7 @@ interface UserInfo {
 }
 
 export default function SettingsPage() {
+  const { t } = useLanguage();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,22 +45,18 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error('Failed to fetch user info', err);
-      toast.error('Failed to load user settings');
+      toast.error(t.settings.toast.loadSettingsFailed);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t.settings.toast.loadSettingsFailed]);
 
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
 
   const disconnectGithub = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to disconnect GitHub? You will not be able to deploy from your repositories until you reconnect.',
-      )
-    ) {
+    if (!confirm(t.settings.disconnectConfirm)) {
       return;
     }
 
@@ -68,14 +66,14 @@ export default function SettingsPage() {
         credentials: 'include',
       });
       if (res.ok) {
-        toast.success('GitHub disconnected successfully');
+        toast.success(t.settings.toast.githubDisconnected);
         fetchUser();
       } else {
-        toast.error('Failed to disconnect GitHub');
+        toast.error(t.settings.toast.githubDisconnectFailed);
       }
     } catch (err) {
       console.error(err);
-      toast.error('Error connecting to API');
+      toast.error(t.common.apiError);
     }
   };
 
@@ -95,8 +93,8 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto py-8 px-6 animate-fade-in">
       <div className="flex items-center justify-between mb-12">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-white mb-2">Settings</h1>
-          <p className="text-slate-400 text-lg">Manage your account and integrations</p>
+          <h1 className="text-4xl font-bold tracking-tight text-white mb-2">{t.settings.title}</h1>
+          <p className="text-slate-400 text-lg">{t.settings.subtitle}</p>
         </div>
       </div>
 
@@ -128,10 +126,10 @@ export default function SettingsPage() {
               <p className="text-slate-500 font-mono text-sm mt-1">ID: {user?.id}</p>
               <div className="flex gap-2 mt-4">
                 <span className="px-3 py-1 bg-indigo-500/15 text-indigo-400 text-[11px] font-bold uppercase tracking-wider rounded-full border border-indigo-500/20 shadow-sm">
-                  Free Plan <span className="text-[10px]">🇨🇭</span>
+                  {t.common.freePlan} <span className="text-[10px]">🇨🇭</span>
                 </span>
                 <span className="px-3 py-1 bg-white/5 text-slate-400 text-[11px] font-bold uppercase tracking-wider rounded-full border border-white/10 shadow-sm">
-                  Early Access
+                  {t.common.earlyAccess}
                 </span>
               </div>
             </div>
@@ -146,9 +144,11 @@ export default function SettingsPage() {
                 <GithubIcon size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">GitHub Integration</h2>
+                <h2 className="text-2xl font-bold text-white tracking-tight">
+                  {t.settings.githubIntegration}
+                </h2>
                 <p className="text-slate-400 text-sm mt-1 leading-relaxed">
-                  Manage your connected GitHub account and repository access.
+                  {t.settings.githubDesc}
                 </p>
               </div>
             </div>
@@ -165,16 +165,16 @@ export default function SettingsPage() {
                     {user?.username}
                     {user?.isGithubConnected ? (
                       <span className="text-[10px] uppercase tracking-widest bg-emerald-500/15 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5 font-bold shadow-sm">
-                        <CheckCircle2 size={12} /> Connected
+                        <CheckCircle2 size={12} /> {t.settings.connected}
                       </span>
                     ) : (
                       <span className="text-[10px] uppercase tracking-widest bg-rose-500/15 text-rose-400 px-2.5 py-1 rounded-full border border-rose-500/20 flex items-center gap-1.5 font-bold shadow-sm">
-                        <AlertCircle size={12} /> Disconnected
+                        <AlertCircle size={12} /> {t.settings.disconnected}
                       </span>
                     )}
                   </div>
                   <div className="text-sm text-slate-500 mt-1 font-medium">
-                    GitHub Account Linked
+                    {t.settings.accountLinked}
                   </div>
                 </div>
               </div>
@@ -184,14 +184,14 @@ export default function SettingsPage() {
                   onClick={disconnectGithub}
                   className="w-full sm:w-auto text-sm text-rose-400 hover:text-white font-bold transition-all flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 hover:bg-rose-500 rounded-xl border border-rose-500/20 shadow-md active:scale-95"
                 >
-                  <LogOut size={16} /> Disconnect
+                  <LogOut size={16} /> {t.settings.disconnect}
                 </button>
               ) : (
                 <button
                   onClick={reconnectGithub}
                   className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <RefreshCw size={16} /> Reconnect
+                  <RefreshCw size={16} /> {t.settings.reconnect}
                 </button>
               )}
             </div>
@@ -202,12 +202,10 @@ export default function SettingsPage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-white text-lg tracking-tight">
-                  Managing Organization Access
+                  {t.settings.orgAccessTitle}
                 </h3>
                 <p className="text-sm text-slate-400 mt-2 leading-relaxed font-medium">
-                  If you need to grant or revoke access to specific GitHub Organizations, you can do
-                  so directly in your GitHub Personal Settings. This platform only requests the
-                  permissions you explicitly grant.
+                  {t.settings.orgAccessDesc}
                 </p>
                 <a
                   href={`https://github.com/settings/connections/applications/${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}`}
@@ -215,7 +213,7 @@ export default function SettingsPage() {
                   rel="noopener noreferrer"
                   className="group inline-flex items-center gap-2 text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-all mt-5 bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-500/20"
                 >
-                  Manage on GitHub
+                  {t.settings.manageOnGithub}
                   <ArrowUpRight
                     size={16}
                     className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -229,23 +227,22 @@ export default function SettingsPage() {
         {/* Danger Zone */}
         <section className="bg-rose-500/5 border border-rose-500/20 rounded-[32px] overflow-hidden shadow-2xl">
           <div className="p-8 border-b border-rose-500/10 bg-rose-500/5">
-            <h2 className="text-2xl font-bold text-rose-400 tracking-tight">Danger Zone</h2>
-            <p className="text-rose-400/60 text-sm mt-1 font-medium">
-              Irreversible actions for your account.
-            </p>
+            <h2 className="text-2xl font-bold text-rose-400 tracking-tight">
+              {t.settings.dangerZone}
+            </h2>
+            <p className="text-rose-400/60 text-sm mt-1 font-medium">{t.settings.irreversible}</p>
           </div>
           <div className="p-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <div>
-                <div className="font-bold text-lg text-white">Delete Account</div>
+                <div className="font-bold text-lg text-white">{t.settings.deleteAccount}</div>
                 <div className="text-sm text-slate-500 mt-1 font-medium max-w-md">
-                  Permanently remove all your data, services, and deployments. This cannot be
-                  undone.
+                  {t.settings.deleteAccountDesc}
                 </div>
               </div>
               <button
                 className="w-full sm:w-auto p-4 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-md active:scale-95 border border-rose-500/20"
-                title="Delete Account"
+                title={t.settings.deleteAccount}
               >
                 <Trash2 size={24} />
               </button>

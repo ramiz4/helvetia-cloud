@@ -1,10 +1,12 @@
 'use client';
 
+import { useLanguage } from '@/lib/LanguageContext';
 import { ExternalLink, Mail, ShieldCheck, Twitter } from 'lucide-react';
 import Image from 'next/image';
 import { GithubIcon } from './icons/GithubIcon';
 
 export default function Footer() {
+  const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -17,20 +19,17 @@ export default function Footer() {
               <div className="relative w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(99,102,241,0.4)]">
                 <Image
                   src="/logo.png"
-                  alt="Helvetia Cloud Logo"
+                  alt={t.nav.logoAlt}
                   width={32}
                   height={32}
                   className="rounded-lg"
                 />
               </div>
               <span className="text-xl font-bold tracking-tight text-white font-display">
-                HELVETIA
+                {t.nav.brand}
               </span>
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">
-              The modern Platform-as-a-Service for developers who want the power of Kubernetes with
-              the simplicity of Heroku. Hosted entirely in Switzerland.
-            </p>
+            <p className="text-slate-400 text-sm leading-relaxed mb-6">{t.footer.brandDesc}</p>
             <div className="flex items-center gap-4">
               <a
                 href="https://github.com/ramiz4/helvetia-cloud"
@@ -61,12 +60,12 @@ export default function Footer() {
           {/* Product Column */}
           <div>
             <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
-              Product
+              {t.footer.product}
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
                 <a href="/" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  Dashboard
+                  {t.nav.dashboard}
                 </a>
               </li>
               <li>
@@ -74,17 +73,17 @@ export default function Footer() {
                   href="/deployments"
                   className="text-slate-400 hover:text-indigo-400 transition-colors"
                 >
-                  Deployments
+                  {t.nav.deployments}
                 </a>
               </li>
               <li>
                 <a href="/new" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  New Service
+                  {t.nav.newService}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  Pricing
+                  {t.footer.pricing}
                 </a>
               </li>
             </ul>
@@ -93,7 +92,7 @@ export default function Footer() {
           {/* Company Column */}
           <div>
             <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
-              Resources
+              {t.footer.resources}
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
@@ -101,22 +100,22 @@ export default function Footer() {
                   href="#"
                   className="text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2"
                 >
-                  Documentation <ExternalLink size={12} />
+                  {t.footer.documentation} <ExternalLink size={12} />
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  Blog
+                  {t.footer.blog}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  Changelog
+                  {t.footer.changelog}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  Status
+                  {t.footer.status}
                 </a>
               </li>
             </ul>
@@ -125,29 +124,29 @@ export default function Footer() {
           {/* Legal Column */}
           <div>
             <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
-              Legal & Swiss Made
+              {t.footer.legalSwiss}
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  Terms of Service
+                  {t.footer.termsOfService}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  Privacy Policy
+                  {t.footer.privacyPolicy}
                 </a>
               </li>
               <li>
                 <div className="flex items-center gap-2 text-indigo-400/80 font-medium">
                   <ShieldCheck size={16} />
-                  <span>DSGVO / GDPR Compliant</span>
+                  <span>{t.footer.gdprCompliant}</span>
                 </div>
               </li>
               <li>
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="text-base">🇨🇭</span>
-                  <span>Hosted in Switzerland</span>
+                  <span>{t.footer.hostedInSwiss}</span>
                 </div>
               </li>
             </ul>
@@ -155,13 +154,13 @@ export default function Footer() {
         </div>
 
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <p>© {currentYear} Helvetia Cloud. Open source under MIT License.</p>
+          <p>{t.footer.rights.replace('{year}', currentYear.toString())}</p>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              All systems operational
+              {t.common.allSystemsOperational}
             </span>
-            <span>Version 1.0.0-beta</span>
+            <span>{t.common.version} 1.0.0-beta</span>
           </div>
         </div>
       </div>

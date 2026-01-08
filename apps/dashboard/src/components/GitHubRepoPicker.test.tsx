@@ -1,3 +1,4 @@
+import { LanguageProvider } from '@/lib/LanguageContext';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import GitHubRepoPicker from './GitHubRepoPicker';
@@ -15,10 +16,16 @@ describe('GitHubRepoPicker', () => {
       json: () => Promise.resolve([]),
     });
 
-    render(<GitHubRepoPicker onSelect={vi.fn()} />);
+    render(
+      <LanguageProvider>
+        <GitHubRepoPicker onSelect={vi.fn()} />
+      </LanguageProvider>,
+    );
 
     // Check for some loading indicators or search input
-    expect(screen.getByPlaceholderText(/search repositories/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/search repositories/i)).toBeInTheDocument();
+    });
   });
 
   it('renders repositories after fetching', async () => {
@@ -39,7 +46,11 @@ describe('GitHubRepoPicker', () => {
       json: () => Promise.resolve(mockRepos),
     });
 
-    render(<GitHubRepoPicker onSelect={vi.fn()} />);
+    render(
+      <LanguageProvider>
+        <GitHubRepoPicker onSelect={vi.fn()} />
+      </LanguageProvider>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('user/test-repo')).toBeInTheDocument();
@@ -52,7 +63,11 @@ describe('GitHubRepoPicker', () => {
       status: 500,
     });
 
-    render(<GitHubRepoPicker onSelect={vi.fn()} />);
+    render(
+      <LanguageProvider>
+        <GitHubRepoPicker onSelect={vi.fn()} />
+      </LanguageProvider>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/failed to fetch repositories/i)).toBeInTheDocument();

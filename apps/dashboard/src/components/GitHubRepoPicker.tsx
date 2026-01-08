@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from '@/lib/LanguageContext';
 import { API_BASE_URL } from '@/lib/config';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -38,6 +39,7 @@ export default function GitHubRepoPicker({
   selectedRepoUrl: _selectedRepoUrl,
   className = '',
 }: GitHubRepoPickerProps) {
+  const { t } = useLanguage();
   const [repos, setRepos] = useState<Repo[]>([]);
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null); // null means "Personal/All"
@@ -68,55 +70,55 @@ export default function GitHubRepoPicker({
     }
   }, []);
 
-  const fetchRepos = useCallback(async (orgLogin?: string | null) => {
-    setLoading(true);
-    setError(null);
+  const fetchRepos = useCallback(
+    async (orgLogin?: string | null) => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const allRepos: Repo[] = [];
-      let page = 1;
-      const perPage = 100;
+      try {
+        const allRepos: Repo[] = [];
+        let page = 1;
+        const perPage = 100;
 
-      while (true) {
-        let url = `${API_BASE_URL}/github/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
-        if (orgLogin) {
-          url += `&org=${orgLogin}`;
-        }
-
-        const res = await fetch(url, {
-          credentials: 'include',
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            localStorage.removeItem('user');
-            throw new Error('Session expired. Please log in again.');
+        while (true) {
+          let url = `${API_BASE_URL}/github/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
+          if (orgLogin) {
+            url += `&org=${orgLogin}`;
           }
-          throw new Error('Failed to fetch repositories');
+
+          const res = await fetch(url, {
+            credentials: 'include',
+          });
+
+          if (!res.ok) {
+            if (res.status === 401) {
+              localStorage.removeItem('user');
+              throw new Error(t.githubPicker.sessionExpired);
+            }
+            throw new Error(t.githubPicker.fetchReposFailed);
+          }
+
+          const pageData: Repo[] = await res.json();
+          allRepos.push(...pageData);
+
+          if (pageData.length < perPage) {
+            break;
+          }
+
+          page += 1;
         }
 
-        const pageData: Repo[] = await res.json();
-        allRepos.push(...pageData);
-
-        if (pageData.length < perPage) {
-          break;
-        }
-
-        page += 1;
+        setRepos(allRepos);
+      } catch (err) {
+        console.error('Failed to load GitHub repositories', err);
+        const errorMessage = err instanceof Error ? err.message : t.githubPicker.fetchReposFailed;
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
       }
-
-      setRepos(allRepos);
-    } catch (err) {
-      console.error('Failed to load GitHub repositories', err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Could not load repositories. Please check your network connection and GitHub token.';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [t],
+  );
 
   useEffect(() => {
     fetchOrgs();
@@ -138,9 +140,9 @@ export default function GitHubRepoPicker({
       if (!res.ok) {
         if (res.status === 401) {
           localStorage.removeItem('user');
-          throw new Error('Session expired. Please log in again.');
+          throw new Error(t.githubPicker.sessionExpired);
         }
-        throw new Error('Failed to fetch branches');
+        throw new Error(t.githubPicker.fetchBranchesFailed);
       }
 
       const data: GitHubBranch[] = await res.json();
@@ -196,8 +198,8 @@ export default function GitHubRepoPicker({
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder="Search repositories..."
-                aria-label="Search repositories"
+                placeholder={t.githubPicker.searchPlaceholder}
+                aria-label={t.githubPicker.searchAria}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-white/30 transition-all font-sans pl-10"
@@ -225,14 +227,14 @@ export default function GitHubRepoPicker({
                 value={selectedOrg || ''}
                 onChange={(e) => setSelectedOrg(e.target.value || null)}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white appearance-none cursor-pointer transition-all pr-10"
-                aria-label="Select organization"
+                aria-label={t.githubPicker.selectOrgAria}
               >
                 <option value="" className="bg-gray-900">
-                  {loadingOrgs ? 'Loading organizations...' : 'All Repositories'}
+                  {loadingOrgs ? t.githubPicker.loadingOrgs : t.githubPicker.allRepos}
                 </option>
                 {!loadingOrgs && orgs.length === 0 && (
                   <option disabled className="bg-gray-900 text-white/30">
-                    No organizations found
+                    {t.githubPicker.noOrgsFound}
                   </option>
                 )}
                 {orgs.map((org) => (
@@ -275,7 +277,7 @@ export default function GitHubRepoPicker({
                     key={repo.id}
                     onClick={() => handleRepoSelect(repo)}
                     className="w-full p-4 flex flex-col gap-3 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-blue-500/30 rounded-xl transition-all group text-left relative overflow-hidden"
-                    aria-label={`Select ${repo.private ? 'private' : 'public'} repository ${repo.full_name}, last updated ${new Date(repo.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}`}
+                    aria-label={`${repo.private ? 'private' : 'public'} repository ${repo.full_name}`}
                   >
                     <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                     <div className="flex items-start justify-between w-full">
@@ -322,7 +324,7 @@ export default function GitHubRepoPicker({
                             {repo.full_name}
                           </div>
                           <div className="text-xs text-white/40 mt-1">
-                            Updated {new Date(repo.updated_at).toLocaleDateString()}
+                            {new Date(repo.updated_at).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
@@ -350,7 +352,7 @@ export default function GitHubRepoPicker({
 
             {!loading && filteredRepos.length === 0 && (
               <div className="text-center py-12 text-white/40 bg-white/5 rounded-xl border border-dashed border-white/10">
-                <p>No repositories found matching "{search}"</p>
+                <p>{t.githubPicker.noReposFound.replace('{search}', search)}</p>
               </div>
             )}
           </div>
@@ -400,10 +402,10 @@ export default function GitHubRepoPicker({
                     href={selectedRepo.html_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`View ${selectedRepo.full_name} on GitHub (opens in new tab)`}
+                    aria-label={`${t.githubPicker.viewOnGithub} (opens in new tab)`}
                     className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-1 font-medium transition-colors"
                   >
-                    View on GitHub
+                    {t.githubPicker.viewOnGithub}
                     <svg
                       width="12"
                       height="12"
@@ -426,7 +428,7 @@ export default function GitHubRepoPicker({
                 onClick={resetSelection}
                 className="text-sm text-white/50 hover:text-white transition-colors border border-white/10 hover:border-white/30 px-3 py-1.5 rounded-lg bg-black/20"
               >
-                Change Repository
+                {t.githubPicker.changeRepo}
               </button>
             </div>
 
@@ -436,7 +438,7 @@ export default function GitHubRepoPicker({
                   htmlFor="branch-select"
                   className="block text-sm font-medium text-white/60 mb-2"
                 >
-                  Branch to Deploy
+                  {t.githubPicker.branchToDeploy}
                 </label>
                 <div className="relative">
                   <select

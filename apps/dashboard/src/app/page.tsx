@@ -98,7 +98,9 @@ export default function Home() {
     eventSource.onopen = () => console.log('SSE logs stream connected');
 
     eventSource.onmessage = (event) => {
-      setSelectedLogs((prev) => (prev === 'No logs available.' ? '' : prev || '') + event.data);
+      setSelectedLogs(
+        (prev) => (prev === t.dashboard.modals.noLogs ? '' : prev || '') + event.data,
+      );
     };
 
     eventSource.onerror = (_error) => {
@@ -115,7 +117,7 @@ export default function Home() {
       console.log('Closing SSE logs stream');
       eventSource.close();
     };
-  }, [activeDeploymentId, fetchServices]); // Re-run when target deployment changes
+  }, [activeDeploymentId, fetchServices, t.dashboard.modals.noLogs]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -223,14 +225,14 @@ export default function Home() {
       });
 
       if (res.ok) {
-        const updatedService = { ...editingService, envVars: envVarsObj };
-        setServices(services.map((s) => (s.id === editingService.id ? updatedService : s)));
+        toast.success(t.common.success);
         setEditingService(null);
+        fetchServices(true);
       } else {
-        toast.error('Failed to update service');
+        toast.error(t.dashboard.actions.updateFailed);
       }
     } catch {
-      toast.error('Error connecting to API');
+      toast.error(t.common.apiError);
     }
   };
 
@@ -248,17 +250,12 @@ export default function Home() {
       // Refresh services
       fetchServices();
     } catch {
-      toast.error('Failed to trigger deployment');
+      toast.error(t.dashboard.actions.deployTriggerFailed);
     }
   };
 
   const deleteService = async (serviceId: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this service?\n\nThis will stop the app and remove all data.',
-      )
-    )
-      return;
+    if (!confirm(t.dashboard.actions.deleteConfirm)) return;
 
     try {
       const res = await fetch(`${API_BASE_URL}/services/${serviceId}`, {
@@ -266,12 +263,13 @@ export default function Home() {
         credentials: 'include',
       });
       if (res.ok) {
+        toast.success(t.common.success);
         setServices(services.filter((s) => s.id !== serviceId));
       } else {
-        toast.error('Failed to delete service');
+        toast.error(t.dashboard.actions.deleteFailed);
       }
     } catch {
-      toast.error('Error connecting to API');
+      toast.error(t.common.apiError);
     }
   };
 
@@ -282,9 +280,9 @@ export default function Home() {
         credentials: 'include',
       });
       const data = await res.json();
-      setSelectedLogs(data.logs || 'No logs available.');
+      setSelectedLogs(data.logs || t.dashboard.modals.noLogs);
     } catch {
-      toast.error('Failed to fetch logs');
+      toast.error(t.dashboard.actions.fetchLogsFailed);
     }
   };
 
@@ -297,12 +295,11 @@ export default function Home() {
         const updatedService = await res.json();
         setServices((prev) => prev.map((s) => (s.id === serviceId ? updatedService : s)));
       } else {
-        console.error('Failed to fetch service details', res.status);
-        toast.error('Failed to refresh service details');
+        toast.error(t.dashboard.modals.refreshFailed);
       }
     } catch (err) {
       console.error(err);
-      toast.error('Error refreshing service details');
+      toast.error(t.dashboard.modals.refreshError);
     }
   };
 
@@ -314,19 +311,24 @@ export default function Home() {
       });
 
       if (res.ok) {
-        toast.success('Container restarted successfully!');
+        toast.success(t.dashboard.actions.restartSuccess);
         fetchService(serviceId);
       } else {
         const error = await res.json();
-        toast.error(error.error || 'Failed to restart container');
+        toast.error(error.error || t.dashboard.actions.restartFailed);
       }
     } catch {
-      toast.error('Error connecting to API');
+      toast.error(t.common.apiError);
     }
   };
 
   if (isAuthenticated === null) {
-    return null; // or a loading spinner
+    return (
+      <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
+        <p className="text-slate-500 font-medium animate-pulse text-lg">{t.dashboard.loading}</p>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -355,6 +357,15 @@ export default function Home() {
         <div>
           <h1 className="text-4xl font-bold tracking-tight text-white mb-2">{t.dashboard.title}</h1>
           <p className="text-slate-400 text-lg">{t.dashboard.subtitle}</p>
+        </div>
+        <div className="flex gap-4">
+          <a
+            href="/new"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 gap-2"
+          >
+            <Plus size={20} />
+            {t.dashboard.createNewService}
+          </a>
         </div>
       </div>
 
@@ -428,9 +439,7 @@ export default function Home() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 gap-4">
           <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
-          <p className="text-slate-500 font-medium animate-pulse text-lg">
-            Loading your workspace...
-          </p>
+          <p className="text-slate-500 font-medium animate-pulse text-lg">{t.dashboard.loading}</p>
         </div>
       ) : filteredServices.length === 0 ? (
         <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] text-center p-20 flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden">
@@ -448,7 +457,7 @@ export default function Home() {
                 href="/new"
                 className="inline-flex items-center justify-center px-10 py-5 rounded-2xl font-bold text-lg bg-indigo-500 text-white hover:bg-indigo-400 transition-all hover:-translate-y-1 shadow-xl shadow-indigo-500/30"
               >
-                Create New Service
+                {t.dashboard.createNewService}
               </a>
             )}
           </div>
@@ -484,7 +493,11 @@ export default function Home() {
                           : 'bg-purple-500/15 text-purple-400 border-purple-500/20'
                       }`}
                     >
-                      {service.type || 'DOCKER'}
+                      {service.type === 'STATIC'
+                        ? t.dashboard.newService.staticSite
+                        : service.type === 'COMPOSE'
+                          ? t.dashboard.newService.composeStack
+                          : t.dashboard.newService.dockerService}
                     </span>
                   </div>
                 </div>
@@ -711,9 +724,9 @@ export default function Home() {
                         }
                         className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium appearance-none"
                       >
-                        <option value="DOCKER">Docker Service</option>
-                        <option value="STATIC">Static Site</option>
-                        <option value="COMPOSE">Docker Compose</option>
+                        <option value="DOCKER">{t.dashboard.newService.dockerService}</option>
+                        <option value="STATIC">{t.dashboard.newService.staticSite}</option>
+                        <option value="COMPOSE">{t.dashboard.newService.composeStack}</option>
                       </select>
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                         <svg
@@ -782,31 +795,25 @@ export default function Home() {
                           ? t.dashboard.labels.mainService
                           : t.dashboard.labels.startCommand}
                     </label>
-                    {editingService.type === 'STATIC' ? (
-                      <input
-                        type="text"
-                        value={editingService.staticOutputDir || ''}
-                        onChange={(e) =>
-                          setEditingService((prev) =>
-                            prev ? { ...prev, staticOutputDir: e.target.value } : null,
-                          )
-                        }
-                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                        placeholder="dist"
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={editingService.startCommand || ''}
-                        onChange={(e) =>
-                          setEditingService((prev) =>
-                            prev ? { ...prev, startCommand: e.target.value } : null,
-                          )
-                        }
-                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                        placeholder="app"
-                      />
-                    )}
+                    <input
+                      type="text"
+                      value={
+                        editingService.type === 'STATIC'
+                          ? editingService.staticOutputDir || ''
+                          : editingService.startCommand || ''
+                      }
+                      onChange={(e) =>
+                        setEditingService((prev) =>
+                          prev
+                            ? editingService.type === 'STATIC'
+                              ? { ...prev, staticOutputDir: e.target.value }
+                              : { ...prev, startCommand: e.target.value }
+                            : null,
+                        )
+                      }
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                      placeholder={editingService.type === 'STATIC' ? 'dist' : 'npm start'}
+                    />
                   </div>
                 </div>
 
@@ -816,84 +823,73 @@ export default function Home() {
                   </label>
                   <input
                     type="number"
-                    disabled={editingService.type === 'STATIC'}
-                    value={editingService.type === 'STATIC' ? 80 : editingService.port || 3000}
+                    value={editingService.port || 3000}
                     onChange={(e) =>
                       setEditingService((prev) =>
                         prev ? { ...prev, port: parseInt(e.target.value) } : null,
                       )
                     }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium disabled:opacity-50"
+                    disabled={editingService.type === 'STATIC'}
                   />
                 </div>
 
-                <div className="pt-4 border-t border-white/5">
-                  <div className="flex items-center justify-between mb-4">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                      Environment Variables
-                      <span className="bg-white/10 text-white/60 px-2 py-0.5 rounded text-[10px] items-center justify-center flex">
-                        {editingEnvVarsList.length}
-                      </span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                      {t.dashboard.labels.envVars}
                     </label>
                     <button
                       type="button"
                       onClick={() =>
-                        setEditingEnvVarsList([...editingEnvVarsList, { key: '', value: '' }])
+                        setEditingEnvVarsList((prev) => [...prev, { key: '', value: '' }])
                       }
-                      className="text-xs flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg hover:bg-indigo-500/10"
+                      className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 transition-all"
                     >
-                      <Plus size={14} />
-                      Add Variable
+                      <Plus size={12} /> {t.dashboard.newService.addVariable}
                     </button>
                   </div>
-
-                  <div className="space-y-3">
-                    {editingEnvVarsList.map((env, index) => (
-                      <div
-                        key={index}
-                        className="flex gap-2 animate-in fade-in slide-in-from-left-4 duration-300"
-                      >
-                        <input
-                          type="text"
-                          placeholder="KEY"
-                          value={env.key}
-                          onChange={(e) => {
-                            const newList = [...editingEnvVarsList];
-                            newList[index].key = e.target.value;
-                            setEditingEnvVarsList(newList);
-                          }}
-                          className="flex-1 px-4 py-2.5 bg-black/20 border border-white/5 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all font-mono text-sm"
-                        />
-                        <div className="text-white/20 flex items-center">=</div>
-                        <input
-                          type="text"
-                          placeholder="VALUE"
-                          value={env.value}
-                          onChange={(e) => {
-                            const newList = [...editingEnvVarsList];
-                            newList[index].value = e.target.value;
-                            setEditingEnvVarsList(newList);
-                          }}
-                          className="flex-1 px-4 py-2.5 bg-black/20 border border-white/5 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all font-mono text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newList = [...editingEnvVarsList];
-                            newList.splice(index, 1);
-                            setEditingEnvVarsList(newList);
-                          }}
-                          className="p-2.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
-                          aria-label="Remove variable"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    {editingEnvVarsList.length === 0 ? (
+                      <div className="py-8 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600">
+                        <span className="text-xs">{t.dashboard.newService.noEnvVars}</span>
                       </div>
-                    ))}
-                    {editingEnvVarsList.length === 0 && (
-                      <div className="text-sm text-slate-500 italic p-8 text-center border border-white/5 rounded-2xl border-dashed bg-black/10">
-                        No environment variables defined
-                      </div>
+                    ) : (
+                      editingEnvVarsList.map((ev, i) => (
+                        <div key={i} className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="KEY"
+                            value={ev.key}
+                            onChange={(e) => {
+                              const newList = [...editingEnvVarsList];
+                              newList[i].key = e.target.value;
+                              setEditingEnvVarsList(newList);
+                            }}
+                            className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                          />
+                          <input
+                            type="text"
+                            placeholder="VALUE"
+                            value={ev.value}
+                            onChange={(e) => {
+                              const newList = [...editingEnvVarsList];
+                              newList[i].value = e.target.value;
+                              setEditingEnvVarsList(newList);
+                            }}
+                            className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditingEnvVarsList((prev) => prev.filter((_, idx) => idx !== i))
+                            }
+                            className="p-2 bg-white/5 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))
                     )}
                   </div>
                 </div>
@@ -905,14 +901,14 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setEditingService(null)}
-                className="px-6 py-3 rounded-xl font-bold bg-transparent text-slate-300 hover:bg-white/5 hover:text-white transition-all border border-transparent hover:border-white/10"
+                className="px-6 py-2.5 rounded-xl font-bold text-slate-400 hover:bg-white/5 transition-all"
               >
                 {t.dashboard.actions.cancel}
               </button>
               <button
                 type="submit"
                 form="edit-service-form"
-                className="px-8 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+                className="px-8 py-2.5 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 shadow-xl shadow-indigo-500/20 transition-all active:scale-95"
               >
                 {t.dashboard.actions.save}
               </button>
