@@ -262,6 +262,35 @@ fastify.post('/auth/logout', async (request, reply) => {
   return { message: 'Logged out successfully' };
 });
 
+fastify.get('/auth/me', async (request) => {
+  const user = (request as any).user;
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      username: true,
+      avatarUrl: true,
+      githubId: true,
+      githubAccessToken: true, // we check if it exists
+    },
+  });
+
+  return {
+    ...dbUser,
+    isGithubConnected: !!dbUser?.githubAccessToken,
+    githubAccessToken: undefined, // Don't send the token itself
+  };
+});
+
+fastify.delete('/auth/github/disconnect', async (request) => {
+  const user = (request as any).user;
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { githubAccessToken: null },
+  });
+  return { success: true };
+});
+
 // Service Routes
 fastify.get('/services', async (request) => {
   // Add authentication middleware in real app
@@ -554,6 +583,36 @@ fastify.get('/services/metrics/stream', async (request, reply) => {
 });
 
 // GitHub Proxy Routes
+fastify.get('/github/orgs', async (request, reply) => {
+  const user = (request as any).user;
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+
+  if (!dbUser?.githubAccessToken) {
+    return reply.status(401).send({
+      error:
+        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
+    });
+  }
+
+  try {
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
+    const res = await axios.get('https://api.github.com/user/orgs', {
+      headers: {
+        Authorization: `token ${decryptedToken}`,
+        Accept: 'application/json',
+      },
+    });
+
+    console.log(`Fetched ${res.data.length} organizations for user ${user.id}`);
+    return res.data;
+  } catch (err: any) {
+    console.error('GitHub Orgs API error:', err.response?.data || err.message);
+    return reply
+      .status(err.response?.status || 500)
+      .send(err.response?.data || { error: 'Failed to fetch GitHub organizations' });
+  }
+});
+
 fastify.get('/github/repos', async (request, reply) => {
   const user = (request as any).user;
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
@@ -565,7 +624,7 @@ fastify.get('/github/repos', async (request, reply) => {
     });
   }
 
-  const { sort, per_page, type, page } = request.query as any;
+  const { sort, per_page, type, page, org } = request.query as any;
 
   // Validation and Sanitization
   const validSorts = ['updated', 'created', 'pushed', 'full_name'];
@@ -578,22 +637,33 @@ fastify.get('/github/repos', async (request, reply) => {
 
   try {
     const decryptedToken = decrypt(dbUser.githubAccessToken);
-    const res = await axios.get('https://api.github.com/user/repos', {
+
+    let url = 'https://api.github.com/user/repos';
+    const params: any = {
+      sort: sanitizedSort,
+      per_page: sanitizedPerPage,
+      page: sanitizedPage,
+    };
+
+    if (org) {
+      // If org is provided, we fetch repos for that organization
+      // Note: org repos API uses slightly different param names or defaults
+      url = `https://api.github.com/orgs/${org}/repos`;
+    } else {
+      params.type = sanitizedType;
+    }
+
+    const res = await axios.get(url, {
       headers: {
         Authorization: `token ${decryptedToken}`,
         Accept: 'application/json',
       },
-      params: {
-        sort: sanitizedSort,
-        per_page: sanitizedPerPage,
-        type: sanitizedType,
-        page: sanitizedPage,
-      },
+      params,
     });
 
     return res.data;
   } catch (err: any) {
-    console.error('GitHub API error:', err.response?.data || err.message);
+    console.error('GitHub Repos API error:', err.response?.data || err.message);
     return reply
       .status(err.response?.status || 500)
       .send(err.response?.data || { error: 'Failed to fetch GitHub repositories' });

@@ -9,6 +9,18 @@ config({ path: envPath });
 const nextConfig: NextConfig = {
   env: {
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+    NEXT_PUBLIC_GITHUB_CLIENT_ID:
+      process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || process.env.GITHUB_CLIENT_ID,
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   turbopack: {
     root: path.resolve(__dirname, '../../'),
