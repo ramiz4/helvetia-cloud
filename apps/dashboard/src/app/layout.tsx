@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
+import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
 import { LanguageProvider } from '../lib/LanguageContext';
-import './globals.css';
+import './tailwind.css';
 
 export const metadata: Metadata = {
   title: 'Helvetia Cloud | Platform-as-a-Service',
@@ -24,30 +25,34 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>
+      <body className="bg-slate-950 text-slate-200 font-sans antialiased min-h-screen">
         <LanguageProvider>
-          <div className="app-shell">
+          <div className="flex flex-col min-h-screen bg-slate-950">
             <Navigation />
-            <main className="main-content container animate-fade-in">{children}</main>
+            <main className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in">
+              {children}
+            </main>
+            <Footer />
           </div>
           <Toaster
             position="bottom-right"
             toastOptions={{
               style: {
-                background: 'var(--bg-glass)',
-                color: 'var(--text-primary)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid var(--border-light)',
+                background: 'rgba(15, 23, 42, 0.8)',
+                color: '#f8fafc',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '1rem',
               },
               success: {
                 iconTheme: {
-                  primary: 'var(--success)',
+                  primary: '#10b981',
                   secondary: 'white',
                 },
               },
               error: {
                 iconTheme: {
-                  primary: 'var(--error)',
+                  primary: '#ef4444',
                   secondary: 'white',
                 },
               },
