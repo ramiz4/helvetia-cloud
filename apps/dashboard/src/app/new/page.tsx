@@ -1,8 +1,10 @@
 'use client';
 
+import { Loader2, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GitHubRepoPicker from '../../components/GitHubRepoPicker';
+import { GithubIcon } from '../../components/icons/GithubIcon';
 import { useLanguage } from '../../lib/LanguageContext';
 import { API_BASE_URL } from '../../lib/config';
 import { sanitizeServiceName } from '../../utils/serviceName';
@@ -118,13 +120,11 @@ export default function NewService() {
             onClick={() => setImportMethod('github')}
             className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
               importMethod === 'github'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-            </svg>
+            <GithubIcon size={20} />
             {t.dashboard.newService.importGithub}
           </button>
           <button
@@ -134,7 +134,7 @@ export default function NewService() {
             }}
             className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
               importMethod === 'manual'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -156,7 +156,7 @@ export default function NewService() {
             }}
             className={`py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 font-medium ${
               importMethod === 'database'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -610,22 +610,24 @@ export default function NewService() {
                   </div>
                 )}
 
-                <div className="pt-4">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform active:scale-[0.99]"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        {t.dashboard.newService.deployingButton}
-                      </>
-                    ) : (
-                      t.dashboard.newService.deployButton
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-5 rounded-2xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/25 active:scale-95 flex items-center justify-center gap-3 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {t.dashboard.newService.deployingButton}
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={20} />
+                      {t.dashboard.newService.deployButton}
+                    </>
+                  )}
+                </button>
               </div>
             </form>
           )}
