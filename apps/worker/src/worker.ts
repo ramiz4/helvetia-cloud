@@ -91,6 +91,130 @@ export const worker = new Worker(
           data: { logs: `Managed service deployment. Pulled official image ${imageTag}.` },
         });
       } else {
+        if (type === 'COMPOSE') {
+          // 1. Start Builder (to run compose)
+          const builderName = `builder-${deploymentId}`;
+          builder = await docker.createContainer({
+            Image: 'docker:cli',
+            name: builderName,
+            Entrypoint: ['sleep', '3600'],
+            HostConfig: {
+              AutoRemove: true,
+              Binds: ['/var/run/docker.sock:/var/run/docker.sock', '/Users:/Users'],
+            },
+          });
+          await builder.start();
+
+          console.log(`Starting Docker Compose deployment for ${serviceName}...`);
+
+          const traefikRule = customDomain
+            ? `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`) || Host(\`${customDomain}\`)`
+            : `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`;
+
+          // Escape backticks for shell script
+          const safeTraefikRule = traefikRule.replace(/`/g, '\\`');
+          const mainService = startCommand || 'app'; // User provided logic name
+
+          const buildScript = `
+            set -e
+            # Install tools needed for manage-docker.sh (if applicable) or standard compose
+            apk add --no-cache docker-cli-compose openjdk21 git
+
+            # Check if repoUrl is a local path
+            if [ -d "${repoUrl}" ]; then
+              echo "Using local directory ${repoUrl}"
+              WORKDIR="${repoUrl}"
+            else
+              echo "Cloning from ${repoUrl}..."
+              mkdir -p /app
+              git clone --depth 1 --branch ${branch} ${repoUrl} /app
+              WORKDIR="/app"
+            fi
+
+            # Generate Override File in /tmp to avoid polluting source
+            cat > /tmp/docker-compose.override.yml <<EOF
+services:
+  ${mainService}:
+${
+  envVars && Object.keys(envVars).length > 0
+    ? `    environment:
+${Object.entries(envVars)
+  .map(([k, v]) => `      - ${k}=${v}`)
+  .join('\n')}`
+    : ''
+}
+    labels:
+      - "helvetia.serviceId=${serviceId}"
+      - "traefik.enable=true"
+      - "traefik.http.routers.${serviceName}.rule=${safeTraefikRule}"
+      - "traefik.http.routers.${serviceName}.entrypoints=web"
+      - "traefik.http.services.${serviceName}.loadbalancer.server.port=${port || 8080}"
+    networks:
+      - default
+
+networks:
+  default:
+    external: true
+    name: helvetia-net
+EOF
+
+            cd "$WORKDIR"
+            echo "Deploying with Docker Compose in $WORKDIR..."
+
+            # Use project name = serviceName to namespace it.
+            # Point to the override file in /tmp
+            docker compose -f "${buildCommand || 'docker-compose.yml'}" -f /tmp/docker-compose.override.yml -p ${serviceName} up -d --build --remove-orphans
+          `;
+
+          let buildLogs = '';
+          const exec = await builder.exec({
+            Cmd: ['sh', '-c', buildScript],
+            AttachStdout: true,
+            AttachStderr: true,
+            Tty: true,
+          });
+
+          const stream = await exec.start({ hijack: true, stdin: false });
+          await new Promise((resolve, reject) => {
+            stream.on('data', async (chunk: Buffer) => {
+              const text = chunk.toString();
+              const clean = scrubLogs(text);
+              buildLogs += clean;
+              console.log(clean);
+              await redisConnection.publish(`deployment-logs:${deploymentId}`, clean);
+            });
+            stream.on('end', resolve);
+            stream.on('error', reject);
+          });
+
+          const execResult = await exec.inspect();
+          if (execResult.ExitCode !== 0) {
+            throw new Error(`Compose deployment failed with exit code ${execResult.ExitCode}`);
+          }
+
+          // Update logs in DB
+          /* eslint-disable no-control-regex */
+          const sanitizedLogs = buildLogs
+            .replace(/\0/g, '')
+            .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+          /* eslint-enable no-control-regex */
+
+          await prisma.deployment.update({
+            where: { id: deploymentId },
+            data: { logs: sanitizedLogs, status: 'SUCCESS' },
+          });
+
+          await prisma.service.update({
+            where: { id: serviceId },
+            data: { status: 'ACTIVE' },
+          });
+
+          if (builder) {
+            await builder.remove({ force: true }).catch(() => {});
+          }
+          return;
+        }
+
         // 1. Start Builder (Isolated Environment)
         const builderName = `builder-${deploymentId}`;
 
@@ -101,7 +225,10 @@ export const worker = new Worker(
           Entrypoint: ['sleep', '3600'],
           HostConfig: {
             AutoRemove: true,
-            Binds: ['/var/run/docker.sock:/var/run/docker.sock'],
+            Binds: [
+              '/var/run/docker.sock:/var/run/docker.sock',
+              '/Users:/Users', // Mount Users directory for local repository access
+            ],
           },
         });
         await builder.start();
