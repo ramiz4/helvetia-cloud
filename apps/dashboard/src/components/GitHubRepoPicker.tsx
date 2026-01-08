@@ -13,6 +13,11 @@ interface Repo {
   updated_at: string;
 }
 
+interface Org {
+  login: string;
+  avatar_url: string;
+}
+
 interface GitHubBranch {
   name: string;
   commit: {
@@ -34,7 +39,10 @@ export default function GitHubRepoPicker({
   className = '',
 }: GitHubRepoPickerProps) {
   const [repos, setRepos] = useState<Repo[]>([]);
+  const [orgs, setOrgs] = useState<Org[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<string | null>(null); // null means "Personal/All"
   const [loading, setLoading] = useState(false);
+  const [loadingOrgs, setLoadingOrgs] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selectedRepo, setSelectedRepo] = useState<Repo | null>(null);
@@ -43,7 +51,24 @@ export default function GitHubRepoPicker({
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [view, setView] = useState<'list' | 'config'>('list');
 
-  const fetchRepos = useCallback(async () => {
+  const fetchOrgs = useCallback(async () => {
+    setLoadingOrgs(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/github/orgs`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOrgs(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch organizations', err);
+    } finally {
+      setLoadingOrgs(false);
+    }
+  }, []);
+
+  const fetchRepos = useCallback(async (orgLogin?: string | null) => {
     setLoading(true);
     setError(null);
 
@@ -53,7 +78,10 @@ export default function GitHubRepoPicker({
       const perPage = 100;
 
       while (true) {
-        const url = `${API_BASE_URL}/github/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
+        let url = `${API_BASE_URL}/github/repos?sort=updated&per_page=${perPage}&type=all&page=${page}`;
+        if (orgLogin) {
+          url += `&org=${orgLogin}`;
+        }
 
         const res = await fetch(url, {
           credentials: 'include',
@@ -91,8 +119,12 @@ export default function GitHubRepoPicker({
   }, []);
 
   useEffect(() => {
-    fetchRepos();
-  }, [fetchRepos]);
+    fetchOrgs();
+  }, [fetchOrgs]);
+
+  useEffect(() => {
+    fetchRepos(selectedOrg);
+  }, [fetchRepos, selectedOrg]);
 
   const fetchBranches = async (repo: Repo) => {
     setLoadingBranches(true);
@@ -160,31 +192,73 @@ export default function GitHubRepoPicker({
 
       {view === 'list' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="relative mb-6">
-            <input
-              type="text"
-              placeholder="Search repositories..."
-              aria-label="Search repositories"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-white/30 transition-all font-sans"
-            />
-            <svg
-              className="absolute right-4 top-3.5 text-white/30"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Search repositories..."
+                aria-label="Search repositories"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white placeholder-white/30 transition-all font-sans pl-10"
               />
-            </svg>
+              <svg
+                className="absolute left-3.5 top-3.5 text-white/30"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+
+            <div className="md:w-64 relative">
+              <select
+                value={selectedOrg || ''}
+                onChange={(e) => setSelectedOrg(e.target.value || null)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-white appearance-none cursor-pointer transition-all pr-10"
+                aria-label="Select organization"
+              >
+                <option value="" className="bg-gray-900">
+                  {loadingOrgs ? 'Loading organizations...' : 'All Repositories'}
+                </option>
+                {!loadingOrgs && orgs.length === 0 && (
+                  <option disabled className="bg-gray-900 text-white/30">
+                    No organizations found
+                  </option>
+                )}
+                {orgs.map((org) => (
+                  <option key={org.login} value={org.login} className="bg-gray-900">
+                    {org.login}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-3.5 pointer-events-none text-white/40">
+                <svg
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
 
           <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">

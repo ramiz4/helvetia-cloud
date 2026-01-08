@@ -8,7 +8,6 @@ import {
   ExternalLink,
   FileText,
   Play,
-  RefreshCw,
   RotateCw,
   Search,
   Trash2,
@@ -340,96 +339,61 @@ export default function Home() {
   );
 
   return (
-    <div className="section">
-      <div
-        className="header-actions"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem',
-        }}
-      >
+    <div className="py-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
         <div>
-          <h1>{t.dashboard.title}</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>{t.dashboard.subtitle}</p>
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button onClick={() => fetchServices()} className="btn btn-ghost" title="Refresh">
-            <RefreshCw size={18} />
-          </button>
+          <h1 className="text-4xl font-bold tracking-tight text-white mb-2">{t.dashboard.title}</h1>
+          <p className="text-slate-400 text-lg">{t.dashboard.subtitle}</p>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div
-        className="grid"
-        style={{
-          marginBottom: '2rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        }}
-      >
-        <div className="card glass">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div
-              className="logo-icon"
-              style={{
-                background: 'rgba(99, 102, 241, 0.1)',
-                color: 'var(--primary)',
-                boxShadow: 'none',
-              }}
-            >
-              <Zap size={20} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20 shadow-lg">
+              <Zap size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
+              <div className="text-4xl font-bold text-white mb-1 leading-none">
                 {services.length}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                 {t.dashboard.stats.total}
               </div>
             </div>
           </div>
         </div>
-        <div className="card glass">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div
-              className="logo-icon"
-              style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                color: 'var(--success)',
-                boxShadow: 'none',
-              }}
-            >
-              <CheckCircle2 size={20} />
+
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-lg">
+              <CheckCircle2 size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
+              <div className="text-4xl font-bold text-white mb-1 leading-none">
                 {activeServices}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                 {t.dashboard.stats.active}
               </div>
             </div>
           </div>
         </div>
-        <div className="card glass">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div
-              className="logo-icon"
-              style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                color: 'var(--error)',
-                boxShadow: 'none',
-              }}
-            >
-              <AlertCircle size={20} />
+
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center border border-rose-500/20 shadow-lg">
+              <AlertCircle size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '2rem', fontWeight: '700', lineHeight: 1 }}>
+              <div className="text-4xl font-bold text-white mb-1 leading-none">
                 {failingServices}
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">
                 {t.dashboard.stats.failed}
               </div>
             </div>
@@ -438,249 +402,166 @@ export default function Home() {
       </div>
 
       {/* Search Bar */}
-      <div className="search-bar" style={{ marginBottom: '2rem' }}>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <Search
-            size={18}
-            style={{
-              position: 'absolute',
-              left: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-secondary)',
-            }}
-          />
-          <input
-            type="text"
-            placeholder={t.dashboard.search.placeholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ paddingLeft: '2.5rem' }}
-            aria-label={t.dashboard.search.placeholder}
-          />
-        </div>
+      <div className="relative max-w-md mb-12">
+        <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+        <input
+          type="text"
+          placeholder={t.dashboard.search.placeholder}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-white/10 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-lg"
+          aria-label={t.dashboard.search.placeholder}
+        />
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-          <div className="spinner"></div>
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
+          <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
+          <p className="text-slate-500 font-medium animate-pulse text-lg">
+            Loading your workspace...
+          </p>
         </div>
       ) : filteredServices.length === 0 ? (
-        <div
-          className="card glass"
-          style={{
-            textAlign: 'center',
-            padding: '4rem',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1rem',
-          }}
-        >
-          <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '50%' }}>
-            <Zap size={32} color="var(--text-secondary)" />
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] text-center p-20 flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-b from-indigo-500/5 to-transparent" />
+          <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center relative z-10 ring-8 ring-white/5">
+            <Zap size={40} className="text-slate-500" />
           </div>
-          <div>
-            <h3 style={{ marginBottom: '0.5rem' }}>{t.dashboard.search.noResults}</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+          <div className="relative z-10 max-w-md">
+            <h3 className="text-3xl font-bold text-white mb-4">{t.dashboard.search.noResults}</h3>
+            <p className="text-slate-400 text-lg mb-10 leading-relaxed">
               {searchQuery ? t.dashboard.search.tryAgain : t.dashboard.search.getStarted}
             </p>
+            {!searchQuery && (
+              <a
+                href="/new"
+                className="inline-flex items-center justify-center px-10 py-5 rounded-2xl font-bold text-lg bg-indigo-500 text-white hover:bg-indigo-400 transition-all hover:-translate-y-1 shadow-xl shadow-indigo-500/30"
+              >
+                Create New Service
+              </a>
+            )}
           </div>
         </div>
       ) : (
-        <div className="grid">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {filteredServices.map((service) => (
-            <div key={service.id} className="card">
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem',
-                  alignItems: 'flex-start',
-                }}
-              >
-                <div>
-                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{service.name}</h3>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span className={`status-badge status-${service.status.toLowerCase()}`}>
+            <div
+              key={service.id}
+              className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-white/10 hover:border-indigo-500/30 transition-all duration-500 group shadow-2xl flex flex-col"
+            >
+              <div className="flex justify-between items-start mb-8">
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-bold text-white tracking-tight leading-none">
+                    {service.name}
+                  </h3>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border transition-colors ${
+                        service.status === 'ACTIVE' || service.status === 'RUNNING'
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
+                          : service.status === 'DEPLOYING'
+                            ? 'bg-amber-500/15 text-amber-400 border-amber-500/20 animate-pulse'
+                            : 'bg-rose-500/15 text-rose-400 border-rose-500/20'
+                      }`}
+                    >
                       {service.status}
                     </span>
                     <span
-                      className={`text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border ${
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
                         service.type === 'STATIC'
-                          ? 'bg-sky-400/15 text-sky-400 border-sky-400/20'
-                          : 'bg-purple-500/15 text-purple-500 border-purple-500/20'
+                          ? 'bg-sky-500/15 text-sky-400 border-sky-500/20'
+                          : 'bg-purple-500/15 text-purple-400 border-purple-500/20'
                       }`}
                     >
                       {service.type || 'DOCKER'}
                     </span>
-                    {service.customDomain && (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        {service.customDomain}
-                      </span>
-                    )}
-                    {service.isPreview && (
-                      <span
-                        className="text-[0.7rem] px-2 py-[0.1rem] rounded-[0.5rem] uppercase font-semibold border bg-yellow-500/15 text-yellow-500 border-yellow-500/20"
-                        title={
-                          service.prNumber != null
-                            ? `Preview Environment for PR #${service.prNumber}`
-                            : 'Preview Environment'
-                        }
-                      >
-                        {service.prNumber != null
-                          ? `PR #${service.prNumber} PREVIEW`
-                          : 'PREVIEW ENVIRONMENT'}
-                      </span>
-                    )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="flex gap-2">
                   <button
                     onClick={() => setEditingService(service)}
-                    className="btn-icon"
+                    className="p-2.5 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
                     title={t.dashboard.actions.edit}
                   >
-                    <Edit2 size={16} />
+                    <Edit2 size={18} />
                   </button>
                   <button
                     onClick={() => deleteService(service.id)}
-                    className="btn-icon"
-                    style={{ color: 'var(--error)' }}
+                    className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all"
                     title={t.dashboard.actions.delete}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>
 
-              <div
-                style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.9rem',
-                  marginBottom: '1.5rem',
-                  paddingBottom: '1rem',
-                  borderBottom: '1px solid var(--border-subtle)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      background: 'var(--text-muted)',
-                      borderRadius: '50%',
-                    }}
-                  ></div>
-                  <span
-                    style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  >
-                    {service.repoUrl}
-                  </span>
-                </div>
+              <div className="flex items-center gap-3 text-sm text-slate-500 mb-8 pb-4 border-b border-white/5">
+                <div className="w-2 h-2 rounded-full bg-slate-600 shadow-[0_0_8px_rgba(71,85,105,0.5)]" />
+                <span className="truncate font-medium">{service.repoUrl}</span>
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '1rem',
-                  marginBottom: '1.5rem',
-                }}
-              >
-                <div
-                  style={{
-                    background: 'var(--bg-glass)',
-                    padding: '0.75rem',
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: '0.25rem',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    <Cpu size={14} /> {t.dashboard.labels.cpu}
+              <div className="grid grid-cols-2 gap-4 mb-10">
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 group/metric hover:border-indigo-500/20 transition-colors">
+                  <div className="flex items-center gap-2 mb-3 text-slate-500 group-hover/metric:text-indigo-400 transition-colors">
+                    <Cpu size={14} className="opacity-70" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">
+                      {t.dashboard.labels.cpu}
+                    </span>
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                    {service.metrics?.cpu || 0}%
+                  <div className="text-2xl font-bold text-white tabular-nums tracking-tight">
+                    {service.metrics?.cpu || 0}
+                    <span className="text-sm font-medium text-slate-500 ml-1">%</span>
                   </div>
                 </div>
-                <div
-                  style={{
-                    background: 'var(--bg-glass)',
-                    padding: '0.75rem',
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: '0.25rem',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    <Zap size={14} /> {t.dashboard.labels.ram}
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 group/metric hover:border-amber-500/20 transition-colors">
+                  <div className="flex items-center gap-2 mb-3 text-slate-500 group-hover/metric:text-amber-400 transition-colors">
+                    <Zap size={14} className="opacity-70" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">
+                      {t.dashboard.labels.ram}
+                    </span>
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                    {service.metrics?.memory || 0} MB
+                  <div className="text-2xl font-bold text-white tabular-nums tracking-tight">
+                    {service.metrics?.memory || 0}
+                    <span className="text-sm font-medium text-slate-500 ml-1">MB</span>
                   </div>
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  marginTop: 'auto',
-                }}
-              >
-                {/* Primary action - full width */}
+              <div className="flex flex-col gap-3 mt-auto">
                 <button
                   onClick={() => triggerDeploy(service.id)}
-                  className="btn btn-primary"
-                  style={{ width: '100%' }}
+                  className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all hover:shadow-[0_8px_20px_rgba(99,102,241,0.3)] shadow-lg active:scale-95"
                 >
-                  <Play size={16} /> {t.dashboard.actions.redeploy}
+                  <Play size={18} fill="currentColor" /> {t.dashboard.actions.redeploy}
                 </button>
 
-                {/* Secondary actions - responsive grid */}
-                <div
-                  style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}
-                >
+                <div className="grid grid-cols-3 gap-3">
                   <button
                     onClick={() => restartService(service.id)}
-                    className="btn btn-ghost"
+                    className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95 group/btn"
                     title={t.dashboard.actions.restart}
                   >
-                    <RotateCw size={16} />
+                    <RotateCw
+                      size={18}
+                      className="group-active/btn:rotate-180 transition-transform duration-500"
+                    />
                   </button>
                   <button
                     onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
-                    className="btn btn-ghost"
+                    className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed group/btn"
                     disabled={!service.deployments[0]}
                     title={t.dashboard.actions.logs}
                   >
-                    <FileText size={16} />
+                    <FileText size={18} />
                   </button>
                   <a
                     href={`http://${service.name}.localhost`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-ghost"
+                    className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95"
                     title={t.dashboard.actions.visit}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <ExternalLink size={16} />
+                    <ExternalLink size={18} />
                   </a>
                 </div>
               </div>
@@ -691,47 +572,19 @@ export default function Home() {
 
       {/* Logs Modal */}
       {selectedLogs !== null && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '2rem',
-          }}
-        >
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-100 p-8">
           <div
             ref={logsModalRef}
             tabIndex={-1}
-            className="card glass active-logs focus:outline-none"
+            className="glass w-full max-w-4xl max-h-[85vh] flex flex-col rounded-[32px] overflow-hidden focus:outline-none"
             role="dialog"
             aria-modal="true"
             aria-labelledby="logs-modal-title"
-            style={{
-              width: '100%',
-              maxWidth: '900px',
-              maxHeight: '85vh',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: 0,
-            }}
           >
-            <div
-              style={{
-                padding: '1.5rem',
-                borderBottom: '1px solid var(--border-light)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <FileText size={20} className="text-primary" />
-                <h2 id="logs-modal-title" style={{ fontSize: '1.25rem' }}>
+            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <FileText size={20} className="text-indigo-400" />
+                <h2 id="logs-modal-title" className="text-xl font-bold text-white">
                   {t.dashboard.modals.logsTitle}
                 </h2>
               </div>
@@ -740,33 +593,17 @@ export default function Home() {
                   setSelectedLogs(null);
                   setActiveDeploymentId(null);
                 }}
-                className="btn-icon"
+                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 transition-colors"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem', background: '#000' }}>
-              <pre
-                style={{
-                  fontFamily: 'monospace',
-                  fontSize: '0.9rem',
-                  color: '#c9d1d9',
-                  whiteSpace: 'pre-wrap',
-                  lineHeight: 1.5,
-                }}
-              >
+            <div className="flex-1 overflow-auto p-6 bg-black/40 custom-scrollbar">
+              <pre className="font-mono text-sm text-slate-300 whitespace-pre-wrap underline-offset-4 leading-relaxed">
                 {selectedLogs}
               </pre>
             </div>
-            <div
-              style={{
-                padding: '1rem',
-                borderTop: '1px solid var(--border-light)',
-                background: 'var(--bg-surface)',
-                fontSize: '0.85rem',
-                color: 'var(--text-secondary)',
-              }}
-            >
+            <div className="p-4 border-t border-white/10 bg-slate-900/50 text-xs font-medium text-slate-500 tracking-wider uppercase">
               {activeDeploymentId ? t.dashboard.modals.streaming : t.dashboard.modals.ended}
             </div>
           </div>
@@ -775,162 +612,182 @@ export default function Home() {
 
       {/* Edit Service Modal */}
       {editingService !== null && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '2rem',
-          }}
-        >
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-100 p-8">
           <div
             ref={editModalRef}
             tabIndex={-1}
-            className="card glass focus:outline-none"
+            className="glass w-full max-w-2xl max-h-[90vh] overflow-auto rounded-[32px] p-8 focus:outline-none relative custom-scrollbar"
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-modal-title"
-            style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}
           >
-            <div
-              style={{
-                marginBottom: '1.5rem',
-                borderBottom: '1px solid var(--border-light)',
-                paddingBottom: '1rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <h2 id="edit-modal-title">{t.dashboard.modals.editTitle}</h2>
-              <button onClick={() => setEditingService(null)} className="btn-icon">
-                <X size={20} />
+            <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/10">
+              <h2 id="edit-modal-title" className="text-2xl font-bold text-white tracking-tight">
+                {t.dashboard.modals.editTitle}
+              </h2>
+              <button
+                onClick={() => setEditingService(null)}
+                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 transition-colors"
+                aria-label="Close"
+              >
+                <X size={24} />
               </button>
             </div>
 
-            <form
-              onSubmit={updateService}
-              style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}
-            >
-              <div>
-                <label>{t.dashboard.labels.serviceName}</label>
+            <form onSubmit={updateService} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                  {t.dashboard.labels.serviceName}
+                </label>
                 <input
                   type="text"
                   value={editingService.name}
-                  onChange={(e) => setEditingService({ ...editingService, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditingService((prev) => (prev ? { ...prev, name: e.target.value } : null))
+                  }
+                  className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
                   required
                 />
               </div>
 
-              <div>
-                <label>{t.dashboard.labels.repoUrl}</label>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                  {t.dashboard.labels.repoUrl}
+                </label>
                 <input
                   type="url"
                   value={editingService.repoUrl}
                   onChange={(e) =>
-                    setEditingService({ ...editingService, repoUrl: e.target.value })
+                    setEditingService((prev) =>
+                      prev ? { ...prev, repoUrl: e.target.value } : null,
+                    )
                   }
+                  className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
                   required
                 />
               </div>
 
-              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label>{t.dashboard.labels.serviceType}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="sm:col-span-2 space-y-2">
+                  <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                    {t.dashboard.labels.serviceType}
+                  </label>
                   <select
                     value={editingService.type || 'DOCKER'}
                     onChange={(e) =>
-                      setEditingService({
-                        ...editingService,
-                        type: e.target.value,
-                        port: e.target.value === 'STATIC' ? 80 : editingService.port,
-                      })
+                      setEditingService((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              type: e.target.value,
+                              port: e.target.value === 'STATIC' ? 80 : prev.port,
+                            }
+                          : null,
+                      )
                     }
-                    className="w-full"
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium appearance-none"
                   >
                     <option value="DOCKER">Docker Service</option>
                     <option value="STATIC">Static Site</option>
                   </select>
                 </div>
-                <div>
-                  <label>Branch</label>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                    Branch
+                  </label>
                   <input
                     type="text"
                     value={editingService.branch || ''}
                     onChange={(e) =>
-                      setEditingService({ ...editingService, branch: e.target.value })
+                      setEditingService((prev) =>
+                        prev ? { ...prev, branch: e.target.value } : null,
+                      )
                     }
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                    placeholder="main"
                   />
                 </div>
-                <div>
-                  <label>Port</label>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                    Port
+                  </label>
                   <input
                     type="number"
                     disabled={editingService.type === 'STATIC'}
                     value={editingService.type === 'STATIC' ? 80 : editingService.port || 3000}
                     onChange={(e) =>
-                      setEditingService({ ...editingService, port: parseInt(e.target.value) })
+                      setEditingService((prev) =>
+                        prev ? { ...prev, port: parseInt(e.target.value) } : null,
+                      )
                     }
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
 
-              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label>Build Command</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                    Build Command
+                  </label>
                   <input
                     type="text"
                     value={editingService.buildCommand || ''}
                     onChange={(e) =>
-                      setEditingService({ ...editingService, buildCommand: e.target.value })
+                      setEditingService((prev) =>
+                        prev ? { ...prev, buildCommand: e.target.value } : null,
+                      )
                     }
-                    placeholder="e.g. npm run build"
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                    placeholder="npm run build"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   {editingService.type === 'STATIC' ? (
                     <>
-                      <label>Output Directory</label>
+                      <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                        Output Directory
+                      </label>
                       <input
                         type="text"
                         value={editingService.staticOutputDir || ''}
                         onChange={(e) =>
-                          setEditingService({
-                            ...editingService,
-                            staticOutputDir: e.target.value,
-                          })
+                          setEditingService((prev) =>
+                            prev ? { ...prev, staticOutputDir: e.target.value } : null,
+                          )
                         }
-                        placeholder="e.g. dist"
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                        placeholder="dist"
                       />
                     </>
                   ) : (
                     <>
-                      <label>Start Command</label>
+                      <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                        Start Command
+                      </label>
                       <input
                         type="text"
                         value={editingService.startCommand || ''}
                         onChange={(e) =>
-                          setEditingService({
-                            ...editingService,
-                            startCommand: e.target.value,
-                          })
+                          setEditingService((prev) =>
+                            prev ? { ...prev, startCommand: e.target.value } : null,
+                          )
                         }
-                        placeholder="e.g. npm start"
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                        placeholder="npm start"
                       />
                     </>
                   )}
                 </div>
               </div>
 
-              <div>
-                <label>Environment Variables</label>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                  Environment Variables
+                </label>
                 <textarea
-                  style={{ minHeight: '120px', fontFamily: 'monospace', fontSize: '0.85rem' }}
                   value={
                     editingService.envVars
                       ? Object.entries(editingService.envVars)
@@ -948,20 +805,24 @@ export default function Home() {
                           return [k.trim(), v.join('=').trim()];
                         }),
                     );
-                    setEditingService({ ...editingService, envVars });
+                    setEditingService((prev) => (prev ? { ...prev, envVars } : null));
                   }}
-                  placeholder="DATABASE_URL=postgres://..."
+                  className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all min-h-[120px] custom-scrollbar"
+                  placeholder="KEY=VALUE"
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 py-4 rounded-2xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+                >
                   {t.dashboard.actions.save}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingService(null)}
-                  className="btn btn-ghost"
+                  className="flex-1 py-4 rounded-2xl font-bold bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all border border-white/10 active:scale-95"
                 >
                   {t.dashboard.actions.cancel}
                 </button>

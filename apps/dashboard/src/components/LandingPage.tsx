@@ -42,41 +42,49 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="landing-page">
-      {/* Hero Section */}
-      <section className="min-h-[80vh] flex items-center justify-center text-center p-8 relative overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(99,102,241,0.15)_0%,transparent_70%)] blur-[60px] -z-10" />
+    <div className="relative overflow-hidden bg-slate-950">
+      {/* Background Orbs */}
+      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[1000px] h-[1000px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
 
+      {/* Hero Section */}
+      <section className="min-h-[90vh] flex items-center justify-center text-center p-8 relative">
         <div className="max-w-[800px] z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="status-badge status-active mb-6 inline-block">{t.hero.badge}</span>
+            <span className="px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 mb-6 inline-block">
+              {t.hero.badge}
+            </span>
             <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.1] mb-6 font-bold italic">
               <span className="bg-linear-to-br from-white to-slate-400 bg-clip-text text-transparent">
                 {t.hero.titleLine1}
               </span>
               <br />
-              <span className="text-primary">{t.hero.titleLine2}</span>
+              <span className="text-indigo-500 font-extrabold drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                {t.hero.titleLine2}
+              </span>
             </h1>
-            <p className="text-xl text-(--text-primary) mb-4 leading-relaxed font-semibold">
+            <p className="text-xl text-slate-200 mb-4 leading-relaxed font-semibold">
               {t.hero.subtitle}
             </p>
-            <p className="text-lg text-(--text-secondary) mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg text-slate-400 mb-10 leading-relaxed max-w-2xl mx-auto">
               {t.hero.description}
             </p>
-            <div className="flex gap-4 justify-center">
-              <a href="/login" className="btn btn-primary px-8 py-3 text-[1.1rem]">
-                {t.hero.ctaPrimary} <ArrowRight size={20} />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href="/login"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-2xl font-bold cursor-pointer transition-all border border-transparent shadow-[0_8px_32px_rgba(99,102,241,0.3)] bg-indigo-500 text-white hover:bg-indigo-400 hover:-translate-y-1 active:scale-95 text-lg"
+              >
+                {t.hero.ctaPrimary} <ArrowRight size={20} className="ml-2" />
               </a>
               <a
                 href="https://github.com/ramiz4/helvetia-cloud"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-ghost px-8 py-3 text-[1.1rem]"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-2xl font-bold cursor-pointer transition-all border border-white/10 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 hover:border-white/20 active:scale-95 text-lg"
               >
                 {t.hero.ctaSecondary}
               </a>
@@ -86,7 +94,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="container pb-24">
+      <section className="container max-w-7xl mx-auto px-8 pb-32">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -95,38 +103,45 @@ export default function LandingPage() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
           {features.map((feature, idx) => (
-            <div key={idx} className="card glass p-8">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-6">
-                {feature.icon}
+            <div
+              key={idx}
+              className="p-8 rounded-3xl bg-slate-900/40 backdrop-blur-xl border border-white/10 hover:border-indigo-500/50 hover:-translate-y-2 transition-all duration-500 group shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative z-10">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-8 border border-indigo-500/20 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-500 shadow-lg">
+                  {feature.icon}
+                </div>
+                <h3 className="text-2xl mb-4 font-bold text-white tracking-tight">
+                  {feature.title}
+                </h3>
+                <p className="text-slate-400 leading-relaxed text-lg">{feature.description}</p>
               </div>
-              <h3 className="text-xl mb-3">{feature.title}</h3>
-              <p className="text-(--text-secondary) leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </motion.div>
       </section>
 
       {/* CTA Section */}
-      <section className="container pb-16">
-        <div className="card bg-linear-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 py-16 px-8 text-center relative overflow-hidden">
+      <section className="container max-w-7xl mx-auto px-8 pb-32">
+        <div className="p-16 rounded-[40px] bg-linear-to-br from-indigo-500/10 to-purple-500/10 border border-white/10 text-center relative overflow-hidden shadow-2xl group">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1)_0%,transparent_70%)]" />
           <div className="relative z-10">
-            <h2 className="text-4xl mb-4">{t.ctaSection.title}</h2>
-            <p className="text-(--text-secondary) mb-8 text-[1.1rem]">{t.ctaSection.subtitle}</p>
-            <a href="/login" className="btn btn-primary">
-              {t.ctaSection.button} <ArrowUpRight size={18} />
+            <h2 className="text-5xl font-bold mb-6 tracking-tight text-white">
+              {t.ctaSection.title}
+            </h2>
+            <p className="text-slate-400 mb-12 text-xl max-w-2xl mx-auto">
+              {t.ctaSection.subtitle}
+            </p>
+            <a
+              href="/login"
+              className="inline-flex items-center justify-center px-10 py-5 rounded-2xl font-bold cursor-pointer transition-all border border-transparent shadow-[0_8px_32px_rgba(99,102,241,0.3)] bg-indigo-500 text-white hover:bg-indigo-400 hover:-translate-y-1 active:scale-95 text-xl"
+            >
+              {t.ctaSection.button} <ArrowUpRight size={22} className="ml-2" />
             </a>
           </div>
         </div>
       </section>
-
-      <footer className="border-t border-(--border-light) py-8 text-center text-(--text-muted) text-sm">
-        <div className="container">
-          <p>
-            {t.footer.rights.replace('{year}', new Date().getFullYear().toString())}{' '}
-            <span>🇨🇭 Hosted in Switzerland</span>
-          </p>
-        </div>
-      </footer>
 
       <CookieBanner title={t.cookie.title} text={t.cookie.text} acceptText={t.cookie.accept} />
     </div>

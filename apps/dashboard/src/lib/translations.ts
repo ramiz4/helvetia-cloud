@@ -56,6 +56,7 @@ export const translations = {
       dashboard: 'Dashboard',
       deployments: 'Deployments',
       newService: 'New Service',
+      settings: 'Settings',
       logout: 'Logout',
     },
     dashboard: {
@@ -181,6 +182,7 @@ export const translations = {
       dashboard: 'Dashboard',
       deployments: 'Deployments',
       newService: 'Neuer Service',
+      settings: 'Einstellungen',
       logout: 'Abmelden',
     },
     dashboard: {
@@ -308,6 +310,7 @@ export const translations = {
       dashboard: 'Tableau de bord',
       deployments: 'Déploiements',
       newService: 'Nouveau Service',
+      settings: 'Paramètres',
       logout: 'Déconnexion',
     },
     dashboard: {
@@ -434,6 +437,7 @@ export const translations = {
       dashboard: 'Dashboard',
       deployments: 'Deployment',
       newService: 'Nuovo Servizio',
+      settings: 'Impostazioni',
       logout: 'Esci',
     },
     dashboard: {
@@ -556,6 +560,7 @@ export const translations = {
       dashboard: 'Dashboard',
       deployments: 'Deployments',
       newService: 'Neue Service',
+      settings: 'Iistellige',
       logout: 'Abmälde',
     },
     dashboard: {

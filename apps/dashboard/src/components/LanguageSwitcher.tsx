@@ -136,7 +136,7 @@ export default function LanguageSwitcher() {
           id="language-menu"
           ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-2 w-48 py-1 rounded-lg glass border border-white/10 shadow-xl animate-fade-in z-50 overflow-hidden"
+          className="absolute right-0 mt-2 w-48 py-1 rounded-lg bg-slate-900/90 backdrop-blur-xl border border-white/10 shadow-xl animate-fade-in z-50 overflow-hidden"
         >
           {languages.map((l, index) => (
             <button
@@ -148,8 +148,8 @@ export default function LanguageSwitcher() {
                 buttonRef.current?.focus();
               }}
               onKeyDown={(e) => handleMenuKeyDown(e, index)}
-              className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/10 transition-colors focus:bg-white/10 focus:outline-hidden ${
-                language === l.code ? 'bg-white/5 text-(--primary)' : 'text-(--text-secondary)'
+              className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between hover:bg-white/10 transition-colors focus:bg-white/10 focus:outline-none ${
+                language === l.code ? 'bg-white/5 text-indigo-400' : 'text-slate-400'
               }`}
             >
               <span>{l.label}</span>
