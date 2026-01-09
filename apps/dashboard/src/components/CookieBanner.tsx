@@ -54,16 +54,24 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
   if (accepted) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 z-50 animate-fade-in">
+    <div
+      className="fixed bottom-0 left-0 right-0 p-4 z-50 animate-fade-in"
+      role="dialog"
+      aria-labelledby="cookie-banner-title"
+      aria-describedby="cookie-banner-description"
+    >
       <div className="container max-w-4xl mx-auto">
         <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 shadow-2xl">
           <div className="text-sm md:text-base text-slate-200">
-            <span className="font-bold block mb-1 text-white">{title}</span>
-            {text}
+            <span id="cookie-banner-title" className="font-bold block mb-1 text-white">
+              {title}
+            </span>
+            <span id="cookie-banner-description">{text}</span>
           </div>
           <button
             onClick={handleAcceptCookies}
             className="px-8 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all active:scale-95 shadow-lg shadow-indigo-500/20 whitespace-nowrap min-w-[140px]"
+            aria-label={acceptText}
           >
             {acceptText}
           </button>

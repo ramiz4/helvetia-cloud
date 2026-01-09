@@ -96,6 +96,9 @@ export const translations = {
       logoutFailed: 'Logout failed on server, but you will be logged out locally.',
       logoutNetworkError: 'Network error during logout, but you will be logged out locally.',
       selectLanguage: 'Select Language',
+      openMenu: 'Open navigation menu',
+      closeMenu: 'Close navigation menu',
+      mobileMenu: 'Mobile navigation',
     },
     login: {
       backToHome: 'Back to home',
@@ -361,6 +364,9 @@ export const translations = {
       logoutFailed: 'Abmeldung auf dem Server fehlgeschlagen, Sie werden aber lokal abgemeldet.',
       logoutNetworkError: 'Netzwerkfehler beim Abmelden, aber du wirst lokal abgemeldet.',
       selectLanguage: 'Sprache wählen',
+      openMenu: 'Navigationsmenü öffnen',
+      closeMenu: 'Navigationsmenü schließen',
+      mobileMenu: 'Mobile Navigation',
     },
     login: {
       backToHome: 'Zurück zur Startseite',
@@ -631,6 +637,9 @@ export const translations = {
       logoutNetworkError:
         'Erreur réseau lors de la déconnexion, mais vous serez déconnecté localement.',
       selectLanguage: 'Choisir la langue',
+      openMenu: 'Ouvrir le menu de navigation',
+      closeMenu: 'Fermer le menu de navigation',
+      mobileMenu: 'Navigation mobile',
     },
     login: {
       backToHome: "Retour à l'accueil",
@@ -897,6 +906,9 @@ export const translations = {
       logoutFailed: 'Logout fallito sul server, ma verrai disconnesso localmente.',
       logoutNetworkError: 'Errore di rete durante il logout, ma verrai disconnesso localmente.',
       selectLanguage: 'Seleziona lingua',
+      openMenu: 'Apri menu di navigazione',
+      closeMenu: 'Chiudi menu di navigazione',
+      mobileMenu: 'Navigazione mobile',
     },
     login: {
       backToHome: 'Torna alla home',
@@ -1159,6 +1171,9 @@ export const translations = {
       logoutFailed: 'Abmäldig uf em Server hät nöd klappet, du wirsch aber lokal abmäldet.',
       logoutNetworkError: 'Netzwärchfähler bim Abmälde, aber du wirsch lokal abgemäldet.',
       selectLanguage: 'Schprooch wähle',
+      openMenu: 'Navigationsmenü öffne',
+      closeMenu: 'Navigationsmenü schliesse',
+      mobileMenu: 'Mobili Navigation',
     },
     login: {
       backToHome: 'Zrugg uf d’Startsiite',

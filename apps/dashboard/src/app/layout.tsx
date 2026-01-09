@@ -26,10 +26,16 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-slate-950 text-slate-200 font-sans antialiased min-h-screen">
+        <a href="#main-content" className="skip-to-main">
+          Skip to main content
+        </a>
         <LanguageProvider>
           <div className="flex flex-col min-h-screen bg-slate-950">
             <Navigation />
-            <main className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in">
+            <main
+              id="main-content"
+              className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
+            >
               {children}
             </main>
             <Footer />

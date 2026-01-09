@@ -191,7 +191,11 @@ export default function Navigation() {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="flex lg:hidden items-center justify-center p-2 rounded-xl bg-white/5 border border-white/10 text-white z-50"
-            aria-label="Toggle Menu"
+            aria-label={
+              isMenuOpen ? t.nav.closeMenu || 'Close Menu' : t.nav.openMenu || 'Open Menu'
+            }
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -204,9 +208,13 @@ export default function Navigation() {
           <div
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300"
             onClick={() => setIsMenuOpen(false)}
+            aria-hidden="true"
           />
-          <div
+          <nav
+            id="mobile-menu"
             className="absolute top-[70px] left-0 right-0 max-h-[calc(100vh-70px)] bg-slate-900/90 border-b border-white/10 overflow-y-auto animate-in slide-in-from-top-4 duration-300 p-6 flex flex-col gap-6"
+            role="navigation"
+            aria-label={t.nav.mobileMenu || 'Mobile navigation'}
             style={{
               backdropFilter: 'blur(20px) saturate(200%)',
               WebkitBackdropFilter: 'blur(20px) saturate(200%)',
@@ -318,7 +326,7 @@ export default function Navigation() {
                 </a>
               </div>
             )}
-          </div>
+          </nav>
         </div>
       )}
     </>
