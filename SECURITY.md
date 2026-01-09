@@ -14,19 +14,29 @@
 
 ### ✅ Secure Configuration
 
-The worker uses a dedicated workspace directory for builds:
+The worker mounts a dedicated workspace directory, though it's currently unused:
 
 ```bash
 # Set in .env
 WORKSPACE_DIR=/tmp/helvetia-workspaces
 ```
 
-This directory is:
+**Current Implementation Note**: While this directory is mounted to builder containers at `/workspaces:ro`, it is **not currently used**. All builds happen inside the container's ephemeral filesystem at `/app`. The repository is cloned directly into `/app` within the container, and all build artifacts remain in the container's temporary storage.
 
-- **Isolated**: Only contains build artifacts
+**Security Validation**: The workspace mount configuration is validated by both unit tests (`apps/worker/src/worker.test.ts`) and integration tests (`apps/worker/src/worker.integration.test.ts`). The integration tests verify:
+
+- The workspace mount is truly read-only (write attempts fail)
+- Builds actually write to `/app` inside the container, not `/workspaces`
+- Build artifacts don't leak to the host workspace directory
+- Host filesystem paths are not accessible from builder containers
+
+This directory mount provides:
+
+- **Isolation**: Dedicated directory separate from host user data
 - **Read-only**: Mounted with `:ro` flag to prevent container writes
-- **Temporary**: Can be safely cleaned up
+- **Temporary**: Can be safely cleaned up (though it will remain empty)
 - **Secure**: Does not expose host user data
+- **Future-ready**: Available if build artifact persistence is needed later
 
 ### Production Deployment
 

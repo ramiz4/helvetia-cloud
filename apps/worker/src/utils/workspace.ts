@@ -1,5 +1,4 @@
 import fs from 'fs/promises';
-import path from 'path';
 
 /**
  * Get the workspace directory from environment or use default
@@ -28,4 +27,35 @@ export function getSecureBindMounts(): string[] {
     '/var/run/docker.sock:/var/run/docker.sock',
     `${workspaceDir}:/workspaces:ro`, // Read-only mount for security
   ];
+}
+
+/**
+ * Clean up old workspace directories
+ * @param maxAge Maximum age in milliseconds (default: 24 hours)
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanupWorkspace(maxAge: number = 24 * 60 * 60 * 1000): Promise<void> {
+  const workspaceDir = getWorkspaceDir();
+
+  try {
+    const entries = await fs.readdir(workspaceDir, { withFileTypes: true });
+    const now = Date.now();
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const dirPath = `${workspaceDir}/${entry.name}`;
+        const stats = await fs.stat(dirPath);
+        const age = now - stats.mtimeMs;
+
+        if (age > maxAge) {
+          await fs.rm(dirPath, { recursive: true, force: true });
+        }
+      }
+    }
+  } catch (error) {
+    // Gracefully handle non-existent workspace directory
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error;
+    }
+  }
 }
