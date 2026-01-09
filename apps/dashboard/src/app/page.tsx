@@ -44,7 +44,6 @@ export default function Home() {
   // Check authentication after mount to avoid hydration mismatch
   useEffect(() => {
     const user = localStorage.getItem('user');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsAuthenticated(!!user);
   }, []);
 
@@ -193,7 +192,6 @@ export default function Home() {
   // Handle error state from React Query
   useEffect(() => {
     if (isError && error instanceof Error && error.message === 'Unauthorized') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAuthenticated(false);
       localStorage.removeItem('user');
     }

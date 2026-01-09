@@ -37,7 +37,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     // Load from local storage if available
     const saved = localStorage.getItem('helvetia-lang');
