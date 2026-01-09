@@ -349,8 +349,7 @@ describe('GitHub Integration', () => {
       process.env.GITHUB_WEBHOOK_SECRET = 'test-webhook-secret';
     });
 
-    function generateSignature(payload: object, secret: string): string {
-      const rawBody = JSON.stringify(payload);
+    function generateSignature(rawBody: string | Buffer, secret: string): string {
       const hmac = crypto.createHmac('sha256', secret);
       return 'sha256=' + hmac.update(rawBody).digest('hex');
     }
@@ -393,13 +392,15 @@ describe('GitHub Integration', () => {
         },
       };
 
+      const rawBody = Buffer.from(JSON.stringify(payload));
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
-          'x-hub-signature-256': generateSignature(payload, 'test-webhook-secret'),
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': generateSignature(rawBody, 'test-webhook-secret'),
         },
-        payload,
+        payload: rawBody,
       });
 
       expect(response.statusCode).toBe(200);
@@ -437,13 +438,15 @@ describe('GitHub Integration', () => {
         },
       };
 
+      const rawBody = Buffer.from(JSON.stringify(payload));
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
-          'x-hub-signature-256': generateSignature(payload, 'test-webhook-secret'),
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': generateSignature(rawBody, 'test-webhook-secret'),
         },
-        payload,
+        payload: rawBody,
       });
 
       expect(response.statusCode).toBe(200);

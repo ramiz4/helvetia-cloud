@@ -232,15 +232,17 @@ describe('Rate Limiting', () => {
       after: 'abc123',
     };
 
+    const payloadBuffer = Buffer.from(JSON.stringify(payload));
+
     const signature =
-      'sha256=' +
-      crypto.createHmac('sha256', 'test-secret').update(JSON.stringify(payload)).digest('hex');
+      'sha256=' + crypto.createHmac('sha256', 'test-secret').update(payloadBuffer).digest('hex');
 
     const response = await fastify.inject({
       method: 'POST',
       url: '/webhooks/github',
-      payload,
+      payload: payloadBuffer,
       headers: {
+        'Content-Type': 'application/json',
         'x-hub-signature-256': signature,
       },
     });

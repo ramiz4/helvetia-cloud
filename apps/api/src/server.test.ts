@@ -426,9 +426,9 @@ describe('API Server', () => {
       }
     });
 
-    function generateSignature(payload: string, secret: string): string {
+    function generateSignature(rawBody: string | Buffer, secret: string): string {
       const hmac = crypto.createHmac('sha256', secret);
-      return 'sha256=' + hmac.update(payload).digest('hex');
+      return 'sha256=' + hmac.update(rawBody).digest('hex');
     }
 
     it('should reject webhook request without signature', async () => {
@@ -453,13 +453,16 @@ describe('API Server', () => {
         ref: 'refs/heads/main',
       };
 
+      const rawBody = Buffer.from(JSON.stringify(payload));
+
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
+          'Content-Type': 'application/json',
           'x-hub-signature-256': 'sha256=invalidsignature',
         },
-        payload,
+        payload: rawBody,
       });
 
       expect(response.statusCode).toBe(401);
@@ -471,7 +474,7 @@ describe('API Server', () => {
         repository: { html_url: 'https://github.com/test/repo' },
         ref: 'refs/heads/main',
       };
-      const rawBody = JSON.stringify(payload);
+      const rawBody = Buffer.from(JSON.stringify(payload));
       const signature = generateSignature(rawBody, 'test-webhook-secret-key');
 
       const { prisma } = await import('database');
@@ -481,9 +484,10 @@ describe('API Server', () => {
         method: 'POST',
         url: '/webhooks/github',
         headers: {
+          'Content-Type': 'application/json',
           'x-hub-signature-256': signature,
         },
-        payload,
+        payload: rawBody,
       });
 
       // Should not be 401 (might be 200 with skipped message or other valid response)
@@ -508,7 +512,7 @@ describe('API Server', () => {
           },
         },
       };
-      const rawBody = JSON.stringify(payload);
+      const rawBody = Buffer.from(JSON.stringify(payload));
       const signature = generateSignature(rawBody, 'test-webhook-secret-key');
 
       const { prisma } = await import('database');
@@ -518,9 +522,10 @@ describe('API Server', () => {
         method: 'POST',
         url: '/webhooks/github',
         headers: {
+          'Content-Type': 'application/json',
           'x-hub-signature-256': signature,
         },
-        payload,
+        payload: rawBody,
       });
 
       expect(response.statusCode).not.toBe(401);
@@ -534,16 +539,17 @@ describe('API Server', () => {
         repository: { html_url: 'https://github.com/test/repo' },
         ref: 'refs/heads/main',
       };
-      const rawBody = JSON.stringify(payload);
+      const rawBody = Buffer.from(JSON.stringify(payload));
       const signature = generateSignature(rawBody, 'test-webhook-secret-key');
 
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
+          'Content-Type': 'application/json',
           'x-hub-signature-256': signature,
         },
-        payload,
+        payload: rawBody,
       });
 
       expect(response.statusCode).toBe(500);
@@ -578,13 +584,16 @@ describe('API Server', () => {
         ref: 'refs/heads/main',
       };
 
+      const rawBody = Buffer.from(JSON.stringify(payload));
+
       await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
+          'Content-Type': 'application/json',
           'x-hub-signature-256': 'sha256=invalidsignature',
         },
-        payload,
+        payload: rawBody,
       });
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
