@@ -52,6 +52,7 @@ This is a monorepo managed by PNPM Workspaces containing:
 ## Build, Test & Lint Commands
 
 ### Root Level
+
 - **Install Dependencies**: `pnpm install`
 - **Dev Mode (All Services)**: `pnpm dev` - Runs all services in parallel
 - **Build (All)**: `pnpm build` - Builds all workspaces
@@ -61,24 +62,28 @@ This is a monorepo managed by PNPM Workspaces containing:
 - **Test (All)**: `pnpm test` - Runs tests in all workspaces
 
 ### Dashboard (Frontend)
+
 - **Dev**: `pnpm --filter dashboard dev` - Starts Next.js dev server (port 3000)
 - **Build**: `pnpm --filter dashboard build` - Creates production build
 - **Start**: `pnpm --filter dashboard start` - Runs production server
 - **Test**: `pnpm --filter dashboard test` - Runs Vitest tests
 
 ### API (Backend)
+
 - **Dev**: `pnpm --filter api dev` - Starts Fastify server with watch mode (port 3001)
 - **Build**: `pnpm --filter api build` - Compiles TypeScript to `dist/`
 - **Start**: `pnpm --filter api start` - Runs compiled API server
 - **Test**: `pnpm --filter api test` - Runs Vitest tests
 
 ### Worker (Background Jobs)
+
 - **Dev**: `pnpm --filter worker dev` - Starts worker with watch mode
 - **Build**: `pnpm --filter worker build` - Compiles TypeScript to `dist/`
 - **Start**: `pnpm --filter worker start` - Runs compiled worker
 - **Test**: `pnpm --filter worker test` - Runs Vitest tests
 
 ### Database
+
 - **Generate Prisma Client**: `pnpm generate` - Regenerates Prisma client after schema changes
 - **Push Schema**: `pnpm db:push` - Pushes schema changes to database (dev only)
 - **Schema Location**: `packages/database/prisma/schema.prisma`
@@ -86,6 +91,7 @@ This is a monorepo managed by PNPM Workspaces containing:
 ## Environment Setup
 
 ### Prerequisites
+
 - Node.js v20+
 - pnpm (package manager)
 - Docker & Docker Compose
@@ -93,6 +99,7 @@ This is a monorepo managed by PNPM Workspaces containing:
 - Redis (via Docker)
 
 ### Initial Setup Steps
+
 1. Copy environment file: `cp .env.example .env`
 2. Configure required variables in `.env`:
    - `GITHUB_CLIENT_ID` & `GITHUB_CLIENT_SECRET` (GitHub OAuth)
@@ -108,12 +115,14 @@ This is a monorepo managed by PNPM Workspaces containing:
 6. Start development servers: `pnpm dev`
 
 ### Docker Commands
+
 - **Start Services**: `docker-compose up -d postgres redis traefik`
 - **Stop Services**: `docker-compose down`
 - **View Logs**: `docker-compose logs -f [service-name]`
 - **Restart Service**: `docker-compose restart [service-name]`
 
 ### Access Points
+
 - Dashboard: http://localhost:3000
 - API: http://localhost:3001
 - Traefik Dashboard: http://localhost:8090
@@ -129,31 +138,33 @@ This is a monorepo managed by PNPM Workspaces containing:
 ## Common Patterns & Examples
 
 ### Adding a New API Route
+
 1. Create route handler in `apps/api/src/routes/`
 2. Use Zod for request validation
 3. Keep business logic in services (`apps/api/src/services/`)
 4. Register route in `apps/api/src/index.ts`
 5. Example:
+
    ```typescript
    // apps/api/src/routes/example.ts
    import { FastifyPluginAsync } from 'fastify';
    import { z } from 'zod';
-   
+
    const schema = z.object({
-     name: z.string().min(1)
+     name: z.string().min(1),
    });
-   
+
    export const exampleRoutes: FastifyPluginAsync = async (fastify) => {
      fastify.post('/example', async (request, reply) => {
        const parseResult = schema.safeParse(request.body);
-   
+
        if (!parseResult.success) {
          return reply.status(400).send({
            success: false,
            error: parseResult.error.flatten(),
          });
        }
-   
+
        const data = parseResult.data;
        // Business logic here
        return { success: true };
@@ -162,17 +173,19 @@ This is a monorepo managed by PNPM Workspaces containing:
    ```
 
 ### Creating a New Dashboard Page
+
 1. Create route in `apps/dashboard/src/app/[route]/page.tsx`
 2. Use Server Components by default (no `'use client'`)
 3. Add `'use client'` only when using hooks, events, or browser APIs
 4. Fetch data server-side when possible
 5. Example:
+
    ```typescript
    // apps/dashboard/src/app/services/page.tsx
    export default async function ServicesPage() {
      // Server-side data fetching
      const services = await fetchServices();
-     
+
      return (
        <div className="container mx-auto p-4">
          <h1 className="text-2xl font-bold">Services</h1>
@@ -183,34 +196,41 @@ This is a monorepo managed by PNPM Workspaces containing:
    ```
 
 ### Adding Background Jobs
+
 1. Define job processor in `apps/worker/src/jobs/`
 2. Queue job from API using BullMQ
 3. Example:
+
    ```typescript
    // Queue job in API
    import { Queue } from 'bullmq';
    import Redis from 'ioredis';
-   
+
    const redis = new Redis(process.env.REDIS_URL);
    const deploymentQueue = new Queue('deployment', { connection: redis });
-   
+
    await deploymentQueue.add('deploy', {
      serviceId,
-     commitHash
+     commitHash,
    });
-   
+
    // Process in worker
    import { Worker } from 'bullmq';
-   
-   const worker = new Worker('deployment', async (job) => {
-     const { serviceId, commitHash } = job.data;
-     // Processing logic
-   }, { connection: redis });
+
+   const worker = new Worker(
+     'deployment',
+     async (job) => {
+       const { serviceId, commitHash } = job.data;
+       // Processing logic
+     },
+     { connection: redis },
+   );
    ```
 
 ## Troubleshooting
 
 ### Common Issues
+
 - **"Cannot connect to database"**: Ensure PostgreSQL is running (`docker-compose up -d postgres`) and `DATABASE_URL` is correct
 - **"Redis connection failed"**: Start Redis (`docker-compose up -d redis`) and verify `REDIS_URL`
 - **"Port already in use"**: Check if services are already running. Kill processes or change ports in `.env`
@@ -218,6 +238,7 @@ This is a monorepo managed by PNPM Workspaces containing:
 - **Build failures**: Clear build cache (`rm -rf apps/*/dist apps/*/.next`) and rebuild
 
 ### Debugging
+
 - Use `console.log()` for quick debugging (remove before committing)
 - API logs are visible in terminal when running `pnpm dev`
 - Worker logs show job processing status

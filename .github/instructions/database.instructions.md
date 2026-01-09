@@ -1,6 +1,6 @@
 ---
-applyTo: "packages/database/**/*.{ts,prisma}"
-excludeAgent: ""
+applyTo: 'packages/database/**/*.{ts,prisma}'
+excludeAgent: ''
 ---
 
 # Database & Prisma Instructions
@@ -8,10 +8,12 @@ excludeAgent: ""
 ## Prisma Schema Guidelines
 
 ### Schema Location
+
 - Main schema: `packages/database/prisma/schema.prisma`
 - This is a shared package used by API and Worker
 
 ### Schema Structure
+
 ```prisma
 generator client {
   provider = "prisma-client-js"
@@ -27,13 +29,14 @@ model User {
   email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // Relations
   services  Service[]
 }
 ```
 
 ### Naming Conventions
+
 - **Models**: PascalCase, singular (e.g., `User`, `Service`, `Deployment`)
 - **Fields**: camelCase (e.g., `userId`, `createdAt`, `isActive`)
 - **Relations**: camelCase, plural for one-to-many (e.g., `services`, `deployments`)
@@ -46,6 +49,7 @@ model User {
   ```
 
 ### Field Types
+
 - **IDs**: Use `String @id @default(cuid())` for user-facing IDs
 - **Timestamps**: Always include `createdAt` and `updatedAt`
   ```prisma
@@ -64,77 +68,88 @@ model User {
   ```
 
 ### Relations
+
 - **One-to-many**:
+
   ```prisma
   model User {
     id       String    @id @default(cuid())
     services Service[]
   }
-  
+
   model Service {
     id     String @id @default(cuid())
     userId String
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   }
   ```
+
 - **One-to-one**:
+
   ```prisma
   model User {
     id      String   @id @default(cuid())
     profile Profile?
   }
-  
+
   model Profile {
     id     String @id @default(cuid())
     userId String @unique
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   }
   ```
+
 - **Many-to-many**: Use explicit join table
+
   ```prisma
   model Service {
     id   String           @id @default(cuid())
     tags ServiceOnTags[]
   }
-  
+
   model Tag {
     id       String           @id @default(cuid())
     services ServiceOnTags[]
   }
-  
+
   model ServiceOnTags {
     serviceId String
     tagId     String
     service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
     tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
-    
+
     @@id([serviceId, tagId])
   }
   ```
 
 ### Indexes & Performance
+
 - Add indexes for frequently queried fields:
+
   ```prisma
   model Service {
     userId String
     status String
-    
+
     @@index([userId])
     @@index([status])
     @@index([userId, status])
   }
   ```
+
 - Add indexes for text fields (PostgreSQL):
+
   ```prisma
   model Service {
     name        String
     description String?
-    
+
     @@index([name])
   }
   ```
 
 ### OnDelete Behavior
+
 - Use `Cascade` when child records should be deleted with parent:
   ```prisma
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -145,6 +160,7 @@ model User {
 ## Workflow Commands
 
 ### Development
+
 1. **Edit schema**: Modify `packages/database/prisma/schema.prisma`
 2. **Push changes** (dev only): `pnpm db:push`
    - Syncs schema to database without migrations
@@ -154,6 +170,7 @@ model User {
    - Run after any schema modification
 
 ### Production (Migrations)
+
 1. **Create migration**: `cd packages/database && pnpm prisma migrate dev --name <migration-name>`
 2. **Apply migration**: `pnpm prisma migrate deploy` (in production)
 3. **Generate client**: `pnpm generate`
@@ -163,45 +180,47 @@ Note: This project uses `db:push` for development. Use migrations for production
 ## Using Prisma Client
 
 ### Importing
+
 ```typescript
 // In apps/api or apps/worker
 import { prisma } from 'database';
 ```
 
 ### Basic Queries
+
 ```typescript
 // Find all
 const users = await prisma.user.findMany();
 
 // Find with filter
 const users = await prisma.user.findMany({
-  where: { email: { contains: '@example.com' } }
+  where: { email: { contains: '@example.com' } },
 });
 
 // Find one
 const user = await prisma.user.findUnique({
-  where: { id: userId }
+  where: { id: userId },
 });
 
 // Find first matching
 const user = await prisma.user.findFirst({
-  where: { email: userEmail }
+  where: { email: userEmail },
 });
 
 // Create
 const user = await prisma.user.create({
-  data: { email, name }
+  data: { email, name },
 });
 
 // Update
 const user = await prisma.user.update({
   where: { id: userId },
-  data: { name: newName }
+  data: { name: newName },
 });
 
 // Delete
 await prisma.user.delete({
-  where: { id: userId }
+  where: { id: userId },
 });
 
 // Count
@@ -209,14 +228,15 @@ const count = await prisma.user.count();
 ```
 
 ### Relations
+
 ```typescript
 // Include relations
 const user = await prisma.user.findUnique({
   where: { id: userId },
   include: {
     services: true,
-    deployments: true
-  }
+    deployments: true,
+  },
 });
 
 // Select specific fields
@@ -228,10 +248,10 @@ const user = await prisma.user.findUnique({
     services: {
       select: {
         id: true,
-        name: true
-      }
-    }
-  }
+        name: true,
+      },
+    },
+  },
 });
 
 // Nested writes
@@ -241,38 +261,40 @@ const user = await prisma.user.create({
     services: {
       create: [
         { name: 'Service 1', type: 'DOCKER' },
-        { name: 'Service 2', type: 'STATIC' }
-      ]
-    }
-  }
+        { name: 'Service 2', type: 'STATIC' },
+      ],
+    },
+  },
 });
 ```
 
 ### Transactions
+
 ```typescript
 // Sequential operations (all or nothing)
 await prisma.$transaction(async (tx) => {
   const service = await tx.service.create({
-    data: { name, userId }
+    data: { name, userId },
   });
-  
+
   await tx.deployment.create({
     data: {
       serviceId: service.id,
       commitHash,
-      status: 'PENDING'
-    }
+      status: 'PENDING',
+    },
   });
 });
 
 // Independent operations (run in parallel)
 const [users, services] = await prisma.$transaction([
   prisma.user.findMany(),
-  prisma.service.findMany()
+  prisma.service.findMany(),
 ]);
 ```
 
 ### Error Handling
+
 ```typescript
 import { Prisma } from '@prisma/client';
 
@@ -294,6 +316,7 @@ try {
 ```
 
 ### Common Error Codes
+
 - `P2002`: Unique constraint failed
 - `P2003`: Foreign key constraint failed
 - `P2025`: Record not found (e.g., in update/delete)
@@ -303,38 +326,44 @@ try {
 ## Best Practices
 
 ### Performance
+
 - **Use select**: Only fetch fields you need
 - **Use pagination**: Avoid loading all records
   ```typescript
   const services = await prisma.service.findMany({
     take: 20,
     skip: page * 20,
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   });
   ```
 - **Use indexes**: Add indexes to frequently queried fields
 - **Batch operations**: Use `createMany`, `updateMany`, `deleteMany` when possible
 
 ### Type Safety
+
 - Prisma generates TypeScript types automatically
 - Use generated types:
+
   ```typescript
   import { User, Service, ServiceType } from '@prisma/client';
-  
+
   function processService(service: Service) {
     // service is fully typed
   }
   ```
+
 - Use Prisma's utility types:
+
   ```typescript
   import { Prisma } from '@prisma/client';
-  
+
   type ServiceWithUser = Prisma.ServiceGetPayload<{
-    include: { user: true }
+    include: { user: true };
   }>;
   ```
 
 ### Security
+
 - **Never expose raw database errors** to clients
 - **Always validate input** before queries (use Zod)
 - **Use parameterized queries**: Prisma does this automatically
@@ -345,11 +374,13 @@ try {
   ```
 
 ### Testing
+
 - Use a separate test database
 - Reset database between tests:
+
   ```typescript
   import { beforeEach } from 'vitest';
-  
+
   beforeEach(async () => {
     await prisma.user.deleteMany();
     await prisma.service.deleteMany();
@@ -357,6 +388,7 @@ try {
   ```
 
 ## Common Mistakes to Avoid
+
 - ❌ Forgetting to run `pnpm generate` after schema changes
 - ❌ Not handling Prisma errors properly
 - ❌ Loading relations without checking if needed (N+1 problem)
