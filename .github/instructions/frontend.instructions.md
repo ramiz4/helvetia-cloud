@@ -54,7 +54,7 @@ excludeAgent: ""
   import { useState, useEffect } from 'react';
   
   export function ClientComponent() {
-    const [data, setData] = useState(null);
+    const [data, setData] = useState<unknown | null>(null);
     const [error, setError] = useState<Error | null>(null);
   
     useEffect(() => {
