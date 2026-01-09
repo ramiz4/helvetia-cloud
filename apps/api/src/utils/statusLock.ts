@@ -2,6 +2,8 @@ import IORedis from 'ioredis';
 import Redlock from 'redlock';
 
 // Type for Lock from redlock
+// Note: Custom type definition needed due to incompatibilities between
+// redlock@5.0.0-beta.2 and @types/redlock package
 type Lock = {
   value: string;
   attempts: Array<{ resourceKey: string; value: string }>;
@@ -16,6 +18,7 @@ const redisClient = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379
 });
 
 // Initialize Redlock with retry settings
+// Note: Using 'as any' due to type incompatibility between IORedis and redlock beta
 const redlock = new Redlock([redisClient as any], {
   // Retry settings for lock acquisition
   retryCount: 10,
@@ -46,6 +49,7 @@ export function getStatusLockKey(serviceId: string): string {
 export async function acquireStatusLock(serviceId: string, ttl = 10000): Promise<Lock> {
   const lockKey = getStatusLockKey(serviceId);
   try {
+    // Note: Type assertion needed due to redlock beta version type incompatibilities
     const lock = (await redlock.acquire([lockKey], ttl)) as unknown as Lock;
     console.log(`Acquired lock for service ${serviceId}`);
     return lock;

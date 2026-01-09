@@ -4,6 +4,15 @@ import { withStatusLock } from '../utils/statusLock';
 
 const docker = new Docker();
 
+// Type for service with deployments
+type ServiceWithDeployments = {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  deployments: Array<{ status: string; createdAt: Date }>;
+};
+
 /**
  * Status reconciliation service
  * Periodically checks and corrects service status based on actual container state
@@ -85,7 +94,10 @@ export class StatusReconciliationService {
   /**
    * Reconciles a single service's status
    */
-  private async reconcileService(service: any, containers: Docker.ContainerInfo[]): Promise<void> {
+  private async reconcileService(
+    service: ServiceWithDeployments,
+    containers: Docker.ContainerInfo[],
+  ): Promise<void> {
     try {
       // Use distributed lock to avoid conflicts
       await withStatusLock(
