@@ -61,7 +61,7 @@ excludeAgent: ''
 - **Server Components**: Fetch data directly with async/await
   ```tsx
   export default async function Page() {
-    const data = await fetch('API_URL').then((r) => r.json());
+    const data = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/endpoint`).then((r) => r.json());
     return <div>{data.title}</div>;
   }
   ```
@@ -78,7 +78,7 @@ excludeAgent: ''
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await fetch('API_URL');
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/endpoint`);
           if (!response.ok) {
             throw new Error('Failed to fetch data');
           }
