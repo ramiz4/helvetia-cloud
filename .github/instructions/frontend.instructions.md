@@ -55,8 +55,26 @@ excludeAgent: ""
   
   export function ClientComponent() {
     const [data, setData] = useState(null);
+    const [error, setError] = useState<Error | null>(null);
+  
     useEffect(() => {
-      fetch('API_URL').then(r => r.json()).then(setData);
+      const fetchData = async () => {
+        try {
+          const response = await fetch('API_URL');
+          if (!response.ok) {
+            throw new Error('Failed to fetch data');
+          }
+          const json = await response.json();
+          setData(json);
+        } catch (err) {
+          const error =
+            err instanceof Error ? err : new Error('Unknown error while fetching data');
+          console.error(error);
+          setError(error);
+        }
+      };
+  
+      void fetchData();
     }, []);
   }
   ```
