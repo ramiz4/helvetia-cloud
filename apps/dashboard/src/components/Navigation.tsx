@@ -4,6 +4,7 @@ import { API_BASE_URL } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
 import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Plus, Settings, X } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -115,7 +116,7 @@ export default function Navigation() {
         />
 
         <div className="max-w-[1280px] mx-auto px-6 h-[70px] flex items-center justify-between">
-          <a
+          <Link
             href="/"
             className="flex items-center gap-3 font-bold text-xl text-white font-display tracking-tight z-50 shrink-0"
             aria-label={t.nav.homeAria}
@@ -130,13 +131,13 @@ export default function Navigation() {
             <span className="flex items-center gap-2" aria-hidden="true">
               {t.nav.brand}
             </span>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           {isLoggedIn ? (
             <div className="hidden lg:flex items-center gap-6">
               <div className="flex gap-2">
-                <a
+                <Link
                   href="/"
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
                     pathname === '/'
@@ -146,7 +147,7 @@ export default function Navigation() {
                 >
                   <LayoutDashboard size={18} />
                   <span>{t.nav.dashboard}</span>
-                </a>
+                </Link>
                 <a
                   href="/deployments"
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
@@ -223,7 +224,7 @@ export default function Navigation() {
             {isLoggedIn ? (
               <>
                 <div className="flex flex-col gap-2">
-                  <a
+                  <Link
                     href="/"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
                       pathname === '/'
@@ -233,7 +234,7 @@ export default function Navigation() {
                   >
                     <LayoutDashboard size={20} />
                     <span>{t.nav.dashboard}</span>
-                  </a>
+                  </Link>
                   <a
                     href="/deployments"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
