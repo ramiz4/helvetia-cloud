@@ -40,31 +40,46 @@ function getDefaultPortForServiceType(serviceType: string): number {
 
 // Helper to determine service status
 function determineServiceStatus(service: any, containers: any[]): string {
-  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === service.id);
+  // If the service itself is marked as DEPLOYING in the database, respect that first
+  if (service.status === 'DEPLOYING') {
+    return 'DEPLOYING';
+  }
+
+  const serviceContainers = containers.filter(
+    (c) =>
+      c.Labels['helvetia.serviceId'] === service.id ||
+      (service.type === 'COMPOSE' && c.Labels['com.docker.compose.project'] === service.name),
+  );
   const latestDeployment = service.deployments[0];
-  let status = 'IDLE';
+
+  // If there's an active deployment in progress, it's DEPLOYING
+  if (latestDeployment && ['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
+    return 'DEPLOYING';
+  }
 
   if (serviceContainers.length > 0) {
-    const container = serviceContainers[0];
-    if (container.State === 'running') {
-      status = 'RUNNING';
-    } else if (container.State === 'restarting') {
-      status = 'CRASHING';
-    } else if (container.State === 'exited' || container.State === 'dead') {
-      status = 'STOPPED';
-    } else {
-      status = container.State.toUpperCase();
+    if (serviceContainers.some((c) => c.State === 'running')) {
+      return 'RUNNING';
     }
-  } else if (latestDeployment) {
-    if (['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
-      status = 'DEPLOYING';
-    } else if (latestDeployment.status === 'FAILED') {
-      status = 'FAILED';
-    } else if (latestDeployment.status === 'SUCCESS') {
-      status = 'IDLE';
+    if (serviceContainers.some((c) => c.State === 'restarting')) {
+      return 'CRASHING';
+    }
+    if (serviceContainers.every((c) => ['exited', 'dead', 'created'].includes(c.State))) {
+      return 'STOPPED';
+    }
+    return serviceContainers[0].State.toUpperCase();
+  }
+
+  if (latestDeployment) {
+    if (latestDeployment.status === 'FAILED') {
+      return 'FAILED';
+    }
+    if (latestDeployment.status === 'SUCCESS') {
+      return 'STOPPED';
     }
   }
-  return status;
+
+  return 'IDLE';
 }
 
 // Helper to delete a service and its resources
