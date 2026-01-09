@@ -45,6 +45,10 @@ export const worker = new Worker(
     } = job.data;
 
     let builder: Docker.Container | null = null;
+    let newContainer: Docker.Container | null = null;
+    let oldContainers: Docker.ContainerInfo[] = [];
+    let imageTag = '';
+    let buildLogs = '';
 
     // Prepare secrets for scrubbing
     const secrets = envVars
@@ -60,7 +64,14 @@ export const worker = new Worker(
         data: { status: 'BUILDING' },
       });
 
-      let imageTag = `helvetia/${serviceName}:latest`;
+      // Capture old containers before deployment for potential rollback
+      const allContainers = await docker.listContainers({ all: true });
+      oldContainers = allContainers.filter(
+        (c) => c.Labels['helvetia.serviceId'] === serviceId && c.State === 'running',
+      );
+      console.log(`Found ${oldContainers.length} running containers for rollback if needed`);
+
+      imageTag = `helvetia/${serviceName}:latest`;
       const isDatabase = ['POSTGRES', 'REDIS', 'MYSQL'].includes(type);
 
       if (isDatabase) {
@@ -148,7 +159,6 @@ EOF
             docker compose -f "${buildCommand || 'docker-compose.yml'}" -f /tmp/docker-compose.override.yml -p ${serviceName} up -d --build --remove-orphans
           `;
 
-          let buildLogs = '';
           const exec = await builder.exec({
             Cmd: ['sh', '-c', buildScript],
             AttachStdout: true,
@@ -302,8 +312,6 @@ EOF
         docker build -t ${imageTag} .
       `;
 
-        let buildLogs = '';
-
         // 3. Execute Build
         const exec = await builder.exec({
           Cmd: ['sh', '-c', buildScript],
@@ -356,7 +364,7 @@ EOF
         ? `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`) || Host(\`${customDomain}\`)`
         : `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`;
 
-      const newContainer = await docker.createContainer({
+      newContainer = await docker.createContainer({
         Image: imageTag,
         name: containerName,
         Env: envVars ? Object.entries(envVars).map(([k, v]) => `${k}=${v}`) : [],
@@ -399,14 +407,14 @@ EOF
 
       // 5. Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
       console.log(`Cleaning up old containers for ${serviceName}...`);
-      const containers = await docker.listContainers({ all: true });
-      const oldContainers = containers.filter(
+      const currentContainers = await docker.listContainers({ all: true });
+      const containersToRemove = currentContainers.filter(
         (c) =>
           c.Labels['helvetia.serviceId'] === serviceId &&
           c.Names.some((name) => !name.includes(postfix)),
       );
 
-      for (const old of oldContainers) {
+      for (const old of containersToRemove) {
         const container = docker.getContainer(old.Id);
         // Wait a small grace period for Traefik to switch traffic if needed
         // In a more robust system, we would check health here.
@@ -427,18 +435,113 @@ EOF
       console.log(`Deployment ${deploymentId} successful!`);
     } catch (error) {
       console.error(`Deployment ${deploymentId} failed:`, error);
+
+      // Comprehensive error logging
       const errorMessage = error instanceof Error ? error.message : String(error);
-      await prisma.deployment.update({
-        where: { id: deploymentId },
-        data: { status: 'FAILED', logs: errorMessage },
-      });
-      await prisma.service.update({
-        where: { id: serviceId },
-        data: { status: 'FAILED' },
-      });
+      const errorStack = error instanceof Error ? error.stack : '';
+      const fullErrorLog = [
+        '=== DEPLOYMENT FAILURE ===',
+        `Error: ${errorMessage}`,
+        errorStack ? `Stack Trace:\n${errorStack}` : '',
+        buildLogs ? `\n=== BUILD LOGS ===\n${buildLogs}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      console.error('Full error details:', fullErrorLog);
+
+      // Cleanup: Remove failed new container if it was created
+      if (newContainer) {
+        console.log('Cleaning up failed new container...');
+        try {
+          await newContainer.stop({ t: 5 }).catch(() => {
+            console.log('Failed to stop new container (may not be running)');
+          });
+          await newContainer.remove({ force: true });
+          console.log('Failed new container removed');
+        } catch (cleanupError) {
+          console.error('Failed to cleanup new container:', cleanupError);
+        }
+      }
+
+      // Rollback: Restart old containers if they exist
+      if (oldContainers.length > 0) {
+        console.log(`Rolling back: restarting ${oldContainers.length} old container(s)...`);
+        for (const oldContainerInfo of oldContainers) {
+          try {
+            const container = docker.getContainer(oldContainerInfo.Id);
+            const containerState = await container.inspect();
+
+            // Only restart if container was previously running
+            if (containerState.State.Running) {
+              console.log(`Container ${oldContainerInfo.Id} is still running, no action needed`);
+            } else {
+              console.log(`Restarting old container ${oldContainerInfo.Id}...`);
+              await container.start();
+              console.log(`Successfully restarted container ${oldContainerInfo.Id}`);
+            }
+          } catch (rollbackError) {
+            console.error(`Failed to restart old container ${oldContainerInfo.Id}:`, rollbackError);
+          }
+        }
+        console.log('Rollback attempt completed');
+      } else {
+        console.log('No old containers to rollback to');
+      }
+
+      // Update database with detailed error information
+      try {
+        await prisma.deployment.update({
+          where: { id: deploymentId },
+          data: {
+            status: 'FAILED',
+            logs: fullErrorLog.substring(0, 50000), // Limit log size for database
+          },
+        });
+
+        // Set service status based on rollback success
+        const serviceStatus = oldContainers.length > 0 ? 'RUNNING' : 'FAILED';
+        await prisma.service.update({
+          where: { id: serviceId },
+          data: { status: serviceStatus },
+        });
+
+        if (oldContainers.length > 0) {
+          console.log(
+            'Service status set to RUNNING after rollback attempt; previous containers may still be serving traffic',
+          );
+        }
+      } catch (dbError) {
+        console.error('Failed to update database with error status:', dbError);
+      }
+
+      // Re-throw to mark job as failed
+      throw error;
     } finally {
+      // Ensure builder container is always cleaned up
       if (builder) {
-        await builder.remove({ force: true }).catch(() => {});
+        console.log('Cleaning up builder container...');
+        try {
+          const builderInfo = await builder.inspect();
+          console.log(`Builder container state: ${builderInfo.State.Status}`);
+
+          if (builderInfo.State.Running) {
+            await builder.stop({ t: 5 });
+            console.log('Builder container stopped');
+          }
+
+          await builder.remove({ force: true });
+          console.log('Builder container removed successfully');
+        } catch (cleanupError) {
+          console.error('Failed to cleanup builder container:', cleanupError);
+          // Try force removal as last resort
+          try {
+            await builder.remove({ force: true, v: true });
+            console.log('Builder container force removed');
+          } catch (forceRemoveError) {
+            console.error('Even force removal failed:', forceRemoveError);
+          }
+        }
       }
     }
   },
