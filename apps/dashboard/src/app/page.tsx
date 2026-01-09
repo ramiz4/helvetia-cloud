@@ -24,7 +24,12 @@ import type { Service } from '../types/service';
 
 export default function Home() {
   const { t } = useLanguage();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  // Initialize authentication state from localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const user = localStorage.getItem('user');
+    return user ? true : null;
+  });
   const [selectedLogs, setSelectedLogs] = useState<string | null>(null);
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -37,17 +42,6 @@ export default function Home() {
   const deployServiceMutation = useDeployService();
   const restartServiceMutation = useRestartService();
   const updateMetrics = useUpdateServiceMetrics();
-
-  useEffect(() => {
-    // Check authentication status on mount
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    const user = localStorage.getItem('user');
-    if (user) {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (!activeDeploymentId) return;
@@ -191,6 +185,14 @@ export default function Home() {
     }
   };
 
+  // Handle error state from React Query
+  useEffect(() => {
+    if (isError && error instanceof Error && error.message === 'Unauthorized') {
+      setIsAuthenticated(false);
+      localStorage.removeItem('user');
+    }
+  }, [isError, error]);
+
   if (isAuthenticated === null) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
@@ -202,15 +204,6 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return <LandingPage />;
-  }
-
-  // Handle error state from React Query
-  if (isError) {
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      setIsAuthenticated(false);
-      localStorage.removeItem('user');
-      return <LandingPage />;
-    }
   }
 
   const activeServices = services.filter(
