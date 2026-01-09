@@ -1,5 +1,14 @@
 import IORedis from 'ioredis';
-import Redlock, { Lock } from 'redlock';
+import Redlock from 'redlock';
+
+// Type for Lock from redlock
+type Lock = {
+  value: string;
+  attempts: Array<{ resourceKey: string; value: string }>;
+  expiration: number;
+  release(): Promise<void>;
+  extend(ttl: number): Promise<Lock>;
+};
 
 // Initialize Redis client for Redlock
 const redisClient = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
@@ -7,19 +16,17 @@ const redisClient = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379
 });
 
 // Initialize Redlock with retry settings
-const redlock = new Redlock([redisClient], {
+const redlock = new Redlock([redisClient as any], {
   // Retry settings for lock acquisition
   retryCount: 10,
   retryDelay: 200, // 200ms between retries
   retryJitter: 100, // Add up to 100ms random jitter
   // Drift factor for clock drift tolerance
   driftFactor: 0.01,
-  // Automatically extend locks that are taking longer than expected
-  automaticExtensionThreshold: 500,
 });
 
 // Listen for errors to avoid unhandled rejections
-redlock.on('error', (error) => {
+redlock.on('clientError', (error) => {
   console.error('Redlock error:', error);
 });
 
@@ -39,7 +46,7 @@ export function getStatusLockKey(serviceId: string): string {
 export async function acquireStatusLock(serviceId: string, ttl = 10000): Promise<Lock> {
   const lockKey = getStatusLockKey(serviceId);
   try {
-    const lock = await redlock.acquire([lockKey], ttl);
+    const lock = (await redlock.acquire([lockKey], ttl)) as unknown as Lock;
     console.log(`Acquired lock for service ${serviceId}`);
     return lock;
   } catch (error) {
@@ -93,7 +100,7 @@ export async function withStatusLock<T>(
  */
 export async function extendStatusLock(lock: Lock, ttl: number): Promise<Lock> {
   try {
-    const extendedLock = await lock.extend(ttl);
+    const extendedLock = (await lock.extend(ttl)) as unknown as Lock;
     console.log(`Extended lock for ${ttl}ms`);
     return extendedLock;
   } catch (error) {
