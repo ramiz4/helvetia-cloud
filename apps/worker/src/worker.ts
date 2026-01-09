@@ -6,6 +6,7 @@ import IORedis from 'ioredis';
 import path from 'path';
 import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
+import { withStatusLock } from './utils/statusLock';
 import { getSecureBindMounts } from './utils/workspace';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
@@ -196,9 +197,12 @@ EOF
             data: { logs: sanitizedLogs, status: 'SUCCESS' },
           });
 
-          await prisma.service.update({
-            where: { id: serviceId },
-            data: { status: 'RUNNING' },
+          // Update service status with distributed lock
+          await withStatusLock(serviceId, async () => {
+            await prisma.service.update({
+              where: { id: serviceId },
+              data: { status: 'RUNNING' },
+            });
           });
 
           if (builder) {
@@ -427,9 +431,12 @@ EOF
         data: { status: 'SUCCESS', imageTag },
       });
 
-      await prisma.service.update({
-        where: { id: serviceId },
-        data: { status: 'RUNNING' },
+      // Update service status with distributed lock
+      await withStatusLock(serviceId, async () => {
+        await prisma.service.update({
+          where: { id: serviceId },
+          data: { status: 'RUNNING' },
+        });
       });
 
       console.log(`Deployment ${deploymentId} successful!`);
@@ -499,11 +506,13 @@ EOF
           },
         });
 
-        // Set service status based on rollback success
+        // Set service status based on rollback success with distributed lock
         const serviceStatus = oldContainers.length > 0 ? 'RUNNING' : 'FAILED';
-        await prisma.service.update({
-          where: { id: serviceId },
-          data: { status: serviceStatus },
+        await withStatusLock(serviceId, async () => {
+          await prisma.service.update({
+            where: { id: serviceId },
+            data: { status: serviceStatus },
+          });
         });
 
         if (oldContainers.length > 0) {
