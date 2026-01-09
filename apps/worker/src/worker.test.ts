@@ -51,10 +51,44 @@ vi.mock('dockerode', () => {
   };
 });
 
+import { getSecureBindMounts } from './utils/workspace';
 import { worker } from './worker';
 
 describe('Worker', () => {
   it('should be defined', () => {
     expect(worker).toBeDefined();
+  });
+
+  describe('Security - Mount Configuration', () => {
+    it('should not expose host filesystem via bind mounts', () => {
+      const mounts = getSecureBindMounts();
+
+      // Check that dangerous mounts are not present
+      const dangerousPaths = ['/Users', '/home', '/root', '/etc'];
+      const hasDangerousMount = mounts.some((mount) => {
+        const hostPath = mount.split(':')[0];
+        return dangerousPaths.some(
+          (dangerous) => hostPath === dangerous || hostPath.startsWith(dangerous + '/'),
+        );
+      });
+
+      expect(hasDangerousMount).toBe(false);
+    });
+
+    it('should mount workspace directory as read-only', () => {
+      const mounts = getSecureBindMounts();
+      const workspaceMount = mounts.find((m) => m.includes('/workspaces'));
+
+      expect(workspaceMount).toBeDefined();
+      expect(workspaceMount).toMatch(/:ro$/);
+    });
+
+    it('should only include docker socket and workspace mounts', () => {
+      const mounts = getSecureBindMounts();
+
+      expect(mounts).toHaveLength(2);
+      expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
+      expect(mounts[1]).toContain('/workspaces:ro');
+    });
   });
 });
