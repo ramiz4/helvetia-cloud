@@ -7,6 +7,9 @@ vi.mock('ioredis', () => {
     subscribe: vi.fn(),
     removeListener: vi.fn(),
     quit: vi.fn(),
+    defineCommand: vi.fn(), // Required by @fastify/rate-limit
+    pttl: vi.fn().mockResolvedValue(60000),
+    eval: vi.fn().mockResolvedValue([0, 60000]),
   };
   return {
     default: vi.fn(function () {
