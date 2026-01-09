@@ -333,7 +333,7 @@ async function getServiceMetrics(
 }
 
 // Helper to validate JWT token from request
-async function validateToken(request: any, fastifyInstance: typeof fastify): Promise<boolean> {
+async function validateToken(request: any): Promise<boolean> {
   try {
     // Try to verify the JWT token
     await request.jwtVerify();
@@ -888,7 +888,7 @@ fastify.get(
 
     const sendMetrics = async () => {
       // Validate token before sending metrics
-      const isValid = await validateToken(request, fastify);
+      const isValid = await validateToken(request);
       if (!isValid) {
         console.log(`Token expired for user ${user.id}, closing metrics stream`);
         isConnectionValid = false;
@@ -1456,7 +1456,7 @@ fastify.get(
 
     // Set up periodic token validation (every 30 seconds)
     const tokenValidationInterval = setInterval(async () => {
-      const isValid = await validateToken(request, fastify);
+      const isValid = await validateToken(request);
       if (!isValid) {
         console.log(`Token expired for user ${user.id}, closing logs stream`);
         isConnectionValid = false;
