@@ -52,6 +52,7 @@ cp .env.example .env
 - `REDIS_URL`: Redis connection string
 - `JWT_SECRET`: Secret key for JWT token signing
 - `ENCRYPTION_KEY`: A 32-character key for encrypting sensitive data (e.g. GitHub tokens)
+- `ENCRYPTION_SALT`: A random hex string used as a salt for encryption key derivation
 - `PLATFORM_DOMAIN`: Your platform's domain (e.g., `helvetia.cloud`)
 - `APP_BASE_URL`: The base URL of the application, used for CORS configuration (e.g., `http://localhost:3000`)
 - `NODE_ENV`: The environment mode (e.g., `development` or `production`)
