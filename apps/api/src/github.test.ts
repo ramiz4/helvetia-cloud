@@ -343,6 +343,19 @@ describe('GitHub Integration', () => {
   });
 
   describe('POST /webhooks/github', () => {
+    const crypto = require('crypto');
+
+    // Set webhook secret for these tests
+    beforeEach(() => {
+      process.env.GITHUB_WEBHOOK_SECRET = 'test-webhook-secret';
+    });
+
+    function generateSignature(payload: object, secret: string): string {
+      const rawBody = JSON.stringify(payload);
+      const hmac = crypto.createHmac('sha256', secret);
+      return 'sha256=' + hmac.update(rawBody).digest('hex');
+    }
+
     it('should create a preview environment and inject token into queue', async () => {
       const { prisma } = await import('database');
       const mockBaseService = {
@@ -371,18 +384,23 @@ describe('GitHub Integration', () => {
       } as never);
       vi.mocked(prisma.deployment.create).mockResolvedValue({ id: 'deployment-id' } as never);
 
+      const payload = {
+        action: 'opened',
+        number: 123,
+        pull_request: {
+          number: 123,
+          head: { ref: 'feature-branch', sha: 'abc1234' },
+          base: { repo: { html_url: 'https://github.com/owner/repo' } },
+        },
+      };
+
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
-        payload: {
-          action: 'opened',
-          number: 123,
-          pull_request: {
-            number: 123,
-            head: { ref: 'feature-branch', sha: 'abc1234' },
-            base: { repo: { html_url: 'https://github.com/owner/repo' } },
-          },
+        headers: {
+          'x-hub-signature-256': generateSignature(payload, 'test-webhook-secret'),
         },
+        payload,
       });
 
       expect(response.statusCode).toBe(200);
@@ -410,18 +428,23 @@ describe('GitHub Integration', () => {
       vi.mocked(prisma.service.delete).mockResolvedValue(mockPreviewService as never);
       vi.mocked(prisma.deployment.findMany).mockResolvedValue([]);
 
+      const payload = {
+        action: 'closed',
+        number: 123,
+        pull_request: {
+          number: 123,
+          head: { ref: 'feature-branch' },
+          base: { repo: { html_url: 'https://github.com/owner/repo' } },
+        },
+      };
+
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
-        payload: {
-          action: 'closed',
-          number: 123,
-          pull_request: {
-            number: 123,
-            head: { ref: 'feature-branch' },
-            base: { repo: { html_url: 'https://github.com/owner/repo' } },
-          },
+        headers: {
+          'x-hub-signature-256': generateSignature(payload, 'test-webhook-secret'),
         },
+        payload,
       });
 
       expect(response.statusCode).toBe(200);

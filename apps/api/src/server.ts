@@ -258,6 +258,24 @@ async function getServiceMetrics(
   };
 }
 
+// GitHub webhook signature verification
+function verifyGitHubSignature(payload: string, signature: string, secret: string): boolean {
+  if (!signature || !secret) {
+    return false;
+  }
+
+  try {
+    const hmac = crypto.createHmac('sha256', secret);
+    const digest = 'sha256=' + hmac.update(payload).digest('hex');
+
+    // Use timingSafeEqual to prevent timing attacks
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+  } catch (error) {
+    console.error('Error verifying GitHub signature:', error);
+    return false;
+  }
+}
+
 export const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
 });
@@ -1080,7 +1098,35 @@ fastify.post('/services/:id/restart', async (request, reply) => {
 fastify.post(
   '/webhooks/github',
   { config: { rateLimit: authRateLimitConfig } },
-  async (request) => {
+  async (request, reply) => {
+  // Verify GitHub webhook signature
+  const signature = request.headers['x-hub-signature-256'] as string;
+  const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    console.error('GITHUB_WEBHOOK_SECRET is not configured');
+    return reply.status(500).send({ error: 'Webhook secret not configured' });
+  }
+
+  if (!signature) {
+    console.warn('GitHub webhook received without signature', {
+      ip: request.ip,
+      headers: request.headers,
+    });
+    return reply.status(401).send({ error: 'Missing signature' });
+  }
+
+  // Convert the body back to string for signature verification
+  const rawBody = JSON.stringify(request.body);
+
+  if (!verifyGitHubSignature(rawBody, signature, webhookSecret)) {
+    console.warn('GitHub webhook signature verification failed', {
+      ip: request.ip,
+      signature: signature.substring(0, 20) + '...',
+    });
+    return reply.status(401).send({ error: 'Invalid signature' });
+  }
+
     const payload = request.body as any;
 
     // Handle Pull Request events
