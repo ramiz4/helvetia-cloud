@@ -67,7 +67,7 @@ describe('crypto utils', () => {
     // First encryption with salt1
     process.env.ENCRYPTION_KEY = 'test_key_32_chars_long_secure!';
     process.env.ENCRYPTION_SALT = 'salt_value_1';
-    const { encrypt: encrypt1, decrypt: decrypt1 } = await import('./crypto');
+    const { encrypt: encrypt1 } = await import('./crypto');
     const encrypted1 = encrypt1(text);
 
     // Clear and reload with different salt
