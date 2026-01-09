@@ -49,6 +49,75 @@ This is a monorepo managed by PNPM Workspaces containing:
   - Example: `feat(dashboard): add user profile page`
   - Example: `fix(api): resolve docker connection issue`
 
+## Build, Test & Lint Commands
+
+### Root Level
+- **Install Dependencies**: `pnpm install`
+- **Dev Mode (All Services)**: `pnpm dev` - Runs all services in parallel
+- **Build (All)**: `pnpm build` - Builds all workspaces
+- **Start (Production)**: `pnpm start` - Starts all services in production mode
+- **Lint**: `pnpm lint` - Runs ESLint across the entire monorepo
+- **Format**: `pnpm format` - Formats code with Prettier
+- **Test (All)**: `pnpm test` - Runs tests in all workspaces
+
+### Dashboard (Frontend)
+- **Dev**: `pnpm --filter dashboard dev` - Starts Next.js dev server (port 3000)
+- **Build**: `pnpm --filter dashboard build` - Creates production build
+- **Start**: `pnpm --filter dashboard start` - Runs production server
+- **Test**: `pnpm --filter dashboard test` - Runs Vitest tests
+
+### API (Backend)
+- **Dev**: `pnpm --filter api dev` - Starts Fastify server with watch mode (port 3001)
+- **Build**: `pnpm --filter api build` - Compiles TypeScript to `dist/`
+- **Start**: `pnpm --filter api start` - Runs compiled API server
+- **Test**: `pnpm --filter api test` - Runs Vitest tests
+
+### Worker (Background Jobs)
+- **Dev**: `pnpm --filter worker dev` - Starts worker with watch mode
+- **Build**: `pnpm --filter worker build` - Compiles TypeScript to `dist/`
+- **Start**: `pnpm --filter worker start` - Runs compiled worker
+- **Test**: `pnpm --filter worker test` - Runs Vitest tests
+
+### Database
+- **Generate Prisma Client**: `pnpm generate` - Regenerates Prisma client after schema changes
+- **Push Schema**: `pnpm db:push` - Pushes schema changes to database (dev only)
+- **Schema Location**: `packages/database/prisma/schema.prisma`
+
+## Environment Setup
+
+### Prerequisites
+- Node.js v20+
+- pnpm (package manager)
+- Docker & Docker Compose
+- PostgreSQL (via Docker)
+- Redis (via Docker)
+
+### Initial Setup Steps
+1. Copy environment file: `cp .env.example .env`
+2. Configure required variables in `.env`:
+   - `GITHUB_CLIENT_ID` & `GITHUB_CLIENT_SECRET` (GitHub OAuth)
+   - `DATABASE_URL` (PostgreSQL connection string)
+   - `REDIS_URL` (Redis connection string)
+   - `JWT_SECRET` (for JWT token signing)
+   - `ENCRYPTION_KEY` (32-character key for encrypting tokens)
+   - `ENCRYPTION_SALT` (hex string for key derivation)
+   - `PLATFORM_DOMAIN` (e.g., `helvetia.cloud`)
+3. Start infrastructure: `docker-compose up -d postgres redis traefik`
+4. Install dependencies: `pnpm install`
+5. Push database schema: `pnpm db:push`
+6. Start development servers: `pnpm dev`
+
+### Docker Commands
+- **Start Services**: `docker-compose up -d postgres redis traefik`
+- **Stop Services**: `docker-compose down`
+- **View Logs**: `docker-compose logs -f [service-name]`
+- **Restart Service**: `docker-compose restart [service-name]`
+
+### Access Points
+- Dashboard: http://localhost:3000
+- API: http://localhost:3001
+- Traefik Dashboard: http://localhost:8090
+
 ## Agent Workflow
 
 - **Task Invitation**: When starting a task from a user prompt, the Agent MUST follow this GitHub Flow:
@@ -57,8 +126,90 @@ This is a monorepo managed by PNPM Workspaces containing:
   3. **Commit**: Create small, conventional commits (e.g., `feat: add functionality`, `chore: update config`).
   4. **Push**: Push the changes to the remote (e.g., `git push -u origin feat/task-name`).
 
+## Common Patterns & Examples
+
+### Adding a New API Route
+1. Create route handler in `apps/api/src/routes/`
+2. Use Zod for request validation
+3. Keep business logic in services (`apps/api/src/services/`)
+4. Register route in `apps/api/src/index.ts`
+5. Example:
+   ```typescript
+   // apps/api/src/routes/example.ts
+   import { FastifyPluginAsync } from 'fastify';
+   import { z } from 'zod';
+   
+   const schema = z.object({
+     name: z.string().min(1)
+   });
+   
+   export const exampleRoutes: FastifyPluginAsync = async (fastify) => {
+     fastify.post('/example', async (request, reply) => {
+       const data = schema.parse(request.body);
+       // Business logic here
+       return { success: true };
+     });
+   };
+   ```
+
+### Creating a New Dashboard Page
+1. Create route in `apps/dashboard/src/app/[route]/page.tsx`
+2. Use Server Components by default (no `'use client'`)
+3. Add `'use client'` only when using hooks, events, or browser APIs
+4. Fetch data server-side when possible
+5. Example:
+   ```typescript
+   // apps/dashboard/src/app/services/page.tsx
+   export default async function ServicesPage() {
+     // Server-side data fetching
+     const services = await fetchServices();
+     
+     return (
+       <div className="container mx-auto p-4">
+         <h1 className="text-2xl font-bold">Services</h1>
+         {/* Use Tailwind utility classes */}
+       </div>
+     );
+   }
+   ```
+
+### Adding Background Jobs
+1. Define job processor in `apps/worker/src/jobs/`
+2. Queue job from API using BullMQ
+3. Example:
+   ```typescript
+   // Queue job in API
+   await deploymentQueue.add('deploy', {
+     serviceId,
+     commitHash
+   });
+   
+   // Process in worker
+   deploymentQueue.process('deploy', async (job) => {
+     const { serviceId, commitHash } = job.data;
+     // Processing logic
+   });
+   ```
+
+## Troubleshooting
+
+### Common Issues
+- **"Cannot connect to database"**: Ensure PostgreSQL is running (`docker-compose up -d postgres`) and `DATABASE_URL` is correct
+- **"Redis connection failed"**: Start Redis (`docker-compose up -d redis`) and verify `REDIS_URL`
+- **"Port already in use"**: Check if services are already running. Kill processes or change ports in `.env`
+- **"Module not found"**: Run `pnpm install` and `pnpm generate` (for Prisma client)
+- **Build failures**: Clear build cache (`rm -rf apps/*/dist apps/*/.next`) and rebuild
+
+### Debugging
+- Use `console.log()` for quick debugging (remove before committing)
+- API logs are visible in terminal when running `pnpm dev`
+- Worker logs show job processing status
+- Check Docker logs: `docker-compose logs -f [service-name]`
+
 ## AI Behavior
 
 - **Conciseness**: Provide code solutions directly. Avoid over-explaining standard practices unless asked.
 - **Security**: Do not hardcode secrets. Use environment variables.
 - **Safety**: Verify commands before suggesting them. Avoid destructive file operations without confirmation.
+- **Testing**: Always run tests after making changes. Fix failing tests related to your changes.
+- **Linting**: Run `pnpm lint` before committing. Fix any linting errors in files you modified.
