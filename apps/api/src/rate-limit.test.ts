@@ -7,6 +7,7 @@ vi.mock('axios');
 
 // Mock Redis and other dependencies before importing server
 vi.mock('ioredis', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockRedis: any = {
     on: vi.fn(),
     subscribe: vi.fn(),
@@ -99,6 +100,7 @@ describe('Rate Limiting', () => {
     vi.clearAllMocks();
 
     // Reset rate limit mock behavior to allow requests by default
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const IORedis = (await import('ioredis')).default as unknown as any;
     const redis = new IORedis();
 
@@ -124,6 +126,7 @@ describe('Rate Limiting', () => {
   // TODO: investigate why fastify-rate-limit ignores the redis mock in tests
   it.skip('should enforce rate limits when redis reports high usage', async () => {
     // Import the mocked Redis class
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const IORedis = (await import('ioredis')).default as unknown as any;
     const redis = new IORedis();
 
