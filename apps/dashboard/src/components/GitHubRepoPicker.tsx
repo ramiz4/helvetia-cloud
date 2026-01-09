@@ -2,6 +2,7 @@
 
 import { useLanguage } from '@/lib/LanguageContext';
 import { API_BASE_URL } from '@/lib/config';
+import { fetchWithAuth } from '@/lib/tokenRefresh';
 import { useCallback, useEffect, useState } from 'react';
 
 interface Repo {
@@ -56,9 +57,7 @@ export default function GitHubRepoPicker({
   const fetchOrgs = useCallback(async () => {
     setLoadingOrgs(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/github/orgs`, {
-        credentials: 'include',
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/github/orgs`);
       if (res.ok) {
         const data = await res.json();
         setOrgs(data);
@@ -86,9 +85,7 @@ export default function GitHubRepoPicker({
             url += `&org=${orgLogin}`;
           }
 
-          const res = await fetch(url, {
-            credentials: 'include',
-          });
+          const res = await fetchWithAuth(url);
 
           if (!res.ok) {
             if (res.status === 401) {
@@ -133,9 +130,7 @@ export default function GitHubRepoPicker({
 
     try {
       const [owner, name] = repo.full_name.split('/');
-      const res = await fetch(`${API_BASE_URL}/github/repos/${owner}/${name}/branches`, {
-        credentials: 'include',
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/github/repos/${owner}/${name}/branches`);
 
       if (!res.ok) {
         if (res.status === 401) {

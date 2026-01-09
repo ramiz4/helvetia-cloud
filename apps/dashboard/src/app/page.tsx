@@ -21,6 +21,7 @@ import {
 } from '../hooks/useServices';
 import { API_BASE_URL } from '../lib/config';
 import { useLanguage } from '../lib/LanguageContext';
+import { checkAndRefreshToken, fetchWithAuth } from '../lib/tokenRefresh';
 import type { Service } from '../types/service';
 
 export default function Home() {
@@ -41,10 +42,24 @@ export default function Home() {
   const restartServiceMutation = useRestartService();
   const updateMetrics = createUpdateServiceMetrics(queryClient);
 
-  // Check authentication after mount to avoid hydration mismatch
+  // Check authentication and refresh token on page load
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    setIsAuthenticated(!!user);
+    const initAuth = async () => {
+      const user = localStorage.getItem('user');
+      if (user) {
+        // Proactively refresh token on page load
+        const refreshed = await checkAndRefreshToken();
+        setIsAuthenticated(refreshed);
+        if (!refreshed) {
+          // If refresh failed, clear user data
+          localStorage.removeItem('user');
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   useEffect(() => {
@@ -209,9 +224,7 @@ export default function Home() {
   const fetchLogs = async (deploymentId: string) => {
     setActiveDeploymentId(deploymentId);
     try {
-      const res = await fetch(`${API_BASE_URL}/deployments/${deploymentId}/logs`, {
-        credentials: 'include',
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/deployments/${deploymentId}/logs`);
       const data = await res.json();
       setSelectedLogs(data.logs || t.dashboard.modals.noLogs);
     } catch {

@@ -2,6 +2,7 @@
 
 import { API_BASE_URL } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
+import { fetchWithAuth } from '@/lib/tokenRefresh';
 import {
   AlertCircle,
   ArrowUpRight,
@@ -32,9 +33,7 @@ export default function SettingsPage() {
 
   const fetchUser = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/me`, {
-        credentials: 'include',
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/auth/me`);
       if (res.ok) {
         const data = await res.json();
         setUser(data);
@@ -61,9 +60,8 @@ export default function SettingsPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/github/disconnect`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/auth/github/disconnect`, {
         method: 'DELETE',
-        credentials: 'include',
       });
       if (res.ok) {
         toast.success(t.settings.toast.githubDisconnected);
