@@ -75,20 +75,24 @@ describe('Worker', () => {
       expect(hasDangerousMount).toBe(false);
     });
 
-    it('should mount workspace directory as read-only', () => {
+    it('should only mount Docker socket', () => {
       const mounts = getSecureBindMounts();
-      const workspaceMount = mounts.find((m) => m.includes('/workspaces'));
 
-      expect(workspaceMount).toBeDefined();
-      expect(workspaceMount).toMatch(/:ro$/);
+      expect(mounts).toHaveLength(1);
+      expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
     });
 
-    it('should only include docker socket and workspace mounts', () => {
+    it('should not mount any host directories', () => {
       const mounts = getSecureBindMounts();
 
-      expect(mounts).toHaveLength(2);
-      expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
-      expect(mounts[1]).toContain('/workspaces:ro');
+      // Filter out the Docker socket mount
+      const hostDirMounts = mounts.filter((mount) => {
+        const hostPath = mount.split(':')[0];
+        return hostPath !== '/var/run/docker.sock';
+      });
+
+      // Should not mount any host directories
+      expect(hostDirMounts).toHaveLength(0);
     });
   });
 });

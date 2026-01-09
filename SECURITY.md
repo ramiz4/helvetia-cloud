@@ -14,59 +14,56 @@
 
 ### ✅ Secure Configuration
 
-The worker uses a dedicated workspace directory for builds:
+The worker uses an isolated build approach with **no host directory mounts**:
 
-```bash
-# Set in .env
-WORKSPACE_DIR=/tmp/helvetia-workspaces
+**Current Implementation:**
+
+```typescript
+Binds: ['/var/run/docker.sock:/var/run/docker.sock'];
 ```
 
-This directory is:
+All builds happen inside the container's ephemeral filesystem:
 
-- **Isolated**: Only contains build artifacts
-- **Read-only**: Mounted with `:ro` flag to prevent container writes
-- **Temporary**: Can be safely cleaned up
-- **Secure**: Does not expose host user data
+- **Isolated**: Repositories are cloned to `/app` inside the container
+- **Ephemeral**: Build artifacts are automatically removed when container exits
+- **Secure**: No host directories are exposed to containers
+- **Automatic cleanup**: Container removal cleans up all build data
+
+This approach follows the principle of least privilege - containers only have access to:
+
+1. The Docker socket (required to build images)
+2. Their own isolated filesystem (automatically managed by Docker)
 
 ### Production Deployment
 
 For production environments:
 
-1. **Use a dedicated workspace directory**:
+1. **Monitor Docker disk usage**:
+   - Builder containers and images consume disk space
+   - Implement automated cleanup of old images
+   - Set up disk usage alerts
+
+2. **Enable SELinux/AppArmor labels** (if available):
 
    ```bash
-   WORKSPACE_DIR=/var/lib/helvetia/workspaces
+   # SELinux example for Docker directory
+   sudo semanage fcontext -a -t svirt_sandbox_file_t /var/lib/docker
    ```
 
-2. **Set proper permissions**:
+3. **Consider Docker volumes** for database services for better isolation
 
-   ```bash
-   sudo mkdir -p /var/lib/helvetia/workspaces
-   sudo chown -R helvetia:helvetia /var/lib/helvetia/workspaces
-   sudo chmod 750 /var/lib/helvetia/workspaces
-   ```
-
-3. **Enable SELinux/AppArmor labels** (if available):
-
-   ```bash
-   # SELinux example
-   sudo chcon -Rt svirt_sandbox_file_t /var/lib/helvetia/workspaces
-   ```
-
-4. **Consider Docker volumes** instead of bind mounts for better isolation
-
-5. **Implement regular cleanup**:
-   - Configure automated cleanup of old workspace directories
+4. **Implement regular cleanup**:
+   - Configure automated cleanup of old images
    - Monitor disk usage
    - Set retention policies
 
 ### Security Checklist
 
-- [ ] WORKSPACE_DIR is set to a dedicated directory
-- [ ] No root directories are mounted in containers
-- [ ] Workspace mounts use `:ro` (read-only) flag
-- [ ] Proper file permissions are set
-- [ ] Regular cleanup is configured
+- [x] No root directories are mounted in containers
+- [x] Only Docker socket is mounted (required for builds)
+- [x] Builds happen in isolated container filesystem
+- [x] Automatic cleanup via container removal
+- [ ] Resource limits are set (CPU, memory)
 - [ ] Monitoring is in place
 
 ### Principle of Least Privilege
