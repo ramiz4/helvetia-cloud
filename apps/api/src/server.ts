@@ -1103,29 +1103,29 @@ fastify.post(
   const signature = request.headers['x-hub-signature-256'] as string;
   const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 
-  if (!webhookSecret) {
-    console.error('GITHUB_WEBHOOK_SECRET is not configured');
-    return reply.status(500).send({ error: 'Webhook secret not configured' });
-  }
+    if (!webhookSecret) {
+      console.error('GITHUB_WEBHOOK_SECRET is not configured');
+      return reply.status(500).send({ error: 'Webhook secret not configured' });
+    }
 
-  if (!signature) {
-    console.warn('GitHub webhook received without signature', {
-      ip: request.ip,
-      headers: request.headers,
-    });
-    return reply.status(401).send({ error: 'Missing signature' });
-  }
+    if (!signature) {
+      console.warn('GitHub webhook received without signature', {
+        ip: request.ip,
+        headers: request.headers,
+      });
+      return reply.status(401).send({ error: 'Missing signature' });
+    }
 
-  // Convert the body back to string for signature verification
-  const rawBody = JSON.stringify(request.body);
+    // Get raw body for signature verification
+    const rawBody = (request as any).rawBody || JSON.stringify(request.body);
 
-  if (!verifyGitHubSignature(rawBody, signature, webhookSecret)) {
-    console.warn('GitHub webhook signature verification failed', {
-      ip: request.ip,
-      signature: signature.substring(0, 20) + '...',
-    });
-    return reply.status(401).send({ error: 'Invalid signature' });
-  }
+    if (!verifyGitHubSignature(rawBody, signature, webhookSecret)) {
+      console.warn('GitHub webhook signature verification failed', {
+        ip: request.ip,
+        signature: signature.substring(0, 20) + '...',
+      });
+      return reply.status(401).send({ error: 'Invalid signature' });
+    }
 
     const payload = request.body as any;
 
