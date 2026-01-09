@@ -27,6 +27,41 @@ const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
 });
 
+// Helper function to parse and get allowed origins from environment
+function getAllowedOrigins(): string[] {
+  const originsEnv =
+    process.env.ALLOWED_ORIGINS || process.env.APP_BASE_URL || 'http://localhost:3000';
+  return originsEnv
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+}
+
+// Helper function to validate if an origin is allowed
+// Note: This returns false for undefined origins, but the CORS plugin
+// at the framework level allows no-origin requests (same-origin, curl, etc.)
+function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return false;
+  const allowedOrigins = getAllowedOrigins();
+  return allowedOrigins.includes(origin);
+}
+
+// Helper function to get a safe origin for CORS headers
+// Returns the validated request origin if allowed, otherwise the first allowed origin
+function getSafeOrigin(requestOrigin: string | undefined): string {
+  const allowedOrigins = getAllowedOrigins();
+
+  // Ensure we always have at least one allowed origin
+  if (allowedOrigins.length === 0) {
+    throw new Error('CORS misconfiguration: No allowed origins configured');
+  }
+
+  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    return requestOrigin;
+  }
+  return allowedOrigins[0];
+}
+
 // Helper function to get the default port for service type
 function getDefaultPortForServiceType(serviceType: string): number {
   const portMap: Record<string, number> = {
@@ -325,8 +360,24 @@ export const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
 });
 
+// Export CORS helper functions for testing
+export { getAllowedOrigins, getSafeOrigin, isOriginAllowed };
+
 fastify.register(cors, {
-  origin: [process.env.APP_BASE_URL || 'http://localhost:3000'],
+  origin: (origin, cb) => {
+    // Allow requests with no origin (like curl, Postman, or same-origin requests)
+    if (!origin) {
+      cb(null, true);
+      return;
+    }
+
+    // Check if origin is in the allowed list
+    if (isOriginAllowed(origin)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not allowed by CORS'), false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
@@ -790,7 +841,7 @@ fastify.get(
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no', // Disable nginx buffering
-      'Access-Control-Allow-Origin': request.headers.origin || '*',
+      'Access-Control-Allow-Origin': getSafeOrigin(request.headers.origin),
       'Access-Control-Allow-Credentials': 'true',
     });
 
@@ -1335,7 +1386,7 @@ fastify.get(
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
-      'Access-Control-Allow-Origin': request.headers.origin || '*',
+      'Access-Control-Allow-Origin': getSafeOrigin(request.headers.origin),
       'Access-Control-Allow-Credentials': 'true',
     });
 
