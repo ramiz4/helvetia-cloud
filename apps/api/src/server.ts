@@ -153,40 +153,90 @@ async function deleteService(id: string, userId?: string) {
 }
 
 // Helper to get metrics for a service
-async function getServiceMetrics(id: string, dockerInstance?: any, containerList?: any[]) {
+async function getServiceMetrics(
+  id: string,
+  dockerInstance?: any,
+  containerList?: any[],
+  serviceInfo?: { name: string; type: string },
+) {
   const Docker = (await import('dockerode')).default;
   const docker = dockerInstance || new Docker();
 
   const containers = containerList || (await docker.listContainers({ all: true }));
-  const serviceContainers = containers.filter(
-    (c: any) => c.Labels['helvetia.serviceId'] === id && c.State === 'running',
+
+  // Use either the explicit serviceInfo or try to find it from labels if missing
+  // (though callers should provide it for accuracy with COMPOSE)
+  const allServiceContainers = containers.filter(
+    (c: any) =>
+      c.Labels['helvetia.serviceId'] === id ||
+      (serviceInfo?.type === 'COMPOSE' &&
+        c.Labels['com.docker.compose.project'] === serviceInfo?.name),
   );
 
-  if (serviceContainers.length === 0) {
-    return { cpu: 0, memory: 0, memoryLimit: 0 };
+  // Determine aggregate status
+  let status = 'STOPPED';
+  if (allServiceContainers.length > 0) {
+    if (allServiceContainers.some((c: any) => c.State === 'running')) {
+      status = 'RUNNING';
+    } else if (allServiceContainers.some((c: any) => ['restarting', 'created'].includes(c.State))) {
+      status = 'DEPLOYING';
+    } else if (
+      allServiceContainers.some((c: any) => c.State === 'exited' && c.Status.includes('Exited (0)'))
+    ) {
+      // If it's a one-off task that finished successfully
+      status = 'STOPPED';
+    } else {
+      status = 'FAILED';
+    }
+  } else {
+    status = 'NOT_RUNNING';
   }
 
-  const containerInfo = serviceContainers[0];
-  const container = docker.getContainer(containerInfo.Id);
+  const runningContainers = allServiceContainers.filter((c: any) => c.State === 'running');
 
-  // Get single stats snapshot
-  const stats = await container.stats({ stream: false });
+  if (runningContainers.length === 0) {
+    return { cpu: 0, memory: 0, memoryLimit: 0, status };
+  }
 
-  // Calculate CPU percentage (simplified)
-  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-  const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-  const cpuPercent =
-    systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
+  let totalCpu = 0;
+  let totalMemory = 0;
+  let totalMemoryLimit = 0;
 
-  // Calculate Memory usage in MB
-  const memoryUsage =
-    (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
-  const memoryLimit = stats.memory_stats.limit / 1024 / 1024;
+  // Process all running containers and sum their metrics
+  await Promise.all(
+    runningContainers.map(async (containerInfo: any) => {
+      try {
+        const container = docker.getContainer(containerInfo.Id);
+        const stats = await container.stats({ stream: false });
+
+        if (stats.cpu_stats && stats.precpu_stats) {
+          const cpuDelta =
+            stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+          const systemDelta =
+            stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+          const onlineCpus = stats.cpu_stats.online_cpus || 1;
+
+          if (systemDelta > 0 && cpuDelta > 0) {
+            totalCpu += (cpuDelta / systemDelta) * onlineCpus * 100.0;
+          }
+        }
+
+        if (stats.memory_stats) {
+          const usage = stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0);
+          totalMemory += usage / 1024 / 1024;
+          totalMemoryLimit += stats.memory_stats.limit / 1024 / 1024;
+        }
+      } catch (_err) {
+        // Ignore stats errors for individual containers
+      }
+    }),
+  );
 
   return {
-    cpu: parseFloat(cpuPercent.toFixed(2)),
-    memory: parseFloat(memoryUsage.toFixed(2)),
-    memoryLimit: parseFloat(memoryLimit.toFixed(2)),
+    cpu: parseFloat(totalCpu.toFixed(2)),
+    memory: parseFloat(totalMemory.toFixed(2)),
+    memoryLimit: parseFloat(totalMemoryLimit.toFixed(2)),
+    status,
   };
 }
 
@@ -576,7 +626,7 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
   const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
 
-  return getServiceMetrics(id);
+  return getServiceMetrics(id, undefined, undefined, service);
 });
 
 // SSE endpoint for real-time metrics streaming
@@ -603,12 +653,12 @@ fastify.get('/services/metrics/stream', async (request, reply) => {
 
       const services = await prisma.service.findMany({
         where: { userId: user.id },
-        select: { id: true },
+        select: { id: true, name: true, type: true },
       });
 
       const metricsPromises = services.map(async (s) => ({
         id: s.id,
-        metrics: await getServiceMetrics(s.id, docker, containers),
+        metrics: await getServiceMetrics(s.id, docker, containers, s),
       }));
 
       const results = await Promise.all(metricsPromises);

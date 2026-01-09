@@ -36,7 +36,7 @@ interface Service {
   customDomain?: string;
   isPreview?: boolean;
   prNumber?: number;
-  metrics?: { cpu: number; memory: number; memoryLimit: number };
+  metrics?: { cpu: number; memory: number; memoryLimit: number; status?: string };
   deployments: { id: string; status: string; createdAt: string }[];
 }
 
@@ -161,7 +161,15 @@ export default function Home() {
             setServices((prev) =>
               prev.map((service) => {
                 const update = updates.find((u) => u.id === service.id);
-                return update && update.metrics ? { ...service, metrics: update.metrics } : service;
+                if (update && update.metrics) {
+                  return {
+                    ...service,
+                    metrics: update.metrics,
+                    // Real-time status update from the metrics stream
+                    status: update.metrics.status || service.status,
+                  };
+                }
+                return service;
               }),
             );
           }
@@ -476,15 +484,19 @@ export default function Home() {
                   </h3>
                   <div className="flex flex-wrap gap-2 items-center">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border transition-colors ${
-                        service.status === 'ACTIVE' || service.status === 'RUNNING'
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-sm ${
+                        service.status === 'RUNNING'
                           ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
                           : service.status === 'DEPLOYING'
                             ? 'bg-amber-500/15 text-amber-400 border-amber-500/20 animate-pulse'
-                            : 'bg-rose-500/15 text-rose-400 border-rose-500/20'
+                            : service.status === 'FAILED'
+                              ? 'bg-rose-500/15 text-rose-400 border-rose-500/20'
+                              : 'bg-slate-500/15 text-slate-400 border-slate-500/20'
                       }`}
                     >
-                      {service.status}
+                      {service.status === 'NOT_RUNNING'
+                        ? t.dashboard.status.notRunning
+                        : service.status}
                     </span>
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
