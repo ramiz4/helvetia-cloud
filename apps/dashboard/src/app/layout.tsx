@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
 import { LanguageProvider } from '../lib/LanguageContext';
+import QueryProvider from '../lib/QueryProvider';
 import './tailwind.css';
 
 export const metadata: Metadata = {
@@ -30,40 +31,42 @@ export default function RootLayout({
           Skip to main content
         </a>
         <LanguageProvider>
-          <div className="flex flex-col min-h-screen bg-slate-950">
-            <Navigation />
-            <main
-              id="main-content"
-              className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
-            >
-              {children}
-            </main>
-            <Footer />
-          </div>
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              style: {
-                background: 'rgba(15, 23, 42, 0.8)',
-                color: '#f8fafc',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '1rem',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#10b981',
-                  secondary: 'white',
+          <QueryProvider>
+            <div className="flex flex-col min-h-screen bg-slate-950">
+              <Navigation />
+              <main
+                id="main-content"
+                className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
+              >
+                {children}
+              </main>
+              <Footer />
+            </div>
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  color: '#f8fafc',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '1rem',
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: 'white',
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: 'white',
+                  },
                 },
-              },
-            }}
-          />
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: 'white',
+                  },
+                },
+              }}
+            />
+          </QueryProvider>
         </LanguageProvider>
       </body>
     </html>
