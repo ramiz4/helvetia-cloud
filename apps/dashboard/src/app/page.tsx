@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -11,12 +12,12 @@ import { SearchBar } from '../components/SearchBar';
 import { ServiceCard } from '../components/ServiceCard/ServiceCard';
 import { StatsCards } from '../components/StatsCards';
 import {
+  createUpdateServiceMetrics,
   useDeleteService,
   useDeployService,
   useRestartService,
   useServices,
   useUpdateService,
-  useUpdateServiceMetrics,
 } from '../hooks/useServices';
 import { API_BASE_URL } from '../lib/config';
 import { useLanguage } from '../lib/LanguageContext';
@@ -24,12 +25,9 @@ import type { Service } from '../types/service';
 
 export default function Home() {
   const { t } = useLanguage();
-  // Initialize authentication state from localStorage
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const user = localStorage.getItem('user');
-    return user ? true : null;
-  });
+  const queryClient = useQueryClient();
+  // Initialize authentication state - will be set after mount to avoid hydration mismatch
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [selectedLogs, setSelectedLogs] = useState<string | null>(null);
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -41,7 +39,14 @@ export default function Home() {
   const deleteServiceMutation = useDeleteService();
   const deployServiceMutation = useDeployService();
   const restartServiceMutation = useRestartService();
-  const updateMetrics = useUpdateServiceMetrics();
+  const updateMetrics = createUpdateServiceMetrics(queryClient);
+
+  // Check authentication after mount to avoid hydration mismatch
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsAuthenticated(!!user);
+  }, []);
 
   useEffect(() => {
     if (!activeDeploymentId) return;

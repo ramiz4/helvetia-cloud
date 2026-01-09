@@ -15,7 +15,6 @@ const makeQueryClient = () =>
   });
 
 declare global {
-  // eslint-disable-next-line no-var
   var queryClient: QueryClient | undefined;
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import FocusTrap from '@/components/FocusTrap';
-import type { Service } from '@/types/service';
+import type { Service, ServiceType } from '@/types/service';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -129,7 +129,7 @@ export function EditServiceModal({
                       onChange={(e) =>
                         setEditingService((prev) => ({
                           ...prev,
-                          type: e.target.value,
+                          type: e.target.value as ServiceType,
                           port: e.target.value === 'STATIC' ? 80 : prev.port,
                         }))
                       }

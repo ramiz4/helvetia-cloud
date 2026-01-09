@@ -1,7 +1,7 @@
 'use client';
 
 import { API_BASE_URL } from '@/lib/config';
-import type { Service, UpdateServiceData } from '@/types/service';
+import type { Service, ServiceStatus, UpdateServiceData } from '@/types/service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Query keys
@@ -218,11 +218,9 @@ export function useRestartService() {
   });
 }
 
-// Hook: Update service metrics (for real-time updates)
-export function useUpdateServiceMetrics() {
-  const queryClient = useQueryClient();
-
-  return (updates: Array<{ id: string; metrics: Service['metrics']; status?: string }>) => {
+// Utility: Create service metrics updater (for real-time updates)
+export function createUpdateServiceMetrics(queryClient: ReturnType<typeof useQueryClient>) {
+  return (updates: Array<{ id: string; metrics: Service['metrics']; status?: ServiceStatus }>) => {
     queryClient.setQueryData<Service[]>(serviceKeys.lists(), (old) =>
       old
         ? old.map((service) => {
@@ -231,7 +229,7 @@ export function useUpdateServiceMetrics() {
               return {
                 ...service,
                 metrics: update.metrics,
-                status: update.metrics.status || service.status,
+                status: (update.metrics.status as ServiceStatus) || service.status,
               };
             }
             return service;

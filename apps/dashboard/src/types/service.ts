@@ -1,3 +1,6 @@
+export type ServiceStatus = 'RUNNING' | 'DEPLOYING' | 'FAILED' | 'NOT_RUNNING' | 'STOPPED';
+export type ServiceType = 'DOCKER' | 'STATIC' | 'COMPOSE';
+
 export interface Service {
   id: string;
   name: string;
@@ -6,8 +9,8 @@ export interface Service {
   buildCommand: string;
   startCommand: string;
   port: number;
-  status: string;
-  type: string;
+  status: ServiceStatus;
+  type: ServiceType;
   staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;
@@ -24,7 +27,7 @@ export interface UpdateServiceData {
   buildCommand?: string;
   startCommand?: string;
   port?: number;
-  type?: string;
+  type?: ServiceType;
   staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;
