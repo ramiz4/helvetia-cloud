@@ -29,8 +29,12 @@ const deploymentQueue = new Queue('deployments', {
 
 // Helper function to parse and get allowed origins from environment
 function getAllowedOrigins(): string[] {
-  const originsEnv = process.env.ALLOWED_ORIGINS || process.env.APP_BASE_URL || 'http://localhost:3000';
-  return originsEnv.split(',').map((o) => o.trim()).filter(Boolean);
+  const originsEnv =
+    process.env.ALLOWED_ORIGINS || process.env.APP_BASE_URL || 'http://localhost:3000';
+  return originsEnv
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
 }
 
 // Helper function to validate if an origin is allowed
@@ -347,6 +351,9 @@ export const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
 });
 
+// Export CORS helper functions for testing
+export { getAllowedOrigins, getSafeOrigin, isOriginAllowed };
+
 fastify.register(cors, {
   origin: (origin, cb) => {
     // Allow requests with no origin (like curl, Postman, or same-origin requests)
@@ -354,7 +361,7 @@ fastify.register(cors, {
       cb(null, true);
       return;
     }
-    
+
     // Check if origin is in the allowed list
     if (isOriginAllowed(origin)) {
       cb(null, true);
