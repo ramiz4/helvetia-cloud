@@ -39,9 +39,14 @@ export default function Home() {
   const updateMetrics = useUpdateServiceMetrics();
 
   useEffect(() => {
-    // Check authentication status
+    // Check authentication status on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     const user = localStorage.getItem('user');
-    setIsAuthenticated(!!user);
+    if (user) {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -60,7 +65,7 @@ export default function Home() {
       );
     };
 
-    eventSource.onerror = (_error) => {
+    eventSource.onerror = () => {
       if (eventSource.readyState === EventSource.CLOSED) {
         console.log('SSE logs stream ended - deployment finished');
       } else {
@@ -244,7 +249,7 @@ export default function Home() {
           totalServices={services.length}
           activeServices={activeServices}
           failedServices={failingServices}
-          translations={t}
+          translations={t.dashboard}
         />
 
         <SearchBar
