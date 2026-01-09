@@ -81,10 +81,15 @@ async function deleteService(id: string, userId?: string) {
   const Docker = (await import('dockerode')).default;
   const docker = new Docker();
   const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+  const serviceContainers = containers.filter(
+    (c) =>
+      c.Labels['helvetia.serviceId'] === id ||
+      (service.type === 'COMPOSE' && c.Labels['com.docker.compose.project'] === service.name),
+  );
 
   for (const containerInfo of serviceContainers) {
     const container = docker.getContainer(containerInfo.Id);
+    console.log(`Stopping and removing container ${containerInfo.Id} for service ${id}`);
     await container.stop().catch(() => {});
     await container.remove().catch(() => {});
   }
@@ -96,10 +101,49 @@ async function deleteService(id: string, userId?: string) {
     try {
       const volume = docker.getVolume(volumeName);
       await volume.remove();
-      console.log(`Removed volume ${volumeName} for database service ${service.name}`);
+      console.log(`Removed volume ${volumeName} for service ${service.name}`);
     } catch (err) {
-      console.error(`Failed to remove volume ${volumeName}:`, err);
-      // Continue with deletion even if volume removal fails
+      if ((err as any).statusCode !== 404) {
+        console.error(`Failed to remove volume ${volumeName}:`, err);
+      }
+    }
+  } else if (serviceType === 'COMPOSE') {
+    try {
+      const { Volumes } = await docker.listVolumes();
+      const projectVolumes = Volumes.filter(
+        (v) => v.Labels && v.Labels['com.docker.compose.project'] === service.name,
+      );
+
+      for (const volumeInfo of projectVolumes) {
+        const volume = docker.getVolume(volumeInfo.Name);
+        await volume.remove();
+        console.log(`Removed volume ${volumeInfo.Name} for compose project ${service.name}`);
+      }
+    } catch (err) {
+      console.error(`Failed to list/remove volumes for compose project ${service.name}:`, err);
+    }
+  }
+
+  // 1.5 Remove associated images
+  const deployments = await prisma.deployment.findMany({
+    where: { serviceId: id },
+    select: { imageTag: true },
+  });
+
+  const imageTags = new Set(
+    deployments.map((d) => d.imageTag).filter((tag): tag is string => !!tag),
+  );
+
+  for (const tag of imageTags) {
+    try {
+      const image = docker.getImage(tag);
+      await image.remove({ force: true });
+      console.log(`Removed image ${tag}`);
+    } catch (err) {
+      // Don't log error if image doesn't exist
+      if ((err as any).statusCode !== 404) {
+        console.error(`Failed to remove image ${tag}:`, err);
+      }
     }
   }
 
@@ -493,7 +537,6 @@ fastify.delete('/services/:id', async (request, reply) => {
   if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
   await deleteService(id, user.id);
-
   return { success: true };
 });
 

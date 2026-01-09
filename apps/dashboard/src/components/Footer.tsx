@@ -3,6 +3,7 @@
 import { useLanguage } from '@/lib/LanguageContext';
 import { ExternalLink, Mail, ShieldCheck, Twitter } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { GithubIcon } from './icons/GithubIcon';
 
 export default function Footer() {
@@ -64,22 +65,25 @@ export default function Footer() {
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
-                <a href="/" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <Link href="/" className="text-slate-400 hover:text-indigo-400 transition-colors">
                   {t.nav.dashboard}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/deployments"
                   className="text-slate-400 hover:text-indigo-400 transition-colors"
                 >
                   {t.nav.deployments}
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/new" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <Link
+                  href="/new"
+                  className="text-slate-400 hover:text-indigo-400 transition-colors"
+                >
                   {t.nav.newService}
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">

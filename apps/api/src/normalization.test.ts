@@ -57,7 +57,7 @@ describe('API Service Normalization', () => {
   it('should normalize lowercase service type to uppercase on creation', async () => {
     const { prisma } = await import('database');
     vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.service.upsert).mockResolvedValue({ id: 's1' } as any);
+    vi.mocked(prisma.service.upsert).mockResolvedValue({ id: 's1' } as never);
 
     const response = await fastify.inject({
       method: 'POST',
@@ -76,8 +76,8 @@ describe('API Service Normalization', () => {
 
   it('should normalize lowercase service type to uppercase on update', async () => {
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.updateMany).mockResolvedValue({ count: 1 } as any);
-    vi.mocked(prisma.service.findUnique).mockResolvedValue({ id: 's1' } as any);
+    vi.mocked(prisma.service.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.service.findUnique).mockResolvedValue({ id: 's1' } as never);
 
     const response = await fastify.inject({
       method: 'PATCH',

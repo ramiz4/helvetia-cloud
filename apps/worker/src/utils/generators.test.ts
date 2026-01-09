@@ -2,6 +2,11 @@ import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import { generateComposeOverride, generateDockerfileLines } from './generators';
 
+interface ComposeConfig {
+  services: Record<string, any>;
+  networks: Record<string, any>;
+}
+
 describe('Generators', () => {
   describe('generateComposeOverride', () => {
     it('should generate valid YAML with labels and environment variables', () => {
@@ -18,7 +23,7 @@ describe('Generators', () => {
       };
 
       const result = generateComposeOverride(params);
-      const parsed = yaml.load(result) as any;
+      const parsed = yaml.load(result) as unknown as ComposeConfig;
 
       expect(parsed.services.web.labels).toContain('helvetia.serviceId=123');
       expect(parsed.services.web.labels).toContain(
@@ -38,7 +43,7 @@ describe('Generators', () => {
         mainService: 'app',
         traefikRule: 'Host(`t.c`)',
       });
-      const parsed = yaml.load(result) as any;
+      const parsed = yaml.load(result) as unknown as ComposeConfig;
       expect(parsed.services.app.environment).toBeUndefined();
     });
 
@@ -52,7 +57,7 @@ describe('Generators', () => {
           EVIL: 'value\n  other_service:\n    image: busybox',
         },
       });
-      const parsed = yaml.load(result) as any;
+      const parsed = yaml.load(result) as unknown as ComposeConfig;
       // It should NOT have a second service
       expect(Object.keys(parsed.services)).toHaveLength(1);
       expect(parsed.services.app.environment.EVIL).toBe(
