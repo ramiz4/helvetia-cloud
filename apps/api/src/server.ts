@@ -13,6 +13,7 @@ import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 import { decrypt, encrypt } from './utils/crypto';
+import { getRepoUrlMatchCondition } from './utils/repoUrl';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 
@@ -1232,7 +1233,7 @@ fastify.register(async (scope) => {
             // Find the base service for this repo (the one that isn't a preview)
             const baseService = await prisma.service.findFirst({
               where: {
-                repoUrl: { contains: repoUrl },
+                ...getRepoUrlMatchCondition(repoUrl),
                 isPreview: false,
               },
             });
@@ -1278,7 +1279,7 @@ fastify.register(async (scope) => {
             const previewService = await prisma.service.findFirst({
               where: {
                 prNumber: prNumber,
-                repoUrl: { contains: repoUrl },
+                ...getRepoUrlMatchCondition(repoUrl),
                 isPreview: true,
               },
             });
@@ -1311,7 +1312,7 @@ fastify.register(async (scope) => {
       // Find service(s) matching this repo and branch
       const services = await prisma.service.findMany({
         where: {
-          repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
+          ...getRepoUrlMatchCondition(repoUrl),
           branch,
           isPreview: false, // Only trigger non-preview services for push events
         },
