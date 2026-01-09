@@ -6,7 +6,7 @@ import IORedis from 'ioredis';
 import path from 'path';
 import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
-import { ensureWorkspaceDir, getSecureBindMounts } from './utils/workspace';
+import { getSecureBindMounts } from './utils/workspace';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -94,9 +94,6 @@ export const worker = new Worker(
         });
       } else {
         if (type === 'COMPOSE') {
-          // Ensure workspace directory exists
-          await ensureWorkspaceDir();
-
           // 1. Start Builder (to run compose)
           const builderName = `builder-${deploymentId}`;
           builder = await docker.createContainer({
@@ -199,9 +196,6 @@ EOF
           }
           return;
         }
-
-        // Ensure workspace directory exists
-        await ensureWorkspaceDir();
 
         // 1. Start Builder (Isolated Environment)
         const builderName = `builder-${deploymentId}`;

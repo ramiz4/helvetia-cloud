@@ -42,41 +42,32 @@ This directory mount provides:
 
 For production environments:
 
-1. **Use a dedicated workspace directory**:
+1. **Monitor Docker disk usage**:
+   - Builder containers and images consume disk space
+   - Implement automated cleanup of old images
+   - Set up disk usage alerts
+
+2. **Enable SELinux/AppArmor labels** (if available):
 
    ```bash
-   WORKSPACE_DIR=/var/lib/helvetia/workspaces
+   # SELinux example for Docker directory
+   sudo semanage fcontext -a -t svirt_sandbox_file_t /var/lib/docker
    ```
 
-2. **Set proper permissions**:
+3. **Consider Docker volumes** for database services for better isolation
 
-   ```bash
-   sudo mkdir -p /var/lib/helvetia/workspaces
-   sudo chown -R helvetia:helvetia /var/lib/helvetia/workspaces
-   sudo chmod 750 /var/lib/helvetia/workspaces
-   ```
-
-3. **Enable SELinux/AppArmor labels** (if available):
-
-   ```bash
-   # SELinux example
-   sudo chcon -Rt svirt_sandbox_file_t /var/lib/helvetia/workspaces
-   ```
-
-4. **Consider Docker volumes** instead of bind mounts for better isolation
-
-5. **Implement regular cleanup**:
-   - Configure automated cleanup of old workspace directories
+4. **Implement regular cleanup**:
+   - Configure automated cleanup of old images
    - Monitor disk usage
    - Set retention policies
 
 ### Security Checklist
 
-- [ ] WORKSPACE_DIR is set to a dedicated directory
-- [ ] No root directories are mounted in containers
-- [ ] Workspace mounts use `:ro` (read-only) flag
-- [ ] Proper file permissions are set
-- [ ] Regular cleanup is configured
+- [x] No root directories are mounted in containers
+- [x] Only Docker socket is mounted (required for builds)
+- [x] Builds happen in isolated container filesystem
+- [x] Automatic cleanup via container removal
+- [ ] Resource limits are set (CPU, memory)
 - [ ] Monitoring is in place
 
 ### Principle of Least Privilege
