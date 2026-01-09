@@ -133,6 +133,14 @@ Stay updated with our progress and future plans in the [ROADMAP.md](./ROADMAP.md
 
 For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./ARCHITECTURE.md).
 
+## 🔍 Code Review & Issues
+
+A comprehensive code review has been conducted. See:
+
+- [CODE_REVIEW.md](./CODE_REVIEW.md) - Detailed technical analysis and findings
+- [GITHUB_ISSUES.md](./GITHUB_ISSUES.md) - Prioritized issues ready to be created
+- [PRIORITIZATION.md](./PRIORITIZATION.md) - Implementation roadmap and priorities
+
 ---
 
 ## 📄 License
