@@ -108,6 +108,8 @@ describe('API Service Normalization', () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.json().error).toBe('Invalid service type');
+    expect(response.json().error).toBe('Validation failed');
+    // Check that the validation error mentions the type field
+    expect(response.json().details.some((d: any) => d.field === 'type')).toBe(true);
   });
 });

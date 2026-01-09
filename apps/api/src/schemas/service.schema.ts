@@ -72,11 +72,12 @@ export const ServiceCreateSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  // Service type: must be one of allowed types
+  // Service type: must be one of allowed types (case-insensitive)
   type: z
-    .enum(['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'])
-    .optional()
-    .or(z.string()),
+    .string()
+    .transform((val) => val.toUpperCase())
+    .pipe(z.enum(['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE']))
+    .optional(),
 
   // Static output directory: limit length
   staticOutputDir: z
@@ -156,11 +157,12 @@ export const ServiceUpdateSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  // Service type: must be one of allowed types
+  // Service type: must be one of allowed types (case-insensitive)
   type: z
-    .enum(['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'])
-    .optional()
-    .or(z.string()),
+    .string()
+    .transform((val) => val.toUpperCase())
+    .pipe(z.enum(['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE']))
+    .optional(),
 
   // Static output directory: limit length
   staticOutputDir: z
