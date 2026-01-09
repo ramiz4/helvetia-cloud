@@ -12,6 +12,8 @@ import dotenv from 'dotenv';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
+import { ZodError } from 'zod';
+import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
 import { decrypt, encrypt } from './utils/crypto';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 
@@ -635,6 +637,23 @@ fastify.get('/services/:id', async (request, reply) => {
 
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
+
+  // Validate request body
+  try {
+    ServiceUpdateSchema.parse(request.body);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: error.issues.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+    }
+    throw error;
+  }
+
   const {
     name,
     repoUrl,
@@ -683,6 +702,22 @@ fastify.patch('/services/:id', async (request, reply) => {
 });
 
 fastify.post('/services', async (request, reply) => {
+  // Validate request body
+  try {
+    ServiceCreateSchema.parse(request.body);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: error.issues.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+    }
+    throw error;
+  }
+
   const {
     name,
     repoUrl,
