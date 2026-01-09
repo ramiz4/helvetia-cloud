@@ -2,6 +2,7 @@
 import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
+import rateLimit from '@fastify/rate-limit';
 
 import axios from 'axios';
 import { Queue } from 'bullmq';
@@ -276,6 +277,94 @@ fastify.register(fastifyJwt, {
   },
 });
 
+// Global rate limiting
+fastify.register(rateLimit, {
+  max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+  timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
+  redis: redisConnection,
+  nameSpace: 'helvetia-rate-limit:',
+  skipOnError: true, // Don't block requests if Redis is down
+  allowList: ['/health'], // Exclude health endpoint
+  keyGenerator: (request) => {
+    // Global limiter is intentionally IP-based because authentication runs later
+    return request.ip;
+  },
+  errorResponseBuilder: (request, context) => {
+    return {
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: `Rate limit exceeded, retry in ${Math.ceil(context.ttl / 1000)} seconds`,
+    };
+  },
+  addHeadersOnExceeding: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true,
+  },
+  addHeaders: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true,
+  },
+});
+
+// Stricter rate limiting for authentication endpoints
+const authRateLimitConfig = {
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
+  timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',
+  redis: redisConnection,
+  nameSpace: 'helvetia-auth-rate-limit:',
+  skipOnError: true,
+  keyGenerator: (request) => request.ip,
+  errorResponseBuilder: (request, context) => {
+    return {
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: `Too many authentication attempts, retry in ${Math.ceil(context.ttl / 1000)} seconds`,
+    };
+  },
+  addHeadersOnExceeding: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true,
+  },
+  addHeaders: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true,
+  },
+};
+
+// Stricter rate limiting for SSE/streaming endpoints
+const wsRateLimitConfig = {
+  max: parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
+  timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
+  redis: redisConnection,
+  nameSpace: 'helvetia-ws-rate-limit:',
+  skipOnError: true,
+  keyGenerator: (request) => {
+    const user = (request as any).user;
+    return user?.id || request.ip;
+  },
+  errorResponseBuilder: (request, context) => {
+    return {
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: `Too many streaming connections, retry in ${Math.ceil(context.ttl / 1000)} seconds`,
+    };
+  },
+  addHeadersOnExceeding: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true,
+  },
+  addHeaders: {
+    'x-ratelimit-limit': true,
+    'x-ratelimit-remaining': true,
+    'x-ratelimit-reset': true,
+  },
+};
+
 // Auth hook
 fastify.addHook('onRequest', async (request, reply) => {
   const publicRoutes = ['/health', '/webhooks/github', '/auth/github', '/auth/logout'];
@@ -293,75 +382,79 @@ fastify.get('/health', async () => {
   return { status: 'ok' };
 });
 
-fastify.post('/auth/github', async (request, reply) => {
-  const { code } = request.body as any;
+fastify.post(
+  '/auth/github',
+  { config: { rateLimit: authRateLimitConfig } },
+  async (request, reply) => {
+    const { code } = request.body as any;
 
-  if (!code) {
-    return reply.status(400).send({ error: 'Code is required' });
-  }
-
-  try {
-    // 1. Exchange code for access token
-    const tokenRes = await axios.post(
-      'https://github.com/login/oauth/access_token',
-      {
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code,
-      },
-      {
-        headers: { Accept: 'application/json' },
-      },
-    );
-
-    const { access_token, error } = tokenRes.data;
-
-    if (error) {
-      return reply.status(401).send({ error });
+    if (!code) {
+      return reply.status(400).send({ error: 'Code is required' });
     }
 
-    // 2. Fetch user info
-    const userRes = await axios.get('https://api.github.com/user', {
-      headers: { Authorization: `token ${access_token}` },
-    });
+    try {
+      // 1. Exchange code for access token
+      const tokenRes = await axios.post(
+        'https://github.com/login/oauth/access_token',
+        {
+          client_id: process.env.GITHUB_CLIENT_ID,
+          client_secret: process.env.GITHUB_CLIENT_SECRET,
+          code,
+        },
+        {
+          headers: { Accept: 'application/json' },
+        },
+      );
 
-    const githubUser = userRes.data;
+      const { access_token, error } = tokenRes.data;
 
-    // 3. Upsert user in DB
-    const encryptedToken = encrypt(access_token);
-    const user = await prisma.user.upsert({
-      where: { githubId: githubUser.id.toString() },
-      update: {
-        username: githubUser.login,
-        avatarUrl: githubUser.avatar_url,
-        githubAccessToken: encryptedToken,
-      },
-      create: {
-        githubId: githubUser.id.toString(),
-        username: githubUser.login,
-        avatarUrl: githubUser.avatar_url,
-        githubAccessToken: encryptedToken,
-      },
-    });
+      if (error) {
+        return reply.status(401).send({ error });
+      }
 
-    // 4. Generate JWT
-    const token = fastify.jwt.sign({ id: user.id, username: user.username });
+      // 2. Fetch user info
+      const userRes = await axios.get('https://api.github.com/user', {
+        headers: { Authorization: `token ${access_token}` },
+      });
 
-    // 5. Set cookie and return user
-    reply.setCookie('token', token, {
-      path: '/',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
+      const githubUser = userRes.data;
 
-    return { user, token };
-  } catch (err: any) {
-    console.error('Auth error:', err.response?.data || err.message);
-    return reply.status(500).send({ error: 'Authentication failed' });
-  }
-});
+      // 3. Upsert user in DB
+      const encryptedToken = encrypt(access_token);
+      const user = await prisma.user.upsert({
+        where: { githubId: githubUser.id.toString() },
+        update: {
+          username: githubUser.login,
+          avatarUrl: githubUser.avatar_url,
+          githubAccessToken: encryptedToken,
+        },
+        create: {
+          githubId: githubUser.id.toString(),
+          username: githubUser.login,
+          avatarUrl: githubUser.avatar_url,
+          githubAccessToken: encryptedToken,
+        },
+      });
+
+      // 4. Generate JWT
+      const token = fastify.jwt.sign({ id: user.id, username: user.username });
+
+      // 5. Set cookie and return user
+      reply.setCookie('token', token, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+      });
+
+      return { user, token };
+    } catch (err: any) {
+      console.error('Auth error:', err.response?.data || err.message);
+      return reply.status(500).send({ error: 'Authentication failed' });
+    }
+  },
+);
 
 fastify.post('/auth/logout', async (request, reply) => {
   reply.clearCookie('token', {
@@ -647,62 +740,66 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
 });
 
 // SSE endpoint for real-time metrics streaming
-fastify.get('/services/metrics/stream', async (request, reply) => {
-  const user = (request as any).user;
+fastify.get(
+  '/services/metrics/stream',
+  { config: { rateLimit: wsRateLimitConfig } },
+  async (request, reply) => {
+    const user = (request as any).user;
 
-  // Set SSE headers with CORS support
-  reply.raw.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no', // Disable nginx buffering
-    'Access-Control-Allow-Origin': request.headers.origin || '*',
-    'Access-Control-Allow-Credentials': 'true',
-  });
+    // Set SSE headers with CORS support
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no', // Disable nginx buffering
+      'Access-Control-Allow-Origin': request.headers.origin || '*',
+      'Access-Control-Allow-Credentials': 'true',
+    });
 
-  console.log(`SSE client connected for real-time metrics: ${user.id}`);
+    console.log(`SSE client connected for real-time metrics: ${user.id}`);
 
-  const sendMetrics = async () => {
-    try {
-      const Docker = (await import('dockerode')).default;
-      const docker = new Docker();
-      const containers = await docker.listContainers({ all: true });
+    const sendMetrics = async () => {
+      try {
+        const Docker = (await import('dockerode')).default;
+        const docker = new Docker();
+        const containers = await docker.listContainers({ all: true });
 
-      const services = await prisma.service.findMany({
-        where: { userId: user.id },
-        select: { id: true, name: true, type: true, status: true },
-      });
+        const services = await prisma.service.findMany({
+          where: { userId: user.id },
+          select: { id: true, name: true, type: true, status: true },
+        });
 
-      const metricsPromises = services.map(async (s) => ({
-        id: s.id,
-        metrics: await getServiceMetrics(s.id, docker, containers, s),
-      }));
+        const metricsPromises = services.map(async (s) => ({
+          id: s.id,
+          metrics: await getServiceMetrics(s.id, docker, containers, s),
+        }));
 
-      const results = await Promise.all(metricsPromises);
+        const results = await Promise.all(metricsPromises);
 
-      // Send as SSE event
-      reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
-    } catch (err) {
-      console.error('Error sending metrics via SSE:', err);
-    }
-  };
+        // Send as SSE event
+        reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
+      } catch (err) {
+        console.error('Error sending metrics via SSE:', err);
+      }
+    };
 
-  // Send immediate connection acknowledgment (makes it feel instant)
-  reply.raw.write(': connected\n\n');
+    // Send immediate connection acknowledgment (makes it feel instant)
+    reply.raw.write(': connected\n\n');
 
-  // Fetch and send initial metrics asynchronously (non-blocking)
-  sendMetrics();
-  const interval = setInterval(sendMetrics, 5000);
+    // Fetch and send initial metrics asynchronously (non-blocking)
+    sendMetrics();
+    const interval = setInterval(sendMetrics, 5000);
 
-  // Clean up on client disconnect
-  request.raw.on('close', () => {
-    console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
-    clearInterval(interval);
-  });
+    // Clean up on client disconnect
+    request.raw.on('close', () => {
+      console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
+      clearInterval(interval);
+    });
 
-  // Keep the connection open
-  return reply;
-});
+    // Keep the connection open
+    return reply;
+  },
+);
 
 // GitHub Proxy Routes
 fastify.get('/github/orgs', async (request, reply) => {
@@ -830,51 +927,55 @@ fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
 });
 
 // Deployment Routes
-fastify.post('/services/:id/deploy', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
+fastify.post(
+  '/services/:id/deploy',
+  { config: { rateLimit: wsRateLimitConfig } },
+  async (request, reply) => {
+    const { id } = request.params as any;
+    const user = (request as any).user;
 
-  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
-  if (!service) return reply.status(404).send({ error: 'Service not found' });
+    const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+    if (!service) return reply.status(404).send({ error: 'Service not found' });
 
-  const deployment = await prisma.deployment.create({
-    data: {
-      serviceId: id,
-      status: 'QUEUED',
-    },
-  });
+    const deployment = await prisma.deployment.create({
+      data: {
+        serviceId: id,
+        status: 'QUEUED',
+      },
+    });
 
-  // Update service status to DEPLOYING
-  await prisma.service.update({
-    where: { id },
-    data: { status: 'DEPLOYING' },
-  });
+    // Update service status to DEPLOYING
+    await prisma.service.update({
+      where: { id },
+      data: { status: 'DEPLOYING' },
+    });
 
-  // Inject token if available
-  let repoUrl = service.repoUrl;
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-  if (dbUser?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
-    const decryptedToken = decrypt(dbUser.githubAccessToken);
-    repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
-  }
+    // Inject token if available
+    let repoUrl = service.repoUrl;
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+    if (dbUser?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
+      const decryptedToken = decrypt(dbUser.githubAccessToken);
+      repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
+    }
 
-  await deploymentQueue.add('build', {
-    deploymentId: deployment.id,
-    serviceId: service.id,
-    repoUrl,
-    branch: service.branch,
-    buildCommand: service.buildCommand,
-    startCommand: service.startCommand,
-    serviceName: service.name,
-    port: service.port,
-    envVars: service.envVars,
-    customDomain: (service as any).customDomain,
-    type: (service as any).type,
-    staticOutputDir: (service as any).staticOutputDir,
-  });
+    await deploymentQueue.add('build', {
+      deploymentId: deployment.id,
+      serviceId: service.id,
+      repoUrl,
+      branch: service.branch,
+      buildCommand: service.buildCommand,
+      startCommand: service.startCommand,
+      serviceName: service.name,
+      port: service.port,
+      envVars: service.envVars,
+      customDomain: (service as any).customDomain,
+      type: (service as any).type,
+      staticOutputDir: (service as any).staticOutputDir,
+    });
 
-  return deployment;
-});
+    return deployment;
+  },
+);
 
 // Restart container without rebuilding
 fastify.post('/services/:id/restart', async (request, reply) => {
@@ -976,180 +1077,184 @@ fastify.post('/services/:id/restart', async (request, reply) => {
   }
 });
 
-fastify.post('/webhooks/github', async (request) => {
-  const payload = request.body as any;
+fastify.post(
+  '/webhooks/github',
+  { config: { rateLimit: authRateLimitConfig } },
+  async (request) => {
+    const payload = request.body as any;
 
-  // Handle Pull Request events
-  if (payload.pull_request) {
-    try {
-      const pr = payload.pull_request;
-      const action = payload.action;
-      const prNumber = payload.number;
-      const repoUrl = pr.base.repo.html_url;
-      const headBranch = pr.head.ref;
+    // Handle Pull Request events
+    if (payload.pull_request) {
+      try {
+        const pr = payload.pull_request;
+        const action = payload.action;
+        const prNumber = payload.number;
+        const repoUrl = pr.base.repo.html_url;
+        const headBranch = pr.head.ref;
 
-      console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
+        console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
 
-      if (['opened', 'synchronize'].includes(action)) {
-        // Find the base service for this repo (the one that isn't a preview)
-        const baseService = await prisma.service.findFirst({
-          where: {
-            repoUrl: { contains: repoUrl },
-            isPreview: false,
-          },
-        });
+        if (['opened', 'synchronize'].includes(action)) {
+          // Find the base service for this repo (the one that isn't a preview)
+          const baseService = await prisma.service.findFirst({
+            where: {
+              repoUrl: { contains: repoUrl },
+              isPreview: false,
+            },
+          });
 
-        if (!baseService) {
-          console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
-          return { skipped: 'No base service found' };
-        }
+          if (!baseService) {
+            console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
+            return { skipped: 'No base service found' };
+          }
 
-        const previewName = `${baseService.name}-pr-${prNumber}`;
+          const previewName = `${baseService.name}-pr-${prNumber}`;
 
-        // Upsert the preview service
-        const service = await prisma.service.upsert({
-          where: { name: previewName },
-          update: {
-            branch: headBranch,
-            status: 'IDLE',
-          },
-          create: {
-            name: previewName,
-            repoUrl: baseService.repoUrl,
-            branch: headBranch,
-            buildCommand: baseService.buildCommand,
-            startCommand: baseService.startCommand,
-            port: baseService.port,
-            type: baseService.type,
-            staticOutputDir: baseService.staticOutputDir,
-            envVars: baseService.envVars || {},
-            userId: baseService.userId,
-            isPreview: true,
-            prNumber: prNumber,
-          },
-        });
+          // Upsert the preview service
+          const service = await prisma.service.upsert({
+            where: { name: previewName },
+            update: {
+              branch: headBranch,
+              status: 'IDLE',
+            },
+            create: {
+              name: previewName,
+              repoUrl: baseService.repoUrl,
+              branch: headBranch,
+              buildCommand: baseService.buildCommand,
+              startCommand: baseService.startCommand,
+              port: baseService.port,
+              type: baseService.type,
+              staticOutputDir: baseService.staticOutputDir,
+              envVars: baseService.envVars || {},
+              userId: baseService.userId,
+              isPreview: true,
+              prNumber: prNumber,
+            },
+          });
 
-        console.log(`Triggering preview deployment for ${service.name}`);
+          console.log(`Triggering preview deployment for ${service.name}`);
 
-        const deployment = await prisma.deployment.create({
-          data: {
+          const deployment = await prisma.deployment.create({
+            data: {
+              serviceId: service.id,
+              status: 'QUEUED',
+              commitHash: pr.head.sha,
+            },
+          });
+
+          // Inject token if available
+          let repoUrlData = service.repoUrl;
+          const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+          if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+            const decryptedToken = decrypt(dbUser.githubAccessToken);
+            repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+          }
+
+          await deploymentQueue.add('build', {
+            deploymentId: deployment.id,
             serviceId: service.id,
-            status: 'QUEUED',
-            commitHash: pr.head.sha,
-          },
-        });
+            repoUrl: repoUrlData,
+            branch: service.branch,
+            buildCommand: service.buildCommand,
+            startCommand: service.startCommand,
+            serviceName: service.name,
+            port: service.port,
+            envVars: service.envVars,
+            customDomain: (service as any).customDomain,
+            type: (service as any).type,
+            staticOutputDir: (service as any).staticOutputDir,
+          });
 
-        // Inject token if available
-        let repoUrlData = service.repoUrl;
-        const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
-        if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-          const decryptedToken = decrypt(dbUser.githubAccessToken);
-          repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+          return { success: true, previewService: service.name };
         }
 
-        await deploymentQueue.add('build', {
-          deploymentId: deployment.id,
-          serviceId: service.id,
-          repoUrl: repoUrlData,
-          branch: service.branch,
-          buildCommand: service.buildCommand,
-          startCommand: service.startCommand,
-          serviceName: service.name,
-          port: service.port,
-          envVars: service.envVars,
-          customDomain: (service as any).customDomain,
-          type: (service as any).type,
-          staticOutputDir: (service as any).staticOutputDir,
-        });
+        if (action === 'closed') {
+          const previewService = await prisma.service.findFirst({
+            where: {
+              prNumber: prNumber,
+              repoUrl: { contains: repoUrl },
+              isPreview: true,
+            },
+          });
 
-        return { success: true, previewService: service.name };
-      }
-
-      if (action === 'closed') {
-        const previewService = await prisma.service.findFirst({
-          where: {
-            prNumber: prNumber,
-            repoUrl: { contains: repoUrl },
-            isPreview: true,
-          },
-        });
-
-        if (previewService) {
-          console.log(`Cleaning up preview environment for PR #${prNumber}`);
-          await deleteService(previewService.id, previewService.userId);
-          return { success: true, deletedService: previewService.name };
+          if (previewService) {
+            console.log(`Cleaning up preview environment for PR #${prNumber}`);
+            await deleteService(previewService.id, previewService.userId);
+            return { success: true, deletedService: previewService.name };
+          }
+          return { skipped: 'No preview service found to delete' };
         }
-        return { skipped: 'No preview service found to delete' };
-      }
 
-      return { skipped: `Action ${action} not handled` };
-    } catch (error) {
-      console.error('Error handling GitHub PR webhook:', error);
-      return { error: 'Internal server error while processing webhook' };
+        return { skipped: `Action ${action} not handled` };
+      } catch (error) {
+        console.error('Error handling GitHub PR webhook:', error);
+        return { error: 'Internal server error while processing webhook' };
+      }
     }
-  }
 
-  // Basic check for push event
-  if (!payload.repository || !payload.ref) {
-    return { skipped: 'Not a push or PR event' };
-  }
+    // Basic check for push event
+    if (!payload.repository || !payload.ref) {
+      return { skipped: 'Not a push or PR event' };
+    }
 
-  const repoUrl = payload.repository.html_url;
-  const branch = payload.ref.replace('refs/heads/', '');
+    const repoUrl = payload.repository.html_url;
+    const branch = payload.ref.replace('refs/heads/', '');
 
-  console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
+    console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
 
-  // Find service(s) matching this repo and branch
-  const services = await prisma.service.findMany({
-    where: {
-      repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
-      branch,
-      isPreview: false, // Only trigger non-preview services for push events
-    },
-  });
-
-  if (services.length === 0) {
-    console.log(`No service found for ${repoUrl} on branch ${branch}`);
-    return { skipped: 'No matching service found' };
-  }
-
-  for (const service of services) {
-    console.log(`Triggering automated deployment for ${service.name}`);
-
-    const deployment = await prisma.deployment.create({
-      data: {
-        serviceId: service.id,
-        status: 'QUEUED',
-        commitHash: payload.after,
+    // Find service(s) matching this repo and branch
+    const services = await prisma.service.findMany({
+      where: {
+        repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
+        branch,
+        isPreview: false, // Only trigger non-preview services for push events
       },
     });
 
-    // Inject token if available
-    let repoUrlData = service.repoUrl;
-    const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
-    if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-      const decryptedToken = decrypt(dbUser.githubAccessToken);
-      repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+    if (services.length === 0) {
+      console.log(`No service found for ${repoUrl} on branch ${branch}`);
+      return { skipped: 'No matching service found' };
     }
 
-    await deploymentQueue.add('build', {
-      deploymentId: deployment.id,
-      serviceId: service.id,
-      repoUrl: repoUrlData,
-      branch: service.branch,
-      buildCommand: service.buildCommand,
-      startCommand: service.startCommand,
-      serviceName: service.name,
-      port: service.port,
-      envVars: service.envVars,
-      customDomain: (service as any).customDomain,
-      type: (service as any).type,
-      staticOutputDir: (service as any).staticOutputDir,
-    });
-  }
+    for (const service of services) {
+      console.log(`Triggering automated deployment for ${service.name}`);
 
-  return { success: true, servicesTriggered: services.length };
-});
+      const deployment = await prisma.deployment.create({
+        data: {
+          serviceId: service.id,
+          status: 'QUEUED',
+          commitHash: payload.after,
+        },
+      });
+
+      // Inject token if available
+      let repoUrlData = service.repoUrl;
+      const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+      if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+        const decryptedToken = decrypt(dbUser.githubAccessToken);
+        repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+      }
+
+      await deploymentQueue.add('build', {
+        deploymentId: deployment.id,
+        serviceId: service.id,
+        repoUrl: repoUrlData,
+        branch: service.branch,
+        buildCommand: service.buildCommand,
+        startCommand: service.startCommand,
+        serviceName: service.name,
+        port: service.port,
+        envVars: service.envVars,
+        customDomain: (service as any).customDomain,
+        type: (service as any).type,
+        staticOutputDir: (service as any).staticOutputDir,
+      });
+    }
+
+    return { success: true, servicesTriggered: services.length };
+  },
+);
 
 fastify.get('/services/:id/deployments', async (request, reply) => {
   const { id } = request.params as any;
@@ -1181,53 +1286,57 @@ fastify.get('/deployments/:id/logs', async (request, reply) => {
 });
 
 // SSE endpoint for real-time deployment logs
-fastify.get('/deployments/:id/logs/stream', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
+fastify.get(
+  '/deployments/:id/logs/stream',
+  { config: { rateLimit: wsRateLimitConfig } },
+  async (request, reply) => {
+    const { id } = request.params as any;
+    const user = (request as any).user;
 
-  // Verify deployment belongs to user
-  const deployment = await prisma.deployment.findUnique({
-    where: { id },
-    include: { service: true },
-  });
+    // Verify deployment belongs to user
+    const deployment = await prisma.deployment.findUnique({
+      where: { id },
+      include: { service: true },
+    });
 
-  if (!deployment || deployment.service.userId !== user.id) {
-    return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
-  }
-
-  // Set SSE headers with CORS support
-  reply.raw.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no',
-    'Access-Control-Allow-Origin': request.headers.origin || '*',
-    'Access-Control-Allow-Credentials': 'true',
-  });
-
-  console.log(`SSE client connected for live logs: ${id}`);
-
-  const channel = `deployment-logs:${id}`;
-
-  const onMessage = (chan: string, message: string) => {
-    if (chan === channel) {
-      // Send log line as SSE event
-      reply.raw.write(`data: ${message}\n\n`);
+    if (!deployment || deployment.service.userId !== user.id) {
+      return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
     }
-  };
 
-  subConnection.subscribe(channel);
-  subConnection.on('message', onMessage);
+    // Set SSE headers with CORS support
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': request.headers.origin || '*',
+      'Access-Control-Allow-Credentials': 'true',
+    });
 
-  // Clean up on client disconnect
-  request.raw.on('close', () => {
-    console.log(`SSE client disconnected from live logs: ${id}`);
-    subConnection.removeListener('message', onMessage);
-  });
+    console.log(`SSE client connected for live logs: ${id}`);
 
-  // Keep the connection open
-  return reply;
-});
+    const channel = `deployment-logs:${id}`;
+
+    const onMessage = (chan: string, message: string) => {
+      if (chan === channel) {
+        // Send log line as SSE event
+        reply.raw.write(`data: ${message}\n\n`);
+      }
+    };
+
+    subConnection.subscribe(channel);
+    subConnection.on('message', onMessage);
+
+    // Clean up on client disconnect
+    request.raw.on('close', () => {
+      console.log(`SSE client disconnected from live logs: ${id}`);
+      subConnection.removeListener('message', onMessage);
+    });
+
+    // Keep the connection open
+    return reply;
+  },
+);
 
 // Removed auto-start for testing
 // const start = async () => {
