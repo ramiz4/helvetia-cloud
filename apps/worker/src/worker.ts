@@ -6,6 +6,7 @@ import IORedis from 'ioredis';
 import path from 'path';
 import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
+import { getSecureBindMounts } from './utils/workspace';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -101,7 +102,7 @@ export const worker = new Worker(
             Entrypoint: ['sleep', '3600'],
             HostConfig: {
               AutoRemove: true,
-              Binds: ['/var/run/docker.sock:/var/run/docker.sock', '/Users:/Users'],
+              Binds: getSecureBindMounts(),
             },
           });
           await builder.start();
@@ -128,16 +129,11 @@ export const worker = new Worker(
             # Install tools needed for standard Docker Compose usage
             apk add --no-cache docker-cli-compose git
 
-            # Check if repoUrl is a local path
-            if [ -d "${repoUrl}" ]; then
-              echo "Using local directory ${repoUrl}"
-              WORKDIR="${repoUrl}"
-            else
-              echo "Cloning from ${repoUrl}..."
-              mkdir -p /app
-              git clone --depth 1 --branch ${branch} ${repoUrl} /app
-              WORKDIR="/app"
-            fi
+            # Clone repository (local paths are not supported for security)
+            echo "Cloning from ${repoUrl}..."
+            mkdir -p /app
+            git clone --depth 1 --branch ${branch} ${repoUrl} /app
+            WORKDIR="/app"
 
             # Generate Override File in /tmp to avoid polluting source
             cat > /tmp/docker-compose.override.yml <<'EOF'
@@ -211,10 +207,7 @@ EOF
           Entrypoint: ['sleep', '3600'],
           HostConfig: {
             AutoRemove: true,
-            Binds: [
-              '/var/run/docker.sock:/var/run/docker.sock',
-              '/Users:/Users', // Mount Users directory for local repository access
-            ],
+            Binds: getSecureBindMounts(),
           },
         });
         await builder.start();

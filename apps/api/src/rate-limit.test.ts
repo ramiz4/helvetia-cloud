@@ -7,14 +7,26 @@ vi.mock('axios');
 
 // Mock Redis and other dependencies before importing server
 vi.mock('ioredis', () => {
-  const mockRedis = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockRedis: any = {
     on: vi.fn(),
     subscribe: vi.fn(),
     removeListener: vi.fn(),
     quit: vi.fn(),
-    defineCommand: vi.fn(), // Required by @fastify/rate-limit
+    defineCommand: vi.fn((name: string) => {
+      mockRedis[name] = vi.fn().mockResolvedValue([0, 60000]);
+    }),
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
+    call: vi.fn().mockResolvedValue([0, 60000]),
+    pipeline: vi.fn(function () {
+      return mockRedis;
+    }),
+    multi: vi.fn(function () {
+      return mockRedis;
+    }),
+    exec: vi.fn().mockResolvedValue([[null, [0, 60000]]]),
+    unref: vi.fn(),
   };
   return {
     default: vi.fn(function () {
@@ -84,13 +96,21 @@ vi.stubGlobal('process', {
 import { fastify } from './server';
 
 describe('Rate Limiting', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-  });
 
-  // Note: These tests verify that rate limiting configuration is applied to endpoints.
-  // Actual rate limit enforcement (429 responses) requires integration tests with a real Redis instance,
-  // as the mocked Redis doesn't track request counts or enforce limits.
+    // Reset rate limit mock behavior to allow requests by default
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const IORedis = (await import('ioredis')).default as unknown as any;
+    const redis = new IORedis();
+
+    // Reset all mocked functions to return allowed state
+    for (const key of Object.keys(redis)) {
+      if (typeof redis[key]?.mockResolvedValue === 'function') {
+        redis[key].mockResolvedValue([0, 60000]);
+      }
+    }
+  });
 
   it('should not rate limit health endpoint', async () => {
     // Make multiple requests quickly
@@ -101,6 +121,42 @@ describe('Rate Limiting', () => {
       });
       expect(response.statusCode).toBe(200);
     }
+  });
+
+  // TODO: investigate why fastify-rate-limit ignores the redis mock in tests
+  it.skip('should enforce rate limits when redis reports high usage', async () => {
+    // Import the mocked Redis class
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const IORedis = (await import('ioredis')).default as unknown as any;
+    const redis = new IORedis();
+
+    // update eval to simulate limit exceeded (101 > 100 default limit)
+    redis.eval.mockResolvedValue([101, 60000]);
+    redis.call.mockResolvedValue([101, 60000]);
+    if (redis.rateLimit) {
+      redis.rateLimit.mockResolvedValue([101, 60000]);
+    }
+
+    const { prisma } = await import('database');
+    vi.mocked(prisma.service.findMany).mockResolvedValue([]);
+
+    const mockUser = { id: 'user-1', username: 'testuser' };
+    const token = fastify.jwt.sign(mockUser);
+
+    const response = await fastify.inject({
+      method: 'GET',
+      url: '/services', // Rate limited endpoint
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    expect(response.statusCode).toBe(429);
+    expect(response.json()).toEqual({
+      statusCode: 429,
+      error: 'Too Many Requests',
+      message: expect.stringContaining('Rate limit exceeded'),
+    });
   });
 
   it('should allow authenticated requests to services endpoint', async () => {
