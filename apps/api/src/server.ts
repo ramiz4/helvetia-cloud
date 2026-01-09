@@ -12,6 +12,8 @@ import dotenv from 'dotenv';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
+import { ZodError } from 'zod';
+import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
 import { decrypt, encrypt } from './utils/crypto';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 
@@ -635,6 +637,24 @@ fastify.get('/services/:id', async (request, reply) => {
 
 fastify.patch('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
+
+  // Validate and parse request body
+  let validatedData;
+  try {
+    validatedData = ServiceUpdateSchema.parse(request.body);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: error.issues.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+    }
+    throw error;
+  }
+
   const {
     name,
     repoUrl,
@@ -646,15 +666,8 @@ fastify.patch('/services/:id', async (request, reply) => {
     customDomain,
     type,
     staticOutputDir,
-  } = request.body as any;
+  } = validatedData;
 
-  const normalizedType = type?.toUpperCase();
-  if (
-    normalizedType !== undefined &&
-    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(normalizedType)
-  ) {
-    return reply.status(400).send({ error: 'Invalid service type' });
-  }
   const user = (request as any).user;
   const service = await prisma.service.updateMany({
     where: { id, userId: user.id },
@@ -664,14 +677,10 @@ fastify.patch('/services/:id', async (request, reply) => {
       branch,
       buildCommand,
       startCommand,
-      port: port
-        ? parseInt(port)
-        : normalizedType
-          ? getDefaultPortForServiceType(normalizedType)
-          : undefined,
+      port: port ?? (type ? getDefaultPortForServiceType(type) : undefined),
       envVars,
       customDomain,
-      type: normalizedType,
+      type: type,
       staticOutputDir,
     },
   });
@@ -683,6 +692,23 @@ fastify.patch('/services/:id', async (request, reply) => {
 });
 
 fastify.post('/services', async (request, reply) => {
+  // Validate and parse request body
+  let validatedData;
+  try {
+    validatedData = ServiceCreateSchema.parse(request.body);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: error.issues.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+    }
+    throw error;
+  }
+
   const {
     name,
     repoUrl,
@@ -694,15 +720,9 @@ fastify.post('/services', async (request, reply) => {
     type,
     staticOutputDir,
     envVars,
-  } = request.body as any;
+  } = validatedData;
 
-  const normalizedType = type?.toUpperCase();
-  if (
-    normalizedType &&
-    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(normalizedType)
-  ) {
-    return reply.status(400).send({ error: 'Invalid service type' });
-  }
+  const finalType = type || 'DOCKER';
   const user = (request as any).user;
   const userId = user.id;
 
@@ -712,8 +732,7 @@ fastify.post('/services', async (request, reply) => {
     return reply.status(403).send({ error: 'Service name taken by another user' });
   }
 
-  const finalType = normalizedType || 'DOCKER';
-  let finalPort = port ? parseInt(port) : 3000;
+  let finalPort = port || 3000;
   let finalEnvVars = envVars || {};
 
   if (finalType === 'STATIC') finalPort = 80;
