@@ -64,8 +64,8 @@ For production environments:
 ### Security Checklist
 
 - [x] No root directories are mounted in containers
-- [x] Only Docker socket is mounted (required for builds)
-- [x] Builds happen in isolated container filesystem
+- [x] Only a Docker socket and an unused, read-only workspace directory are mounted (workspace is not used by builds)
+- [x] Builds happen in an isolated container filesystem
 - [x] Automatic cleanup via container removal
 - [ ] Resource limits are set (CPU, memory)
 - [ ] Monitoring is in place
