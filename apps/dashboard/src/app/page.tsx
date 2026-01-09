@@ -647,7 +647,7 @@ export default function Home() {
               aria-modal="true"
               aria-labelledby="logs-modal-title"
             >
-            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
+              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
               <div className="flex items-center gap-3">
                 <FileText size={20} className="text-indigo-400" />
                 <h2 id="logs-modal-title" className="text-xl font-bold text-white">
@@ -673,6 +673,7 @@ export default function Home() {
             <div className="p-4 border-t border-white/10 bg-slate-900/50 text-xs font-medium text-slate-500 tracking-wider uppercase">
               {activeDeploymentId ? t.dashboard.modals.streaming : t.dashboard.modals.ended}
             </div>
+            </div>
           </FocusTrap>
         </div>
       )}
@@ -688,8 +689,8 @@ export default function Home() {
               aria-modal="true"
               aria-labelledby="edit-modal-title"
             >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
               <h2 id="edit-modal-title" className="text-xl font-bold text-white tracking-tight">
                 {t.dashboard.modals.editTitle}
               </h2>
@@ -946,6 +947,7 @@ export default function Home() {
               >
                 {t.dashboard.actions.save}
               </button>
+            </div>
             </div>
           </FocusTrap>
         </div>
