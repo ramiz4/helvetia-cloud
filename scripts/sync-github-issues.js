@@ -149,6 +149,8 @@ const Synchronizer = {
     // 2. Create missing issues
     let createdCount = 0;
     for (const issue of targetIssues) {
+      if (issue.synced) continue;
+
       const matches = existingTitles.get(issue.title) || [];
       const hasOpenIssue = matches.some((m) => m.state === 'OPEN');
 
