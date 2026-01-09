@@ -406,7 +406,7 @@ fastify.register(fastifyJwt, {
     signed: false,
   },
   sign: {
-    expiresIn: '7d', // Token expires after 7 days
+    expiresIn: '15m', // Short-lived access tokens (15 minutes)
   },
 });
 
