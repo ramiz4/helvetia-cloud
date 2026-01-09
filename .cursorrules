@@ -48,6 +48,13 @@ This is a monorepo managed by PNPM Workspaces containing:
   3. **Commit**: Create small, conventional commits (e.g., `feat: add functionality`, `chore: update config`).
   4. **Push**: Push the changes to the remote (e.g., `git push -u origin feat/task-name`).
 
+## Code Reviews & Issues
+- **Issue Tracking**: If you perform a code review or find bugs/improvements, you MUST add them to `github_issues.json`.
+  - Format: JSON object with `title`, `body`, and `labels`.
+  - **Do NOT** create separate markdown files for issues.
+  - **Do NOT** just list issues in the chat.
+- **Sync**: After adding issues to the JSON file, instruct the user to run `node scripts/sync-github-issues.js` (or run it yourself if allowed).
+
 ## AI Behavior
 - **Conciseness**: Provide code solutions directly. Avoid over-explaining standard practices unless asked.
 - **Security**: Do not hardcode secrets. Use environment variables.

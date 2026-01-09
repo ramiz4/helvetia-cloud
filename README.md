@@ -133,6 +133,18 @@ Stay updated with our progress and future plans in the [ROADMAP.md](./ROADMAP.md
 
 For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./ARCHITECTURE.md).
 
+## 🔍 Code Review & Issues
+
+A comprehensive code review has been completed, resulting in **32 prioritized findings** across security, reliability, and code quality.
+
+- **✅ Actionable Issues**: All findings have been converted into [GitHub Issues](https://github.com/ramiz4/helvetia-cloud/issues) with labels (`P0`, `P1`, etc.).
+- **🔄 Automated Sync**: Issues are managed via `scripts/sync-github-issues.js`, which keeps the repository in sync with the `github_issues.json` source of truth.
+- **📊 Priorities**:
+  - **P0**: Critical Security (Must Fix)
+  - **P1**: High Priority (Reliability/Bugs)
+  - **P2**: Medium Priority (Improvements)
+  - **P3**: Low Priority (Polish)
+
 ---
 
 ## 📄 License
