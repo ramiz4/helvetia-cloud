@@ -4,6 +4,7 @@ import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
 import path from 'path';
+import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
@@ -111,14 +112,21 @@ export const worker = new Worker(
             ? `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`) || Host(\`${customDomain}\`)`
             : `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`;
 
-          // Escape backticks for shell script
-          const safeTraefikRule = traefikRule.replace(/`/g, '\\`');
           const mainService = startCommand || 'app'; // User provided logic name
+
+          const overrideYaml = generateComposeOverride({
+            serviceName,
+            serviceId,
+            mainService,
+            traefikRule,
+            port,
+            envVars,
+          });
 
           const buildScript = `
             set -e
-            # Install tools needed for manage-docker.sh (if applicable) or standard compose
-            apk add --no-cache docker-cli-compose openjdk21 git
+            # Install tools needed for standard Docker Compose usage
+            apk add --no-cache docker-cli-compose git
 
             # Check if repoUrl is a local path
             if [ -d "${repoUrl}" ]; then
@@ -132,30 +140,8 @@ export const worker = new Worker(
             fi
 
             # Generate Override File in /tmp to avoid polluting source
-            cat > /tmp/docker-compose.override.yml <<EOF
-services:
-  ${mainService}:
-${
-  envVars && Object.keys(envVars).length > 0
-    ? `    environment:
-${Object.entries(envVars)
-  .map(([k, v]) => `      - ${k}=${v}`)
-  .join('\n')}`
-    : ''
-}
-    labels:
-      - "helvetia.serviceId=${serviceId}"
-      - "traefik.enable=true"
-      - "traefik.http.routers.${serviceName}.rule=${safeTraefikRule}"
-      - "traefik.http.routers.${serviceName}.entrypoints=web"
-      - "traefik.http.services.${serviceName}.loadbalancer.server.port=${port || 8080}"
-    networks:
-      - default
-
-networks:
-  default:
-    external: true
-    name: helvetia-net
+            cat > /tmp/docker-compose.override.yml <<'EOF'
+${overrideYaml}
 EOF
 
             cd "$WORKDIR"
@@ -206,7 +192,7 @@ EOF
 
           await prisma.service.update({
             where: { id: serviceId },
-            data: { status: 'ACTIVE' },
+            data: { status: 'RUNNING' },
           });
 
           if (builder) {
@@ -252,21 +238,17 @@ EOF
             echo "RUN npm install -g pnpm" >> Dockerfile
             echo "WORKDIR /app" >> Dockerfile
 
-            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
-              echo '${Object.keys(envVars || {})
-                .map((key) => `ARG ${key}`)
-                .join('\\n')}' >> Dockerfile
-            fi
+            ${Object.keys(envVars || {})
+              .map((key) => `echo "ARG ${key}" >> Dockerfile`)
+              .join('\n            ')}
 
             echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
             echo "RUN pnpm install" >> Dockerfile
             echo "COPY . ." >> Dockerfile
 
-            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
-              echo '${Object.entries(envVars || {})
-                .map(([k, v]) => `ENV ${k}="${v}"`)
-                .join('\\n')}' >> Dockerfile
-            fi
+            ${Object.entries(envVars || {})
+              .map(([k, v]) => `echo "ENV ${k}=${JSON.stringify(v)}" >> Dockerfile`)
+              .join('\n            ')}
 
             echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
 
@@ -300,21 +282,17 @@ EOF
             echo "RUN npm install -g pnpm" >> Dockerfile
             echo "WORKDIR /app" >> Dockerfile
 
-            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
-              echo '${Object.keys(envVars || {})
-                .map((key) => `ARG ${key}`)
-                .join('\\n')}' >> Dockerfile
-            fi
+            ${Object.keys(envVars || {})
+              .map((key) => `echo "ARG ${key}" >> Dockerfile`)
+              .join('\n            ')}
 
             echo "COPY package*.json pnpm-lock.yaml* ./" >> Dockerfile
             echo "RUN pnpm install" >> Dockerfile
             echo "COPY . ." >> Dockerfile
 
-            if [ -n "${envVars && Object.keys(envVars).length > 0 ? 'true' : ''}" ]; then
-              echo '${Object.entries(envVars || {})
-                .map(([k, v]) => `ENV ${k}="${v}"`)
-                .join('\\n')}' >> Dockerfile
-            fi
+            ${Object.entries(envVars || {})
+              .map(([k, v]) => `echo "ENV ${k}=${JSON.stringify(v)}" >> Dockerfile`)
+              .join('\n            ')}
 
             echo "RUN ${buildCommand || 'pnpm build'}" >> Dockerfile
             echo "EXPOSE ${port || 3000}" >> Dockerfile
@@ -450,7 +428,7 @@ EOF
 
       await prisma.service.update({
         where: { id: serviceId },
-        data: { status: 'ACTIVE' },
+        data: { status: 'RUNNING' },
       });
 
       console.log(`Deployment ${deploymentId} successful!`);

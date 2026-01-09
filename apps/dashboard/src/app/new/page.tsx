@@ -47,21 +47,27 @@ export default function NewServicePage() {
   const [composeFile, setComposeFile] = useState('docker-compose.yml');
   const [mainService, setMainService] = useState('app');
   const [envVars, setEnvVars] = useState<{ key: string; value: string }[]>([]);
+  const [dbEngine, setDbEngine] = useState<'postgres' | 'redis' | 'mysql'>('postgres');
 
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    let finalType = importType === 'compose' ? 'COMPOSE' : serviceType.toUpperCase();
+    if (importType === 'database') {
+      finalType = dbEngine.toUpperCase();
+    }
+
     const data = {
       name: projectName,
       repoUrl,
       branch,
-      type: importType === 'compose' ? 'compose' : serviceType,
+      type: finalType,
       buildCommand,
       startCommand,
       outputDirectory: serviceType === 'static' ? outputDirectory : undefined,
-      port: serviceType === 'docker' ? port : undefined,
+      port: serviceType === 'docker' || importType === 'compose' ? port : undefined,
       composeFile: importType === 'compose' ? composeFile : undefined,
       mainService: importType === 'compose' ? mainService : undefined,
       envVars: Object.fromEntries(envVars.map((ev) => [ev.key, ev.value])),
@@ -309,10 +315,15 @@ export default function NewServicePage() {
                             <label className="block text-sm font-medium text-slate-400 mb-2">
                               {t.dashboard.newService.databaseEngine}
                             </label>
-                            <select className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white cursor-pointer appearance-none transition-all">
+                            <select
+                              value={dbEngine}
+                              onChange={(e) =>
+                                setDbEngine(e.target.value as 'postgres' | 'redis' | 'mysql')
+                              }
+                              className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white cursor-pointer appearance-none transition-all"
+                            >
                               <option value="postgres">PostgreSQL</option>
                               <option value="mysql">MySQL</option>
-                              <option value="mongodb">MongoDB</option>
                               <option value="redis">Redis</option>
                             </select>
                           </div>

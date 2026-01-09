@@ -46,6 +46,7 @@ vi.mock('database', () => ({
     },
     deployment: {
       create: vi.fn(),
+      findMany: vi.fn(),
       deleteMany: vi.fn(),
     },
   },
@@ -61,9 +62,13 @@ vi.mock('dockerode', () => {
           remove: vi.fn().mockResolvedValue({}),
           inspect: vi.fn().mockResolvedValue({ State: { Running: true } }),
         })),
+        getImage: vi.fn(() => ({
+          remove: vi.fn().mockResolvedValue({}),
+        })),
         getVolume: vi.fn(() => ({
           remove: vi.fn().mockResolvedValue({}),
         })),
+        listVolumes: vi.fn().mockResolvedValue({ Volumes: [] }),
       };
     }),
   };
@@ -400,6 +405,7 @@ describe('GitHub Integration', () => {
       vi.mocked(prisma.service.findFirst).mockResolvedValue(mockPreviewService as never);
       vi.mocked(prisma.service.findUnique).mockResolvedValue(mockPreviewService as never);
       vi.mocked(prisma.service.delete).mockResolvedValue(mockPreviewService as never);
+      vi.mocked(prisma.deployment.findMany).mockResolvedValue([]);
 
       const response = await fastify.inject({
         method: 'POST',

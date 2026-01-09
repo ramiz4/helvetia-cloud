@@ -40,31 +40,46 @@ function getDefaultPortForServiceType(serviceType: string): number {
 
 // Helper to determine service status
 function determineServiceStatus(service: any, containers: any[]): string {
-  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === service.id);
+  // If the service itself is marked as DEPLOYING in the database, respect that first
+  if (service.status === 'DEPLOYING') {
+    return 'DEPLOYING';
+  }
+
+  const serviceContainers = containers.filter(
+    (c) =>
+      c.Labels['helvetia.serviceId'] === service.id ||
+      (service.type === 'COMPOSE' && c.Labels['com.docker.compose.project'] === service.name),
+  );
   const latestDeployment = service.deployments[0];
-  let status = 'IDLE';
+
+  // If there's an active deployment in progress, it's DEPLOYING
+  if (latestDeployment && ['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
+    return 'DEPLOYING';
+  }
 
   if (serviceContainers.length > 0) {
-    const container = serviceContainers[0];
-    if (container.State === 'running') {
-      status = 'RUNNING';
-    } else if (container.State === 'restarting') {
-      status = 'CRASHING';
-    } else if (container.State === 'exited' || container.State === 'dead') {
-      status = 'STOPPED';
-    } else {
-      status = container.State.toUpperCase();
+    if (serviceContainers.some((c) => c.State === 'running')) {
+      return 'RUNNING';
     }
-  } else if (latestDeployment) {
-    if (['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
-      status = 'DEPLOYING';
-    } else if (latestDeployment.status === 'FAILED') {
-      status = 'FAILED';
-    } else if (latestDeployment.status === 'SUCCESS') {
-      status = 'IDLE';
+    if (serviceContainers.some((c) => c.State === 'restarting')) {
+      return 'CRASHING';
+    }
+    if (serviceContainers.every((c) => ['exited', 'dead', 'created'].includes(c.State))) {
+      return 'STOPPED';
+    }
+    return serviceContainers[0].State.toUpperCase();
+  }
+
+  if (latestDeployment) {
+    if (latestDeployment.status === 'FAILED') {
+      return 'FAILED';
+    }
+    if (latestDeployment.status === 'SUCCESS') {
+      return 'STOPPED';
     }
   }
-  return status;
+
+  return 'IDLE';
 }
 
 // Helper to delete a service and its resources
@@ -81,10 +96,15 @@ async function deleteService(id: string, userId?: string) {
   const Docker = (await import('dockerode')).default;
   const docker = new Docker();
   const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+  const serviceContainers = containers.filter(
+    (c) =>
+      c.Labels['helvetia.serviceId'] === id ||
+      (service.type === 'COMPOSE' && c.Labels['com.docker.compose.project'] === service.name),
+  );
 
   for (const containerInfo of serviceContainers) {
     const container = docker.getContainer(containerInfo.Id);
+    console.log(`Stopping and removing container ${containerInfo.Id} for service ${id}`);
     await container.stop().catch(() => {});
     await container.remove().catch(() => {});
   }
@@ -96,10 +116,49 @@ async function deleteService(id: string, userId?: string) {
     try {
       const volume = docker.getVolume(volumeName);
       await volume.remove();
-      console.log(`Removed volume ${volumeName} for database service ${service.name}`);
+      console.log(`Removed volume ${volumeName} for service ${service.name}`);
     } catch (err) {
-      console.error(`Failed to remove volume ${volumeName}:`, err);
-      // Continue with deletion even if volume removal fails
+      if ((err as any).statusCode !== 404) {
+        console.error(`Failed to remove volume ${volumeName}:`, err);
+      }
+    }
+  } else if (serviceType === 'COMPOSE') {
+    try {
+      const { Volumes } = await docker.listVolumes();
+      const projectVolumes = Volumes.filter(
+        (v) => v.Labels && v.Labels['com.docker.compose.project'] === service.name,
+      );
+
+      for (const volumeInfo of projectVolumes) {
+        const volume = docker.getVolume(volumeInfo.Name);
+        await volume.remove();
+        console.log(`Removed volume ${volumeInfo.Name} for compose project ${service.name}`);
+      }
+    } catch (err) {
+      console.error(`Failed to list/remove volumes for compose project ${service.name}:`, err);
+    }
+  }
+
+  // 1.5 Remove associated images
+  const deployments = await prisma.deployment.findMany({
+    where: { serviceId: id },
+    select: { imageTag: true },
+  });
+
+  const imageTags = new Set(
+    deployments.map((d) => d.imageTag).filter((tag): tag is string => !!tag),
+  );
+
+  for (const tag of imageTags) {
+    try {
+      const image = docker.getImage(tag);
+      await image.remove({ force: true });
+      console.log(`Removed image ${tag}`);
+    } catch (err) {
+      // Don't log error if image doesn't exist
+      if ((err as any).statusCode !== 404) {
+        console.error(`Failed to remove image ${tag}:`, err);
+      }
     }
   }
 
@@ -109,40 +168,92 @@ async function deleteService(id: string, userId?: string) {
 }
 
 // Helper to get metrics for a service
-async function getServiceMetrics(id: string, dockerInstance?: any, containerList?: any[]) {
+async function getServiceMetrics(
+  id: string,
+  dockerInstance?: any,
+  containerList?: any[],
+  serviceInfo?: { name: string; type: string; status?: string },
+) {
   const Docker = (await import('dockerode')).default;
   const docker = dockerInstance || new Docker();
 
   const containers = containerList || (await docker.listContainers({ all: true }));
-  const serviceContainers = containers.filter(
-    (c: any) => c.Labels['helvetia.serviceId'] === id && c.State === 'running',
+
+  // Use either the explicit serviceInfo or try to find it from labels if missing
+  // (though callers should provide it for accuracy with COMPOSE)
+  const allServiceContainers = containers.filter(
+    (c: any) =>
+      c.Labels['helvetia.serviceId'] === id ||
+      (serviceInfo?.type === 'COMPOSE' &&
+        c.Labels['com.docker.compose.project'] === serviceInfo?.name),
   );
 
-  if (serviceContainers.length === 0) {
-    return { cpu: 0, memory: 0, memoryLimit: 0 };
+  // Determine aggregate status
+  let status = 'STOPPED';
+  if (serviceInfo?.status === 'DEPLOYING') {
+    status = 'DEPLOYING';
+  } else if (allServiceContainers.length > 0) {
+    if (allServiceContainers.some((c: any) => c.State === 'running')) {
+      status = 'RUNNING';
+    } else if (allServiceContainers.some((c: any) => ['restarting', 'created'].includes(c.State))) {
+      status = 'DEPLOYING';
+    } else if (
+      allServiceContainers.some((c: any) => c.State === 'exited' && c.Status.includes('Exited (0)'))
+    ) {
+      // If it's a one-off task that finished successfully
+      status = 'STOPPED';
+    } else {
+      status = 'FAILED';
+    }
+  } else {
+    status = 'NOT_RUNNING';
   }
 
-  const containerInfo = serviceContainers[0];
-  const container = docker.getContainer(containerInfo.Id);
+  const runningContainers = allServiceContainers.filter((c: any) => c.State === 'running');
 
-  // Get single stats snapshot
-  const stats = await container.stats({ stream: false });
+  if (runningContainers.length === 0) {
+    return { cpu: 0, memory: 0, memoryLimit: 0, status };
+  }
 
-  // Calculate CPU percentage (simplified)
-  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-  const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-  const cpuPercent =
-    systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100.0 : 0;
+  let totalCpu = 0;
+  let totalMemory = 0;
+  let totalMemoryLimit = 0;
 
-  // Calculate Memory usage in MB
-  const memoryUsage =
-    (stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0)) / 1024 / 1024;
-  const memoryLimit = stats.memory_stats.limit / 1024 / 1024;
+  // Process all running containers and sum their metrics
+  await Promise.all(
+    runningContainers.map(async (containerInfo: any) => {
+      try {
+        const container = docker.getContainer(containerInfo.Id);
+        const stats = await container.stats({ stream: false });
+
+        if (stats.cpu_stats && stats.precpu_stats) {
+          const cpuDelta =
+            stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+          const systemDelta =
+            stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+          const onlineCpus = stats.cpu_stats.online_cpus || 1;
+
+          if (systemDelta > 0 && cpuDelta > 0) {
+            totalCpu += (cpuDelta / systemDelta) * onlineCpus * 100.0;
+          }
+        }
+
+        if (stats.memory_stats) {
+          const usage = stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0);
+          totalMemory += usage / 1024 / 1024;
+          totalMemoryLimit += stats.memory_stats.limit / 1024 / 1024;
+        }
+      } catch {
+        // Ignore stats errors for individual containers
+      }
+    }),
+  );
 
   return {
-    cpu: parseFloat(cpuPercent.toFixed(2)),
-    memory: parseFloat(memoryUsage.toFixed(2)),
-    memoryLimit: parseFloat(memoryLimit.toFixed(2)),
+    cpu: parseFloat(totalCpu.toFixed(2)),
+    memory: parseFloat(totalMemory.toFixed(2)),
+    memoryLimit: parseFloat(totalMemoryLimit.toFixed(2)),
+    status,
   };
 }
 
@@ -350,9 +461,10 @@ fastify.patch('/services/:id', async (request, reply) => {
     staticOutputDir,
   } = request.body as any;
 
+  const normalizedType = type?.toUpperCase();
   if (
-    type !== undefined &&
-    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(type)
+    normalizedType !== undefined &&
+    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(normalizedType)
   ) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
@@ -365,10 +477,14 @@ fastify.patch('/services/:id', async (request, reply) => {
       branch,
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : type ? getDefaultPortForServiceType(type) : undefined,
+      port: port
+        ? parseInt(port)
+        : normalizedType
+          ? getDefaultPortForServiceType(normalizedType)
+          : undefined,
       envVars,
       customDomain,
-      type,
+      type: normalizedType,
       staticOutputDir,
     },
   });
@@ -395,7 +511,11 @@ fastify.post('/services', async (request, reply) => {
     envVars,
   } = request.body as any;
 
-  if (type && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(type)) {
+  const normalizedType = type?.toUpperCase();
+  if (
+    normalizedType &&
+    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(normalizedType)
+  ) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -407,7 +527,7 @@ fastify.post('/services', async (request, reply) => {
     return reply.status(403).send({ error: 'Service name taken by another user' });
   }
 
-  const finalType = type || 'DOCKER';
+  const finalType = normalizedType || 'DOCKER';
   let finalPort = port ? parseInt(port) : 3000;
   let finalEnvVars = envVars || {};
 
@@ -484,7 +604,6 @@ fastify.delete('/services/:id', async (request, reply) => {
   if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
   await deleteService(id, user.id);
-
   return { success: true };
 });
 
@@ -524,7 +643,7 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
   const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
 
-  return getServiceMetrics(id);
+  return getServiceMetrics(id, undefined, undefined, service);
 });
 
 // SSE endpoint for real-time metrics streaming
@@ -551,12 +670,12 @@ fastify.get('/services/metrics/stream', async (request, reply) => {
 
       const services = await prisma.service.findMany({
         where: { userId: user.id },
-        select: { id: true },
+        select: { id: true, name: true, type: true, status: true },
       });
 
       const metricsPromises = services.map(async (s) => ({
         id: s.id,
-        metrics: await getServiceMetrics(s.id, docker, containers),
+        metrics: await getServiceMetrics(s.id, docker, containers, s),
       }));
 
       const results = await Promise.all(metricsPromises);
@@ -723,6 +842,12 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
       serviceId: id,
       status: 'QUEUED',
     },
+  });
+
+  // Update service status to DEPLOYING
+  await prisma.service.update({
+    where: { id },
+    data: { status: 'DEPLOYING' },
   });
 
   // Inject token if available

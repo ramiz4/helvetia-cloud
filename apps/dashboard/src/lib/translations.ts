@@ -143,6 +143,9 @@ export const translations = {
         fetchLogsFailed: 'Failed to fetch logs',
         deployTriggerFailed: 'Failed to trigger deployment',
       },
+      status: {
+        notRunning: 'Not Running',
+      },
       createNewService: 'Create New Service',
       labels: {
         cpu: 'CPU',
@@ -404,6 +407,9 @@ export const translations = {
           'Sind Sie sicher, dass Sie diesen Dienst löschen möchten?\n\nDies stoppt die App und entfernt alle Daten.',
         fetchLogsFailed: 'Fehler beim Abrufen der Logs',
         deployTriggerFailed: 'Fehler beim Starten des Deployments',
+      },
+      status: {
+        notRunning: 'Nicht aktiv',
       },
       createNewService: 'Neuen Service erstellen',
       labels: {
@@ -672,6 +678,9 @@ export const translations = {
         fetchLogsFailed: 'Échec de récupération des logs',
         deployTriggerFailed: 'Échec du lancement du déploiement',
       },
+      status: {
+        notRunning: 'Inactif',
+      },
       createNewService: 'Créer un nouveau service',
       labels: {
         cpu: 'CPU',
@@ -935,6 +944,9 @@ export const translations = {
         fetchLogsFailed: 'Recupero log fallito',
         deployTriggerFailed: 'Impossibile avviare il deployment',
       },
+      status: {
+        notRunning: 'Non attivo',
+      },
       createNewService: 'Crea nuovo servizio',
       labels: {
         cpu: 'CPU',
@@ -1194,7 +1206,10 @@ export const translations = {
         fetchLogsFailed: 'Logs chönd nöd glade werde',
         deployTriggerFailed: 'Deployment konnte nicht gestartet werden',
       },
-      createNewService: 'Neuen Service erstellen',
+      status: {
+        notRunning: 'Lauft nöd',
+      },
+      createNewService: 'Neuä Service erstelle',
       labels: {
         cpu: 'CPU',
         ram: 'RAM',

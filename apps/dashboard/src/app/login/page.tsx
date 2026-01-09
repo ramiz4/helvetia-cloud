@@ -4,7 +4,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import { GithubIcon } from '../../components/icons/GithubIcon';
 
 const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
@@ -12,16 +12,8 @@ const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
 function LoginContent() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam === 'code_expired') {
-      setError(t.login.codeExpired);
-    } else if (errorParam) {
-      setError(errorParam);
-    }
-  }, [searchParams, t]);
+  const errorParam = searchParams.get('error');
+  const error = errorParam === 'code_expired' ? t.login.codeExpired : errorParam;
 
   const handleGitHubLogin = () => {
     if (!GITHUB_CLIENT_ID) {
