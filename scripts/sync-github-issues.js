@@ -245,6 +245,7 @@ const Synchronizer = {
         issue.number = bestMatch.number;
         issue.state = bestMatch.state;
         issue.url = bestMatch.url;
+        issue.synced = true;
         updatedCount++;
       }
     }
