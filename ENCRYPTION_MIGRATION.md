@@ -13,7 +13,7 @@ Previously, the encryption module used a hardcoded salt value (`'salt'`) for key
 ### 1. Crypto Module Updates
 
 - **File**: `apps/api/src/utils/crypto.ts`
-- **Change**: Replaced hardcoded `'salt'` with `process.env.ENCRYPTION_SALT || crypto.randomBytes(16).toString('hex')`
+- **Change**: Replaced hardcoded `'salt'` with `process.env.ENCRYPTION_SALT || crypto.randomBytes(32).toString('hex')`
 - **Impact**: Encryption keys are now derived using a unique, secure salt per installation
 
 ### 2. Environment Variables
