@@ -286,9 +286,8 @@ fastify.register(rateLimit, {
   skipOnError: true, // Don't block requests if Redis is down
   allowList: ['/health'], // Exclude health endpoint
   keyGenerator: (request) => {
-    // Use user ID if authenticated, otherwise use IP
-    const user = (request as any).user;
-    return user?.id || request.ip;
+    // Global limiter is intentionally IP-based because authentication runs later
+    return request.ip;
   },
   errorResponseBuilder: (request, context) => {
     return {
