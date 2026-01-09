@@ -350,9 +350,10 @@ fastify.patch('/services/:id', async (request, reply) => {
     staticOutputDir,
   } = request.body as any;
 
+  const normalizedType = type?.toUpperCase();
   if (
-    type !== undefined &&
-    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(type)
+    normalizedType !== undefined &&
+    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(normalizedType)
   ) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
@@ -365,10 +366,14 @@ fastify.patch('/services/:id', async (request, reply) => {
       branch,
       buildCommand,
       startCommand,
-      port: port ? parseInt(port) : type ? getDefaultPortForServiceType(type) : undefined,
+      port: port
+        ? parseInt(port)
+        : normalizedType
+          ? getDefaultPortForServiceType(normalizedType)
+          : undefined,
       envVars,
       customDomain,
-      type,
+      type: normalizedType,
       staticOutputDir,
     },
   });
@@ -395,7 +400,11 @@ fastify.post('/services', async (request, reply) => {
     envVars,
   } = request.body as any;
 
-  if (type && !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(type)) {
+  const normalizedType = type?.toUpperCase();
+  if (
+    normalizedType &&
+    !['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'].includes(normalizedType)
+  ) {
     return reply.status(400).send({ error: 'Invalid service type' });
   }
   const user = (request as any).user;
@@ -407,7 +416,7 @@ fastify.post('/services', async (request, reply) => {
     return reply.status(403).send({ error: 'Service name taken by another user' });
   }
 
-  const finalType = type || 'DOCKER';
+  const finalType = normalizedType || 'DOCKER';
   let finalPort = port ? parseInt(port) : 3000;
   let finalEnvVars = envVars || {};
 

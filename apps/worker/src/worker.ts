@@ -140,8 +140,8 @@ export const worker = new Worker(
 
           const buildScript = `
             set -e
-            # Install tools needed for manage-docker.sh (if applicable) or standard compose
-            apk add --no-cache docker-cli-compose openjdk21 git
+            # Install tools needed for standard Docker Compose usage
+            apk add --no-cache docker-cli-compose git
 
             # Check if repoUrl is a local path
             if [ -d "${repoUrl}" ]; then

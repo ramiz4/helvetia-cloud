@@ -47,21 +47,27 @@ export default function NewServicePage() {
   const [composeFile, setComposeFile] = useState('docker-compose.yml');
   const [mainService, setMainService] = useState('app');
   const [envVars, setEnvVars] = useState<{ key: string; value: string }[]>([]);
+  const [dbEngine, setDbEngine] = useState<'postgres' | 'redis' | 'mysql'>('postgres');
 
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    let finalType = importType === 'compose' ? 'COMPOSE' : serviceType.toUpperCase();
+    if (importType === 'database') {
+      finalType = dbEngine.toUpperCase();
+    }
+
     const data = {
       name: projectName,
       repoUrl,
       branch,
-      type: importType === 'compose' ? 'compose' : serviceType,
+      type: finalType,
       buildCommand,
       startCommand,
       outputDirectory: serviceType === 'static' ? outputDirectory : undefined,
-      port: serviceType === 'docker' ? port : undefined,
+      port: (serviceType === 'docker' || importType === 'compose') ? port : undefined,
       composeFile: importType === 'compose' ? composeFile : undefined,
       mainService: importType === 'compose' ? mainService : undefined,
       envVars: Object.fromEntries(envVars.map((ev) => [ev.key, ev.value])),
@@ -126,14 +132,12 @@ export default function NewServicePage() {
             <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-white/5" />
 
             <div
-              className={`flex items-center gap-4 relative z-10 p-2 rounded-2xl transition-all ${
-                step === 1 ? 'bg-indigo-500/10' : ''
-              }`}
+              className={`flex items-center gap-4 relative z-10 p-2 rounded-2xl transition-all ${step === 1 ? 'bg-indigo-500/10' : ''
+                }`}
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
-                  step >= 1 ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-slate-500'
-                }`}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${step >= 1 ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-slate-500'
+                  }`}
               >
                 1
               </div>
@@ -143,14 +147,12 @@ export default function NewServicePage() {
             </div>
 
             <div
-              className={`flex items-center gap-4 relative z-10 p-2 rounded-2xl transition-all ${
-                step === 2 ? 'bg-indigo-500/10' : ''
-              }`}
+              className={`flex items-center gap-4 relative z-10 p-2 rounded-2xl transition-all ${step === 2 ? 'bg-indigo-500/10' : ''
+                }`}
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
-                  step >= 2 ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-slate-500'
-                }`}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${step >= 2 ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-slate-500'
+                  }`}
               >
                 2
               </div>
@@ -200,11 +202,10 @@ export default function NewServicePage() {
                   <button
                     key={type.id}
                     onClick={() => setImportType(type.id as ImportType)}
-                    className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${
-                      importType === type.id
-                        ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                        : 'bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10 hover:border-white/20'
-                    }`}
+                    className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${importType === type.id
+                      ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                      : 'bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10 hover:border-white/20'
+                      }`}
                   >
                     <type.icon size={24} />
                     <span className="text-xs font-bold tracking-tight">{type.label}</span>
@@ -309,10 +310,13 @@ export default function NewServicePage() {
                             <label className="block text-sm font-medium text-slate-400 mb-2">
                               {t.dashboard.newService.databaseEngine}
                             </label>
-                            <select className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white cursor-pointer appearance-none transition-all">
+                            <select
+                              value={dbEngine}
+                              onChange={(e) => setDbEngine(e.target.value as 'postgres' | 'redis' | 'mysql')}
+                              className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white cursor-pointer appearance-none transition-all"
+                            >
                               <option value="postgres">PostgreSQL</option>
                               <option value="mysql">MySQL</option>
-                              <option value="mongodb">MongoDB</option>
                               <option value="redis">Redis</option>
                             </select>
                           </div>
@@ -388,11 +392,10 @@ export default function NewServicePage() {
                             <button
                               type="button"
                               onClick={() => setServiceType('docker')}
-                              className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                                serviceType === 'docker'
-                                  ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                                  : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                              }`}
+                              className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'docker'
+                                ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                                : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
+                                }`}
                             >
                               <Combine size={18} />
                               <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -402,11 +405,10 @@ export default function NewServicePage() {
                             <button
                               type="button"
                               onClick={() => setServiceType('static')}
-                              className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                                serviceType === 'static'
-                                  ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                                  : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                              }`}
+                              className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'static'
+                                ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                                : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
+                                }`}
                             >
                               <Globe size={18} />
                               <span className="text-[10px] font-bold uppercase tracking-wider">
