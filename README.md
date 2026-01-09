@@ -55,6 +55,7 @@ cp .env.example .env
 - `ENCRYPTION_SALT`: A random hex string used as a salt for encryption key derivation
 - `PLATFORM_DOMAIN`: Your platform's domain (e.g., `helvetia.cloud`)
 - `APP_BASE_URL`: The base URL of the application, used for CORS configuration (e.g., `http://localhost:3000`)
+- `ALLOWED_ORIGINS`: Comma-separated list of allowed origins for CORS (e.g., `http://localhost:3000,https://app.example.com`). Falls back to `APP_BASE_URL` if not set.
 - `NODE_ENV`: The environment mode (e.g., `development` or `production`)
 
   **Dashboard Configuration** (Next.js):
