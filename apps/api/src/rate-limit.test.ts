@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
+import crypto from 'crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock axios before importing server
@@ -73,6 +74,10 @@ vi.mock('dockerode', () => {
 
 vi.stubGlobal('process', {
   ...process,
+  env: {
+    ...process.env,
+    GITHUB_WEBHOOK_SECRET: 'test-secret',
+  },
   exit: vi.fn() as unknown as (code?: number) => never,
 });
 
@@ -128,11 +133,11 @@ describe('Rate Limiting', () => {
 
     vi.mocked(axios.post).mockResolvedValueOnce({
       data: { access_token: 'mock-token', error: null },
-    } as any);
+    } as unknown as AxiosResponse);
 
     vi.mocked(axios.get).mockResolvedValueOnce({
       data: mockGithubUser,
-    } as any);
+    } as unknown as AxiosResponse);
 
     // Mock successful auth
     vi.mocked(prisma.user.upsert).mockResolvedValue({
@@ -221,13 +226,22 @@ describe('Rate Limiting', () => {
     // Mock for webhook processing
     vi.mocked(prisma.service.findMany).mockResolvedValue([]);
 
+    const payload = {
+      repository: { html_url: 'https://github.com/test/repo' },
+      ref: 'refs/heads/main',
+      after: 'abc123',
+    };
+
+    const signature =
+      'sha256=' +
+      crypto.createHmac('sha256', 'test-secret').update(JSON.stringify(payload)).digest('hex');
+
     const response = await fastify.inject({
       method: 'POST',
       url: '/webhooks/github',
-      payload: {
-        repository: { html_url: 'https://github.com/test/repo' },
-        ref: 'refs/heads/main',
-        after: 'abc123',
+      payload,
+      headers: {
+        'x-hub-signature-256': signature,
       },
     });
 

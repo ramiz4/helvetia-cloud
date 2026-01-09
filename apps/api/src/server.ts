@@ -9,7 +9,7 @@ import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
-import Fastify from 'fastify';
+import Fastify, { FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 import { decrypt, encrypt } from './utils/crypto';
@@ -333,8 +333,8 @@ const authRateLimitConfig = {
   redis: redisConnection,
   nameSpace: 'helvetia-auth-rate-limit:',
   skipOnError: true,
-  keyGenerator: (request) => request.ip,
-  errorResponseBuilder: (request, context) => {
+  keyGenerator: (request: FastifyRequest) => request.ip,
+  errorResponseBuilder: (request: FastifyRequest, context: any) => {
     return {
       statusCode: 429,
       error: 'Too Many Requests',
@@ -360,11 +360,11 @@ const wsRateLimitConfig = {
   redis: redisConnection,
   nameSpace: 'helvetia-ws-rate-limit:',
   skipOnError: true,
-  keyGenerator: (request) => {
+  keyGenerator: (request: FastifyRequest) => {
     const user = (request as any).user;
     return user?.id || request.ip;
   },
-  errorResponseBuilder: (request, context) => {
+  errorResponseBuilder: (request: FastifyRequest, context: any) => {
     return {
       statusCode: 429,
       error: 'Too Many Requests',
@@ -1099,9 +1099,9 @@ fastify.post(
   '/webhooks/github',
   { config: { rateLimit: authRateLimitConfig } },
   async (request, reply) => {
-  // Verify GitHub webhook signature
-  const signature = request.headers['x-hub-signature-256'] as string;
-  const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+    // Verify GitHub webhook signature
+    const signature = request.headers['x-hub-signature-256'] as string;
+    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
       console.error('GITHUB_WEBHOOK_SECRET is not configured');
