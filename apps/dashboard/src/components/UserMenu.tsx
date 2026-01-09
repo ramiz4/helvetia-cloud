@@ -26,15 +26,28 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
       }
     };
 
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen]);
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/5 transition-all border border-transparent hover:border-white/10 group"
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        aria-label={`${user.username} user menu`}
       >
         <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-indigo-500/20 border border-indigo-500/30">
           {user.avatarUrl ? (
@@ -60,7 +73,11 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-[calc(100%+10px)] right-0 min-w-[220px] bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-1.5 z-100 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+        <div
+          className="absolute top-[calc(100%+10px)] right-0 min-w-[220px] bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl p-1.5 z-100 animate-in fade-in zoom-in-95 duration-200 origin-top-right"
+          role="menu"
+          aria-label="User menu"
+        >
           <div className="px-3 py-3 border-b border-white/10 mb-1.5">
             <div className="flex flex-col">
               <span className="font-semibold text-sm text-white">{user.username}</span>
@@ -74,6 +91,7 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             href="/settings"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 text-[13px] font-medium transition-all group/item"
+            role="menuitem"
           >
             <Settings
               size={16}
@@ -82,7 +100,12 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             <span>{t.nav.settings}</span>
           </Link>
 
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item">
+          <button
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item"
+            disabled
+            aria-disabled="true"
+            role="menuitem"
+          >
             <CreditCard size={16} />
             <span>{t.userMenu.billing}</span>
             <span className="ml-auto text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 bg-white/5 rounded">
@@ -90,19 +113,29 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             </span>
           </button>
 
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item">
+          <button
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item"
+            disabled
+            aria-disabled="true"
+            role="menuitem"
+          >
             <Shield size={16} />
             <span>{t.userMenu.security}</span>
           </button>
 
-          <div className="h-px bg-white/10 my-1.5 mx-1"></div>
+          <div className="h-px bg-white/10 my-1.5 mx-1" role="separator"></div>
 
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item">
+          <button
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item"
+            disabled
+            aria-disabled="true"
+            role="menuitem"
+          >
             <HelpCircle size={16} />
             <span>{t.userMenu.support}</span>
           </button>
 
-          <div className="h-px bg-white/10 my-1.5 mx-1"></div>
+          <div className="h-px bg-white/10 my-1.5 mx-1" role="separator"></div>
 
           <button
             onClick={() => {
@@ -110,6 +143,7 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
               onLogout();
             }}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 text-[13px] font-medium w-full text-left transition-all"
+            role="menuitem"
           >
             <LogOut size={16} />
             <span>{t.nav.logout}</span>

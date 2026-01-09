@@ -54,7 +54,7 @@ describe('Navigation', () => {
     // Set viewport to mobile is hard in JSDOM, better to just check if button exists and triggers state
     renderNav();
 
-    const toggleButton = screen.getByLabelText(/toggle menu/i);
+    const toggleButton = screen.getByLabelText(/open navigation menu/i);
     fireEvent.click(toggleButton);
 
     // After clicking, the "minimal" language switcher should be visible in the overlay.
@@ -62,13 +62,13 @@ describe('Navigation', () => {
     expect(screen.getAllByText('EN').length).toBeGreaterThan(0);
 
     // Close button (X) should be visible (we can check for the button or its change)
-    expect(screen.getByLabelText(/toggle menu/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/close navigation menu/i)).toBeInTheDocument();
   });
 
   it('closes mobile menu on route change', async () => {
     const { rerender } = renderNav();
 
-    const toggleButton = screen.getByLabelText(/toggle menu/i);
+    const toggleButton = screen.getByLabelText(/open navigation menu/i);
     fireEvent.click(toggleButton);
 
     // Mock pathname change

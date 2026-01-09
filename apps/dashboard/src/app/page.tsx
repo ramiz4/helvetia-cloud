@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import FocusTrap from '../components/FocusTrap';
 import LandingPage from '../components/LandingPage';
 import { API_BASE_URL } from '../lib/config';
 import { useLanguage } from '../lib/LanguageContext';
@@ -535,6 +536,7 @@ export default function Home() {
                       }
                     }}
                     className="p-2.5 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                    aria-label={`${t.dashboard.actions.edit} ${service.name}`}
                     title={t.dashboard.actions.edit}
                   >
                     <Edit2 size={18} />
@@ -542,6 +544,7 @@ export default function Home() {
                   <button
                     onClick={() => deleteService(service.id)}
                     className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all"
+                    aria-label={`${t.dashboard.actions.delete} ${service.name}`}
                     title={t.dashboard.actions.delete}
                   >
                     <Trash2 size={18} />
@@ -593,6 +596,7 @@ export default function Home() {
                   <button
                     onClick={() => restartService(service.id)}
                     className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95 group/btn"
+                    aria-label={`${t.dashboard.actions.restart} ${service.name}`}
                     title={t.dashboard.actions.restart}
                   >
                     <RotateCw
@@ -604,6 +608,7 @@ export default function Home() {
                     onClick={() => service.deployments[0] && fetchLogs(service.deployments[0].id)}
                     className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed group/btn"
                     disabled={!service.deployments[0]}
+                    aria-label={`${t.dashboard.actions.logs} for ${service.name}`}
                     title={t.dashboard.actions.logs}
                   >
                     <FileText size={18} />
@@ -613,6 +618,7 @@ export default function Home() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95"
+                    aria-label={`${t.dashboard.actions.visit} ${service.name} (opens in new tab)`}
                     title={t.dashboard.actions.visit}
                   >
                     <ExternalLink size={18} />
@@ -627,14 +633,21 @@ export default function Home() {
       {/* Logs Modal */}
       {selectedLogs !== null && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-100 p-8">
-          <div
-            ref={logsModalRef}
-            tabIndex={-1}
-            className="glass w-full max-w-4xl max-h-[85vh] flex flex-col rounded-[32px] overflow-hidden focus:outline-none"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="logs-modal-title"
+          <FocusTrap
+            active={true}
+            onEscape={() => {
+              setSelectedLogs(null);
+              setActiveDeploymentId(null);
+            }}
           >
+            <div
+              ref={logsModalRef}
+              tabIndex={-1}
+              className="glass w-full max-w-4xl max-h-[85vh] flex flex-col rounded-[32px] overflow-hidden focus:outline-none"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="logs-modal-title"
+            >
             <div className="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
               <div className="flex items-center gap-3">
                 <FileText size={20} className="text-indigo-400" />
@@ -648,6 +661,7 @@ export default function Home() {
                   setActiveDeploymentId(null);
                 }}
                 className="p-2 rounded-lg hover:bg-white/10 text-slate-400 transition-colors"
+                aria-label="Close logs"
               >
                 <X size={24} />
               </button>
@@ -660,21 +674,22 @@ export default function Home() {
             <div className="p-4 border-t border-white/10 bg-slate-900/50 text-xs font-medium text-slate-500 tracking-wider uppercase">
               {activeDeploymentId ? t.dashboard.modals.streaming : t.dashboard.modals.ended}
             </div>
-          </div>
+          </FocusTrap>
         </div>
       )}
 
       {/* Edit Service Modal */}
       {editingService !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm">
-          <div
-            ref={editModalRef}
-            tabIndex={-1}
-            className="w-full max-w-2xl bg-[#0d121f] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-modal-title"
-          >
+          <FocusTrap active={true} onEscape={() => setEditingService(null)}>
+            <div
+              ref={editModalRef}
+              tabIndex={-1}
+              className="w-full max-w-2xl bg-[#0d121f] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="edit-modal-title"
+            >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
               <h2 id="edit-modal-title" className="text-xl font-bold text-white tracking-tight">
@@ -683,7 +698,7 @@ export default function Home() {
               <button
                 onClick={() => setEditingService(null)}
                 className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                aria-label="Close"
+                aria-label="Close edit dialog"
               >
                 <X size={20} />
               </button>
@@ -934,7 +949,7 @@ export default function Home() {
                 {t.dashboard.actions.save}
               </button>
             </div>
-          </div>
+          </FocusTrap>
         </div>
       )}
     </div>
