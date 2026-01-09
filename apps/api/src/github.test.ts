@@ -53,6 +53,13 @@ vi.mock('database', () => ({
       findMany: vi.fn(),
       deleteMany: vi.fn(),
     },
+    refreshToken: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      updateMany: vi.fn(),
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+    },
   },
 }));
 

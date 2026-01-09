@@ -15,6 +15,11 @@ import path from 'path';
 import { ZodError } from 'zod';
 import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
 import { decrypt, encrypt } from './utils/crypto';
+import {
+  createRefreshToken,
+  revokeAllUserRefreshTokens,
+  verifyAndRotateRefreshToken,
+} from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
@@ -406,7 +411,7 @@ fastify.register(fastifyJwt, {
     signed: false,
   },
   sign: {
-    expiresIn: '7d', // Token expires after 7 days
+    expiresIn: '15m', // Short-lived access token (15 minutes)
   },
 });
 
@@ -481,7 +486,13 @@ const wsRateLimitConfig = {
 
 // Auth hook
 fastify.addHook('onRequest', async (request, reply) => {
-  const publicRoutes = ['/health', '/webhooks/github', '/auth/github', '/auth/logout'];
+  const publicRoutes = [
+    '/health',
+    '/webhooks/github',
+    '/auth/github',
+    '/auth/refresh',
+    '/auth/logout',
+  ];
   if (publicRoutes.includes(request.routeOptions?.url || '')) {
     return;
   }
@@ -550,16 +561,29 @@ fastify.post(
         },
       });
 
-      // 4. Generate JWT
+      // 4. Generate access token (short-lived)
       const token = fastify.jwt.sign({ id: user.id, username: user.username });
 
-      // 5. Set cookie and return user
+      // 5. Generate refresh token (long-lived)
+      const refreshToken = await createRefreshToken(user.id);
+
+      // 6. Set cookies and return user
+      // Access token cookie (15 minutes)
       reply.setCookie('token', token, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+        maxAge: 60 * 15, // 15 minutes
+      });
+
+      // Refresh token cookie (30 days)
+      reply.setCookie('refreshToken', refreshToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
       });
 
       return { user, token };
@@ -570,13 +594,77 @@ fastify.post(
   },
 );
 
-fastify.post('/auth/logout', async (_request, reply) => {
+fastify.post('/auth/refresh', async (request, reply) => {
+  const refreshToken = request.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return reply.status(401).send({ error: 'Refresh token not provided' });
+  }
+
+  try {
+    const result = await verifyAndRotateRefreshToken(refreshToken, fastify, redisConnection);
+
+    if (!result) {
+      // Clear invalid cookies
+      reply.clearCookie('token', { path: '/' });
+      reply.clearCookie('refreshToken', { path: '/' });
+      return reply.status(401).send({ error: 'Invalid or expired refresh token' });
+    }
+
+    // Set new access token cookie (15 minutes)
+    reply.setCookie('token', result.accessToken, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 15, // 15 minutes
+    });
+
+    // Set new refresh token cookie (30 days)
+    reply.setCookie('refreshToken', result.refreshToken, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    return {
+      accessToken: result.accessToken,
+      message: 'Token refreshed successfully',
+    };
+  } catch (err: any) {
+    console.error('Refresh token error:', err.message);
+    return reply.status(500).send({ error: 'Failed to refresh token' });
+  }
+});
+
+fastify.post('/auth/logout', async (request, reply) => {
+  const user = (request as any).user;
+
+  // Revoke all refresh tokens for the user
+  if (user?.id) {
+    try {
+      await revokeAllUserRefreshTokens(user.id, redisConnection);
+    } catch (err) {
+      console.error('Error revoking refresh tokens:', err);
+    }
+  }
+
+  // Clear cookies
   reply.clearCookie('token', {
     path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   });
+  reply.clearCookie('refreshToken', {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+
   return { message: 'Logged out successfully' };
 });
 

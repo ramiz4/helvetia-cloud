@@ -42,6 +42,13 @@ vi.mock('database', () => {
       user: {
         findUnique: vi.fn(),
       },
+      refreshToken: {
+        create: vi.fn(),
+        findUnique: vi.fn(),
+        updateMany: vi.fn(),
+        findMany: vi.fn(),
+        deleteMany: vi.fn(),
+      },
     },
   };
 });
@@ -81,7 +88,7 @@ describe('SSE Token Expiration Handling', () => {
       expect(typeof fastify.jwt.verify).toBe('function');
     });
 
-    it('should create token with default 7 day expiration', () => {
+    it('should create token with default 15 minute expiration', () => {
       const mockUser = { id: 'user-1', username: 'testuser' };
       const token = fastify.jwt.sign(mockUser);
 
@@ -94,6 +101,12 @@ describe('SSE Token Expiration Handling', () => {
       expect(decoded.username).toBe('testuser');
       expect(decoded.exp).toBeDefined();
       expect(decoded.iat).toBeDefined();
+
+      // Should expire in approximately 15 minutes (900 seconds)
+      const exp = decoded.exp;
+      const iat = decoded.iat;
+      expect(exp - iat).toBeGreaterThanOrEqual(899);
+      expect(exp - iat).toBeLessThanOrEqual(901);
     });
 
     it('should create token with custom expiration', () => {
