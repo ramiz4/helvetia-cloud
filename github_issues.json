@@ -1,0 +1,258 @@
+[
+  {
+    "title": "[CRITICAL] Hardcoded Cryptographic Salt in Encryption",
+    "labels": ["P0", "security", "critical", "bug"],
+    "body": "The encryption module uses a hardcoded salt value `'salt'` for key derivation, which completely defeats the purpose of encryption and makes GitHub access tokens vulnerable to decryption.\n\n**Location:**\n`apps/api/src/utils/crypto.ts:8`\n\n**Current Code:**\n\n```typescript\nconst ENCRYPTION_KEY = crypto.scryptSync(KEY, 'salt', 32);\n```\n\n**Security Impact:**\n\n- GitHub access tokens are vulnerable to rainbow table attacks\n- If database is compromised, tokens can be easily decrypted\n- Violates cryptographic best practices\n\n**Recommended Fix:**\n\n```typescript\nconst SALT = process.env.ENCRYPTION_SALT || crypto.randomBytes(32).toString('hex');\nconst ENCRYPTION_KEY = crypto.scryptSync(KEY, SALT, 32);\n```\n\n**Better Solution:**\nUse a proper key management service (AWS KMS, HashiCorp Vault) or at minimum, store a secure random salt in environment variables.\n\n**Acceptance Criteria:**\n\n- [ ] Remove hardcoded salt\n- [ ] Generate unique salt per installation\n- [ ] Store salt securely in environment variables\n- [ ] Update .env.example with ENCRYPTION_SALT\n- [ ] Document migration path for existing encrypted data\n- [ ] Add tests for encryption/decryption",
+    "number": 56,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/56"
+  },
+  {
+    "title": "[CRITICAL] Missing Rate Limiting Implementation",
+    "labels": ["P0", "security", "critical", "enhancement"],
+    "body": "Despite having rate limiting configuration in environment variables, no rate limiting is actually implemented. Critical endpoints are vulnerable to brute-force and DoS attacks.\n\n**Vulnerable Endpoints:**\n\n- `/auth/github` - OAuth callback (brute force risk)\n- `/services/:id/deploy` - Resource-intensive operations (DoS risk)\n- `/webhooks/github` - External webhook (abuse risk)\n- All authenticated endpoints\n\n**Impact:**\n\n- Brute-force attacks on authentication\n- DoS through excessive deployment requests\n- Webhook spam overwhelming the system\n- Resource exhaustion\n\n**Recommended Implementation:**\n\n```typescript\nimport rateLimit from '@fastify/rate-limit';\n\n// Global rate limiting\nfastify.register(rateLimit, {\n  max: parseInt(process.env.RATE_LIMIT_MAX || '100'),\n  timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',\n  redis: redisConnection,\n  keyGenerator: (request) => request.ip,\n});\n\n// Stricter limit for auth routes\nfastify.register(\n  rateLimit,\n  {\n    max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10'),\n    timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',\n    redis: redisConnection,\n  },\n  { prefix: '/auth' },\n);\n```\n\n**Acceptance Criteria:**\n\n- [ ] Install @fastify/rate-limit dependency\n- [ ] Implement global rate limiting\n- [ ] Implement stricter limits for authentication endpoints\n- [ ] Implement limits for deployment endpoints\n- [ ] Implement limits for WebSocket/SSE connections\n- [ ] Exclude /health endpoint from rate limiting\n- [ ] Add rate limit headers in responses\n- [ ] Add tests for rate limiting\n- [ ] Document rate limits in API docs",
+    "number": 58,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/58"
+  },
+  {
+    "title": "[CRITICAL] GitHub Webhook Authentication Missing",
+    "labels": ["P0", "security", "critical", "bug"],
+    "body": "GitHub webhooks endpoint (`/webhooks/github`) processes requests without verifying the signature. Anyone can trigger deployments by sending POST requests to this endpoint.\n\n**Location:**\n`apps/api/src/server.ts:979-1152`\n\n**Current Code:**\n\n```typescript\nfastify.post('/webhooks/github', async (request) => {\n  const payload = request.body as any;\n  // No signature verification!\n```\n\n**Security Impact:**\n\n- Unauthorized deployments can be triggered\n- Malicious actors can cause resource exhaustion\n- Preview environments can be created/destroyed without authorization\n- Potential for code injection through malicious payloads\n\n**Recommended Fix:**\n\n```typescript\nimport crypto from 'crypto';\n\nfunction verifyGitHubSignature(payload: string, signature: string, secret: string): boolean {\n  const hmac = crypto.createHmac('sha256', secret);\n  const digest = 'sha256=' + hmac.update(payload).digest('hex');\n  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));\n}\n\nfastify.post('/webhooks/github', async (request, reply) => {\n  const signature = request.headers['x-hub-signature-256'] as string;\n\n  if (!signature) {\n    return reply.status(401).send({ error: 'Missing signature' });\n  }\n\n  const rawBody = JSON.stringify(request.body);\n\n  if (!verifyGitHubSignature(rawBody, signature, process.env.GITHUB_WEBHOOK_SECRET!)) {\n    return reply.status(401).send({ error: 'Invalid signature' });\n  }\n\n  // ... process webhook\n});\n```\n\n**Acceptance Criteria:**\n\n- [ ] Add GITHUB_WEBHOOK_SECRET to environment variables\n- [ ] Implement signature verification function\n- [ ] Add signature verification to webhook endpoint\n- [ ] Return 401 for missing or invalid signatures\n- [ ] Log suspicious requests\n- [ ] Add tests for signature verification\n- [ ] Update documentation with webhook setup instructions\n- [ ] Update .env.example",
+    "number": 59,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/59"
+  },
+  {
+    "title": "[CRITICAL] Insecure CORS Configuration Allows Origin Reflection",
+    "labels": ["P0", "security", "critical", "bug"],
+    "body": "SSE endpoints reflect the request origin back in `Access-Control-Allow-Origin` header with credentials enabled, effectively bypassing CORS protection.\n\n**Locations:**\n\n- `apps/api/src/server.ts:654-661` (metrics stream)\n- `apps/api/src/server.ts:1199-1206` (logs stream)\n\n**Vulnerable Code:**\n\n```typescript\n'Access-Control-Allow-Origin': request.headers.origin || '*',\n'Access-Control-Allow-Credentials': 'true',\n```\n\n**Security Impact:**\n\n- Cross-origin attacks possible\n- Session hijacking risk\n- CSRF vulnerabilities\n- Sensitive data exposure to malicious origins\n\n**Recommended Fix:**\n\n```typescript\nconst allowedOrigins = (\n  process.env.ALLOWED_ORIGINS ||\n  process.env.APP_BASE_URL ||\n  'http://localhost:3000'\n)\n  .split(',')\n  .map((o) => o.trim());\n\nfastify.register(cors, {\n  origin: (origin, cb) => {\n    if (!origin || allowedOrigins.includes(origin)) {\n      cb(null, true);\n    } else {\n      cb(new Error('Not allowed by CORS'), false);\n    }\n  },\n  credentials: true,\n  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],\n});\n\n// For SSE endpoints\nreply.raw.writeHead(200, {\n  'Content-Type': 'text/event-stream',\n  'Cache-Control': 'no-cache',\n  Connection: 'keep-alive',\n  'X-Accel-Buffering': 'no',\n  'Access-Control-Allow-Origin': allowedOrigins.includes(request.headers.origin || '')\n    ? request.headers.origin\n    : allowedOrigins[0],\n  'Access-Control-Allow-Credentials': 'true',\n});\n```\n\n**Acceptance Criteria:**\n\n- [ ] Add ALLOWED_ORIGINS environment variable\n- [ ] Implement strict origin validation\n- [ ] Fix CORS configuration in server setup\n- [ ] Fix CORS headers in SSE endpoints\n- [ ] Remove wildcard origin fallback\n- [ ] Add tests for CORS validation\n- [ ] Document CORS configuration\n- [ ] Update .env.example",
+    "number": 60,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/60"
+  },
+  {
+    "title": "[CRITICAL] Host Filesystem Exposure via Docker Volume Mount",
+    "labels": ["P0", "security", "critical", "bug"],
+    "body": "Worker mounts the entire `/Users` directory into builder containers, exposing all user data on macOS. This is extremely dangerous.\n\n**Location:**\n`apps/worker/src/worker.ts:104, 216`\n\n**Vulnerable Code:**\n\n```typescript\nBinds: ['/var/run/docker.sock:/var/run/docker.sock', '/Users:/Users'],\n```\n\n**Security Impact:**\n\n- Container can access all user data on macOS\n- Host filesystem can be modified by container\n- Privilege escalation possible\n- Violates principle of least privilege\n- Data breach risk\n\n**Recommended Fix:**\n\n```typescript\n// Only mount specific workspace directory, read-only\nconst workDir = process.env.WORKSPACE_DIR || '/tmp/helvetia-workspaces';\n\n// Ensure directory exists\nawait fs.promises.mkdir(workDir, { recursive: true });\n\nBinds: [\n  '/var/run/docker.sock:/var/run/docker.sock',\n  `${workDir}:/workspaces:ro`, // Read-only mount\n],\n```\n\n**Additional Security:**\n\n- Use temporary directories that are cleaned up\n- Never mount root directories\n- Use SELinux/AppArmor labels\n- Consider using Docker volumes instead of bind mounts\n\n**Acceptance Criteria:**\n\n- [ ] Remove /Users mount completely\n- [ ] Create dedicated workspace directory\n- [ ] Mount workspace as read-only\n- [ ] Add WORKSPACE_DIR environment variable\n- [ ] Implement workspace cleanup\n- [ ] Add documentation warning about production usage\n- [ ] Add tests to verify mount configuration\n- [ ] Update .env.example",
+    "number": 61,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/61"
+  },
+  {
+    "title": "[HIGH] SQL Injection Risk with Prisma String Operations",
+    "labels": ["P1", "security", "bug"],
+    "body": "Using `contains` with unsanitized user input in Prisma queries could be vulnerable to SQL injection or at minimum, unexpected behavior.\n\n**Location:**\nMultiple locations in `apps/api/src/server.ts`\n\n**Example:**\n\n```typescript\nwhere: {\n  repoUrl: {\n    contains: repoUrl;\n  }\n}\n```\n\n**Recommended Fix:**\n\n```typescript\nconst sanitizedRepoUrl = repoUrl.trim().replace(/\\.git$/, '');\nwhere: {\n  OR: [{ repoUrl: sanitizedRepoUrl }, { repoUrl: `${sanitizedRepoUrl}.git` }];\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Audit all Prisma queries using user input\n- [ ] Sanitize repo URLs before querying\n- [ ] Use exact matches where possible\n- [ ] Add input validation tests\n- [ ] Document safe query patterns",
+    "number": 66,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/66"
+  },
+  {
+    "title": "[HIGH] Missing Comprehensive Input Validation",
+    "labels": ["P1", "security", "enhancement"],
+    "body": "Service creation and update endpoints lack comprehensive input validation, allowing potentially malicious or malformed data.\n\n**Location:**\n`apps/api/src/server.ts:500-597`\n\n**Missing Validations:**\n\n- Service name format (could contain special characters)\n- URL validation for repoUrl\n- Command injection prevention for buildCommand/startCommand\n- Size limits for envVars\n- Branch name validation\n\n**Recommended Implementation:**\nUse Zod for schema validation:\n\n```typescript\nimport { z } from 'zod';\n\nconst ServiceCreateSchema = z.object({\n  name: z\n    .string()\n    .min(3)\n    .max(63)\n    .regex(/^[a-z0-9-]+$/),\n  repoUrl: z.string().url().optional(),\n  branch: z\n    .string()\n    .min(1)\n    .max(255)\n    .regex(/^[a-zA-Z0-9-_./]+$/),\n  buildCommand: z.string().max(1000).optional(),\n  startCommand: z.string().max(1000).optional(),\n  port: z.number().int().min(1).max(65535),\n  envVars: z.record(z.string()).optional(),\n  customDomain: z.string().max(255).optional(),\n  type: z.enum(['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE']),\n  staticOutputDir: z.string().max(255).optional(),\n});\n```\n\n**Acceptance Criteria:**\n\n- [ ] Install zod dependency\n- [ ] Create validation schemas for all endpoints\n- [ ] Implement request validation middleware\n- [ ] Return detailed validation errors\n- [ ] Add tests for validation\n- [ ] Document API request/response schemas",
+    "number": 67,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/67"
+  },
+  {
+    "title": "[HIGH] SSE Connection Token Expiration Not Handled",
+    "labels": ["P1", "security", "bug"],
+    "body": "Long-lived SSE connections don't re-validate JWT tokens, potentially allowing access after token expiration.\n\n**Locations:**\n\n- `apps/api/src/server.ts:650-705` (metrics)\n- `apps/api/src/server.ts:1184-1230` (logs)\n\n**Recommended Fix:**\nImplement periodic token validation in SSE streams.\n\n**Acceptance Criteria:**\n\n- [ ] Add periodic token validation (every 5 minutes)\n- [ ] Close connection on token expiration\n- [ ] Implement graceful reconnection on client side\n- [ ] Add tests for token expiration handling\n- [ ] Document SSE connection lifecycle",
+    "number": 68,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/68"
+  },
+  {
+    "title": "[HIGH] Incomplete Error Handling in Worker Deployment",
+    "labels": ["P1", "bug", "reliability"],
+    "body": "Worker's catch block doesn't handle partial failures properly. Resources may not be cleaned up correctly on deployment failure.\n\n**Location:**\n`apps/worker/src/worker.ts:435-445`\n\n**Issues:**\n\n- Builder container might not be cleaned up\n- Old containers might not be restarted on rollback\n- No rollback mechanism for failed deployments\n\n**Acceptance Criteria:**\n\n- [ ] Implement comprehensive cleanup in catch block\n- [ ] Add rollback to previous container on failure\n- [ ] Ensure builder container always cleaned up\n- [ ] Log detailed error information\n- [ ] Add tests for failure scenarios\n- [ ] Update deployment status correctly on all paths",
+    "number": 70,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/70"
+  },
+  {
+    "title": "[HIGH] Race Condition in Service Status Updates",
+    "labels": ["P1", "bug", "concurrency"],
+    "body": "Service status is updated from multiple places without synchronization, leading to race conditions and stale data.\n\n**Locations:**\n\n- API sets status to DEPLOYING when queuing\n- Worker sets status after deployment\n- Docker status checked asynchronously\n\n**Recommended Solution:**\nImplement Redis-based distributed locks using Redlock.\n\n**Acceptance Criteria:**\n\n- [ ] Install redlock dependency\n- [ ] Implement distributed locking for status updates\n- [ ] Create status reconciliation service\n- [ ] Add tests for concurrent updates\n- [ ] Document status lifecycle",
+    "number": 71,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/71"
+  },
+  {
+    "title": "[HIGH] Docker Socket Security Risk",
+    "labels": ["P1", "security", "architecture"],
+    "body": "Direct Docker socket access in both API and Worker provides root-level access to host system.\n\n**Impact:**\n\n- Container escape vulnerabilities\n- Host system compromise potential\n- Privilege escalation risks\n\n**Recommended Solutions:**\n\n1. Run Docker daemon in rootless mode\n2. Implement Docker socket proxy with ACLs\n3. Consider migrating to Kubernetes\n\n**Acceptance Criteria:**\n\n- [ ] Document security implications\n- [ ] Implement Docker socket proxy\n- [ ] Add SELinux/AppArmor policies\n- [ ] Create security hardening guide\n- [ ] Consider Kubernetes migration path",
+    "number": 72,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/72"
+  },
+  {
+    "title": "[HIGH] Memory Leak Risk in SSE Connections",
+    "labels": ["P1", "bug", "performance"],
+    "body": "SSE connection intervals may not be properly cleaned up on errors, leading to memory leaks.\n\n**Location:**\n`apps/api/src/server.ts:650-705`\n\n**Recommended Fix:**\nAdd comprehensive error handling and cleanup.\n\n**Acceptance Criteria:**\n\n- [ ] Add error handling in interval callbacks\n- [ ] Ensure cleanup on all error paths\n- [ ] Add connection state tracking\n- [ ] Implement connection timeout\n- [ ] Add tests for error scenarios\n- [ ] Monitor memory usage",
+    "number": 73,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/73"
+  },
+  {
+    "title": "[HIGH] Unrestricted Service Deletion Risk",
+    "labels": ["P1", "bug", "data-loss"],
+    "body": "Service deletion is permanent and irreversible without safety mechanisms.\n\n**Recommended Implementation:**\nImplement soft deletion with retention period.\n\n**Acceptance Criteria:**\n\n- [ ] Add deletedAt field to Service model\n- [ ] Implement soft deletion\n- [ ] Add delete protection flag\n- [ ] Schedule cleanup after retention period\n- [ ] Add recovery mechanism\n- [ ] Require re-authentication for deletion\n- [ ] Add tests for deletion flow",
+    "number": 74,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/74"
+  },
+  {
+    "title": "[MEDIUM] Missing Dockerfile Generation Validation",
+    "labels": ["P2", "enhancement", "reliability"],
+    "body": "Generated Dockerfiles aren't validated before build, leading to hard-to-debug failures.\n\n**Location:**\n`apps/worker/src/worker.ts:225-310`\n\n**Acceptance Criteria:**\n\n- [ ] Add Dockerfile syntax validation\n- [ ] Implement dry-run before build\n- [ ] Validate environment variable format\n- [ ] Add better error messages\n- [ ] Add tests for various scenarios",
+    "number": 75,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/75"
+  },
+  {
+    "title": "[MEDIUM] Hardcoded Magic Numbers Throughout Codebase",
+    "labels": ["P2", "refactoring", "maintainability"],
+    "body": "Magic numbers scattered throughout code reduce maintainability.\n\n**Examples:**\n\n- `512 * 1024 * 1024` (Memory limit)\n- `1000000000` (CPU limit)\n- `5000` (Metrics interval)\n\n**Acceptance Criteria:**\n\n- [ ] Create constants configuration file\n- [ ] Extract all magic numbers\n- [ ] Make limits configurable via env vars\n- [ ] Update documentation\n- [ ] Add tests with different configurations",
+    "number": 76,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/76"
+  },
+  {
+    "title": "[MEDIUM] Missing Request/Response Logging",
+    "labels": ["P2", "observability", "enhancement"],
+    "body": "No structured logging for requests and responses, making debugging difficult.\n\n**Acceptance Criteria:**\n\n- [ ] Implement request logging hook\n- [ ] Implement response logging hook\n- [ ] Add structured logging with context\n- [ ] Configure log levels per environment\n- [ ] Add request ID correlation\n- [ ] Document logging format",
+    "number": 77,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/77"
+  },
+  {
+    "title": "[MEDIUM] No Health Check Endpoint for Worker",
+    "labels": ["P2", "observability", "enhancement"],
+    "body": "Worker service lacks health check endpoint for monitoring.\n\n**Acceptance Criteria:**\n\n- [ ] Add HTTP health endpoint\n- [ ] Include queue stats\n- [ ] Include Redis connection status\n- [ ] Include uptime information\n- [ ] Document health check format\n- [ ] Add monitoring setup guide",
+    "number": 78,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/78"
+  },
+  {
+    "title": "[MEDIUM] Incomplete Test Coverage",
+    "labels": ["P2", "testing", "quality"],
+    "body": "Test suite exists but critical paths aren't fully covered.\n\n**Missing Tests:**\n\n- Integration tests for deployment flow\n- Webhook processing tests\n- SSE streaming tests\n- Worker deployment tests (currently failing)\n\n**Acceptance Criteria:**\n\n- [ ] Fix failing worker tests\n- [ ] Add integration tests\n- [ ] Achieve 80% code coverage minimum\n- [ ] Add E2E tests for critical flows\n- [ ] Set up test containers for integration tests\n- [ ] Add coverage reporting to CI",
+    "number": 79,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/79"
+  },
+  {
+    "title": "[MEDIUM] Environment Variable Management Needs Improvement",
+    "labels": ["P2", "enhancement", "configuration"],
+    "body": "No validation for required environment variables, leading to potential runtime errors.\n\n**Acceptance Criteria:**\n\n- [ ] Install zod for validation\n- [ ] Create environment schema\n- [ ] Validate on startup\n- [ ] Provide clear error messages\n- [ ] Add type safety for env vars\n- [ ] Update documentation",
+    "number": 80,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/80"
+  },
+  {
+    "title": "[MEDIUM] No Database Migration Strategy",
+    "labels": ["P2", "database", "deployment"],
+    "body": "Using `db:push` instead of migrations is dangerous for production.\n\n**Issues:**\n\n- No migration history\n- Can cause data loss\n- Can't rollback changes\n- No team collaboration on schema changes\n\n**Acceptance Criteria:**\n\n- [ ] Switch to Prisma Migrate\n- [ ] Create initial migration\n- [ ] Update deployment scripts\n- [ ] Document migration workflow\n- [ ] Add rollback procedures\n- [ ] Update CI/CD pipeline",
+    "number": 81,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/81"
+  },
+  {
+    "title": "[MEDIUM] Frontend State Management Issues",
+    "labels": ["P2", "frontend", "performance"],
+    "body": "Dashboard has performance issues and state management anti-patterns.\n\n**Issues:**\n\n- Services fetched on every re-render\n- No caching mechanism\n- Large component needs splitting\n- Optimistic updates without proper rollback\n\n**Acceptance Criteria:**\n\n- [ ] Install React Query or SWR\n- [ ] Implement data caching\n- [ ] Split large components\n- [ ] Add error boundaries\n- [ ] Implement proper loading states\n- [ ] Add tests for state management",
+    "number": 82,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/82"
+  },
+  {
+    "title": "[MEDIUM] Docker Image Cleanup Missing",
+    "labels": ["P2", "infrastructure", "resource-management"],
+    "body": "No cleanup for dangling, failed, or old Docker images, leading to disk space issues.\n\n**Acceptance Criteria:**\n\n- [ ] Implement periodic cleanup job\n- [ ] Remove dangling images\n- [ ] Remove old image versions\n- [ ] Add retention policy\n- [ ] Monitor disk usage\n- [ ] Add configuration options",
+    "number": 83,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/83"
+  },
+  {
+    "title": "[MEDIUM] Missing Prometheus Metrics",
+    "labels": ["P2", "observability", "monitoring"],
+    "body": "No metrics exported for system monitoring.\n\n**Needed Metrics:**\n\n- Request rates and latencies\n- Error rates\n- Deployment success/failure rates\n- Queue depths\n- Resource usage\n\n**Acceptance Criteria:**\n\n- [ ] Install prom-client\n- [ ] Add /metrics endpoint\n- [ ] Implement custom metrics\n- [ ] Add Grafana dashboard\n- [ ] Document metrics\n- [ ] Set up alerting",
+    "number": 84,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/84"
+  },
+  {
+    "title": "[MEDIUM] Session Management Needs Refresh Tokens",
+    "labels": ["P2", "security", "enhancement"],
+    "body": "JWT tokens have 7-day expiration with no refresh mechanism.\n\n**Acceptance Criteria:**\n\n- [ ] Implement refresh token flow\n- [ ] Use short-lived access tokens (15 min)\n- [ ] Implement token rotation\n- [ ] Add token revocation list in Redis\n- [ ] Update frontend to handle refresh\n- [ ] Add tests for token lifecycle",
+    "number": 69,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/69"
+  },
+  {
+    "title": "[MEDIUM] No Request Size Limits",
+    "labels": ["P2", "security", "performance"],
+    "body": "Missing request body size limits could allow DoS attacks.\n\n**Acceptance Criteria:**\n\n- [ ] Add body size limit to Fastify config\n- [ ] Configure appropriate limits (10MB default)\n- [ ] Add limits per endpoint type\n- [ ] Document size limits\n- [ ] Add tests for size validation\n- [ ] Return appropriate error messages",
+    "number": 85,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/85"
+  },
+  {
+    "title": "[LOW] Excessive TypeScript `any` Usage",
+    "labels": ["P3", "refactoring", "type-safety"],
+    "body": "Extensive use of `any` type reduces type safety benefits.\n\n**Acceptance Criteria:**\n\n- [ ] Add Fastify type augmentation\n- [ ] Create proper request/response types\n- [ ] Remove `as any` casts\n- [ ] Enable stricter TypeScript checks\n- [ ] Document type patterns",
+    "number": 93,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/93"
+  },
+  {
+    "title": "[LOW] Inconsistent Error Messages",
+    "labels": ["P3", "ux", "enhancement"],
+    "body": "Error messages aren't user-friendly or consistent.\n\n**Acceptance Criteria:**\n\n- [ ] Create error response standard\n- [ ] Add error codes\n- [ ] Make messages user-friendly\n- [ ] Add i18n support for errors\n- [ ] Document error codes\n- [ ] Update frontend error handling",
+    "number": 87,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/87"
+  },
+  {
+    "title": "[LOW] Missing API Versioning",
+    "labels": ["P3", "api", "architecture"],
+    "body": "No API versioning strategy makes future changes risky.\n\n**Acceptance Criteria:**\n\n- [ ] Add version prefix (/api/v1)\n- [ ] Document versioning strategy\n- [ ] Plan v2 transition path\n- [ ] Update frontend API calls\n- [ ] Add version negotiation",
+    "number": 88,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/88"
+  },
+  {
+    "title": "[LOW] No Request ID Tracing",
+    "labels": ["P3", "observability", "enhancement"],
+    "body": "Missing correlation IDs makes request tracing difficult.\n\n**Acceptance Criteria:**\n\n- [ ] Add request ID generation\n- [ ] Propagate IDs across services\n- [ ] Include in all log entries\n- [ ] Return in response headers\n- [ ] Document tracing setup",
+    "number": 89,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/89"
+  },
+  {
+    "title": "[LOW] Lack of Feature Flags",
+    "labels": ["P3", "deployment", "enhancement"],
+    "body": "No way to enable/disable features without deployment.\n\n**Acceptance Criteria:**\n\n- [ ] Choose feature flag service\n- [ ] Implement feature flag checks\n- [ ] Add admin UI for flags\n- [ ] Document feature flag usage\n- [ ] Add A/B testing capability",
+    "number": 90,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/90"
+  },
+  {
+    "title": "[LOW] No Graceful Shutdown",
+    "labels": ["P3", "reliability", "enhancement"],
+    "body": "Services don't handle SIGTERM/SIGINT gracefully.\n\n**Acceptance Criteria:**\n\n- [ ] Implement graceful shutdown\n- [ ] Wait for in-flight requests\n- [ ] Close connections properly\n- [ ] Update deployment docs\n- [ ] Add tests for shutdown",
+    "number": 91,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/91"
+  },
+  {
+    "title": "[LOW] Dashboard Accessibility Issues",
+    "labels": ["P3", "accessibility", "a11y", "frontend"],
+    "body": "Several accessibility improvements needed for WCAG compliance.\n\n**Issues:**\n\n- Missing ARIA labels\n- Insufficient color contrast\n- No keyboard navigation hints\n- Modal focus trap not complete\n\n**Acceptance Criteria:**\n\n- [ ] Run axe-core audit\n- [ ] Fix all critical a11y issues\n- [ ] Add ARIA labels\n- [ ] Improve color contrast\n- [ ] Implement proper focus management\n- [ ] Add keyboard navigation\n- [ ] Test with screen readers",
+    "number": 92,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/92"
+  }
+]
