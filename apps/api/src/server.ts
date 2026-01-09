@@ -332,6 +332,19 @@ async function getServiceMetrics(
   };
 }
 
+// Helper to validate JWT token from request
+async function validateToken(request: any): Promise<boolean> {
+  try {
+    // Try to verify the JWT token
+    await request.jwtVerify();
+    return true;
+  } catch (error) {
+    // Token is invalid or expired
+    console.log('Token validation failed:', (error as Error).message);
+    return false;
+  }
+}
+
 // GitHub webhook signature verification
 function verifyGitHubSignature(
   payload: string | Buffer,
@@ -391,6 +404,9 @@ fastify.register(fastifyJwt, {
   cookie: {
     cookieName: 'token',
     signed: false,
+  },
+  sign: {
+    expiresIn: '7d', // Token expires after 7 days
   },
 });
 
@@ -867,7 +883,23 @@ fastify.get(
 
     console.log(`SSE client connected for real-time metrics: ${user.id}`);
 
+    // Track if connection is still valid
+    let isConnectionValid = true;
+
     const sendMetrics = async () => {
+      // Validate token before sending metrics
+      const isValid = await validateToken(request);
+      if (!isValid) {
+        console.log(`Token expired for user ${user.id}, closing metrics stream`);
+        isConnectionValid = false;
+        // Send error event to client
+        reply.raw.write(
+          `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
+        );
+        reply.raw.end();
+        return;
+      }
+
       try {
         const Docker = (await import('dockerode')).default;
         const docker = new Docker();
@@ -897,11 +929,18 @@ fastify.get(
 
     // Fetch and send initial metrics asynchronously (non-blocking)
     await sendMetrics();
-    const interval = setInterval(sendMetrics, 5000);
+    const interval = setInterval(async () => {
+      if (!isConnectionValid) {
+        clearInterval(interval);
+        return;
+      }
+      await sendMetrics();
+    }, 5000);
 
     // Clean up on client disconnect
     request.raw.on('close', () => {
       console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
+      isConnectionValid = false;
       clearInterval(interval);
     });
 
@@ -1412,9 +1451,28 @@ fastify.get(
 
     console.log(`SSE client connected for live logs: ${id}`);
 
+    // Track if connection is still valid
+    let isConnectionValid = true;
+
+    // Set up periodic token validation (every 30 seconds)
+    const tokenValidationInterval = setInterval(async () => {
+      const isValid = await validateToken(request);
+      if (!isValid) {
+        console.log(`Token expired for user ${user.id}, closing logs stream`);
+        isConnectionValid = false;
+        // Send error event to client
+        reply.raw.write(
+          `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
+        );
+        reply.raw.end();
+        clearInterval(tokenValidationInterval);
+      }
+    }, 30000); // Check every 30 seconds
+
     const channel = `deployment-logs:${id}`;
 
     const onMessage = (chan: string, message: string) => {
+      if (!isConnectionValid) return;
       if (chan === channel) {
         // Send log line as an SSE event
         reply.raw.write(`data: ${message}\n\n`);
@@ -1427,6 +1485,8 @@ fastify.get(
     // Clean up on client disconnect
     request.raw.on('close', () => {
       console.log(`SSE client disconnected from live logs: ${id}`);
+      isConnectionValid = false;
+      clearInterval(tokenValidationInterval);
       subConnection.removeListener('message', onMessage);
     });
 
