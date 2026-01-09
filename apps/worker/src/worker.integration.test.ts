@@ -11,7 +11,7 @@ describe('Worker Integration - Build Security', () => {
   const docker = new Docker();
   let testContainerId: string | null = null;
 
-  // Skip integration tests in CI environment since they require Docker-in-Docker
+  // Skip integration tests in a CI environment since they require Docker-in-Docker
   if (process.env.CI === 'true') {
     it.skip('Integration tests are skipped in CI environment', () => {
       // These tests require Docker to be available and the ability to pull images
@@ -21,7 +21,7 @@ describe('Worker Integration - Build Security', () => {
   }
 
   afterAll(async () => {
-    // Cleanup any test containers
+    // Clean up any test containers
     if (testContainerId) {
       const container = docker.getContainer(testContainerId);
       await container.stop().catch(() => {});
@@ -30,42 +30,7 @@ describe('Worker Integration - Build Security', () => {
   });
 
   describe('Workspace Mount Behavior', () => {
-    it('should mount workspace as read-only and prevent writes', async () => {
-      const mounts = getSecureBindMounts();
-      const workspaceMount = mounts.find((m) => m.includes('/workspaces'));
-
-      expect(workspaceMount).toBeDefined();
-      expect(workspaceMount).toMatch(/:ro$/);
-
-      // Create a test container with the same mounts as the builder
-      const container = await docker.createContainer({
-        Image: 'docker:cli',
-        Cmd: ['sh', '-c', 'echo "test" > /workspaces/test.txt 2>&1 || echo "WRITE_FAILED"'],
-        HostConfig: {
-          AutoRemove: false,
-          Binds: mounts,
-        },
-      });
-
-      testContainerId = container.id;
-      await container.start();
-      await container.wait();
-
-      const logs = await container.logs({
-        stdout: true,
-        stderr: true,
-      });
-
-      const output = logs.toString();
-
-      // Should fail to write due to read-only mount
-      expect(output).toContain('Read-only file system');
-
-      await container.remove();
-      testContainerId = null;
-    }, 30000);
-
-    it('should verify builds write to /app inside container, not /workspaces', async () => {
+    it('should verify builds write to /app inside container, independent of host', async () => {
       // Simulate the build process
       const container = await docker.createContainer({
         Image: 'docker:cli',
@@ -81,9 +46,9 @@ describe('Worker Integration - Build Security', () => {
           if [ -f /app/build-output.txt ]; then
             echo "BUILD_IN_APP_SUCCESS"
           fi
-          # Verify /workspaces is empty (or doesn't contain our artifact)
-          if [ ! -f /workspaces/build-output.txt ]; then
-            echo "WORKSPACES_CLEAN"
+          # Verify /workspaces is not mounted (should be empty/non-existent or not bind-mounted)
+          if [ ! -d /workspaces ]; then
+             echo "WORKSPACES_NOT_MOUNTED"
           fi
         `,
         ],
@@ -106,8 +71,8 @@ describe('Worker Integration - Build Security', () => {
 
       // Verify build happened in /app
       expect(output).toContain('BUILD_IN_APP_SUCCESS');
-      // Verify /workspaces wasn't used
-      expect(output).toContain('WORKSPACES_CLEAN');
+      // Verify /workspaces wasn't present
+      expect(output).toContain('WORKSPACES_NOT_MOUNTED');
 
       await container.remove();
       testContainerId = null;
@@ -118,7 +83,7 @@ describe('Worker Integration - Build Security', () => {
     it('should not leak build artifacts to host workspace directory', async () => {
       const workspaceDir = getWorkspaceDir();
 
-      // Ensure workspace directory exists
+      // Ensure the workspace directory exists
       await fs.mkdir(workspaceDir, { recursive: true });
 
       // Get initial contents
@@ -148,13 +113,13 @@ describe('Worker Integration - Build Security', () => {
       await container.start();
       await container.wait();
 
-      // Get contents after build
+      // Get contents after a build
       const afterBuild = await fs.readdir(workspaceDir).catch(() => []);
 
       // Workspace directory should remain unchanged (no artifacts leaked)
       expect(afterBuild).toEqual(beforeBuild);
 
-      // Specifically check that our test files aren't there
+      // Specifically, check that our test files aren't there
       expect(afterBuild).not.toContain('secret.txt');
       expect(afterBuild).not.toContain('output.js');
 
@@ -178,12 +143,11 @@ describe('Worker Integration - Build Security', () => {
   });
 
   describe('Docker Socket Security', () => {
-    it('should only mount docker socket and workspace directory', async () => {
+    it('should only mount docker socket', async () => {
       const mounts = getSecureBindMounts();
 
-      expect(mounts).toHaveLength(2);
+      expect(mounts).toHaveLength(1);
       expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
-      expect(mounts[1]).toMatch(/\/workspaces:ro$/);
     });
 
     it('should allow docker commands via socket but not host filesystem access', async () => {
@@ -233,7 +197,7 @@ describe('Worker Integration - Build Security', () => {
   });
 
   describe('Git Clone Security', () => {
-    it('should clone repositories to /app, not /workspaces', async () => {
+    it('should clone repositories to /app', async () => {
       // Test with a real public repository
       const testRepo = 'https://github.com/octocat/Hello-World.git';
 
@@ -250,11 +214,6 @@ describe('Worker Integration - Build Security', () => {
           # Verify clone happened in /app
           if [ -d /app/.git ]; then
             echo "CLONE_IN_APP_SUCCESS"
-          fi
-
-          # Verify nothing was written to /workspaces
-          if [ -z "$(ls -A /workspaces 2>/dev/null)" ]; then
-            echo "WORKSPACES_EMPTY"
           fi
         `,
         ],
@@ -276,7 +235,6 @@ describe('Worker Integration - Build Security', () => {
       const output = logs.toString();
 
       expect(output).toContain('CLONE_IN_APP_SUCCESS');
-      expect(output).toContain('WORKSPACES_EMPTY');
 
       await container.remove();
       testContainerId = null;

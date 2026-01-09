@@ -64,7 +64,7 @@ describe('Worker', () => {
       const mounts = getSecureBindMounts();
 
       // Check that dangerous mounts are not present
-      const dangerousPaths = ['/Users', '/home', '/root', '/etc'];
+      const dangerousPaths = ['/Users', '/home', '/root', '/etc', '/workspaces'];
       const hasDangerousMount = mounts.some((mount) => {
         const hostPath = mount.split(':')[0];
         return dangerousPaths.some(
@@ -75,20 +75,11 @@ describe('Worker', () => {
       expect(hasDangerousMount).toBe(false);
     });
 
-    it('should mount workspace directory as read-only', () => {
-      const mounts = getSecureBindMounts();
-      const workspaceMount = mounts.find((m) => m.includes('/workspaces'));
-
-      expect(workspaceMount).toBeDefined();
-      expect(workspaceMount).toMatch(/:ro$/);
-    });
-
-    it('should only include docker socket and workspace mounts', () => {
+    it('should only include docker socket', () => {
       const mounts = getSecureBindMounts();
 
-      expect(mounts).toHaveLength(2);
+      expect(mounts).toHaveLength(1);
       expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
-      expect(mounts[1]).toContain('/workspaces:ro');
     });
   });
 });

@@ -9,7 +9,7 @@ import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
-import Fastify, { FastifyRequest } from 'fastify';
+import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 import { decrypt, encrypt } from './utils/crypto';
@@ -27,7 +27,7 @@ const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
 });
 
-// Helper function to get default port for service type
+// Helper function to get the default port for service type
 function getDefaultPortForServiceType(serviceType: string): number {
   const portMap: Record<string, number> = {
     STATIC: 80,
@@ -81,6 +81,42 @@ function determineServiceStatus(service: any, containers: any[]): string {
   }
 
   return 'IDLE';
+}
+
+// Helper to create and queue deployment
+async function createAndQueueDeployment(service: any, commitHash: string) {
+  const deployment = await prisma.deployment.create({
+    data: {
+      serviceId: service.id,
+      status: 'QUEUED',
+      commitHash: commitHash,
+    },
+  });
+
+  // Inject token if available
+  let repoUrlData = service.repoUrl;
+  const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+  if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+    const decryptedToken = decrypt(dbUser.githubAccessToken);
+    repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+  }
+
+  await deploymentQueue.add('build', {
+    deploymentId: deployment.id,
+    serviceId: service.id,
+    repoUrl: repoUrlData,
+    branch: service.branch,
+    buildCommand: service.buildCommand,
+    startCommand: service.startCommand,
+    serviceName: service.name,
+    port: service.port,
+    envVars: service.envVars,
+    customDomain: (service as any).customDomain,
+    type: (service as any).type,
+    staticOutputDir: (service as any).staticOutputDir,
+  });
+
+  return deployment;
 }
 
 // Helper to delete a service and its resources
@@ -163,7 +199,7 @@ async function deleteService(id: string, userId?: string) {
     }
   }
 
-  // 2. Delete deployments and service from DB
+  // 2. Delete deployments and services from DB
   await prisma.deployment.deleteMany({ where: { serviceId: id } });
   await prisma.service.delete({ where: { id } });
 }
@@ -190,7 +226,7 @@ async function getServiceMetrics(
   );
 
   // Determine aggregate status
-  let status = 'STOPPED';
+  let status: string;
   if (serviceInfo?.status === 'DEPLOYING') {
     status = 'DEPLOYING';
   } else if (allServiceContainers.length > 0) {
@@ -316,7 +352,7 @@ fastify.register(rateLimit, {
     // Global limiter is intentionally IP-based because authentication runs later
     return request.ip;
   },
-  errorResponseBuilder: (request, context) => {
+  errorResponseBuilder: (_request, context) => {
     return {
       statusCode: 429,
       error: 'Too Many Requests',
@@ -342,14 +378,6 @@ const authRateLimitConfig = {
   redis: redisConnection,
   nameSpace: 'helvetia-auth-rate-limit:',
   skipOnError: true,
-  keyGenerator: (request: FastifyRequest) => request.ip,
-  errorResponseBuilder: (request: FastifyRequest, context: any) => {
-    return {
-      statusCode: 429,
-      error: 'Too Many Requests',
-      message: `Too many authentication attempts, retry in ${Math.ceil(context.ttl / 1000)} seconds`,
-    };
-  },
   addHeadersOnExceeding: {
     'x-ratelimit-limit': true,
     'x-ratelimit-remaining': true,
@@ -369,17 +397,6 @@ const wsRateLimitConfig = {
   redis: redisConnection,
   nameSpace: 'helvetia-ws-rate-limit:',
   skipOnError: true,
-  keyGenerator: (request: FastifyRequest) => {
-    const user = (request as any).user;
-    return user?.id || request.ip;
-  },
-  errorResponseBuilder: (request: FastifyRequest, context: any) => {
-    return {
-      statusCode: 429,
-      error: 'Too Many Requests',
-      message: `Too many streaming connections, retry in ${Math.ceil(context.ttl / 1000)} seconds`,
-    };
-  },
   addHeadersOnExceeding: {
     'x-ratelimit-limit': true,
     'x-ratelimit-remaining': true,
@@ -483,7 +500,7 @@ fastify.post(
   },
 );
 
-fastify.post('/auth/logout', async (request, reply) => {
+fastify.post('/auth/logout', async (_request, reply) => {
   reply.clearCookie('token', {
     path: '/',
     httpOnly: true,
@@ -524,7 +541,7 @@ fastify.delete('/auth/github/disconnect', async (request) => {
 
 // Service Routes
 fastify.get('/services', async (request) => {
-  // Add authentication middleware in real app
+  // Add authentication middleware in a real app
   const user = (request as any).user;
   const services = await prisma.service.findMany({
     where: { userId: user.id },
@@ -536,12 +553,10 @@ fastify.get('/services', async (request) => {
   const docker = new Docker();
   const containers = await docker.listContainers({ all: true });
 
-  const enrichedServices = services.map((service) => ({
+  return services.map((service) => ({
     ...service,
     status: determineServiceStatus(service, containers),
   }));
-
-  return enrichedServices;
 });
 
 fastify.get('/services/:id', async (request, reply) => {
@@ -613,8 +628,6 @@ fastify.patch('/services/:id', async (request, reply) => {
     return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
   return prisma.service.findUnique({ where: { id } });
-
-  return service;
 });
 
 fastify.post('/services', async (request, reply) => {
@@ -685,7 +698,7 @@ fastify.post('/services', async (request, reply) => {
     }
   }
 
-  const service = await prisma.service.upsert({
+  return prisma.service.upsert({
     where: { name },
     update: {
       repoUrl,
@@ -712,8 +725,6 @@ fastify.post('/services', async (request, reply) => {
       envVars: finalEnvVars,
     },
   });
-
-  return service;
 });
 
 fastify.delete('/services/:id', async (request, reply) => {
@@ -803,7 +814,7 @@ fastify.get(
 
         const results = await Promise.all(metricsPromises);
 
-        // Send as SSE event
+        // Send it as an SSE event
         reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
       } catch (err) {
         console.error('Error sending metrics via SSE:', err);
@@ -814,7 +825,7 @@ fastify.get(
     reply.raw.write(': connected\n\n');
 
     // Fetch and send initial metrics asynchronously (non-blocking)
-    sendMetrics();
+    await sendMetrics();
     const interval = setInterval(sendMetrics, 5000);
 
     // Clean up on client disconnect
@@ -1004,7 +1015,7 @@ fastify.post(
   },
 );
 
-// Restart container without rebuilding
+// Restart a container without rebuilding
 fastify.post('/services/:id/restart', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
@@ -1036,7 +1047,7 @@ fastify.post('/services/:id/restart', async (request, reply) => {
     const containerInfo = await existingContainer.inspect();
     const imageTag = containerInfo.Config.Image;
 
-    // Generate new container name
+    // Generate a new container name
     const postfix = Math.random().toString(36).substring(2, 8);
     const containerName = `${service.name}-${postfix}`;
 
@@ -1207,36 +1218,7 @@ fastify.register(async (scope) => {
 
             console.log(`Triggering preview deployment for ${service.name}`);
 
-            const deployment = await prisma.deployment.create({
-              data: {
-                serviceId: service.id,
-                status: 'QUEUED',
-                commitHash: pr.head.sha,
-              },
-            });
-
-            // Inject token if available
-            let repoUrlData = service.repoUrl;
-            const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
-            if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-              const decryptedToken = decrypt(dbUser.githubAccessToken);
-              repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
-            }
-
-            await deploymentQueue.add('build', {
-              deploymentId: deployment.id,
-              serviceId: service.id,
-              repoUrl: repoUrlData,
-              branch: service.branch,
-              buildCommand: service.buildCommand,
-              startCommand: service.startCommand,
-              serviceName: service.name,
-              port: service.port,
-              envVars: service.envVars,
-              customDomain: (service as any).customDomain,
-              type: (service as any).type,
-              staticOutputDir: (service as any).staticOutputDir,
-            });
+            await createAndQueueDeployment(service, pr.head.sha);
 
             return { success: true, previewService: service.name };
           }
@@ -1292,36 +1274,7 @@ fastify.register(async (scope) => {
       for (const service of services) {
         console.log(`Triggering automated deployment for ${service.name}`);
 
-        const deployment = await prisma.deployment.create({
-          data: {
-            serviceId: service.id,
-            status: 'QUEUED',
-            commitHash: payload.after,
-          },
-        });
-
-        // Inject token if available
-        let repoUrlData = service.repoUrl;
-        const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
-        if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-          const decryptedToken = decrypt(dbUser.githubAccessToken);
-          repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
-        }
-
-        await deploymentQueue.add('build', {
-          deploymentId: deployment.id,
-          serviceId: service.id,
-          repoUrl: repoUrlData,
-          branch: service.branch,
-          buildCommand: service.buildCommand,
-          startCommand: service.startCommand,
-          serviceName: service.name,
-          port: service.port,
-          envVars: service.envVars,
-          customDomain: (service as any).customDomain,
-          type: (service as any).type,
-          staticOutputDir: (service as any).staticOutputDir,
-        });
+        await createAndQueueDeployment(service, payload.after);
       }
 
       return { success: true, servicesTriggered: services.length };
@@ -1392,7 +1345,7 @@ fastify.get(
 
     const onMessage = (chan: string, message: string) => {
       if (chan === channel) {
-        // Send log line as SSE event
+        // Send log line as an SSE event
         reply.raw.write(`data: ${message}\n\n`);
       }
     };
