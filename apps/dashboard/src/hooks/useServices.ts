@@ -1,6 +1,7 @@
 'use client';
 
 import { API_BASE_URL } from '@/lib/config';
+import { fetchWithAuth } from '@/lib/tokenRefresh';
 import type { Service, ServiceStatus, UpdateServiceData } from '@/types/service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -15,9 +16,7 @@ export const serviceKeys = {
 
 // Fetch all services
 async function fetchServices(): Promise<Service[]> {
-  const response = await fetch(`${API_BASE_URL}/services`, {
-    credentials: 'include',
-  });
+  const response = await fetchWithAuth(`${API_BASE_URL}/services`);
 
   if (response.status === 401) {
     throw new Error('Unauthorized');
@@ -32,9 +31,7 @@ async function fetchServices(): Promise<Service[]> {
 
 // Fetch single service
 async function fetchService(id: string): Promise<Service> {
-  const response = await fetch(`${API_BASE_URL}/services/${id}`, {
-    credentials: 'include',
-  });
+  const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}`);
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -45,12 +42,11 @@ async function fetchService(id: string): Promise<Service> {
 
 // Update service
 async function updateService(id: string, data: UpdateServiceData): Promise<Service> {
-  const response = await fetch(`${API_BASE_URL}/services/${id}`, {
+  const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
     body: JSON.stringify(data),
   });
 
@@ -63,9 +59,8 @@ async function updateService(id: string, data: UpdateServiceData): Promise<Servi
 
 // Delete service
 async function deleteService(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/services/${id}`, {
+  const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -75,9 +70,8 @@ async function deleteService(id: string): Promise<void> {
 
 // Deploy service
 async function deployService(id: string): Promise<{ id: string }> {
-  const response = await fetch(`${API_BASE_URL}/services/${id}/deploy`, {
+  const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}/deploy`, {
     method: 'POST',
-    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -89,9 +83,8 @@ async function deployService(id: string): Promise<{ id: string }> {
 
 // Restart service
 async function restartService(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/services/${id}/restart`, {
+  const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}/restart`, {
     method: 'POST',
-    credentials: 'include',
   });
 
   if (!response.ok) {

@@ -73,8 +73,6 @@ export default function Navigation() {
       );
     } finally {
       localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('gh_token');
       setIsLoggedIn(false);
       setUser(null);
       router.push('/login');

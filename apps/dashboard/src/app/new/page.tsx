@@ -3,6 +3,7 @@
 import GitHubRepoPicker from '@/components/GitHubRepoPicker';
 import { useLanguage } from '@/lib/LanguageContext';
 import { API_BASE_URL } from '@/lib/config';
+import { fetchWithAuth } from '@/lib/tokenRefresh';
 import {
   ArrowLeft,
   ChevronRight,
@@ -74,13 +75,12 @@ export default function NewServicePage() {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/services`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/services`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
 
       if (!res.ok) {
