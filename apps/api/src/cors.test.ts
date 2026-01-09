@@ -207,6 +207,26 @@ describe('CORS Security', () => {
       expect(response.headers['access-control-allow-origin']).toBe('https://app.example.com');
     });
 
+    it('should use default origin when env vars are missing', () => {
+      // Temporarily clear the configuration
+      const originalAllowed = process.env.ALLOWED_ORIGINS;
+      const originalBase = process.env.APP_BASE_URL;
+
+      delete process.env.ALLOWED_ORIGINS;
+      delete process.env.APP_BASE_URL;
+
+      // Should fall back to default localhost:3000
+      const origins = getAllowedOrigins();
+      expect(origins).toEqual(['http://localhost:3000']);
+
+      const safeOrigin = getSafeOrigin('http://malicious.com');
+      expect(safeOrigin).toBe('http://localhost:3000');
+
+      // Restore
+      if (originalAllowed) process.env.ALLOWED_ORIGINS = originalAllowed;
+      if (originalBase) process.env.APP_BASE_URL = originalBase;
+    });
+
     it('should NOT allow wildcard origin', async () => {
       process.env.ALLOWED_ORIGINS = 'http://localhost:3000';
 
