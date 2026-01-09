@@ -265,9 +265,7 @@ export default function Home() {
               <Zap size={40} className="text-slate-500" />
             </div>
             <div className="relative z-10 max-w-md">
-              <h3 className="text-3xl font-bold text-white mb-4">
-                {t.dashboard.search.noResults}
-              </h3>
+              <h3 className="text-3xl font-bold text-white mb-4">{t.dashboard.search.noResults}</h3>
               <p className="text-slate-400 text-lg mb-10 leading-relaxed">
                 {searchQuery ? t.dashboard.search.tryAgain : t.dashboard.search.getStarted}
               </p>

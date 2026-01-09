@@ -1,17 +1,14 @@
 'use client';
 
-import { Plus, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
 import FocusTrap from '@/components/FocusTrap';
 import type { Service } from '@/types/service';
+import { Plus, Trash2, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface EditServiceModalProps {
   service: Service;
   onClose: () => void;
-  onSave: (
-    service: Service,
-    envVarsList: Array<{ key: string; value: string }>,
-  ) => Promise<void>;
+  onSave: (service: Service, envVarsList: Array<{ key: string; value: string }>) => Promise<void>;
   translations: {
     modals: {
       editTitle: string;
@@ -100,9 +97,7 @@ export function EditServiceModal({
                 <input
                   type="text"
                   value={editingService.name}
-                  onChange={(e) =>
-                    setEditingService((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => setEditingService((prev) => ({ ...prev, name: e.target.value }))}
                   className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
                   required
                 />

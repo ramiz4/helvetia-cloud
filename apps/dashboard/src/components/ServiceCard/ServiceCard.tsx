@@ -1,7 +1,7 @@
 'use client';
 
-import { Cpu, Edit2, ExternalLink, FileText, Play, RotateCw, Trash2, Zap } from 'lucide-react';
 import type { Service } from '@/types/service';
+import { Cpu, Edit2, ExternalLink, FileText, Play, RotateCw, Trash2, Zap } from 'lucide-react';
 
 interface ServiceCardProps {
   service: Service;

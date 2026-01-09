@@ -1,8 +1,8 @@
 'use client';
 
+import FocusTrap from '@/components/FocusTrap';
 import { FileText, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import FocusTrap from '@/components/FocusTrap';
 
 interface LogsModalProps {
   logs: string;
