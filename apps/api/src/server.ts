@@ -9,7 +9,7 @@ import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
 import dotenv from 'dotenv';
-import Fastify from 'fastify';
+import Fastify, { FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 import { decrypt, encrypt } from './utils/crypto';
@@ -258,6 +258,33 @@ async function getServiceMetrics(
   };
 }
 
+// GitHub webhook signature verification
+function verifyGitHubSignature(
+  payload: string | Buffer,
+  signature: string,
+  secret: string,
+): boolean {
+  if (!signature || !secret) {
+    return false;
+  }
+
+  try {
+    const hmac = crypto.createHmac('sha256', secret);
+    const digest = 'sha256=' + hmac.update(payload).digest('hex');
+
+    const signatureBuffer = Buffer.from(signature);
+    const digestBuffer = Buffer.from(digest);
+    if (signatureBuffer.length !== digestBuffer.length) {
+      return false;
+    }
+    // Use timingSafeEqual to prevent timing attacks
+    return crypto.timingSafeEqual(signatureBuffer, digestBuffer);
+  } catch (error) {
+    console.error('Error verifying GitHub signature:', error);
+    return false;
+  }
+}
+
 export const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
 });
@@ -315,8 +342,8 @@ const authRateLimitConfig = {
   redis: redisConnection,
   nameSpace: 'helvetia-auth-rate-limit:',
   skipOnError: true,
-  keyGenerator: (request) => request.ip,
-  errorResponseBuilder: (request, context) => {
+  keyGenerator: (request: FastifyRequest) => request.ip,
+  errorResponseBuilder: (request: FastifyRequest, context: any) => {
     return {
       statusCode: 429,
       error: 'Too Many Requests',
@@ -342,11 +369,11 @@ const wsRateLimitConfig = {
   redis: redisConnection,
   nameSpace: 'helvetia-ws-rate-limit:',
   skipOnError: true,
-  keyGenerator: (request) => {
+  keyGenerator: (request: FastifyRequest) => {
     const user = (request as any).user;
     return user?.id || request.ip;
   },
-  errorResponseBuilder: (request, context) => {
+  errorResponseBuilder: (request: FastifyRequest, context: any) => {
     return {
       statusCode: 429,
       error: 'Too Many Requests',
@@ -1077,184 +1104,230 @@ fastify.post('/services/:id/restart', async (request, reply) => {
   }
 });
 
-fastify.post(
-  '/webhooks/github',
-  { config: { rateLimit: authRateLimitConfig } },
-  async (request) => {
-    const payload = request.body as any;
+// Webhook scope to capture raw body
+fastify.register(async (scope) => {
+  scope.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
+    (req as any).rawBody = body;
+    try {
+      const json = JSON.parse(body.toString());
+      done(null, json);
+    } catch (err: any) {
+      done(err, undefined);
+    }
+  });
 
-    // Handle Pull Request events
-    if (payload.pull_request) {
-      try {
-        const pr = payload.pull_request;
-        const action = payload.action;
-        const prNumber = payload.number;
-        const repoUrl = pr.base.repo.html_url;
-        const headBranch = pr.head.ref;
+  scope.post(
+    '/webhooks/github',
+    { config: { rateLimit: authRateLimitConfig } },
+    async (request, reply) => {
+      // Verify GitHub webhook signature
+      const signature = request.headers['x-hub-signature-256'] as string;
+      const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 
-        console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
-
-        if (['opened', 'synchronize'].includes(action)) {
-          // Find the base service for this repo (the one that isn't a preview)
-          const baseService = await prisma.service.findFirst({
-            where: {
-              repoUrl: { contains: repoUrl },
-              isPreview: false,
-            },
-          });
-
-          if (!baseService) {
-            console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
-            return { skipped: 'No base service found' };
-          }
-
-          const previewName = `${baseService.name}-pr-${prNumber}`;
-
-          // Upsert the preview service
-          const service = await prisma.service.upsert({
-            where: { name: previewName },
-            update: {
-              branch: headBranch,
-              status: 'IDLE',
-            },
-            create: {
-              name: previewName,
-              repoUrl: baseService.repoUrl,
-              branch: headBranch,
-              buildCommand: baseService.buildCommand,
-              startCommand: baseService.startCommand,
-              port: baseService.port,
-              type: baseService.type,
-              staticOutputDir: baseService.staticOutputDir,
-              envVars: baseService.envVars || {},
-              userId: baseService.userId,
-              isPreview: true,
-              prNumber: prNumber,
-            },
-          });
-
-          console.log(`Triggering preview deployment for ${service.name}`);
-
-          const deployment = await prisma.deployment.create({
-            data: {
-              serviceId: service.id,
-              status: 'QUEUED',
-              commitHash: pr.head.sha,
-            },
-          });
-
-          // Inject token if available
-          let repoUrlData = service.repoUrl;
-          const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
-          if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-            const decryptedToken = decrypt(dbUser.githubAccessToken);
-            repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
-          }
-
-          await deploymentQueue.add('build', {
-            deploymentId: deployment.id,
-            serviceId: service.id,
-            repoUrl: repoUrlData,
-            branch: service.branch,
-            buildCommand: service.buildCommand,
-            startCommand: service.startCommand,
-            serviceName: service.name,
-            port: service.port,
-            envVars: service.envVars,
-            customDomain: (service as any).customDomain,
-            type: (service as any).type,
-            staticOutputDir: (service as any).staticOutputDir,
-          });
-
-          return { success: true, previewService: service.name };
-        }
-
-        if (action === 'closed') {
-          const previewService = await prisma.service.findFirst({
-            where: {
-              prNumber: prNumber,
-              repoUrl: { contains: repoUrl },
-              isPreview: true,
-            },
-          });
-
-          if (previewService) {
-            console.log(`Cleaning up preview environment for PR #${prNumber}`);
-            await deleteService(previewService.id, previewService.userId);
-            return { success: true, deletedService: previewService.name };
-          }
-          return { skipped: 'No preview service found to delete' };
-        }
-
-        return { skipped: `Action ${action} not handled` };
-      } catch (error) {
-        console.error('Error handling GitHub PR webhook:', error);
-        return { error: 'Internal server error while processing webhook' };
+      if (!webhookSecret) {
+        console.error('GITHUB_WEBHOOK_SECRET is not configured');
+        return reply.status(500).send({ error: 'Webhook secret not configured' });
       }
-    }
 
-    // Basic check for push event
-    if (!payload.repository || !payload.ref) {
-      return { skipped: 'Not a push or PR event' };
-    }
+      if (!signature) {
+        console.warn('GitHub webhook received without signature', {
+          ip: request.ip,
+          headers: request.headers,
+        });
+        return reply.status(401).send({ error: 'Missing signature' });
+      }
 
-    const repoUrl = payload.repository.html_url;
-    const branch = payload.ref.replace('refs/heads/', '');
+      // Get raw body for signature verification
+      const rawBody = (request as any).rawBody;
 
-    console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
+      if (!rawBody) {
+        console.warn('GitHub webhook received without raw body');
+        return reply.status(400).send({ error: 'Missing raw body' });
+      }
 
-    // Find service(s) matching this repo and branch
-    const services = await prisma.service.findMany({
-      where: {
-        repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
-        branch,
-        isPreview: false, // Only trigger non-preview services for push events
-      },
-    });
+      if (!verifyGitHubSignature(rawBody, signature, webhookSecret)) {
+        console.warn('GitHub webhook signature verification failed', {
+          ip: request.ip,
+          signature: signature.substring(0, 20) + '...',
+        });
+        return reply.status(401).send({ error: 'Invalid signature' });
+      }
 
-    if (services.length === 0) {
-      console.log(`No service found for ${repoUrl} on branch ${branch}`);
-      return { skipped: 'No matching service found' };
-    }
+      const payload = request.body as any;
 
-    for (const service of services) {
-      console.log(`Triggering automated deployment for ${service.name}`);
+      // Handle Pull Request events
+      if (payload.pull_request) {
+        try {
+          const pr = payload.pull_request;
+          const action = payload.action;
+          const prNumber = payload.number;
+          const repoUrl = pr.base.repo.html_url;
+          const headBranch = pr.head.ref;
 
-      const deployment = await prisma.deployment.create({
-        data: {
-          serviceId: service.id,
-          status: 'QUEUED',
-          commitHash: payload.after,
+          console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
+
+          if (['opened', 'synchronize'].includes(action)) {
+            // Find the base service for this repo (the one that isn't a preview)
+            const baseService = await prisma.service.findFirst({
+              where: {
+                repoUrl: { contains: repoUrl },
+                isPreview: false,
+              },
+            });
+
+            if (!baseService) {
+              console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
+              return { skipped: 'No base service found' };
+            }
+
+            const previewName = `${baseService.name}-pr-${prNumber}`;
+
+            // Upsert the preview service
+            const service = await prisma.service.upsert({
+              where: { name: previewName },
+              update: {
+                branch: headBranch,
+                status: 'IDLE',
+              },
+              create: {
+                name: previewName,
+                repoUrl: baseService.repoUrl,
+                branch: headBranch,
+                buildCommand: baseService.buildCommand,
+                startCommand: baseService.startCommand,
+                port: baseService.port,
+                type: baseService.type,
+                staticOutputDir: baseService.staticOutputDir,
+                envVars: baseService.envVars || {},
+                userId: baseService.userId,
+                isPreview: true,
+                prNumber: prNumber,
+              },
+            });
+
+            console.log(`Triggering preview deployment for ${service.name}`);
+
+            const deployment = await prisma.deployment.create({
+              data: {
+                serviceId: service.id,
+                status: 'QUEUED',
+                commitHash: pr.head.sha,
+              },
+            });
+
+            // Inject token if available
+            let repoUrlData = service.repoUrl;
+            const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+            if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+              const decryptedToken = decrypt(dbUser.githubAccessToken);
+              repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+            }
+
+            await deploymentQueue.add('build', {
+              deploymentId: deployment.id,
+              serviceId: service.id,
+              repoUrl: repoUrlData,
+              branch: service.branch,
+              buildCommand: service.buildCommand,
+              startCommand: service.startCommand,
+              serviceName: service.name,
+              port: service.port,
+              envVars: service.envVars,
+              customDomain: (service as any).customDomain,
+              type: (service as any).type,
+              staticOutputDir: (service as any).staticOutputDir,
+            });
+
+            return { success: true, previewService: service.name };
+          }
+
+          if (action === 'closed') {
+            const previewService = await prisma.service.findFirst({
+              where: {
+                prNumber: prNumber,
+                repoUrl: { contains: repoUrl },
+                isPreview: true,
+              },
+            });
+
+            if (previewService) {
+              console.log(`Cleaning up preview environment for PR #${prNumber}`);
+              await deleteService(previewService.id, previewService.userId);
+              return { success: true, deletedService: previewService.name };
+            }
+            return { skipped: 'No preview service found to delete' };
+          }
+
+          return { skipped: `Action ${action} not handled` };
+        } catch (error) {
+          console.error('Error handling GitHub PR webhook:', error);
+          return { error: 'Internal server error while processing webhook' };
+        }
+      }
+
+      // Basic check for push event
+      if (!payload.repository || !payload.ref) {
+        return { skipped: 'Not a push or PR event' };
+      }
+
+      const repoUrl = payload.repository.html_url;
+      const branch = payload.ref.replace('refs/heads/', '');
+
+      console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
+
+      // Find service(s) matching this repo and branch
+      const services = await prisma.service.findMany({
+        where: {
+          repoUrl: { contains: repoUrl }, // Use contains to handle .git suffix variations
+          branch,
+          isPreview: false, // Only trigger non-preview services for push events
         },
       });
 
-      // Inject token if available
-      let repoUrlData = service.repoUrl;
-      const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
-      if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-        const decryptedToken = decrypt(dbUser.githubAccessToken);
-        repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+      if (services.length === 0) {
+        console.log(`No service found for ${repoUrl} on branch ${branch}`);
+        return { skipped: 'No matching service found' };
       }
 
-      await deploymentQueue.add('build', {
-        deploymentId: deployment.id,
-        serviceId: service.id,
-        repoUrl: repoUrlData,
-        branch: service.branch,
-        buildCommand: service.buildCommand,
-        startCommand: service.startCommand,
-        serviceName: service.name,
-        port: service.port,
-        envVars: service.envVars,
-        customDomain: (service as any).customDomain,
-        type: (service as any).type,
-        staticOutputDir: (service as any).staticOutputDir,
-      });
-    }
+      for (const service of services) {
+        console.log(`Triggering automated deployment for ${service.name}`);
 
-    return { success: true, servicesTriggered: services.length };
-  },
-);
+        const deployment = await prisma.deployment.create({
+          data: {
+            serviceId: service.id,
+            status: 'QUEUED',
+            commitHash: payload.after,
+          },
+        });
+
+        // Inject token if available
+        let repoUrlData = service.repoUrl;
+        const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+        if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
+          const decryptedToken = decrypt(dbUser.githubAccessToken);
+          repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
+        }
+
+        await deploymentQueue.add('build', {
+          deploymentId: deployment.id,
+          serviceId: service.id,
+          repoUrl: repoUrlData,
+          branch: service.branch,
+          buildCommand: service.buildCommand,
+          startCommand: service.startCommand,
+          serviceName: service.name,
+          port: service.port,
+          envVars: service.envVars,
+          customDomain: (service as any).customDomain,
+          type: (service as any).type,
+          staticOutputDir: (service as any).staticOutputDir,
+        });
+      }
+
+      return { success: true, servicesTriggered: services.length };
+    },
+  );
+});
 
 fastify.get('/services/:id/deployments', async (request, reply) => {
   const { id } = request.params as any;

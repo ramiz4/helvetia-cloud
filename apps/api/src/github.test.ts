@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // We use vi.hoisted to ensure these mocks are available during hoisting
@@ -343,6 +344,16 @@ describe('GitHub Integration', () => {
   });
 
   describe('POST /webhooks/github', () => {
+    // Set webhook secret for these tests
+    beforeEach(() => {
+      process.env.GITHUB_WEBHOOK_SECRET = 'test-webhook-secret';
+    });
+
+    function generateSignature(rawBody: string | Buffer, secret: string): string {
+      const hmac = crypto.createHmac('sha256', secret);
+      return 'sha256=' + hmac.update(rawBody).digest('hex');
+    }
+
     it('should create a preview environment and inject token into queue', async () => {
       const { prisma } = await import('database');
       const mockBaseService = {
@@ -371,18 +382,25 @@ describe('GitHub Integration', () => {
       } as never);
       vi.mocked(prisma.deployment.create).mockResolvedValue({ id: 'deployment-id' } as never);
 
+      const payload = {
+        action: 'opened',
+        number: 123,
+        pull_request: {
+          number: 123,
+          head: { ref: 'feature-branch', sha: 'abc1234' },
+          base: { repo: { html_url: 'https://github.com/owner/repo' } },
+        },
+      };
+
+      const rawBody = Buffer.from(JSON.stringify(payload));
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
-        payload: {
-          action: 'opened',
-          number: 123,
-          pull_request: {
-            number: 123,
-            head: { ref: 'feature-branch', sha: 'abc1234' },
-            base: { repo: { html_url: 'https://github.com/owner/repo' } },
-          },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': generateSignature(rawBody, 'test-webhook-secret'),
         },
+        payload: rawBody,
       });
 
       expect(response.statusCode).toBe(200);
@@ -410,18 +428,25 @@ describe('GitHub Integration', () => {
       vi.mocked(prisma.service.delete).mockResolvedValue(mockPreviewService as never);
       vi.mocked(prisma.deployment.findMany).mockResolvedValue([]);
 
+      const payload = {
+        action: 'closed',
+        number: 123,
+        pull_request: {
+          number: 123,
+          head: { ref: 'feature-branch' },
+          base: { repo: { html_url: 'https://github.com/owner/repo' } },
+        },
+      };
+
+      const rawBody = Buffer.from(JSON.stringify(payload));
       const response = await fastify.inject({
         method: 'POST',
         url: '/webhooks/github',
-        payload: {
-          action: 'closed',
-          number: 123,
-          pull_request: {
-            number: 123,
-            head: { ref: 'feature-branch' },
-            base: { repo: { html_url: 'https://github.com/owner/repo' } },
-          },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': generateSignature(rawBody, 'test-webhook-secret'),
         },
+        payload: rawBody,
       });
 
       expect(response.statusCode).toBe(200);

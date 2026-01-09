@@ -84,6 +84,33 @@ The API includes production-ready rate limiting with Redis-backed distributed st
 
 > **Note**: Health check endpoints (`/health`) are automatically excluded from rate limiting for monitoring purposes.
 
+#### GitHub Webhook Configuration
+
+To enable automated deployments via GitHub webhooks:
+
+1. **Generate a webhook secret** (or use any strong random string):
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+2. **Add to your `.env` file**:
+
+   ```env
+   GITHUB_WEBHOOK_SECRET=your_generated_secret_here
+   ```
+
+3. **Configure in GitHub Repository**:
+   - Go to your repository settings
+   - Navigate to **Settings** > **Webhooks** > **Add webhook**
+   - Set **Payload URL** to: `https://your-domain.com/webhooks/github`
+   - Set **Content type** to: `application/json`
+   - Set **Secret** to: The same value as your `GITHUB_WEBHOOK_SECRET`
+   - Select events: **Push events** and **Pull requests**
+   - Click **Add webhook**
+
+> **Security Note**: The webhook endpoint verifies GitHub signatures using HMAC SHA-256. Requests without valid signatures are rejected with a 401 status code. Always keep your webhook secret secure and never commit it to version control.
+
 ### 3. Launch Infrastructure
 
 Start the core services (Database, Redis, and Traefik):

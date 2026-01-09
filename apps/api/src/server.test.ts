@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import crypto from 'crypto';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // We must mock BEFORE importing the server
 vi.mock('ioredis', () => {
@@ -405,5 +406,203 @@ describe('API Server', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ message: 'Logged out successfully' });
+  });
+
+  describe('GitHub Webhook Signature Verification', () => {
+    const originalEnv = process.env.GITHUB_WEBHOOK_SECRET;
+
+    beforeEach(() => {
+      // Set a test webhook secret
+      process.env.GITHUB_WEBHOOK_SECRET = 'test-webhook-secret-key';
+      vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+      // Restore original env
+      if (originalEnv) {
+        process.env.GITHUB_WEBHOOK_SECRET = originalEnv;
+      } else {
+        delete process.env.GITHUB_WEBHOOK_SECRET;
+      }
+    });
+
+    function generateSignature(rawBody: string | Buffer, secret: string): string {
+      const hmac = crypto.createHmac('sha256', secret);
+      return 'sha256=' + hmac.update(rawBody).digest('hex');
+    }
+
+    it('should reject webhook request without signature', async () => {
+      const payload = {
+        repository: { html_url: 'https://github.com/test/repo' },
+        ref: 'refs/heads/main',
+      };
+
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/webhooks/github',
+        payload,
+      });
+
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toEqual({ error: 'Missing signature' });
+    });
+
+    it('should reject webhook request with invalid signature', async () => {
+      const payload = {
+        repository: { html_url: 'https://github.com/test/repo' },
+        ref: 'refs/heads/main',
+      };
+
+      const rawBody = Buffer.from(JSON.stringify(payload));
+
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/webhooks/github',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': 'sha256=invalidsignature',
+        },
+        payload: rawBody,
+      });
+
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toEqual({ error: 'Invalid signature' });
+    });
+
+    it('should accept webhook request with valid signature', async () => {
+      const payload = {
+        repository: { html_url: 'https://github.com/test/repo' },
+        ref: 'refs/heads/main',
+      };
+      const rawBody = Buffer.from(JSON.stringify(payload));
+      const signature = generateSignature(rawBody, 'test-webhook-secret-key');
+
+      const { prisma } = await import('database');
+      vi.mocked(prisma.service.findMany).mockResolvedValue([]);
+
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/webhooks/github',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': signature,
+        },
+        payload: rawBody,
+      });
+
+      // Should not be 401 (might be 200 with skipped message or other valid response)
+      expect(response.statusCode).not.toBe(401);
+      expect(response.json()).toHaveProperty('skipped');
+    });
+
+    it('should handle pull request webhook with valid signature', async () => {
+      const payload = {
+        action: 'opened',
+        number: 42,
+        pull_request: {
+          number: 42,
+          head: {
+            ref: 'feature-branch',
+            sha: 'abc123',
+          },
+          base: {
+            repo: {
+              html_url: 'https://github.com/test/repo',
+            },
+          },
+        },
+      };
+      const rawBody = Buffer.from(JSON.stringify(payload));
+      const signature = generateSignature(rawBody, 'test-webhook-secret-key');
+
+      const { prisma } = await import('database');
+      vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/webhooks/github',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': signature,
+        },
+        payload: rawBody,
+      });
+
+      expect(response.statusCode).not.toBe(401);
+      expect(response.json()).toHaveProperty('skipped');
+    });
+
+    it('should return 500 if GITHUB_WEBHOOK_SECRET is not configured', async () => {
+      delete process.env.GITHUB_WEBHOOK_SECRET;
+
+      const payload = {
+        repository: { html_url: 'https://github.com/test/repo' },
+        ref: 'refs/heads/main',
+      };
+      const rawBody = Buffer.from(JSON.stringify(payload));
+      const signature = generateSignature(rawBody, 'test-webhook-secret-key');
+
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/webhooks/github',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': signature,
+        },
+        payload: rawBody,
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({ error: 'Webhook secret not configured' });
+    });
+
+    it('should log suspicious requests with missing signature', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn');
+      const payload = {
+        repository: { html_url: 'https://github.com/test/repo' },
+        ref: 'refs/heads/main',
+      };
+
+      await fastify.inject({
+        method: 'POST',
+        url: '/webhooks/github',
+        payload,
+      });
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'GitHub webhook received without signature',
+        expect.objectContaining({
+          ip: expect.any(String),
+        }),
+      );
+    });
+
+    it('should log suspicious requests with invalid signature', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn');
+      const payload = {
+        repository: { html_url: 'https://github.com/test/repo' },
+        ref: 'refs/heads/main',
+      };
+
+      const rawBody = Buffer.from(JSON.stringify(payload));
+
+      await fastify.inject({
+        method: 'POST',
+        url: '/webhooks/github',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hub-signature-256': 'sha256=invalidsignature',
+        },
+        payload: rawBody,
+      });
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'GitHub webhook signature verification failed',
+        expect.objectContaining({
+          ip: expect.any(String),
+          signature: expect.stringContaining('sha256='),
+        }),
+      );
+    });
   });
 });
