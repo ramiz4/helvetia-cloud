@@ -3,9 +3,10 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const KEY = process.env.ENCRYPTION_KEY || 'development_key_32_chars_long_!!';
+const SALT = process.env.ENCRYPTION_SALT || crypto.randomBytes(16).toString('hex');
 
 // Ensure the key is 32 bytes
-const ENCRYPTION_KEY = crypto.scryptSync(KEY, 'salt', 32);
+const ENCRYPTION_KEY = crypto.scryptSync(KEY, SALT, 32);
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
@@ -23,7 +24,7 @@ export function encrypt(text: string): string {
 export function decrypt(text: string): string {
   const [ivHex, authTagHex, encryptedText] = text.split(':');
 
-  if (!ivHex || !authTagHex || !encryptedText) {
+  if (!ivHex || !authTagHex || encryptedText === undefined) {
     throw new Error('Invalid encrypted text format');
   }
 
