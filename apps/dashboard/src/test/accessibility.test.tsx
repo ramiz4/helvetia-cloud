@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
-import { axe } from 'vitest-axe';
 import { describe, expect, it } from 'vitest';
+import { axe } from 'vitest-axe';
+import CookieBanner from '../components/CookieBanner';
 import Navigation from '../components/Navigation';
 import UserMenu from '../components/UserMenu';
-import CookieBanner from '../components/CookieBanner';
 import { LanguageProvider } from '../lib/LanguageContext';
 
 // Helper to wrap components with LanguageProvider
@@ -35,9 +35,7 @@ describe('Accessibility Tests', () => {
       };
       const mockLogout = () => {};
 
-      const { container } = renderWithProviders(
-        <UserMenu user={mockUser} onLogout={mockLogout} />,
-      );
+      const { container } = renderWithProviders(<UserMenu user={mockUser} onLogout={mockLogout} />);
       const results = await axe(container);
       expect(results.violations).toEqual([]);
     });

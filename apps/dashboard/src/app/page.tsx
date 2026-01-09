@@ -648,31 +648,31 @@ export default function Home() {
               aria-labelledby="logs-modal-title"
             >
               <div className="p-6 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
-              <div className="flex items-center gap-3">
-                <FileText size={20} className="text-indigo-400" />
-                <h2 id="logs-modal-title" className="text-xl font-bold text-white">
-                  {t.dashboard.modals.logsTitle}
-                </h2>
+                <div className="flex items-center gap-3">
+                  <FileText size={20} className="text-indigo-400" />
+                  <h2 id="logs-modal-title" className="text-xl font-bold text-white">
+                    {t.dashboard.modals.logsTitle}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedLogs(null);
+                    setActiveDeploymentId(null);
+                  }}
+                  className="p-2 rounded-lg hover:bg-white/10 text-slate-400 transition-colors"
+                  aria-label="Close logs"
+                >
+                  <X size={24} />
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setSelectedLogs(null);
-                  setActiveDeploymentId(null);
-                }}
-                className="p-2 rounded-lg hover:bg-white/10 text-slate-400 transition-colors"
-                aria-label="Close logs"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-auto p-6 bg-black/40 custom-scrollbar">
-              <pre className="font-mono text-sm text-slate-300 whitespace-pre-wrap underline-offset-4 leading-relaxed">
-                {selectedLogs}
-              </pre>
-            </div>
-            <div className="p-4 border-t border-white/10 bg-slate-900/50 text-xs font-medium text-slate-500 tracking-wider uppercase">
-              {activeDeploymentId ? t.dashboard.modals.streaming : t.dashboard.modals.ended}
-            </div>
+              <div className="flex-1 overflow-auto p-6 bg-black/40 custom-scrollbar">
+                <pre className="font-mono text-sm text-slate-300 whitespace-pre-wrap underline-offset-4 leading-relaxed">
+                  {selectedLogs}
+                </pre>
+              </div>
+              <div className="p-4 border-t border-white/10 bg-slate-900/50 text-xs font-medium text-slate-500 tracking-wider uppercase">
+                {activeDeploymentId ? t.dashboard.modals.streaming : t.dashboard.modals.ended}
+              </div>
             </div>
           </FocusTrap>
         </div>
@@ -691,263 +691,267 @@ export default function Home() {
             >
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
-              <h2 id="edit-modal-title" className="text-xl font-bold text-white tracking-tight">
-                {t.dashboard.modals.editTitle}
-              </h2>
-              <button
-                onClick={() => setEditingService(null)}
-                className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                aria-label="Close edit dialog"
-              >
-                <X size={20} />
-              </button>
-            </div>
+                <h2 id="edit-modal-title" className="text-xl font-bold text-white tracking-tight">
+                  {t.dashboard.modals.editTitle}
+                </h2>
+                <button
+                  onClick={() => setEditingService(null)}
+                  className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                  aria-label="Close edit dialog"
+                >
+                  <X size={20} />
+                </button>
+              </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-              <form id="edit-service-form" onSubmit={updateService} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    {t.dashboard.labels.serviceName}
-                  </label>
-                  <input
-                    type="text"
-                    value={editingService.name}
-                    onChange={(e) =>
-                      setEditingService((prev) => (prev ? { ...prev, name: e.target.value } : null))
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    {t.dashboard.labels.repoUrl}
-                  </label>
-                  <input
-                    type="text"
-                    value={editingService.repoUrl}
-                    onChange={(e) =>
-                      setEditingService((prev) =>
-                        prev ? { ...prev, repoUrl: e.target.value } : null,
-                      )
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <form id="edit-service-form" onSubmit={updateService} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                      {t.dashboard.labels.serviceType}
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={editingService.type || 'DOCKER'}
-                        onChange={(e) =>
-                          setEditingService((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  type: e.target.value,
-                                  port: e.target.value === 'STATIC' ? 80 : prev.port,
-                                }
-                              : null,
-                          )
-                        }
-                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium appearance-none"
-                      >
-                        <option value="DOCKER">{t.dashboard.newService.dockerService}</option>
-                        <option value="STATIC">{t.dashboard.newService.staticSite}</option>
-                        <option value="COMPOSE">{t.dashboard.newService.composeStack}</option>
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M6 9l6 6 6-6" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                      {t.dashboard.labels.branch}
+                      {t.dashboard.labels.serviceName}
                     </label>
                     <input
                       type="text"
-                      value={editingService.branch || ''}
+                      value={editingService.name}
                       onChange={(e) =>
                         setEditingService((prev) =>
-                          prev ? { ...prev, branch: e.target.value } : null,
+                          prev ? { ...prev, name: e.target.value } : null,
                         )
                       }
                       className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                      placeholder="main"
+                      required
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {editingService.type !== 'STATIC' && (
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                        {editingService.type === 'COMPOSE'
-                          ? t.dashboard.labels.composeFile
-                          : t.dashboard.labels.buildCommand}
-                      </label>
-                      <input
-                        type="text"
-                        value={editingService.buildCommand || ''}
-                        onChange={(e) =>
-                          setEditingService((prev) =>
-                            prev ? { ...prev, buildCommand: e.target.value } : null,
-                          )
-                        }
-                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                        placeholder={
-                          editingService.type === 'COMPOSE' ? 'docker-compose.yml' : 'npm run build'
-                        }
-                      />
-                    </div>
-                  )}
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                      {editingService.type === 'STATIC'
-                        ? t.dashboard.labels.outputDir
-                        : editingService.type === 'COMPOSE'
-                          ? t.dashboard.labels.mainService
-                          : t.dashboard.labels.startCommand}
+                      {t.dashboard.labels.repoUrl}
                     </label>
                     <input
                       type="text"
-                      value={
-                        editingService.type === 'STATIC'
-                          ? editingService.staticOutputDir || ''
-                          : editingService.startCommand || ''
-                      }
+                      value={editingService.repoUrl}
                       onChange={(e) =>
                         setEditingService((prev) =>
-                          prev
-                            ? editingService.type === 'STATIC'
-                              ? { ...prev, staticOutputDir: e.target.value }
-                              : { ...prev, startCommand: e.target.value }
-                            : null,
+                          prev ? { ...prev, repoUrl: e.target.value } : null,
                         )
                       }
-                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                      placeholder={editingService.type === 'STATIC' ? 'dist' : 'npm start'}
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                      required
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    {t.dashboard.labels.port}
-                  </label>
-                  <input
-                    type="number"
-                    value={editingService.port || 3000}
-                    onChange={(e) =>
-                      setEditingService((prev) =>
-                        prev ? { ...prev, port: parseInt(e.target.value) } : null,
-                      )
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium disabled:opacity-50"
-                    disabled={editingService.type === 'STATIC'}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                      {t.dashboard.labels.envVars}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setEditingEnvVarsList((prev) => [...prev, { key: '', value: '' }])
-                      }
-                      className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 transition-all"
-                    >
-                      <Plus size={12} /> {t.dashboard.newService.addVariable}
-                    </button>
-                  </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {editingEnvVarsList.length === 0 ? (
-                      <div className="py-8 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600">
-                        <span className="text-xs">{t.dashboard.newService.noEnvVars}</span>
-                      </div>
-                    ) : (
-                      editingEnvVarsList.map((ev, i) => (
-                        <div key={i} className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="KEY"
-                            value={ev.key}
-                            onChange={(e) => {
-                              const newList = [...editingEnvVarsList];
-                              newList[i].key = e.target.value;
-                              setEditingEnvVarsList(newList);
-                            }}
-                            className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
-                          />
-                          <input
-                            type="text"
-                            placeholder="VALUE"
-                            value={ev.value}
-                            onChange={(e) => {
-                              const newList = [...editingEnvVarsList];
-                              newList[i].value = e.target.value;
-                              setEditingEnvVarsList(newList);
-                            }}
-                            className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditingEnvVarsList((prev) => prev.filter((_, idx) => idx !== i))
-                            }
-                            className="p-2 bg-white/5 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                        {t.dashboard.labels.serviceType}
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={editingService.type || 'DOCKER'}
+                          onChange={(e) =>
+                            setEditingService((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    type: e.target.value,
+                                    port: e.target.value === 'STATIC' ? 80 : prev.port,
+                                  }
+                                : null,
+                            )
+                          }
+                          className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium appearance-none"
+                        >
+                          <option value="DOCKER">{t.dashboard.newService.dockerService}</option>
+                          <option value="STATIC">{t.dashboard.newService.staticSite}</option>
+                          <option value="COMPOSE">{t.dashboard.newService.composeStack}</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                           >
-                            <Trash2 size={16} />
-                          </button>
+                            <path d="M6 9l6 6 6-6" />
+                          </svg>
                         </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </form>
-            </div>
+                      </div>
+                    </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-white/10 bg-white/5 shrink-0 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setEditingService(null)}
-                className="px-6 py-2.5 rounded-xl font-bold text-slate-400 hover:bg-white/5 transition-all"
-              >
-                {t.dashboard.actions.cancel}
-              </button>
-              <button
-                type="submit"
-                form="edit-service-form"
-                className="px-8 py-2.5 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 shadow-xl shadow-indigo-500/20 transition-all active:scale-95"
-              >
-                {t.dashboard.actions.save}
-              </button>
-            </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                        {t.dashboard.labels.branch}
+                      </label>
+                      <input
+                        type="text"
+                        value={editingService.branch || ''}
+                        onChange={(e) =>
+                          setEditingService((prev) =>
+                            prev ? { ...prev, branch: e.target.value } : null,
+                          )
+                        }
+                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                        placeholder="main"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {editingService.type !== 'STATIC' && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                          {editingService.type === 'COMPOSE'
+                            ? t.dashboard.labels.composeFile
+                            : t.dashboard.labels.buildCommand}
+                        </label>
+                        <input
+                          type="text"
+                          value={editingService.buildCommand || ''}
+                          onChange={(e) =>
+                            setEditingService((prev) =>
+                              prev ? { ...prev, buildCommand: e.target.value } : null,
+                            )
+                          }
+                          className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                          placeholder={
+                            editingService.type === 'COMPOSE'
+                              ? 'docker-compose.yml'
+                              : 'npm run build'
+                          }
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                        {editingService.type === 'STATIC'
+                          ? t.dashboard.labels.outputDir
+                          : editingService.type === 'COMPOSE'
+                            ? t.dashboard.labels.mainService
+                            : t.dashboard.labels.startCommand}
+                      </label>
+                      <input
+                        type="text"
+                        value={
+                          editingService.type === 'STATIC'
+                            ? editingService.staticOutputDir || ''
+                            : editingService.startCommand || ''
+                        }
+                        onChange={(e) =>
+                          setEditingService((prev) =>
+                            prev
+                              ? editingService.type === 'STATIC'
+                                ? { ...prev, staticOutputDir: e.target.value }
+                                : { ...prev, startCommand: e.target.value }
+                              : null,
+                          )
+                        }
+                        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                        placeholder={editingService.type === 'STATIC' ? 'dist' : 'npm start'}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                      {t.dashboard.labels.port}
+                    </label>
+                    <input
+                      type="number"
+                      value={editingService.port || 3000}
+                      onChange={(e) =>
+                        setEditingService((prev) =>
+                          prev ? { ...prev, port: parseInt(e.target.value) } : null,
+                        )
+                      }
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium disabled:opacity-50"
+                      disabled={editingService.type === 'STATIC'}
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                        {t.dashboard.labels.envVars}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingEnvVarsList((prev) => [...prev, { key: '', value: '' }])
+                        }
+                        className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 transition-all"
+                      >
+                        <Plus size={12} /> {t.dashboard.newService.addVariable}
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                      {editingEnvVarsList.length === 0 ? (
+                        <div className="py-8 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600">
+                          <span className="text-xs">{t.dashboard.newService.noEnvVars}</span>
+                        </div>
+                      ) : (
+                        editingEnvVarsList.map((ev, i) => (
+                          <div key={i} className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="KEY"
+                              value={ev.key}
+                              onChange={(e) => {
+                                const newList = [...editingEnvVarsList];
+                                newList[i].key = e.target.value;
+                                setEditingEnvVarsList(newList);
+                              }}
+                              className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                            />
+                            <input
+                              type="text"
+                              placeholder="VALUE"
+                              value={ev.value}
+                              onChange={(e) => {
+                                const newList = [...editingEnvVarsList];
+                                newList[i].value = e.target.value;
+                                setEditingEnvVarsList(newList);
+                              }}
+                              className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingEnvVarsList((prev) => prev.filter((_, idx) => idx !== i))
+                              }
+                              className="p-2 bg-white/5 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-white/10 bg-white/5 shrink-0 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingService(null)}
+                  className="px-6 py-2.5 rounded-xl font-bold text-slate-400 hover:bg-white/5 transition-all"
+                >
+                  {t.dashboard.actions.cancel}
+                </button>
+                <button
+                  type="submit"
+                  form="edit-service-form"
+                  className="px-8 py-2.5 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 shadow-xl shadow-indigo-500/20 transition-all active:scale-95"
+                >
+                  {t.dashboard.actions.save}
+                </button>
+              </div>
             </div>
           </FocusTrap>
         </div>

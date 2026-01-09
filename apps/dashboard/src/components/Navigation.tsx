@@ -191,7 +191,9 @@ export default function Navigation() {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="flex lg:hidden items-center justify-center p-2 rounded-xl bg-white/5 border border-white/10 text-white z-50"
-            aria-label={isMenuOpen ? t.nav.closeMenu || 'Close Menu' : t.nav.openMenu || 'Open Menu'}
+            aria-label={
+              isMenuOpen ? t.nav.closeMenu || 'Close Menu' : t.nav.openMenu || 'Open Menu'
+            }
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
           >
