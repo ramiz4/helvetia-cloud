@@ -5,7 +5,11 @@ import { type Language } from '@/lib/translations';
 import { ChevronDown, Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-export default function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  variant?: 'dropdown' | 'minimal';
+}
+
+export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,14 +36,11 @@ export default function LanguageSwitcher() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         e.preventDefault();
         setIsOpen(true);
-        // Focus will be moved to first item via useEffect or manually here?
-        // Let's do it in a useEffect that watches isOpen
       }
       return;
     }
@@ -55,49 +56,33 @@ export default function LanguageSwitcher() {
       const buttons =
         menuRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]');
       if (buttons) {
-        const first = buttons[0];
-        (first as HTMLElement).focus();
+        (buttons[0] as HTMLElement).focus();
       }
     }
   };
 
   const handleMenuKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const buttons = menuRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]');
+    if (!buttons) return;
+
     if (e.key === 'Escape') {
       e.preventDefault();
       setIsOpen(false);
       buttonRef.current?.focus();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const buttons =
-        menuRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]');
-      if (buttons) {
-        const nextIndex = (index + 1) % buttons.length;
-        buttons[nextIndex].focus();
-      }
+      const nextIndex = (index + 1) % buttons.length;
+      buttons[nextIndex].focus();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      const buttons =
-        menuRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]');
-      if (buttons) {
-        const prevIndex = (index - 1 + buttons.length) % buttons.length;
-        buttons[prevIndex].focus();
-      }
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      const buttons =
-        menuRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]');
-      buttons?.[0]?.focus();
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      const buttons =
-        menuRef.current?.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]');
-      buttons?.[buttons.length - 1]?.focus();
+      const prevIndex = (index - 1 + buttons.length) % buttons.length;
+      buttons[prevIndex].focus();
     }
   };
 
   // Focus first item when opening
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && variant === 'dropdown') {
       // Small timeout to allow render
       requestAnimationFrame(() => {
         const buttons =
@@ -105,29 +90,60 @@ export default function LanguageSwitcher() {
         buttons?.[0]?.focus();
       });
     }
-  }, [isOpen]);
+  }, [isOpen, variant]);
 
   const currentLang = languages.find((l) => l.code === language);
 
+  if (variant === 'minimal') {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {languages.map((l) => (
+          <button
+            key={l.code}
+            onClick={() => setLanguage(l.code as Language)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+              language === l.code
+                ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                : 'bg-white/5 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'
+            }`}
+          >
+            {l.short}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="relative" ref={containerRef}>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        #language-menu::-webkit-scrollbar { width: 4px; }
+        #language-menu::-webkit-scrollbar-track { background: transparent; }
+        #language-menu::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        #language-menu::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+      `,
+        }}
+      />
+
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
-        className="btn-ghost flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-white/10 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-all border border-transparent hover:border-white/10 group"
         aria-label={t.nav.selectLanguage}
         aria-haspopup="true"
         aria-expanded={isOpen}
         aria-controls="language-menu"
       >
-        <Globe size={16} />
-        <span className="text-sm font-medium uppercase min-w-[1.2rem]">
+        <Globe size={16} className="text-slate-400 group-hover:text-indigo-400 transition-colors" />
+        <span className="text-sm font-bold uppercase min-w-[1.2rem] text-slate-300 group-hover:text-white">
           {currentLang?.short || 'EN'}
         </span>
         <ChevronDown
           size={14}
-          className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -136,8 +152,13 @@ export default function LanguageSwitcher() {
           id="language-menu"
           ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-2 w-48 py-1 rounded-lg bg-slate-900/90 backdrop-blur-xl border border-white/10 shadow-xl animate-fade-in z-50 overflow-hidden"
+          className="absolute right-0 mt-2 w-48 py-2 rounded-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 z-50 overflow-y-auto max-h-[300px]"
         >
+          <div className="px-3 pb-2 mb-1 border-b border-white/5">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
+              {t.nav.selectLanguage}
+            </span>
+          </div>
           {languages.map((l, index) => (
             <button
               key={l.code}
@@ -148,12 +169,20 @@ export default function LanguageSwitcher() {
                 buttonRef.current?.focus();
               }}
               onKeyDown={(e) => handleMenuKeyDown(e, index)}
-              className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between hover:bg-white/10 transition-colors focus:bg-white/10 focus:outline-none ${
-                language === l.code ? 'bg-white/5 text-indigo-400' : 'text-slate-400'
+              className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-white/5 transition-all focus:bg-white/10 focus:outline-none group/item ${
+                language === l.code
+                  ? 'text-indigo-400 bg-indigo-500/5'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
-              <span>{l.label}</span>
-              <span className="text-xs opacity-50 uppercase">{l.short}</span>
+              <span className="font-medium">{l.label}</span>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/5 ${
+                  language === l.code ? 'text-indigo-500 bg-indigo-500/10' : 'text-slate-500'
+                }`}
+              >
+                {l.short}
+              </span>
             </button>
           ))}
         </div>
