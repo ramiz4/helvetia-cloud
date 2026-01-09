@@ -124,13 +124,13 @@ model User {
     @@index([userId, status])
   }
   ```
-- Add full-text search for text fields (PostgreSQL):
+- Add indexes for text fields (PostgreSQL):
   ```prisma
   model Service {
     name        String
     description String?
     
-    @@index([name], type: BTree)
+    @@index([name])
   }
   ```
 

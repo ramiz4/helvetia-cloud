@@ -179,16 +179,24 @@ This is a monorepo managed by PNPM Workspaces containing:
 3. Example:
    ```typescript
    // Queue job in API
+   import { Queue } from 'bullmq';
+   import Redis from 'ioredis';
+   
+   const redis = new Redis(process.env.REDIS_URL);
+   const deploymentQueue = new Queue('deployment', { connection: redis });
+   
    await deploymentQueue.add('deploy', {
      serviceId,
      commitHash
    });
    
    // Process in worker
-   deploymentQueue.process('deploy', async (job) => {
+   import { Worker } from 'bullmq';
+   
+   const worker = new Worker('deployment', async (job) => {
      const { serviceId, commitHash } = job.data;
      // Processing logic
-   });
+   }, { connection: redis });
    ```
 
 ## Troubleshooting
