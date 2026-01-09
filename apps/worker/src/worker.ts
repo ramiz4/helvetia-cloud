@@ -481,10 +481,7 @@ EOF
               console.log(`Successfully restarted container ${oldContainerInfo.Id}`);
             }
           } catch (rollbackError) {
-            console.error(
-              `Failed to restart old container ${oldContainerInfo.Id}:`,
-              rollbackError,
-            );
+            console.error(`Failed to restart old container ${oldContainerInfo.Id}:`, rollbackError);
           }
         }
         console.log('Rollback attempt completed');
