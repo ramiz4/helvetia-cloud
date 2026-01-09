@@ -226,7 +226,7 @@ async function getServiceMetrics(
           totalMemory += usage / 1024 / 1024;
           totalMemoryLimit += stats.memory_stats.limit / 1024 / 1024;
         }
-      } catch (_err) {
+      } catch {
         // Ignore stats errors for individual containers
       }
     }),
