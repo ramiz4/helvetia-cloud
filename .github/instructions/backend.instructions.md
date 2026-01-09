@@ -50,8 +50,15 @@ excludeAgent: ""
   });
   
   fastify.post('/services', async (request, reply) => {
-    const data = createServiceSchema.parse(request.body);
-    // data is now type-safe
+    try {
+      const data = createServiceSchema.parse(request.body);
+      // data is now type-safe
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.code(400).send({ error: error.errors });
+      }
+      throw error;
+    }
   });
   ```
 - **Error handling**: Zod throws on validation failure - catch and return 400

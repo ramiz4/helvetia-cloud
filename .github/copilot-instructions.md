@@ -145,7 +145,16 @@ This is a monorepo managed by PNPM Workspaces containing:
    
    export const exampleRoutes: FastifyPluginAsync = async (fastify) => {
      fastify.post('/example', async (request, reply) => {
-       const data = schema.parse(request.body);
+       const parseResult = schema.safeParse(request.body);
+   
+       if (!parseResult.success) {
+         return reply.status(400).send({
+           success: false,
+           error: parseResult.error.flatten(),
+         });
+       }
+   
+       const data = parseResult.data;
        // Business logic here
        return { success: true };
      });
