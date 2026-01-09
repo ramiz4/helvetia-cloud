@@ -3,8 +3,8 @@ import { prisma } from 'database';
 import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
-import yaml from 'js-yaml';
 import path from 'path';
+import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
@@ -114,29 +114,14 @@ export const worker = new Worker(
 
           const mainService = startCommand || 'app'; // User provided logic name
 
-          const overrideConfig = {
-            services: {
-              [mainService]: {
-                labels: [
-                  `helvetia.serviceId=${serviceId}`,
-                  'traefik.enable=true',
-                  `traefik.http.routers.${serviceName}.rule=${traefikRule}`,
-                  `traefik.http.routers.${serviceName}.entrypoints=web`,
-                  `traefik.http.services.${serviceName}.loadbalancer.server.port=${port || 8080}`,
-                ],
-                networks: ['default'],
-                ...(envVars && Object.keys(envVars).length > 0 ? { environment: envVars } : {}),
-              },
-            },
-            networks: {
-              default: {
-                external: true,
-                name: 'helvetia-net',
-              },
-            },
-          };
-
-          const overrideYaml = yaml.dump(overrideConfig);
+          const overrideYaml = generateComposeOverride({
+            serviceName,
+            serviceId,
+            mainService,
+            traefikRule,
+            port,
+            envVars,
+          });
 
           const buildScript = `
             set -e
