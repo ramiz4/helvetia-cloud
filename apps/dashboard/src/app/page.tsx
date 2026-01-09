@@ -188,6 +188,7 @@ export default function Home() {
   // Handle error state from React Query
   useEffect(() => {
     if (isError && error instanceof Error && error.message === 'Unauthorized') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAuthenticated(false);
       localStorage.removeItem('user');
     }

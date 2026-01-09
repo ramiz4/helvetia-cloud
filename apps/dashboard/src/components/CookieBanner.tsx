@@ -40,6 +40,7 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
 
     const consent = window.localStorage.getItem('cookie_consent');
     if (!consent) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAccepted(false);
     }
   }, []);

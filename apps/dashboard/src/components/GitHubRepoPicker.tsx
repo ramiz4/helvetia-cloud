@@ -36,6 +36,7 @@ interface GitHubRepoPickerProps {
 
 export default function GitHubRepoPicker({
   onSelect,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   selectedRepoUrl: _selectedRepoUrl,
   className = '',
 }: GitHubRepoPickerProps) {
