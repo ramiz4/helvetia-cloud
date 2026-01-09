@@ -57,6 +57,21 @@ export default function Home() {
 
     eventSource.onopen = () => console.log('SSE logs stream connected');
 
+    eventSource.addEventListener('error', (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.code === 'TOKEN_EXPIRED') {
+          console.log('Token expired, logging out user');
+          toast.error('Session expired. Please log in again.');
+          localStorage.removeItem('user');
+          setIsAuthenticated(false);
+          eventSource.close();
+        }
+      } catch {
+        // Not a JSON error event, ignore
+      }
+    });
+
     eventSource.onmessage = (event) => {
       setSelectedLogs(
         (prev) => (prev === t.dashboard.modals.noLogs ? '' : prev || '') + event.data,
@@ -84,6 +99,21 @@ export default function Home() {
       });
 
       eventSource.onopen = () => console.log('SSE metrics stream connected');
+
+      eventSource.addEventListener('error', (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.code === 'TOKEN_EXPIRED') {
+            console.log('Token expired, logging out user');
+            toast.error('Session expired. Please log in again.');
+            localStorage.removeItem('user');
+            setIsAuthenticated(false);
+            eventSource.close();
+          }
+        } catch {
+          // Not a JSON error event, ignore
+        }
+      });
 
       eventSource.onmessage = (event) => {
         try {
