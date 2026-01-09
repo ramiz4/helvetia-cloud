@@ -3,8 +3,19 @@ import { describe, expect, it } from 'vitest';
 import { generateComposeOverride, generateDockerfileLines } from './generators';
 
 interface ComposeConfig {
-  services: Record<string, any>;
-  networks: Record<string, any>;
+  services: Record<
+    string,
+    {
+      labels?: string[];
+      environment?: Record<string, string>;
+    }
+  >;
+  networks: Record<
+    string,
+    {
+      name?: string;
+    }
+  >;
 }
 
 describe('Generators', () => {
@@ -60,7 +71,7 @@ describe('Generators', () => {
       const parsed = yaml.load(result) as unknown as ComposeConfig;
       // It should NOT have a second service
       expect(Object.keys(parsed.services)).toHaveLength(1);
-      expect(parsed.services.app.environment.EVIL).toBe(
+      expect(parsed.services.app.environment!.EVIL).toBe(
         'value\n  other_service:\n    image: busybox',
       );
     });
