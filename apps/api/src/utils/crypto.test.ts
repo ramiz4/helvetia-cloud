@@ -80,9 +80,10 @@ describe('crypto utils', () => {
     expect(() => decrypt2(encrypted1)).toThrow();
   });
 
-  it('should use random salt as fallback when ENCRYPTION_SALT is not set', async () => {
+  it('should use random salt as fallback when ENCRYPTION_SALT is not set in development', async () => {
     process.env.ENCRYPTION_KEY = 'test_key_32_chars_long_secure!';
     delete process.env.ENCRYPTION_SALT;
+    process.env.NODE_ENV = 'development';
 
     const { encrypt, decrypt } = await import('./crypto');
 
@@ -90,8 +91,18 @@ describe('crypto utils', () => {
     const encrypted = encrypt(text);
     const decrypted = decrypt(encrypted);
 
-    // Should still work with random salt
+    // Should still work with random salt in development
     expect(decrypted).toBe(text);
+  });
+
+  it('should throw error when ENCRYPTION_SALT is not set in production', async () => {
+    process.env.ENCRYPTION_KEY = 'test_key_32_chars_long_secure!';
+    delete process.env.ENCRYPTION_SALT;
+    process.env.NODE_ENV = 'production';
+
+    await expect(async () => {
+      await import('./crypto');
+    }).rejects.toThrow('ENCRYPTION_SALT environment variable must be set in production');
   });
 
   it('should handle special characters in text', async () => {

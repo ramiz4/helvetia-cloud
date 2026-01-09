@@ -25,10 +25,10 @@ Previously, the encryption module used a hardcoded salt value (`'salt'`) for key
 
 ### For New Installations
 
-1. Generate a secure random salt:
+1. Generate a secure random salt (32 bytes recommended):
 
    ```bash
-   node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
 
 2. Add the generated salt to your `.env` file:
@@ -76,7 +76,7 @@ If you cannot have users re-authenticate, you can migrate existing tokens:
 
    ```typescript
    import crypto from 'crypto';
-   import { prisma } from 'database';
+   import { prisma } from 'database'; // Adjust import path based on your project structure
    import dotenv from 'dotenv';
 
    dotenv.config();
@@ -86,7 +86,10 @@ If you cannot have users re-authenticate, you can migrate existing tokens:
    const OLD_ENCRYPTION_KEY = crypto.scryptSync(OLD_KEY, 'salt', 32);
 
    // New encryption setup (secure salt)
-   const NEW_SALT = process.env.ENCRYPTION_SALT || crypto.randomBytes(16).toString('hex');
+   const NEW_SALT = process.env.ENCRYPTION_SALT;
+   if (!NEW_SALT) {
+     throw new Error('ENCRYPTION_SALT must be set for migration');
+   }
    const NEW_ENCRYPTION_KEY = crypto.scryptSync(OLD_KEY, NEW_SALT, 32);
 
    function decryptOld(text: string): string {
@@ -150,8 +153,8 @@ If you cannot have users re-authenticate, you can migrate existing tokens:
 2. **Run the migration**:
 
    ```bash
-   # Set your new ENCRYPTION_SALT
-   export ENCRYPTION_SALT=$(node -e "console.log(require('crypto').randomBytes(16).toString('hex'))")
+   # Set your new ENCRYPTION_SALT (32 bytes for better security)
+   export ENCRYPTION_SALT=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 
    # Run the migration script
    tsx migrate-encryption.ts

@@ -3,7 +3,22 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const KEY = process.env.ENCRYPTION_KEY || 'development_key_32_chars_long_!!';
-const SALT = process.env.ENCRYPTION_SALT || crypto.randomBytes(16).toString('hex');
+
+// ENCRYPTION_SALT must be set in production to ensure data consistency
+// Using a random salt in development for security, but note that restarting
+// the server will make previously encrypted data unrecoverable
+const SALT =
+  process.env.ENCRYPTION_SALT ||
+  (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('ENCRYPTION_SALT environment variable must be set in production');
+    }
+    // Development fallback - generates new salt on each start
+    console.warn(
+      'WARNING: ENCRYPTION_SALT not set. Using random salt. Previously encrypted data will be unrecoverable on restart.',
+    );
+    return crypto.randomBytes(32).toString('hex');
+  })();
 
 // Ensure the key is 32 bytes
 const ENCRYPTION_KEY = crypto.scryptSync(KEY, SALT, 32);
