@@ -206,14 +206,7 @@ export default function Navigation() {
           <div
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300"
             onClick={() => setIsMenuOpen(false)}
-            role="button"
-            tabIndex={0}
-            aria-label={t.nav.closeMenuOverlay || 'Close menu overlay'}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setIsMenuOpen(false);
-              }
-            }}
+            aria-hidden="true"
           />
           <nav
             id="mobile-menu"

@@ -642,7 +642,6 @@ export default function Home() {
           >
             <div
               ref={logsModalRef}
-              tabIndex={-1}
               className="glass w-full max-w-4xl max-h-[85vh] flex flex-col rounded-[32px] overflow-hidden focus:outline-none"
               role="dialog"
               aria-modal="true"
@@ -684,7 +683,6 @@ export default function Home() {
           <FocusTrap active={true} onEscape={() => setEditingService(null)}>
             <div
               ref={editModalRef}
-              tabIndex={-1}
               className="w-full max-w-2xl bg-[#0d121f] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
               role="dialog"
               aria-modal="true"

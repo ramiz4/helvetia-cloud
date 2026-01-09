@@ -28,10 +28,13 @@ export default function FocusTrap({ children, active = true, onEscape }: FocusTr
       return Array.from(trap.querySelectorAll<HTMLElement>(selector));
     };
 
-    // Focus first element on mount
+    // Focus first element on mount with a small delay for screen readers
     const focusableElements = getFocusableElements();
     if (focusableElements.length > 0) {
-      focusableElements[0].focus();
+      // Use setTimeout to allow screen readers to announce the modal first
+      setTimeout(() => {
+        focusableElements[0].focus();
+      }, 100);
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
