@@ -1,4 +1,8 @@
+import axios from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Mock axios before importing server
+vi.mock('axios');
 
 // Mock Redis and other dependencies before importing server
 vi.mock('ioredis', () => {
@@ -79,6 +83,10 @@ describe('Rate Limiting', () => {
     vi.clearAllMocks();
   });
 
+  // Note: These tests verify that rate limiting configuration is applied to endpoints.
+  // Actual rate limit enforcement (429 responses) requires integration tests with a real Redis instance,
+  // as the mocked Redis doesn't track request counts or enforce limits.
+
   it('should not rate limit health endpoint', async () => {
     // Make multiple requests quickly
     for (let i = 0; i < 15; i++) {
@@ -108,8 +116,23 @@ describe('Rate Limiting', () => {
     expect(response.statusCode).toBe(200);
   });
 
-  it('should allow auth endpoint requests', async () => {
+  it('should allow auth endpoint requests with mocked GitHub API', async () => {
     const { prisma } = await import('database');
+
+    // Mock GitHub API responses
+    const mockGithubUser = {
+      id: 12345,
+      login: 'testuser',
+      avatar_url: 'https://example.com/avatar.jpg',
+    };
+
+    vi.mocked(axios.post).mockResolvedValueOnce({
+      data: { access_token: 'mock-token', error: null },
+    } as any);
+
+    vi.mocked(axios.get).mockResolvedValueOnce({
+      data: mockGithubUser,
+    } as any);
 
     // Mock successful auth
     vi.mocked(prisma.user.upsert).mockResolvedValue({
@@ -128,8 +151,13 @@ describe('Rate Limiting', () => {
       payload: { code: 'test-code' },
     });
 
-    // Auth endpoint is accessible (actual rate limiting would be handled by Redis in production)
-    expect([200, 400, 401, 500]).toContain(response.statusCode);
+    // Auth endpoint is accessible
+    expect(response.statusCode).toBe(200);
+    expect(axios.post).toHaveBeenCalledWith(
+      'https://github.com/login/oauth/access_token',
+      expect.any(Object),
+      expect.any(Object),
+    );
   });
 
   it('should allow deployment endpoint requests for authenticated users', async () => {
