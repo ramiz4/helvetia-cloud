@@ -192,7 +192,7 @@ EOF
 
           await prisma.service.update({
             where: { id: serviceId },
-            data: { status: 'ACTIVE' },
+            data: { status: 'RUNNING' },
           });
 
           if (builder) {
@@ -428,7 +428,7 @@ EOF
 
       await prisma.service.update({
         where: { id: serviceId },
-        data: { status: 'ACTIVE' },
+        data: { status: 'RUNNING' },
       });
 
       console.log(`Deployment ${deploymentId} successful!`);

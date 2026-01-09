@@ -157,7 +157,7 @@ async function getServiceMetrics(
   id: string,
   dockerInstance?: any,
   containerList?: any[],
-  serviceInfo?: { name: string; type: string },
+  serviceInfo?: { name: string; type: string; status?: string },
 ) {
   const Docker = (await import('dockerode')).default;
   const docker = dockerInstance || new Docker();
@@ -175,7 +175,9 @@ async function getServiceMetrics(
 
   // Determine aggregate status
   let status = 'STOPPED';
-  if (allServiceContainers.length > 0) {
+  if (serviceInfo?.status === 'DEPLOYING') {
+    status = 'DEPLOYING';
+  } else if (allServiceContainers.length > 0) {
     if (allServiceContainers.some((c: any) => c.State === 'running')) {
       status = 'RUNNING';
     } else if (allServiceContainers.some((c: any) => ['restarting', 'created'].includes(c.State))) {
@@ -653,7 +655,7 @@ fastify.get('/services/metrics/stream', async (request, reply) => {
 
       const services = await prisma.service.findMany({
         where: { userId: user.id },
-        select: { id: true, name: true, type: true },
+        select: { id: true, name: true, type: true, status: true },
       });
 
       const metricsPromises = services.map(async (s) => ({
@@ -825,6 +827,12 @@ fastify.post('/services/:id/deploy', async (request, reply) => {
       serviceId: id,
       status: 'QUEUED',
     },
+  });
+
+  // Update service status to DEPLOYING
+  await prisma.service.update({
+    where: { id },
+    data: { status: 'DEPLOYING' },
   });
 
   // Inject token if available

@@ -245,6 +245,11 @@ export default function Home() {
   };
 
   const triggerDeploy = async (serviceId: string) => {
+    // Optimistic update
+    setServices((prev) =>
+      prev.map((s) => (s.id === serviceId ? { ...s, status: 'DEPLOYING' } : s)),
+    );
+
     try {
       const res = await fetch(`${API_BASE_URL}/services/${serviceId}/deploy`, {
         method: 'POST',
@@ -255,10 +260,12 @@ export default function Home() {
       // Open logs immediately for the new deployment
       fetchLogs(deployment.id);
 
-      // Refresh services
+      // Refresh services to sync with DB
       fetchServices();
     } catch {
       toast.error(t.dashboard.actions.deployTriggerFailed);
+      // Revert if failed (optional, but fetchServices will fix it anyway)
+      fetchServices();
     }
   };
 
@@ -312,6 +319,11 @@ export default function Home() {
   };
 
   const restartService = async (serviceId: string) => {
+    // Optimistic update
+    setServices((prev) =>
+      prev.map((s) => (s.id === serviceId ? { ...s, status: 'DEPLOYING' } : s)),
+    );
+
     try {
       const res = await fetch(`${API_BASE_URL}/services/${serviceId}/restart`, {
         method: 'POST',
@@ -344,14 +356,11 @@ export default function Home() {
   }
 
   // Dashboard View
-  // Note: Status values - Worker sets 'ACTIVE' on successful deployment, 'FAILED' on failure
-  // API may also return 'RUNNING', 'STOPPED', 'IDLE' based on Docker container state
+  // Note: Status values - Worker and Docker metrics provide 'RUNNING', 'DEPLOYING', 'STOPPED', 'FAILED'
   const activeServices = services.filter(
-    (s) => s.status === 'ACTIVE' || s.status === 'RUNNING' || s.status === 'DEPLOYING',
+    (s) => s.status === 'RUNNING' || s.status === 'DEPLOYING',
   ).length;
-  const failingServices = services.filter(
-    (s) => s.status === 'FAILED' || s.status === 'ERROR',
-  ).length;
+  const failingServices = services.filter((s) => s.status === 'FAILED').length;
 
   const filteredServices = services.filter(
     (s) =>
@@ -484,26 +493,24 @@ export default function Home() {
                   </h3>
                   <div className="flex flex-wrap gap-2 items-center">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-sm ${
-                        service.status === 'RUNNING'
-                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
-                          : service.status === 'DEPLOYING'
-                            ? 'bg-amber-500/15 text-amber-400 border-amber-500/20 animate-pulse'
-                            : service.status === 'FAILED'
-                              ? 'bg-rose-500/15 text-rose-400 border-rose-500/20'
-                              : 'bg-slate-500/15 text-slate-400 border-slate-500/20'
-                      }`}
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-sm ${service.status === 'RUNNING'
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
+                        : service.status === 'DEPLOYING'
+                          ? 'bg-amber-500/15 text-amber-400 border-amber-500/20 animate-pulse'
+                          : service.status === 'FAILED'
+                            ? 'bg-rose-500/15 text-rose-400 border-rose-500/20'
+                            : 'bg-slate-500/15 text-slate-400 border-slate-500/20'
+                        }`}
                     >
                       {service.status === 'NOT_RUNNING'
                         ? t.dashboard.status.notRunning
                         : service.status}
                     </span>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
-                        service.type === 'STATIC'
-                          ? 'bg-sky-500/15 text-sky-400 border-sky-500/20'
-                          : 'bg-purple-500/15 text-purple-400 border-purple-500/20'
-                      }`}
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${service.type === 'STATIC'
+                        ? 'bg-sky-500/15 text-sky-400 border-sky-500/20'
+                        : 'bg-purple-500/15 text-purple-400 border-purple-500/20'
+                        }`}
                     >
                       {service.type === 'STATIC'
                         ? t.dashboard.newService.staticSite
@@ -727,10 +734,10 @@ export default function Home() {
                           setEditingService((prev) =>
                             prev
                               ? {
-                                  ...prev,
-                                  type: e.target.value,
-                                  port: e.target.value === 'STATIC' ? 80 : prev.port,
-                                }
+                                ...prev,
+                                type: e.target.value,
+                                port: e.target.value === 'STATIC' ? 80 : prev.port,
+                              }
                               : null,
                           )
                         }
