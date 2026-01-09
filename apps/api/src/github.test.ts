@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // We use vi.hoisted to ensure these mocks are available during hoisting
@@ -343,8 +344,6 @@ describe('GitHub Integration', () => {
   });
 
   describe('POST /webhooks/github', () => {
-    const crypto = require('crypto');
-
     // Set webhook secret for these tests
     beforeEach(() => {
       process.env.GITHUB_WEBHOOK_SECRET = 'test-webhook-secret';

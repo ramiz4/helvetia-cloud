@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // We must mock BEFORE importing the server
@@ -408,7 +409,6 @@ describe('API Server', () => {
   });
 
   describe('GitHub Webhook Signature Verification', () => {
-    const crypto = require('crypto');
     const originalEnv = process.env.GITHUB_WEBHOOK_SECRET;
 
     beforeEach(() => {
@@ -452,7 +452,6 @@ describe('API Server', () => {
         repository: { html_url: 'https://github.com/test/repo' },
         ref: 'refs/heads/main',
       };
-      const rawBody = JSON.stringify(payload);
 
       const response = await fastify.inject({
         method: 'POST',
