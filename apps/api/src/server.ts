@@ -929,7 +929,7 @@ fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
 // Deployment Routes
 fastify.post(
   '/services/:id/deploy',
-  { config: { rateLimit: authRateLimitConfig } },
+  { config: { rateLimit: wsRateLimitConfig } },
   async (request, reply) => {
     const { id } = request.params as any;
     const user = (request as any).user;
