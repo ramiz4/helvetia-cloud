@@ -134,6 +134,9 @@ describe('Service Status Determination', () => {
     };
 
     vi.mocked(prisma.service.findMany).mockResolvedValue([mockService] as never);
+    vi.mocked(prisma.deployment.findMany).mockResolvedValue([
+      { id: 'deploy-2', status: 'QUEUED', createdAt: new Date() },
+    ] as never);
     mockListContainers.mockResolvedValue([
       {
         Id: 'container-1',
@@ -167,6 +170,9 @@ describe('Service Status Determination', () => {
     };
 
     vi.mocked(prisma.service.findMany).mockResolvedValue([mockService] as never);
+    vi.mocked(prisma.deployment.findMany).mockResolvedValue([
+      { id: 'deploy-1', status: 'SUCCESS', createdAt: new Date() },
+    ] as never);
     mockListContainers.mockResolvedValue([
       {
         Id: 'container-1',

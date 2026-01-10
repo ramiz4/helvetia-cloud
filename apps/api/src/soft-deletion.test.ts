@@ -105,7 +105,7 @@ describe('Soft Deletion Flow', () => {
         deleteProtected: false,
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
       vi.mocked(prisma.service.update).mockResolvedValue({
         ...mockService,
         deletedAt: new Date(),
@@ -144,7 +144,7 @@ describe('Soft Deletion Flow', () => {
         deleteProtected: true,
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
 
       const token = fastify.jwt.sign({ id: userId });
 
@@ -167,7 +167,7 @@ describe('Soft Deletion Flow', () => {
       const serviceId = 'non-existent';
       const userId = 'user-1';
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
 
       const token = fastify.jwt.sign({ id: userId });
 
@@ -196,7 +196,7 @@ describe('Soft Deletion Flow', () => {
         deleteProtected: false,
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
       vi.mocked(prisma.service.update).mockResolvedValue({
         ...mockService,
         deletedAt: null,
@@ -227,7 +227,7 @@ describe('Soft Deletion Flow', () => {
       const serviceId = 'active-service';
       const userId = 'user-1';
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
 
       const token = fastify.jwt.sign({ id: userId });
 
@@ -255,7 +255,7 @@ describe('Soft Deletion Flow', () => {
         deleteProtected: false,
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
       vi.mocked(prisma.service.update).mockResolvedValue({
         ...mockService,
         deleteProtected: true,
@@ -293,7 +293,7 @@ describe('Soft Deletion Flow', () => {
         deleteProtected: true,
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
       vi.mocked(prisma.service.update).mockResolvedValue({
         ...mockService,
         deleteProtected: false,
@@ -358,22 +358,29 @@ describe('Soft Deletion Flow', () => {
       const serviceId = 'test-service';
       const userId = 'user-1';
 
+      // Mock a soft-deleted service
+      const mockService = {
+        id: serviceId,
+        name: 'test-app',
+        userId,
+        type: 'DOCKER',
+        deletedAt: new Date(), // Soft deleted
+        deleteProtected: false,
+      };
+
+      vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
+      vi.mocked(prisma.deployment.findMany).mockResolvedValue([] as never);
+
       const token = fastify.jwt.sign({ id: userId });
 
-      await fastify.inject({
+      const response = await fastify.inject({
         method: 'GET',
         url: `/services/${serviceId}`,
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Verify deletedAt filter was applied
-      expect(prisma.service.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            deletedAt: null,
-          }),
-        }),
-      );
+      // Should return 404 because service is soft-deleted
+      expect(response.statusCode).toBe(404);
     });
   });
 });
