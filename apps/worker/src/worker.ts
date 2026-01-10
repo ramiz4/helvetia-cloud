@@ -112,9 +112,11 @@ export const worker = new Worker(
             Image: 'docker:cli',
             name: builderName,
             Entrypoint: ['sleep', '3600'],
+            Env: process.env.DOCKER_HOST ? [`DOCKER_HOST=${process.env.DOCKER_HOST}`] : [],
             HostConfig: {
               AutoRemove: true,
               Binds: getSecureBindMounts(),
+              NetworkMode: 'helvetia-net', // Connect to network to access socket proxy
             },
           });
           await builder.start();
@@ -219,9 +221,11 @@ EOF
           Image: 'docker:cli',
           name: builderName,
           Entrypoint: ['sleep', '3600'],
+          Env: process.env.DOCKER_HOST ? [`DOCKER_HOST=${process.env.DOCKER_HOST}`] : [],
           HostConfig: {
             AutoRemove: true,
             Binds: getSecureBindMounts(),
+            NetworkMode: 'helvetia-net', // Connect to network to access socket proxy
           },
         });
         await builder.start();

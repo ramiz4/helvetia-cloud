@@ -114,11 +114,13 @@ To enable automated deployments via GitHub webhooks:
 
 ### 3. Launch Infrastructure
 
-Start the core services (Database, Redis, and Traefik):
+Start the core services (Database, Redis, Docker Socket Proxy, and Traefik):
 
 ```bash
-docker-compose up -d postgres redis traefik
+docker-compose up -d postgres redis docker-socket-proxy traefik
 ```
+
+> **Security Note**: The Docker Socket Proxy provides a security layer between services and the Docker daemon, restricting API access with ACLs. See [DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md) for details.
 
 ### 4. Initialize & Start
 
