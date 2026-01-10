@@ -4,6 +4,7 @@ import Docker from 'dockerode';
 import IORedis from 'ioredis';
 import { MAX_LOG_SIZE_CHARS } from './config/constants';
 import type { DeploymentContext } from './interfaces';
+import { workerMetricsService } from './services/metrics.service';
 import { DeploymentStrategyFactory } from './strategies';
 import {
   cleanupOldContainers,
@@ -26,6 +27,12 @@ const strategyFactory = new DeploymentStrategyFactory();
 export const worker = new Worker(
   'deployments',
   async (job: Job) => {
+    const jobStartTime = Date.now();
+    const jobName = job.name || 'build';
+
+    // Track active jobs
+    workerMetricsService.incrementActiveJobs(jobName);
+
     const {
       deploymentId,
       serviceId,
@@ -46,6 +53,8 @@ export const worker = new Worker(
     let imageTag = '';
     let buildLogs = '';
     let containerPostfix = '';
+    let deploymentStatus = 'FAILED';
+    const serviceType = type || 'DOCKER';
 
     // Prepare secrets for scrubbing
     const secrets = envVars
@@ -187,6 +196,7 @@ export const worker = new Worker(
         imageTag,
       });
 
+      deploymentStatus = 'SUCCESS';
       console.log(`Deployment ${deploymentId} successful!`);
     } catch (error) {
       console.error(`Deployment ${deploymentId} failed:`, error);
@@ -247,8 +257,20 @@ export const worker = new Worker(
         }
       }
 
+      deploymentStatus = 'FAILED';
+
       // Re-throw to mark job as failed
       throw error;
+    } finally {
+      // Record metrics for this deployment
+      const duration = (Date.now() - jobStartTime) / 1000;
+      workerMetricsService.recordDeployment(deploymentStatus, serviceType, duration);
+      workerMetricsService.recordJobProcessing(
+        jobName,
+        deploymentStatus === 'SUCCESS' ? 'completed' : 'failed',
+        duration,
+      );
+      workerMetricsService.decrementActiveJobs(jobName);
     }
   },
   { connection: redisConnection },

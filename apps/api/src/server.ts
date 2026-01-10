@@ -31,6 +31,7 @@ import { getServiceMetrics } from './handlers/metrics.handler';
 import { verifyGitHubSignature } from './handlers/webhook.handler';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
+import { metricsService } from './services/metrics.service';
 import { decrypt, encrypt } from './utils/crypto';
 import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from './utils/helpers/service.helper';
@@ -339,6 +340,23 @@ export {
   isOriginAllowed,
 };
 
+// Collect queue metrics periodically (every 30 seconds)
+if (!isTestEnv) {
+  setInterval(async () => {
+    try {
+      const [waiting, active, completed, failed] = await Promise.all([
+        deploymentQueue.getWaitingCount(),
+        deploymentQueue.getActiveCount(),
+        deploymentQueue.getCompletedCount(),
+        deploymentQueue.getFailedCount(),
+      ]);
+      metricsService.updateQueueDepth('deployments', waiting, active, completed, failed);
+    } catch (error) {
+      console.error('Failed to collect queue metrics:', error);
+    }
+  }, 30000);
+}
+
 /**
  * Request Logging Hook
  *
@@ -399,6 +417,33 @@ if (LOG_RESPONSES && !isTestEnv) {
     );
   });
 }
+
+/**
+ * Metrics Collection Hook
+ *
+ * Collects metrics for all HTTP requests:
+ * - Request count by method, route, and status code
+ * - Request duration histogram
+ * - Requests in progress gauge
+ *
+ * This hook tracks requests in flight and records timing after completion.
+ */
+fastify.addHook('onRequest', async (request, _reply) => {
+  // Track in-progress requests
+  const route = request.routeOptions?.url || request.url;
+  (request as any).metricsEndTimer = metricsService.startHttpRequest(request.method, route);
+});
+
+fastify.addHook('onResponse', async (request, reply) => {
+  // Record completed request metrics
+  const route = request.routeOptions?.url || request.url;
+  const endTimer = (request as any).metricsEndTimer;
+
+  if (endTimer) {
+    const duration = endTimer();
+    metricsService.recordHttpRequest(request.method, route, reply.statusCode, duration);
+  }
+});
 
 fastify.register(cors, {
   origin: (origin, cb) => {
@@ -520,6 +565,8 @@ fastify.setErrorHandler((error: Error & { code?: string }, request, reply) => {
 fastify.addHook('onRequest', async (request, reply) => {
   const publicRoutes = [
     '/health',
+    '/metrics',
+    '/metrics/json',
     '/webhooks/github',
     '/auth/github',
     '/auth/refresh',
@@ -538,6 +585,10 @@ fastify.addHook('onRequest', async (request, reply) => {
 fastify.get('/health', async () => {
   return { status: 'ok' };
 });
+
+// Register metrics routes
+import { metricsRoutes } from './routes/metrics.routes';
+fastify.register(metricsRoutes);
 
 fastify.post(
   '/auth/github',

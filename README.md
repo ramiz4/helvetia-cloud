@@ -11,7 +11,7 @@ A premium, production-realistic **Platform-as-a-Service (PaaS)** designed for se
 - **📦 Multi-Service Support**: Native support for **Docker-based** backends and optimized **Static Sites** (React, Vue, Angular).
 - **🛡️ Secure & Isolated**: Builds are performed in isolated Docker-in-Docker environments with resource limits (CPU/Memory) and secret scrubbing.
 - **🚦 Dynamic Routing**: Traefik-powered routing with support for custom domains and automatic health checks.
-- **📊 Real-time Monitoring**: Live log streaming (SSE/WebSockets) and container resource usage metrics.
+- **📊 Real-time Monitoring**: Live log streaming (SSE/WebSockets), container resource usage metrics, and **Prometheus metrics** for comprehensive observability.
 - **🏗️ Developer First**: Smart GitHub repository picker and branch selection for a seamless onboarding experience.
 
 ## 🛠 Tech Stack
@@ -296,9 +296,45 @@ For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./.do
 
 ## 📊 Monitoring
 
-Helvetia Cloud includes built-in health check endpoints for monitoring service health and performance.
+Helvetia Cloud includes comprehensive monitoring capabilities with built-in health checks and Prometheus metrics.
 
-### Worker Health Check
+### Prometheus Metrics
+
+Both API and Worker services expose Prometheus metrics for monitoring:
+
+- **API Metrics**: `http://localhost:3001/metrics`
+- **Worker Metrics**: `http://localhost:3002/metrics`
+
+**Available Metrics:**
+
+- HTTP request rates, latencies, and error rates
+- Deployment success/failure rates
+- Queue depths and processing times
+- Container resource usage (CPU, memory)
+- Service status metrics
+- Node.js process metrics
+
+**Documentation:**
+
+- [Complete Metrics Documentation](./METRICS.md)
+- [Grafana Dashboard](./grafana-dashboard.json)
+
+**Example Prometheus Configuration:**
+
+```yaml
+scrape_configs:
+  - job_name: 'helvetia-api'
+    static_configs:
+      - targets: ['localhost:3001']
+    metrics_path: '/metrics'
+
+  - job_name: 'helvetia-worker'
+    static_configs:
+      - targets: ['localhost:3002']
+    metrics_path: '/metrics'
+```
+
+### Health Check Endpoints
 
 The worker service exposes an HTTP health check endpoint at `/health` (default port: 3002) that provides:
 
