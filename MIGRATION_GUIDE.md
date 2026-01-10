@@ -128,24 +128,27 @@ fastify.post('/notify', async (request, reply) => {
 - Error hierarchy created
 - DI container setup
 
-### Phase 2: Repository Implementations (Issue #95)
+### Phase 2: Repository Implementations (Issue #126 - ✅ Done)
 
 - Implement `IServiceRepository` using Prisma
 - Implement `IDeploymentRepository` using Prisma
 - Implement `IUserRepository` using Prisma
 - Implement `IRefreshTokenRepository` using Prisma
 
-### Phase 3: Infrastructure Implementations (Issue #97+)
+### Phase 3: Infrastructure Implementations (Issue #128 - ✅ Done)
 
 - Implement `IContainerOrchestrator` using Dockerode
 - Implement `IDeploymentQueue` using BullMQ
 - Implement `ILogger` wrapping Fastify logger
 - Implement `ICache` using Redis
 
-### Phase 4: Gradual Route Migration
+### Phase 4: Gradual Route Migration (Ongoing)
 
-- Start with new routes
-- Refactor existing routes incrementally
+- **Issue #146**: Migrate Service routes to `ServiceController`
+- **Issue #147**: Migrate Deployment routes to `DeploymentController`
+- **Issue #148**: Migrate GitHub Proxy routes to `GitHubController`
+- **Issue #149**: Migrate Webhook routes to `WebhookController`
+- Refactor existing routes incrementally as features are updated
 - No deadline - migrate as convenient
 
 ## Benefits
@@ -215,9 +218,9 @@ pnpm --filter api test src/errors/ src/di/
 
 ## Next Steps
 
-1. **Issue #95**: Implement repository interfaces
-2. **Issue #97**: Implement container orchestrator
+1. **Issue #126**: Implement repository interfaces (✅)
+2. **Issue #128**: Implement container orchestrator (✅)
 3. Continue with other infrastructure implementations
-4. Gradually migrate existing routes
+4. Gradually migrate existing routes (Issues #146, #147, #148, #149)
 
 No immediate action required. Existing code continues to work!

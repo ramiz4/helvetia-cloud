@@ -43,6 +43,12 @@ This is a monorepo managed by PNPM Workspaces containing:
 - **Error Handling**: Use try/catch blocks. Ensure errors are logged and handled gracefully.
 - **Types**: Distinguish between type aliases and interfaces. Prefer interfaces for object shapes; use type aliases for unions, primitives, and utility/derived types. Avoid `any`.
 
+### Software Principles
+
+- Always follow **SOLID**, **DRY**, **KISS**, and **YAGNI** principles.
+- Use best practices for performance, scalability, and maintainability.
+- Act as a principal world-class software architect / engineer. Design for the future but implement for the present.
+
 ### Git & Commits
 
 - **Conventional Commits**: Use semantic commit messages (feat, fix, chore, docs, style, refactor, perf, test).
@@ -129,11 +135,19 @@ This is a monorepo managed by PNPM Workspaces containing:
 
 ## Agent Workflow
 
+- **Task Execution**: All tasks MUST be performed using **TDD (Test-Driven Development)**.
+  1. Write a failing test.
+  2. Implement the minimum code to pass the test.
+  3. Refactor.
 - **Task Invitation**: When starting a task from a user prompt, the Agent MUST follow this GitHub Flow:
   1. **Create Branch**: Create a new branch appropriate for the task (e.g., `git checkout -b feat/task-name`).
   2. **Implement**: Make the necessary code changes.
-  3. **Commit**: Create small, conventional commits (e.g., `feat: add functionality`, `chore: update config`).
-  4. **Push**: Push the changes to the remote (e.g., `git push -u origin feat/task-name`).
+  3. **Quality Check**: Before finishing work, MUST run:
+     - `pnpm format`
+     - `pnpm lint` (Ensure ZERO warnings and errors)
+     - `pnpm test` (Ensure ALL tests pass)
+  4. **Commit**: Create small, conventional commits (e.g., `feat: add functionality`, `chore: update config`).
+  5. **Push**: Push the changes to the remote (e.g., `git push -u origin feat/task-name`).
 
 ## Common Patterns & Examples
 
@@ -246,8 +260,11 @@ This is a monorepo managed by PNPM Workspaces containing:
 
 ## AI Behavior
 
+- **Role**: Act like a principal world-class software architect / engineer.
 - **Conciseness**: Provide code solutions directly. Avoid over-explaining standard practices unless asked.
 - **Security**: Do not hardcode secrets. Use environment variables.
 - **Safety**: Verify commands before suggesting them. Avoid destructive file operations without confirmation.
-- **Testing**: Always run tests after making changes. Fix failing tests related to your changes.
-- **Linting**: Run `pnpm lint` before committing. Fix any linting errors in files you modified.
+- **Quality Assurance**:
+  - ALWAYS run `pnpm format` before finishing.
+  - ALWAYS run `pnpm lint` and ensure no warnings/errors before finishing.
+  - ALWAYS run `pnpm test` and ensure all tests pass before finishing.

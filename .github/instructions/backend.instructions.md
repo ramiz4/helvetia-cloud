@@ -5,6 +5,13 @@ excludeAgent: ''
 
 # Backend (API & Worker) Instructions
 
+## AI Agent Rules & Principles
+
+- **Task Execution**: All tasks MUST be performed using **TDD (Test-Driven Development)**.
+- **Quality Check**: Before finishing work, MUST run `pnpm format`, `pnpm lint` (ZERO warnings and errors), and `pnpm test` (Ensure ALL tests pass).
+- **Principles**: Always follow **SOLID**, **DRY**, **KISS**, and **YAGNI** principles.
+- **Role**: Act like a principal world-class software architect / engineer. Design for the future but implement for the present.
+
 ## Fastify Best Practices
 
 ### Route Structure
