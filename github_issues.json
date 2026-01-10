@@ -286,5 +286,77 @@
     "state": "OPEN",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/92",
     "synced": true
+  },
+  {
+    "title": "[HIGH] Implement Dependency Injection & Core Interfaces",
+    "labels": ["P1", "refactoring", "architecture"],
+    "body": "Introduce dependency injection to decouple components and enable testability.\n\n**Current Issue:**\n- Direct instantiation of Docker, Redis, Prisma throughout codebase\n- Cannot mock dependencies for testing\n- Cannot swap implementations\n\n**Tasks:**\n\n- [ ] Set up DI framework (TSyringe or InversifyJS)\n- [ ] Define core interface contracts (IServiceRepository, IDeploymentRepository, IUserRepository, IContainerOrchestrator, IDeploymentQueue, ILogger, ICache)\n- [ ] Create base error hierarchy (AppError, ValidationError, NotFoundError)\n- [ ] Set up DI container configuration\n\n**Note:** This issue defines interface contracts only. Implementations are handled by other issues (#95 for repositories, #97 for container orchestrator).\n\n**Benefits:**\n- Better testability\n- Loose coupling\n- Easier to swap implementations",
+    "number": 94,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/94",
+    "synced": false
+  },
+  {
+    "title": "[HIGH] Extract Repository Pattern for Data Access",
+    "labels": ["P1", "refactoring", "database"],
+    "body": "Implement repository pattern for data access using interfaces from #94.\n\n**Current Issue:**\n- Prisma queries scattered throughout route handlers\n- Business logic mixed with data access\n- Hard to test and maintain\n\n**Tasks:**\n\n- [ ] Implement Prisma-based repositories (ServiceRepository, DeploymentRepository, UserRepository) using interfaces from #94\n- [ ] Replace direct Prisma calls with repository methods\n- [ ] Add repository unit tests\n- [ ] Register repositories in DI container\n\n**Dependencies:** Requires #94 (interface definitions)\n\n**Benefits:**\n- Clean separation of data access\n- Easier to test business logic\n- Can swap database implementations",
+    "number": 95,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/95",
+    "synced": false
+  },
+  {
+    "title": "[HIGH] Create Service Layer for Business Logic",
+    "labels": ["P1", "refactoring", "architecture"],
+    "body": "Extract business logic from route handlers into dedicated service classes.\n\n**Current Issue:**\n- Business logic embedded in route handlers\n- No reusability across endpoints\n- Difficult to test in isolation\n\n**Tasks:**\n\n- [ ] Create application services (ServiceManagementService, DeploymentOrchestrator, AuthenticationService)\n- [ ] Extract business logic from route handlers into services\n- [ ] Define DTOs and validation schemas\n- [ ] Add comprehensive service tests\n- [ ] Register services in DI container\n\n**Note:** Complete this before #98 (route refactoring). #98 will then handle the remaining route/controller structure.\n\n**Dependencies:** Works best after #94 (DI setup) and #95 (repositories)\n\n**Benefits:**\n- Testable business logic\n- Reusable across different interfaces\n- Clear separation of concerns",
+    "number": 96,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/96",
+    "synced": false
+  },
+  {
+    "title": "[MEDIUM] Abstract Container Orchestration Logic",
+    "labels": ["P2", "refactoring", "infrastructure"],
+    "body": "Implement container orchestration abstraction using interface from #94.\n\n**Current Issue:**\n- Container management duplicated in API and Worker\n- Direct Docker API calls throughout\n- Cannot easily test container logic\n\n**Tasks:**\n\n- [ ] Implement DockerContainerOrchestrator using IContainerOrchestrator interface from #94\n- [ ] Extract container utilities (VolumeManager, NetworkManager, HealthChecker)\n- [ ] Replace direct Docker calls with orchestrator\n- [ ] Add integration tests\n- [ ] Register orchestrator in DI container\n\n**Note:** Package migration to shared location is handled by #101.\n\n**Dependencies:** Requires #94 (interface definition). Can work in parallel with #95, #96, #98.\n\n**Benefits:**\n- DRY - single container implementation\n- Can work in parallel with route refactoring\n- Easier to test",
+    "number": 97,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/97",
+    "synced": false
+  },
+  {
+    "title": "[MEDIUM] Refactor API Routes into Controllers",
+    "labels": ["P2", "refactoring", "api"],
+    "body": "Split monolithic server.ts into focused controllers and route files after business logic extraction.\n\n**Current Issue:**\n- Single file handles all routes, auth, remaining logic\n- Hard to navigate and maintain\n- High risk of merge conflicts\n\n**Tasks:**\n\n- [ ] Create thin controller classes (ServiceController, DeploymentController, AuthController, WebhookController) that call services from #96\n- [ ] Extract route definitions to separate files\n- [ ] Implement middleware (auth, validation, error handling)\n- [ ] Refactor SSE/WebSocket handlers\n\n**Dependencies:** Should be done after #96 (service layer) to avoid refactoring business logic twice.\n\n**Benefits:**\n- Smaller, focused files\n- Reduced merge conflicts\n- Easier to navigate codebase",
+    "number": 98,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/98",
+    "synced": false
+  },
+  {
+    "title": "[MEDIUM] Implement Strategy Pattern for Deployment Types",
+    "labels": ["P2", "refactoring", "worker"],
+    "body": "Use Strategy Pattern to handle different service deployment types.\n\n**Current Issue:**\n- Hardcoded if/else checks for service types\n- Adding new types requires modifying existing code\n- Violates Open/Closed Principle\n\n**Tasks:**\n\n- [ ] Create IDeploymentStrategy interface\n- [ ] Implement strategies (DockerDeploymentStrategy, StaticDeploymentStrategy, DatabaseDeploymentStrategy, ComposeDeploymentStrategy)\n- [ ] Update worker to use strategy pattern\n- [ ] Extract builders (DockerfileBuilder, ComposeFileBuilder)\n- [ ] Add strategy tests\n\n**Note:** Can work independently from API refactoring (#96, #98) since it focuses on worker.\n\n**Benefits:**\n- Easy to add new service types\n- Better code organization\n- Can work independently from API refactoring",
+    "number": 99,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/99",
+    "synced": false
+  },
+  {
+    "title": "[MEDIUM] Improve TypeScript Type Safety",
+    "labels": ["P2", "refactoring", "type-safety", "duplicate"],
+    "body": "**Note:** This issue duplicates #93. Please use #93 for all TypeScript type safety improvements.\n\n**Closing Reason:** Issue #93 already tracks the same work:\n- Remove `any` types\n- Add Fastify type augmentation\n- Create proper request/response types\n- Remove `as any` casts\n- Enable stricter TypeScript checks\n\nTo avoid splitting work across multiple issues, all TypeScript type safety improvements are consolidated in #93.",
+    "number": 100,
+    "state": "CLOSED",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/100",
+    "synced": false
+  },
+  {
+    "title": "[LOW] Create Shared Package for Common Logic",
+    "labels": ["P3", "refactoring", "architecture"],
+    "body": "Extract duplicated logic into shared package used by API and Worker.\n\n**Current Issue:**\n- Container logic duplicated\n- Status determination repeated\n- Utilities not shared\n\n**Tasks:**\n\n- [ ] Create packages/shared structure\n- [ ] Move container orchestrator and utilities from #97 to shared package\n- [ ] Move status lock logic\n- [ ] Move log scrubber\n- [ ] Update imports in API and Worker\n- [ ] Update package.json dependencies\n\n**Note:** This handles the shared package migration for code from other refactoring issues (especially #97).\n\n**Dependencies:** Best done after #97 (container abstraction) is complete.\n\n**Benefits:**\n- DRY principle\n- Consistent behavior\n- Easier to maintain",
+    "number": 101,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/101",
+    "synced": false
   }
 ]
