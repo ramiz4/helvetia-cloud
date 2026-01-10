@@ -1,5 +1,113 @@
 # Security Guidelines
 
+## Table of Contents
+
+1. [Docker Socket Security](#docker-socket-security)
+2. [CORS Configuration](#cors-configuration)
+3. [Docker Volume Mounts](#docker-volume-mounts)
+
+---
+
+## Docker Socket Security
+
+### Overview
+
+Direct access to the Docker socket (`/var/run/docker.sock`) provides **root-equivalent privileges** on the host system. To mitigate this critical security risk, Helvetia Cloud uses a **Docker Socket Proxy** that acts as a security layer with Access Control Lists (ACLs).
+
+### Security Risks Mitigated
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Container Escape | **Critical** | Socket proxy prevents privileged container creation |
+| Host System Compromise | **Critical** | Read-only socket mount + ACL restrictions |
+| Privilege Escalation | **High** | Limited API access through proxy |
+| Unauthorized API Access | **High** | Only whitelisted Docker operations allowed |
+
+### Docker Socket Proxy Implementation
+
+**Architecture**:
+```
+┌──────────┐         ┌─────────────────┐         ┌──────────┐
+│  Worker  │────────>│  Socket Proxy   │────────>│  Docker  │
+│Container │  HTTP   │ (tecnativa)     │  Socket │  Daemon  │
+└──────────┘         └─────────────────┘         └──────────┘
+                      Filters & ACLs
+```
+
+**Configuration** (`docker-compose.yml`):
+- Service: `docker-socket-proxy` (tecnativa/docker-socket-proxy)
+- Socket Mount: Read-only (`/var/run/docker.sock:ro`)
+- Network: `helvetia-net` (shared with Worker and Traefik)
+- Port: 2375 (HTTP, not exposed externally)
+
+**Allowed Operations**:
+- ✅ Build images (required for deployments)
+- ✅ Create/start/stop containers (required for deployments)
+- ✅ List containers and images (required for status monitoring)
+- ✅ Execute commands in containers (required for builds)
+- ✅ Manage networks and volumes (required for networking and persistence)
+
+**Denied Operations**:
+- ❌ Docker Swarm operations (services, tasks, swarm)
+- ❌ Privileged container creation (blocked by proxy)
+- ❌ Direct socket access (only proxy can access socket)
+
+### Security Benefits
+
+1. **API Filtering**: Only whitelisted Docker API endpoints are accessible
+2. **Read-Only Socket**: Proxy mounts socket as read-only
+3. **ACL Enforcement**: Fine-grained control over allowed operations
+4. **Audit Trail**: All Docker API calls go through monitored proxy
+5. **Defense in Depth**: Additional security layer if a service is compromised
+
+### Configuration Details
+
+The socket proxy is configured via environment variables in `docker-compose.yml`:
+
+```yaml
+environment:
+  CONTAINERS: 1     # List, inspect containers
+  POST: 1           # Create containers/exec
+  BUILD: 1          # Build images
+  IMAGES: 1         # Manage images
+  NETWORKS: 1       # Manage networks (Traefik)
+  VOLUMES: 1        # Manage volumes (persistence)
+  EXEC: 1           # Execute commands
+  ALLOW_START: 1    # Start containers
+  ALLOW_STOP: 1     # Stop containers
+  SERVICES: 0       # Deny Swarm services
+  SWARM: 0          # Deny Swarm management
+```
+
+### Usage in Services
+
+Services connect to the proxy using `DOCKER_HOST` environment variable:
+
+```yaml
+worker:
+  environment:
+    - DOCKER_HOST=tcp://docker-socket-proxy:2375
+```
+
+In code (automatically uses `DOCKER_HOST`):
+```typescript
+import Docker from 'dockerode';
+const docker = new Docker(); // Connects to proxy
+```
+
+### Further Hardening
+
+For production deployments, consider additional security measures:
+
+1. **SELinux/AppArmor**: Mandatory Access Control policies
+2. **Rootless Docker**: Run Docker daemon as non-root user
+3. **Kubernetes Migration**: Use CRI instead of Docker API
+4. **Network Segmentation**: Isolate socket proxy network
+
+See [DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md) for comprehensive security guidance.
+
+---
+
 ## CORS Configuration
 
 ### Overview
