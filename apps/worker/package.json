@@ -30,10 +30,12 @@
   "devDependencies": {
     "@types/dockerode": "^3.3.47",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.0.3",
+    "@types/node": "^22.19.5",
     "@types/redlock": "^4.0.8",
+    "@vitest/coverage-v8": "^4.0.16",
     "prisma": "^6.2.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }
