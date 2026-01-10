@@ -9,7 +9,15 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
   // Server Configuration
-  PORT: z.string().regex(/^\d+$/).transform(Number).default('3001'),
+  PORT: z
+    .string()
+    .default('3001')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
 
   // Database Configuration
   DATABASE_URL: z.string().url().min(1, 'DATABASE_URL is required'),
@@ -38,47 +46,163 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().optional(),
 
   // Rate Limiting Configuration
-  RATE_LIMIT_MAX: z.string().regex(/^\d+$/).transform(Number).default('100'),
+  RATE_LIMIT_MAX: z
+    .string()
+    .default('100')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
   RATE_LIMIT_WINDOW: z.string().default('1 minute'),
-  AUTH_RATE_LIMIT_MAX: z.string().regex(/^\d+$/).transform(Number).default('10'),
+  AUTH_RATE_LIMIT_MAX: z
+    .string()
+    .default('10')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
   AUTH_RATE_LIMIT_WINDOW: z.string().default('1 minute'),
-  WS_RATE_LIMIT_MAX: z.string().regex(/^\d+$/).transform(Number).default('10'),
+  WS_RATE_LIMIT_MAX: z
+    .string()
+    .default('10')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
   WS_RATE_LIMIT_WINDOW: z.string().default('1 minute'),
 
   // Container Resource Limits
-  CONTAINER_MEMORY_LIMIT_MB: z.string().regex(/^\d+$/).transform(Number).default('512'),
+  CONTAINER_MEMORY_LIMIT_MB: z
+    .string()
+    .default('512')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
   CONTAINER_CPU_CORES: z
     .string()
-    .regex(/^\d+(\.\d+)?$/)
-    .transform(Number)
-    .default('1.0'),
+    .default('1.0')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+(\.\d+)?$/)
+        .transform((val) => parseFloat(val)),
+    ),
 
   // Service Configuration
-  METRICS_UPDATE_INTERVAL_MS: z.string().regex(/^\d+$/).transform(Number).default('5000'),
-  STATUS_RECONCILIATION_INTERVAL_MS: z.string().regex(/^\d+$/).transform(Number).default('30000'),
-  CONNECTION_TIMEOUT_MS: z.string().regex(/^\d+$/).transform(Number).default('1800000'),
+  METRICS_UPDATE_INTERVAL_MS: z
+    .string()
+    .default('5000')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  STATUS_RECONCILIATION_INTERVAL_MS: z
+    .string()
+    .default('30000')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  CONNECTION_TIMEOUT_MS: z
+    .string()
+    .default('1800000')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
 
   // Distributed Lock Configuration
-  STATUS_LOCK_TTL_MS: z.string().regex(/^\d+$/).transform(Number).default('10000'),
-  STATUS_RECONCILIATION_LOCK_TTL_MS: z.string().regex(/^\d+$/).transform(Number).default('5000'),
-  LOCK_RETRY_DELAY_MS: z.string().regex(/^\d+$/).transform(Number).default('200'),
-  LOCK_RETRY_JITTER_MS: z.string().regex(/^\d+$/).transform(Number).default('100'),
+  STATUS_LOCK_TTL_MS: z
+    .string()
+    .default('10000')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  STATUS_RECONCILIATION_LOCK_TTL_MS: z
+    .string()
+    .default('5000')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  LOCK_RETRY_DELAY_MS: z
+    .string()
+    .default('200')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  LOCK_RETRY_JITTER_MS: z
+    .string()
+    .default('100')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
 
   // Body Size Limits
-  BODY_LIMIT_GLOBAL_MB: z.string().regex(/^\d+$/).transform(Number).default('10'),
-  BODY_LIMIT_STANDARD_MB: z.string().regex(/^\d+$/).transform(Number).default('1'),
-  BODY_LIMIT_SMALL_KB: z.string().regex(/^\d+$/).transform(Number).default('100'),
+  BODY_LIMIT_GLOBAL_MB: z
+    .string()
+    .default('10')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  BODY_LIMIT_STANDARD_MB: z
+    .string()
+    .default('1')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  BODY_LIMIT_SMALL_KB: z
+    .string()
+    .default('100')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
 
   // Logging Configuration
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
   LOG_REQUESTS: z
     .string()
-    .transform((val) => val !== 'false')
-    .default('true'),
+    .default('true')
+    .pipe(z.string().transform((val) => val !== 'false')),
   LOG_RESPONSES: z
     .string()
-    .transform((val) => val !== 'false')
-    .default('true'),
+    .default('true')
+    .pipe(z.string().transform((val) => val !== 'false')),
 
   // Test Environment
   VITEST: z.string().optional(),
@@ -95,7 +219,7 @@ export function validateEnv(): Env {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map((err) => {
+      const errors = (error.issues || []).map((err) => {
         const path = err.path.join('.');
         return `  - ${path}: ${err.message}`;
       });

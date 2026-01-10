@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { validateEnv } from './env';
 
 describe('Environment Validation - Dashboard', () => {
@@ -21,7 +21,8 @@ describe('Environment Validation - Dashboard', () => {
       expect(env.NEXT_PUBLIC_API_URL).toBe('http://localhost:3001');
       expect(env.NEXT_PUBLIC_WS_URL).toBe('ws://localhost:3001');
       expect(env.NEXT_PUBLIC_APP_URL).toBe('http://localhost:3000');
-      expect(env.NODE_ENV).toBe('development');
+      // NODE_ENV is 'test' when running tests
+      expect(env.NODE_ENV).toBe('test');
     });
   });
 

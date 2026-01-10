@@ -18,21 +18,73 @@ const envSchema = z.object({
   PLATFORM_DOMAIN: z.string().default('helvetia.cloud'),
 
   // Container Resource Limits
-  CONTAINER_MEMORY_LIMIT_MB: z.string().regex(/^\d+$/).transform(Number).default('512'),
+  CONTAINER_MEMORY_LIMIT_MB: z
+    .string()
+    .default('512')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
   CONTAINER_CPU_CORES: z
     .string()
-    .regex(/^\d+(\.\d+)?$/)
-    .transform(Number)
-    .default('1.0'),
+    .default('1.0')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+(\.\d+)?$/)
+        .transform((val) => parseFloat(val)),
+    ),
 
   // Service Configuration
-  MAX_LOG_SIZE_CHARS: z.string().regex(/^\d+$/).transform(Number).default('50000'),
-  WORKER_HEALTH_PORT: z.string().regex(/^\d+$/).transform(Number).default('3002'),
+  MAX_LOG_SIZE_CHARS: z
+    .string()
+    .default('50000')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  WORKER_HEALTH_PORT: z
+    .string()
+    .default('3002')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
 
   // Distributed Lock Configuration
-  STATUS_LOCK_TTL_MS: z.string().regex(/^\d+$/).transform(Number).default('10000'),
-  LOCK_RETRY_DELAY_MS: z.string().regex(/^\d+$/).transform(Number).default('200'),
-  LOCK_RETRY_JITTER_MS: z.string().regex(/^\d+$/).transform(Number).default('100'),
+  STATUS_LOCK_TTL_MS: z
+    .string()
+    .default('10000')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  LOCK_RETRY_DELAY_MS: z
+    .string()
+    .default('200')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  LOCK_RETRY_JITTER_MS: z
+    .string()
+    .default('100')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
 
   // Docker Configuration
   DOCKER_HOST: z.string().optional(),
@@ -53,7 +105,7 @@ export function validateEnv(): Env {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map((err) => {
+      const errors = (error.issues || []).map((err) => {
         const path = err.path.join('.');
         return `  - ${path}: ${err.message}`;
       });

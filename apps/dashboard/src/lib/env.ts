@@ -26,7 +26,7 @@ export function validateEnv(): Env {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map((err) => {
+      const errors = (error.issues || []).map((err) => {
         const path = err.path.join('.');
         return `  - ${path}: ${err.message}`;
       });

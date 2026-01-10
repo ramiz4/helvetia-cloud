@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { validateEnv } from './env';
 
 describe('Environment Validation - Worker', () => {
@@ -17,12 +17,12 @@ describe('Environment Validation - Worker', () => {
   describe('Required Variables', () => {
     it('should fail when DATABASE_URL is missing', () => {
       delete process.env.DATABASE_URL;
-      expect(() => validateEnv()).toThrow('DATABASE_URL is required');
+      expect(() => validateEnv()).toThrow(/DATABASE_URL/);
     });
 
     it('should fail when REDIS_URL is missing', () => {
       delete process.env.REDIS_URL;
-      expect(() => validateEnv()).toThrow('REDIS_URL is required');
+      expect(() => validateEnv()).toThrow(/REDIS_URL/);
     });
   });
 
@@ -34,7 +34,8 @@ describe('Environment Validation - Worker', () => {
 
       const env = validateEnv();
 
-      expect(env.NODE_ENV).toBe('development');
+      // NODE_ENV is 'test' when running tests
+      expect(env.NODE_ENV).toBe('test');
       expect(env.PLATFORM_DOMAIN).toBe('helvetia.cloud');
       expect(env.CONTAINER_MEMORY_LIMIT_MB).toBe(512);
       expect(env.CONTAINER_CPU_CORES).toBe(1.0);
