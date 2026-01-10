@@ -1,8 +1,4 @@
-import dotenv from 'dotenv';
-import path from 'path';
-
-// Load environment variables as early as possible
-dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
+import './load-env';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fastifyCookie from '@fastify/cookie';
