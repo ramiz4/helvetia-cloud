@@ -373,8 +373,8 @@ curl http://localhost:3002/health
 
 **Documentation:**
 
-- [Worker Health Check Format](./apps/worker/HEALTH_CHECK.md)
-- [Monitoring Setup Guide](./apps/worker/MONITORING_SETUP.md)
+- [Worker Health Check Format](./.docs/worker/HEALTH_CHECK.md)
+- [Monitoring Setup Guide](./.docs/worker/MONITORING_SETUP.md)
 
 **Integrations:**
 
