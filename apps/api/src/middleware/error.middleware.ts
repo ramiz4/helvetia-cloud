@@ -1,19 +1,50 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
+import { AppError, ErrorCode } from '../errors';
 
 /**
- * Error handler for body size limit exceeded
+ * Global error handler middleware
+ * Handles all errors and converts them to standard error response format
  */
-export function errorHandler(error: FastifyError, request: FastifyRequest, reply: FastifyReply) {
+export function errorHandler(
+  error: FastifyError | AppError | Error,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   // Handle FST_ERR_CTP_BODY_TOO_LARGE error (Fastify body too large error)
-  if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
+  if ('code' in error && error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
     const limit = error.message.match(/(\d+)/)?.[0] || 'unknown';
-    return reply.status(413).send({
-      statusCode: 413,
-      error: 'Payload Too Large',
-      message: `Request body exceeds the maximum allowed size of ${Math.floor(parseInt(limit) / 1024 / 1024)}MB`,
-    });
+    const appError = new AppError(
+      ErrorCode.PAYLOAD_TOO_LARGE,
+      `Request body exceeds the maximum allowed size of ${Math.floor(parseInt(limit) / 1024 / 1024)}MB`,
+      413,
+    );
+    return reply.status(413).send(appError.toJSON());
   }
 
-  // Re-throw the error for other error handlers
-  throw error;
+  // Handle custom AppError instances
+  if (error instanceof AppError) {
+    return reply.status(error.statusCode).send(error.toJSON());
+  }
+
+  // Handle Fastify validation errors
+  if ('validation' in error && error.validation) {
+    const validationError = new AppError(
+      ErrorCode.VALIDATION_FAILED,
+      'Request validation failed',
+      400,
+      error.validation,
+    );
+    return reply.status(400).send(validationError.toJSON());
+  }
+
+  // Log unexpected errors
+  request.log.error(error, 'Unexpected error occurred');
+
+  // Handle all other errors as internal server errors
+  const systemError = new AppError(
+    ErrorCode.SYSTEM_ERROR,
+    process.env.NODE_ENV === 'production' ? undefined : error.message,
+    500,
+  );
+  return reply.status(500).send(systemError.toJSON());
 }

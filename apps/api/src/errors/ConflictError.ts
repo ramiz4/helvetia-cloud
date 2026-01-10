@@ -1,10 +1,11 @@
 import { AppError } from './AppError';
+import { ErrorCode } from './ErrorCodes';
 
 /**
  * Error thrown when a resource conflict occurs (e.g., duplicate entry)
  */
 export class ConflictError extends AppError {
-  constructor(message: string = 'Resource conflict') {
-    super(message, 409);
+  constructor(message?: string, code: ErrorCode = ErrorCode.RESOURCE_CONFLICT) {
+    super(code, message, 409);
   }
 }

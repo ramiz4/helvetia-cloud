@@ -485,21 +485,9 @@ fastify.register(rateLimit, {
 // Create rate limit configs
 const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
-// Error handler for body size limit exceeded
-fastify.setErrorHandler((error: Error & { code?: string }, request, reply) => {
-  // Handle FST_ERR_CTP_BODY_TOO_LARGE error (Fastify body too large error)
-  if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
-    const limit = error.message.match(/(\d+)/)?.[0] || 'unknown';
-    return reply.status(413).send({
-      statusCode: 413,
-      error: 'Payload Too Large',
-      message: `Request body exceeds the maximum allowed size of ${Math.floor(parseInt(limit) / 1024 / 1024)}MB`,
-    });
-  }
-
-  // Re-throw the error for other error handlers
-  throw error;
-});
+// Register global error handler
+import { errorHandler } from './middleware/error.middleware';
+fastify.setErrorHandler(errorHandler);
 
 // Auth hook
 fastify.addHook('onRequest', async (request, reply) => {
