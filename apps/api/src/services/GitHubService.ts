@@ -46,9 +46,9 @@ export class GitHubService implements IGitHubService {
     const validTypes = ['all', 'owner', 'member', 'public', 'private', 'forks', 'sources'];
 
     const sanitizedSort = validSorts.includes(params.sort || '')
-      ? params.sort
+      ? params.sort!
       : ('updated' as const);
-    const sanitizedType = validTypes.includes(params.type || '') ? params.type : ('all' as const);
+    const sanitizedType = validTypes.includes(params.type || '') ? params.type! : ('all' as const);
     const sanitizedPerPage = Math.max(1, Math.min(100, params.per_page || 100));
     const sanitizedPage = Math.max(1, params.page || 1);
 
