@@ -54,7 +54,6 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
       });
 
       // 3. Prepare build script
-      /* eslint-disable no-useless-escape */
       const buildScript = `
         set -e
         apk add --no-cache git
@@ -94,7 +93,6 @@ EOF
         echo "===== Starting Docker Build ====="
         docker build -t ${imageTag} .
       `;
-      /* eslint-enable no-useless-escape */
 
       // 4. Execute build
       const exec = await builder.exec({

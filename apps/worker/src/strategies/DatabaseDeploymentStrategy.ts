@@ -27,7 +27,7 @@ export class DatabaseDeploymentStrategy implements IDeploymentStrategy {
   }
 
   async deploy(context: DeploymentContext): Promise<DeploymentResult> {
-    const { docker, serviceName, type } = context;
+    const { docker, type } = context;
 
     const imageTag = this.databaseImages[type];
     if (!imageTag) {

@@ -63,7 +63,6 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
       });
 
       // 4. Prepare build script
-      /* eslint-disable no-useless-escape */
       const buildScript = `
         set -e
         # Install tools needed for standard Docker Compose usage
@@ -87,7 +86,6 @@ EOF
         # Point to the override file in /tmp
         docker compose -f "${buildCommand || 'docker-compose.yml'}" -f /tmp/docker-compose.override.yml -p ${serviceName} up -d --build --remove-orphans
       `;
-      /* eslint-enable no-useless-escape */
 
       // 5. Execute deployment
       const exec = await builder.exec({
