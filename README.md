@@ -85,6 +85,37 @@ The API includes production-ready rate limiting with Redis-backed distributed st
 
 > **Note**: Health check endpoints (`/health`) are automatically excluded from rate limiting for monitoring purposes.
 
+#### Container & Resource Configuration (Optional)
+
+Configure resource limits and operational parameters for deployed containers:
+
+**Container Resource Limits**:
+
+- `CONTAINER_MEMORY_LIMIT_MB`: Memory limit per container in MB (default: `512`)
+- `CONTAINER_CPU_CORES`: CPU cores per container (default: `1.0`)
+
+**Service Configuration**:
+
+- `MAX_LOG_SIZE_CHARS`: Maximum log size stored in database (default: `50000`)
+- `METRICS_UPDATE_INTERVAL_MS`: Interval for metrics updates in milliseconds (default: `5000` = 5 seconds)
+- `STATUS_RECONCILIATION_INTERVAL_MS`: Interval for status reconciliation in milliseconds (default: `30000` = 30 seconds)
+- `CONNECTION_TIMEOUT_MS`: SSE connection timeout in milliseconds (default: `1800000` = 30 minutes)
+
+**Distributed Lock Configuration**:
+
+- `STATUS_LOCK_TTL_MS`: Default lock TTL for status updates in milliseconds (default: `10000` = 10 seconds)
+- `STATUS_RECONCILIATION_LOCK_TTL_MS`: Lock TTL for status reconciliation in milliseconds (default: `5000` = 5 seconds)
+- `LOCK_RETRY_DELAY_MS`: Retry delay between lock acquisition attempts in milliseconds (default: `200`)
+- `LOCK_RETRY_JITTER_MS`: Random jitter added to retry delay in milliseconds (default: `100`)
+
+**Body Size Limits**:
+
+- `BODY_LIMIT_GLOBAL_MB`: Global body size limit in MB (default: `10`)
+- `BODY_LIMIT_STANDARD_MB`: Standard body size limit in MB (default: `1`)
+- `BODY_LIMIT_SMALL_KB`: Small body size limit in KB (default: `100`)
+
+> **Note**: All default values are production-ready. Only adjust these if you have specific deployment requirements.
+
 #### GitHub Webhook Configuration
 
 To enable automated deployments via GitHub webhooks:
