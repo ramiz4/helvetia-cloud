@@ -68,23 +68,6 @@ const deploymentQueue = new Queue('deployments', {
 import { registerInstance } from './di';
 registerInstance(Symbol.for('DeploymentQueue'), deploymentQueue);
 
-// Collect queue metrics periodically (every 30 seconds)
-if (!isTestEnv) {
-  setInterval(async () => {
-    try {
-      const [waiting, active, completed, failed] = await Promise.all([
-        deploymentQueue.getWaitingCount(),
-        deploymentQueue.getActiveCount(),
-        deploymentQueue.getCompletedCount(),
-        deploymentQueue.getFailedCount(),
-      ]);
-      metricsService.updateQueueDepth('deployments', waiting, active, completed, failed);
-    } catch (error) {
-      console.error('Failed to collect queue metrics:', error);
-    }
-  }, 30000);
-}
-
 // Helper to create and queue deployment
 async function createAndQueueDeployment(service: any, commitHash: string) {
   const deployment = await deploymentRepository.create({
@@ -356,6 +339,23 @@ export {
   getSafeOrigin,
   isOriginAllowed,
 };
+
+// Collect queue metrics periodically (every 30 seconds)
+if (!isTestEnv) {
+  setInterval(async () => {
+    try {
+      const [waiting, active, completed, failed] = await Promise.all([
+        deploymentQueue.getWaitingCount(),
+        deploymentQueue.getActiveCount(),
+        deploymentQueue.getCompletedCount(),
+        deploymentQueue.getFailedCount(),
+      ]);
+      metricsService.updateQueueDepth('deployments', waiting, active, completed, failed);
+    } catch (error) {
+      console.error('Failed to collect queue metrics:', error);
+    }
+  }, 30000);
+}
 
 /**
  * Request Logging Hook
