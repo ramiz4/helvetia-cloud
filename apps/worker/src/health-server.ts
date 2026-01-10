@@ -126,9 +126,11 @@ healthServer.get('/health', async (_request, reply) => {
  */
 export async function startHealthServer() {
   try {
-    // Connect to Redis
-    await redisConnection.connect();
-    console.log('Redis connected for health checks');
+    // Connect to Redis if not already connecting/connected
+    if (redisConnection.status === 'wait') {
+      await redisConnection.connect();
+      console.log('Redis connected for health checks');
+    }
 
     await healthServer.listen({ port: WORKER_HEALTH_PORT, host: '0.0.0.0' });
     console.log(`Worker health check server listening on port ${WORKER_HEALTH_PORT}`);

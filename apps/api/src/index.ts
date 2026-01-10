@@ -1,3 +1,9 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables as early as possible
+dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
+
 import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
 import { fastify } from './server';
 import { statusReconciliationService } from './utils/statusReconciliation';

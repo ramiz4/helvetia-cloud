@@ -1,9 +1,12 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
 import { Job, Worker } from 'bullmq';
 import { prisma } from 'database';
 import Docker from 'dockerode';
-import dotenv from 'dotenv';
 import IORedis from 'ioredis';
-import path from 'path';
 import {
   CONTAINER_CPU_NANOCPUS,
   CONTAINER_MEMORY_LIMIT_BYTES,
@@ -14,8 +17,6 @@ import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
 import { withStatusLock } from './utils/statusLock';
 import { getSecureBindMounts } from './utils/workspace';
-
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 // Type for Docker pull progress events
 interface DockerPullProgressEvent {
@@ -68,7 +69,7 @@ export const worker = new Worker(
     // Validate environment variables before proceeding
     if (envVars && Object.keys(envVars).length > 0) {
       console.log('Validating environment variables...');
-      const envValidation = validateGeneratedDockerfile({
+      const envValidation = await validateGeneratedDockerfile({
         dockerfileContent: 'FROM scratch', // Dummy dockerfile for env var validation only
         envVars,
       });
@@ -346,26 +347,26 @@ EOF
           # We don't ignore 'dist' here because it might be the target
           # output directory for static sites in some configurations
           echo "temp" >> .dockerignore
-          
+
           echo ""
           echo "===== Validating Generated Dockerfile ====="
-          
+
           # Display the generated Dockerfile for visibility
           echo "Generated Dockerfile content:"
           cat Dockerfile
           echo ""
-          
+
           # Basic validation checks
           if ! grep -q "^FROM " Dockerfile; then
             echo "ERROR: Dockerfile must start with a FROM instruction"
             exit 1
           fi
-          
+
           # Check for required instructions in the Dockerfile
           if ! grep -qE "^(CMD|ENTRYPOINT) " Dockerfile; then
             echo "WARNING: Dockerfile should contain a CMD or ENTRYPOINT instruction"
           fi
-          
+
           # Validate EXPOSE instructions have valid port numbers
           if grep -q "^EXPOSE " Dockerfile; then
             while IFS= read -r expose_line; do
@@ -379,11 +380,11 @@ EOF
               done
             done < <(grep "^EXPOSE " Dockerfile)
           fi
-          
+
           echo "✅ Dockerfile syntax validation passed"
           echo ""
         fi
-        
+
         echo "===== Starting Docker Build ====="
         docker build -t ${imageTag} .
       `;

@@ -1,3 +1,9 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables as early as possible
+dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -8,10 +14,8 @@ import axios from 'axios';
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import { prisma } from 'database';
-import dotenv from 'dotenv';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
-import path from 'path';
 import { ZodError } from 'zod';
 import {
   BODY_LIMIT_GLOBAL,
@@ -36,8 +40,7 @@ import {
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 import { withStatusLock } from './utils/statusLock';
 
-dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
-
+// Redis connection initialized after dotenv.config()
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
