@@ -100,6 +100,7 @@ Configure resource limits and operational parameters for deployed containers:
 - `METRICS_UPDATE_INTERVAL_MS`: Interval for metrics updates in milliseconds (default: `5000` = 5 seconds)
 - `STATUS_RECONCILIATION_INTERVAL_MS`: Interval for status reconciliation in milliseconds (default: `30000` = 30 seconds)
 - `CONNECTION_TIMEOUT_MS`: SSE connection timeout in milliseconds (default: `1800000` = 30 minutes)
+- `WORKER_HEALTH_PORT`: Worker health check server port (default: `3002`)
 
 **Distributed Lock Configuration**:
 
@@ -167,6 +168,7 @@ pnpm dev
 
 - **Dashboard**: [http://localhost:3000](http://localhost:3000)
 - **API Engine**: [http://localhost:3001](http://localhost:3001)
+- **Worker Health Check**: [http://localhost:3002/health](http://localhost:3002/health)
 - **Traefik Dashboard**: [http://localhost:8090](http://localhost:8090)
 
 ### 6. Running in Production Mode
@@ -194,6 +196,37 @@ Stay updated with our progress and future plans in the [ROADMAP.md](./ROADMAP.md
 ## 🏗 Architecture
 
 For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+## 📊 Monitoring
+
+Helvetia Cloud includes built-in health check endpoints for monitoring service health and performance.
+
+### Worker Health Check
+
+The worker service exposes an HTTP health check endpoint at `/health` (default port: 3002) that provides:
+
+- Overall service health status
+- Queue statistics (waiting, active, completed, failed jobs)
+- Redis connection status
+- Worker uptime information
+
+**Quick Check:**
+
+```bash
+curl http://localhost:3002/health
+```
+
+**Documentation:**
+
+- [Worker Health Check Format](./apps/worker/HEALTH_CHECK.md)
+- [Monitoring Setup Guide](./apps/worker/MONITORING_SETUP.md)
+
+**Integrations:**
+
+- Docker health checks
+- Kubernetes liveness/readiness probes
+- Prometheus metrics
+- Uptime monitoring services (UptimeRobot, Pingdom, etc.)
 
 ## 🔍 Code Review & Issues
 
