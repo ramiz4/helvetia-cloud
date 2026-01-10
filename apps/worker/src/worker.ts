@@ -61,6 +61,16 @@ export const worker = new Worker(
 
     console.log(`Starting deployment ${deploymentId} for service ${serviceName}`);
 
+    // Verify deployment exists before starting
+    const deploymentRecord = await prisma.deployment.findUnique({
+      where: { id: deploymentId },
+    });
+
+    if (!deploymentRecord) {
+      console.error(`Deployment ${deploymentId} not found in database. Skipping job.`);
+      return;
+    }
+
     // Validate environment variables before proceeding
     if (envVars && Object.keys(envVars).length > 0) {
       console.log('Validating environment variables...');
@@ -589,8 +599,14 @@ EOF
             'Service status set to RUNNING after rollback attempt; previous containers may still be serving traffic',
           );
         }
-      } catch (dbError) {
-        console.error('Failed to update database with error status:', dbError);
+      } catch (dbError: any) {
+        if (dbError.code === 'P2025') {
+          console.error(
+            `Failed to update database: Deployment ${deploymentId} was deleted during processing.`,
+          );
+        } else {
+          console.error('Failed to update database with error status:', dbError);
+        }
       }
 
       // Re-throw to mark job as failed
