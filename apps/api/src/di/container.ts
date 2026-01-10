@@ -3,6 +3,7 @@ import { prisma } from 'database';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { DeploymentController } from '../controllers/DeploymentController';
+import { GitHubController } from '../controllers/GitHubController';
 import { ServiceController } from '../controllers/ServiceController';
 import { DockerContainerOrchestrator } from '../orchestration';
 import {
@@ -13,6 +14,7 @@ import {
 import {
   AuthenticationService,
   DeploymentOrchestratorService,
+  GitHubService,
   ServiceManagementService,
 } from '../services';
 import { TOKENS } from './tokens';
@@ -42,10 +44,12 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
   container.registerSingleton(TOKENS.DeploymentOrchestratorService, DeploymentOrchestratorService);
   container.registerSingleton(TOKENS.AuthenticationService, AuthenticationService);
+  container.registerSingleton(TOKENS.GitHubService, GitHubService);
 
   // Register controllers
   container.registerSingleton(Symbol.for('ServiceController'), ServiceController);
   container.registerSingleton(Symbol.for('DeploymentController'), DeploymentController);
+  container.registerSingleton(Symbol.for('GitHubController'), GitHubController);
 }
 
 /**

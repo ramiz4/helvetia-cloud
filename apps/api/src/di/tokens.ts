@@ -21,6 +21,7 @@ export const TOKENS = {
   ServiceManagementService: Symbol.for('ServiceManagementService'),
   DeploymentOrchestratorService: Symbol.for('DeploymentOrchestratorService'),
   AuthenticationService: Symbol.for('AuthenticationService'),
+  GitHubService: Symbol.for('IGitHubService'),
 
   // External dependencies
   PrismaClient: Symbol.for('PrismaClient'),

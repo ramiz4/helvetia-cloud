@@ -538,6 +538,10 @@ fastify.register(serviceRoutes);
 import { deploymentRoutes } from './routes/deployment.routes';
 fastify.register(deploymentRoutes);
 
+// Register GitHub routes
+import { githubRoutes } from './routes/github.routes';
+fastify.register(githubRoutes);
+
 fastify.post(
   '/auth/github',
   {
@@ -717,131 +721,6 @@ fastify.delete('/auth/github/disconnect', async (request) => {
   const user = (request as any).user;
   await userRepository.update(user.id, { githubAccessToken: null });
   return { success: true };
-});
-
-// GitHub Proxy Routes
-fastify.get('/github/orgs', async (request, reply) => {
-  const user = (request as any).user;
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-
-  if (!dbUser?.githubAccessToken) {
-    return reply.status(401).send({
-      error:
-        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
-    });
-  }
-
-  try {
-    const decryptedToken = decrypt(dbUser.githubAccessToken);
-    const res = await axios.get('https://api.github.com/user/orgs', {
-      headers: {
-        Authorization: `token ${decryptedToken}`,
-        Accept: 'application/json',
-      },
-    });
-
-    console.log(`Fetched ${res.data.length} organizations for user ${user.id}`);
-    return res.data;
-  } catch (err: any) {
-    console.error('GitHub Orgs API error:', err.response?.data || err.message);
-    return reply
-      .status(err.response?.status || 500)
-      .send(err.response?.data || { error: 'Failed to fetch GitHub organizations' });
-  }
-});
-
-fastify.get('/github/repos', async (request, reply) => {
-  const user = (request as any).user;
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-
-  if (!dbUser?.githubAccessToken) {
-    return reply.status(401).send({
-      error:
-        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
-    });
-  }
-
-  const { sort, per_page, type, page, org } = request.query as any;
-
-  // Validation and Sanitization
-  const validSorts = ['updated', 'created', 'pushed', 'full_name'];
-  const validTypes = ['all', 'owner', 'member', 'public', 'private', 'forks', 'sources'];
-
-  const sanitizedSort = validSorts.includes(sort) ? sort : 'updated';
-  const sanitizedType = validTypes.includes(type) ? type : 'all';
-  const sanitizedPerPage = Math.max(1, Math.min(100, parseInt(per_page) || 100));
-  const sanitizedPage = Math.max(1, parseInt(page) || 1);
-
-  try {
-    const decryptedToken = decrypt(dbUser.githubAccessToken);
-
-    let url = 'https://api.github.com/user/repos';
-    const params: any = {
-      sort: sanitizedSort,
-      per_page: sanitizedPerPage,
-      page: sanitizedPage,
-    };
-
-    if (org) {
-      // If org is provided, we fetch repos for that organization
-      // Note: org repos API uses slightly different param names or defaults
-      url = `https://api.github.com/orgs/${org}/repos`;
-    } else {
-      params.type = sanitizedType;
-    }
-
-    const res = await axios.get(url, {
-      headers: {
-        Authorization: `token ${decryptedToken}`,
-        Accept: 'application/json',
-      },
-      params,
-    });
-
-    return res.data;
-  } catch (err: any) {
-    console.error('GitHub Repos API error:', err.response?.data || err.message);
-    return reply
-      .status(err.response?.status || 500)
-      .send(err.response?.data || { error: 'Failed to fetch GitHub repositories' });
-  }
-});
-
-fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
-  const user = (request as any).user;
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-
-  if (!dbUser?.githubAccessToken) {
-    return reply.status(401).send({
-      error:
-        'GitHub authentication required or token expired. Please reconnect your GitHub account.',
-    });
-  }
-
-  const { owner, name } = request.params as any;
-
-  // Validation: owner and name should only contain alphanumeric, hyphens, underscores, or dots
-  const validPattern = /^[a-zA-Z0-9-._]+$/;
-  if (!validPattern.test(owner) || !validPattern.test(name)) {
-    return reply.status(400).send({ error: 'Invalid repository owner or name format' });
-  }
-
-  try {
-    const decryptedToken = decrypt(dbUser.githubAccessToken);
-    const res = await axios.get(`https://api.github.com/repos/${owner}/${name}/branches`, {
-      headers: {
-        Authorization: `token ${decryptedToken}`,
-        Accept: 'application/json',
-      },
-    });
-
-    return res.data;
-  } catch (err: any) {
-    console.error('GitHub API error:', err.response?.data || err.message);
-    return reply
-      .status(err.response?.status || 500)
-      .send(err.response?.data || { error: 'Failed to fetch branches' });
-  }
 });
 
 // Webhook scope to capture raw body

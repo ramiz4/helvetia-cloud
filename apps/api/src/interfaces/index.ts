@@ -35,4 +35,11 @@ export {
   IContainerOrchestrator,
 } from './IContainerOrchestrator';
 export { DeploymentJobData, IDeploymentQueue, JobOptions } from './IDeploymentQueue';
+export {
+  GetRepositoriesParams,
+  GitHubBranch,
+  GitHubOrganization,
+  GitHubRepository,
+  IGitHubService,
+} from './IGitHubService';
 export { ILogger, LogContext, LogLevel } from './ILogger';
