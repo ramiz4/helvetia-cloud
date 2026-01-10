@@ -1,8 +1,3 @@
-import dotenv from 'dotenv';
-import path from 'path';
-
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
-
 import { Job, Worker } from 'bullmq';
 import { prisma } from 'database';
 import Docker from 'dockerode';

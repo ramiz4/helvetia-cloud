@@ -1,3 +1,13 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables as early as possible
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
+// Validate environment variables before doing anything else
+import { initEnv } from './config/env';
+initEnv();
+
 import { scheduleCleanupJob } from './cleanup';
 import { startHealthServer, stopHealthServer } from './health-server';
 import { worker } from './worker';

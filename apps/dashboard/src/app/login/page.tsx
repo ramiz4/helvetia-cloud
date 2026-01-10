@@ -1,13 +1,12 @@
 'use client';
 
+import { GITHUB_CLIENT_ID } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { GithubIcon } from '../../components/icons/GithubIcon';
-
-const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
 
 function LoginContent() {
   const { t } = useLanguage();

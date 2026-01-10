@@ -1,6 +1,6 @@
 'use client';
 
-import { API_BASE_URL } from '@/lib/config';
+import { API_BASE_URL, GITHUB_CLIENT_ID } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
 import { fetchWithAuth } from '@/lib/tokenRefresh';
 import {
@@ -206,7 +206,7 @@ export default function SettingsPage() {
                   {t.settings.orgAccessDesc}
                 </p>
                 <a
-                  href={`https://github.com/settings/connections/applications/${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}`}
+                  href={`https://github.com/settings/connections/applications/${GITHUB_CLIENT_ID}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group inline-flex items-center gap-2 text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-all mt-5 bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-500/20"
