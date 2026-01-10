@@ -52,9 +52,11 @@ vi.mock('database', () => {
       service: {
         findMany: vi.fn(),
         findUnique: vi.fn(),
-        updateMany: vi.fn(),
-        upsert: vi.fn(),
         findFirst: vi.fn(),
+        updateMany: vi.fn(),
+        update: vi.fn(),
+        upsert: vi.fn(),
+        create: vi.fn(),
       },
       user: {
         findUnique: vi.fn(),
