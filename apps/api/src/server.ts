@@ -48,9 +48,6 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
   maxRetriesPerRequest: null,
 });
 
-// Separate connection for subscriptions
-const subConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379');
-
 const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
 });
@@ -486,7 +483,7 @@ fastify.register(rateLimit, {
 });
 
 // Create rate limit configs
-const { authRateLimitConfig, wsRateLimitConfig } = createRateLimitConfigs(redisConnection);
+const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
 // Error handler for body size limit exceeded
 fastify.setErrorHandler((error: Error & { code?: string }, request, reply) => {
