@@ -117,10 +117,7 @@ export class DockerfileBuilder {
       });
     }
 
-    builder
-      .copy('package*.json pnpm-lock.yaml* ./', './')
-      .run('pnpm install')
-      .copy('. .', '.');
+    builder.copy('package*.json pnpm-lock.yaml* ./', './').run('pnpm install').copy('. .', '.');
 
     // Add ENV instructions for runtime variables
     if (options.envVars) {
@@ -161,10 +158,7 @@ export class DockerfileBuilder {
       });
     }
 
-    builder
-      .copy('package*.json pnpm-lock.yaml* ./', './')
-      .run('pnpm install')
-      .copy('. .', '.');
+    builder.copy('package*.json pnpm-lock.yaml* ./', './').run('pnpm install').copy('. .', '.');
 
     // Add ENV instructions for build-time
     if (options.envVars) {
@@ -175,14 +169,11 @@ export class DockerfileBuilder {
 
     builder
       .run(options.buildCommand || 'pnpm build')
-      .raw('RUN ls -R /app | grep \': \' || true')
+      .raw("RUN ls -R /app | grep ': ' || true")
       .raw('')
       .from('nginx:alpine')
       .run('rm -rf /usr/share/nginx/html/*')
-      .copy(
-        `--from=builder /app/${options.staticOutputDir || 'dist'}`,
-        '/usr/share/nginx/html',
-      )
+      .copy(`--from=builder /app/${options.staticOutputDir || 'dist'}`, '/usr/share/nginx/html')
       .raw('COPY nginx.conf /etc/nginx/conf.d/default.conf')
       .expose(80)
       .cmd(['nginx', '-g', 'daemon off;']);

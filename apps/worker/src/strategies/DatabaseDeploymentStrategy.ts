@@ -40,13 +40,10 @@ export class DatabaseDeploymentStrategy implements IDeploymentStrategy {
     try {
       const stream = await docker.pull(imageTag);
       await new Promise((resolve, reject) => {
-        docker.modem.followProgress(
-          stream,
-          (err: Error | null, res: DockerPullProgressEvent[]) => {
-            if (err) reject(err);
-            else resolve(res);
-          },
-        );
+        docker.modem.followProgress(stream, (err: Error | null, res: DockerPullProgressEvent[]) => {
+          if (err) reject(err);
+          else resolve(res);
+        });
       });
       console.log(`Successfully pulled ${imageTag}`);
     } catch (pullError) {

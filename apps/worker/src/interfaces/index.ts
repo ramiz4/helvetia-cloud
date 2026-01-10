@@ -23,8 +23,4 @@ export {
 export { ILogger, LogContext, LogLevel } from './ILogger';
 
 // Deployment strategy interfaces
-export {
-  DeploymentContext,
-  DeploymentResult,
-  IDeploymentStrategy,
-} from './IDeploymentStrategy';
+export { DeploymentContext, DeploymentResult, IDeploymentStrategy } from './IDeploymentStrategy';
