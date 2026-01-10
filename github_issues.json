@@ -310,7 +310,7 @@
     "labels": ["P1", "refactoring", "architecture"],
     "body": "Extract business logic from route handlers into dedicated service classes.\n\n**Current Issue:**\n- Business logic embedded in route handlers\n- No reusability across endpoints\n- Difficult to test in isolation\n\n**Tasks:**\n\n- [ ] Create application services (ServiceManagementService, DeploymentOrchestrator, AuthenticationService)\n- [ ] Extract business logic from route handlers into services\n- [ ] Define DTOs and validation schemas\n- [ ] Add comprehensive service tests\n- [ ] Register services in DI container\n\n**Note:** Complete this before #98 (route refactoring). #98 will then handle the remaining route/controller structure.\n\n**Dependencies:** Works best after #94 (DI setup) and #95 (repositories)\n\n**Benefits:**\n- Testable business logic\n- Reusable across different interfaces\n- Clear separation of concerns",
     "number": 127,
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/127"
   },
@@ -319,7 +319,7 @@
     "labels": ["P2", "refactoring", "infrastructure"],
     "body": "Implement container orchestration abstraction using interface from #94.\n\n**Current Issue:**\n- Container management duplicated in API and Worker\n- Direct Docker API calls throughout\n- Cannot easily test container logic\n\n**Tasks:**\n\n- [ ] Implement DockerContainerOrchestrator using IContainerOrchestrator interface from #94\n- [ ] Extract container utilities (VolumeManager, NetworkManager, HealthChecker)\n- [ ] Replace direct Docker calls with orchestrator\n- [ ] Add integration tests\n- [ ] Register orchestrator in DI container\n\n**Note:** Package migration to shared location is handled by #101.\n\n**Dependencies:** Requires #94 (interface definition). Can work in parallel with #95, #96, #98.\n\n**Benefits:**\n- DRY - single container implementation\n- Can work in parallel with route refactoring\n- Easier to test",
     "number": 128,
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/128"
   },
@@ -328,7 +328,7 @@
     "labels": ["P2", "refactoring", "api"],
     "body": "Split monolithic server.ts into focused controllers and route files after business logic extraction.\n\n**Current Issue:**\n- Single file handles all routes, auth, remaining logic\n- Hard to navigate and maintain\n- High risk of merge conflicts\n\n**Tasks:**\n\n- [ ] Create thin controller classes (ServiceController, DeploymentController, AuthController, WebhookController) that call services from #96\n- [ ] Extract route definitions to separate files\n- [ ] Implement middleware (auth, validation, error handling)\n- [ ] Refactor SSE/WebSocket handlers\n\n**Dependencies:** Should be done after #96 (service layer) to avoid refactoring business logic twice.\n\n**Benefits:**\n- Smaller, focused files\n- Reduced merge conflicts\n- Easier to navigate codebase",
     "number": 129,
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/129"
   },
