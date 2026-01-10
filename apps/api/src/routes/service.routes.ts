@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { BODY_LIMIT_SMALL } from '../config/constants';
-import { resolve, TOKENS } from '../di';
 import { ServiceController } from '../controllers/ServiceController';
+import { resolve } from '../di';
 
 /**
  * Service routes plugin
@@ -60,6 +60,22 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
    */
   fastify.delete('/services/:id', async (request, reply) => {
     return controller.deleteService(request, reply);
+  });
+
+  /**
+   * POST /services/:id/recover
+   * Recover a soft-deleted service
+   */
+  fastify.post('/services/:id/recover', async (request, reply) => {
+    return controller.recoverService(request, reply);
+  });
+
+  /**
+   * PATCH /services/:id/protection
+   * Toggle delete protection for a service
+   */
+  fastify.patch('/services/:id/protection', async (request, reply) => {
+    return controller.toggleProtection(request, reply);
   });
 
   /**

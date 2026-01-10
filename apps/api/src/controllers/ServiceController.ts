@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
-import { BODY_LIMIT_SMALL } from '../config/constants';
 import { getServiceMetrics } from '../handlers/metrics.handler';
 import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from '../schemas/service.schema';
@@ -297,6 +295,50 @@ export class ServiceController {
   }
 
   /**
+   * POST /services/:id/recover
+   * Recover a soft-deleted service
+   */
+  async recoverService(request: FastifyRequest, reply: FastifyReply): Promise<any> {
+    const { id } = request.params as any;
+    const user = (request as any).user;
+
+    const service = await this.serviceRepository.findById(id);
+
+    if (!service || service.userId !== user.id || !service.deletedAt) {
+      return reply.status(404).send({ error: 'Deleted service not found or unauthorized' });
+    }
+
+    // Restore the service
+    const restored = await this.serviceRepository.update(id, { deletedAt: null });
+
+    return { success: true, service: restored, message: 'Service recovered successfully' };
+  }
+
+  /**
+   * PATCH /services/:id/protection
+   * Toggle delete protection for a service
+   */
+  async toggleProtection(request: FastifyRequest, reply: FastifyReply): Promise<any> {
+    const { id } = request.params as any;
+    const user = (request as any).user;
+    const { deleteProtected } = request.body as any;
+
+    if (typeof deleteProtected !== 'boolean') {
+      return reply.status(400).send({ error: 'deleteProtected must be a boolean' });
+    }
+
+    const service = await this.serviceRepository.findById(id);
+
+    if (!service || service.userId !== user.id || service.deletedAt) {
+      return reply.status(404).send({ error: 'Service not found or unauthorized' });
+    }
+
+    const updated = await this.serviceRepository.update(id, { deleteProtected });
+
+    return { success: true, service: updated };
+  }
+
+  /**
    * GET /services/:id/health
    * Get health status of a service
    */
@@ -371,9 +413,8 @@ export class ServiceController {
     // Import helper function for token validation
     const { validateToken } = await import('../utils/tokenValidation');
     const { prisma } = await import('database');
-    const { METRICS_UPDATE_INTERVAL_MS, CONNECTION_TIMEOUT_MS } = await import(
-      '../config/constants'
-    );
+    const { METRICS_UPDATE_INTERVAL_MS, CONNECTION_TIMEOUT_MS } =
+      await import('../config/constants');
 
     // Track connection state for better observability
     const connectionState = {
