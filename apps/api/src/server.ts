@@ -2109,6 +2109,11 @@ fastify.get(
   },
 );
 
+// Export a factory function for testing
+export async function buildServer() {
+  return fastify;
+}
+
 // Removed auto-start for testing
 // const start = async () => {
 //   try {

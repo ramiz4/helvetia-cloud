@@ -189,6 +189,63 @@ To run the optimized, built version of the application:
 
 ---
 
+## 🧪 Testing
+
+Helvetia Cloud includes comprehensive unit and integration tests to ensure reliability and maintainability.
+
+### Running Tests
+
+**Unit Tests** (uses mocks, no external dependencies):
+
+```bash
+pnpm test
+```
+
+**With Coverage**:
+
+```bash
+pnpm test:coverage
+```
+
+**Integration Tests** (requires database and Redis):
+
+1. Start test containers:
+
+```bash
+docker-compose -f docker-compose.test.yml up -d
+```
+
+2. Set test environment variables:
+
+```bash
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5433/helvetia_test"
+export REDIS_URL="redis://localhost:6380"
+```
+
+3. Push database schema:
+
+```bash
+pnpm --filter database db:push
+```
+
+4. Run tests:
+
+```bash
+pnpm test
+```
+
+5. Cleanup:
+
+```bash
+docker-compose -f docker-compose.test.yml down -v
+```
+
+**Test Coverage**: The project maintains a minimum 80% code coverage threshold across all packages.
+
+For detailed information about integration tests, see [INTEGRATION_TESTS.md](./INTEGRATION_TESTS.md).
+
+---
+
 ## 🗺 Roadmap
 
 Stay updated with our progress and future plans in the [ROADMAP.md](./ROADMAP.md).
