@@ -13,7 +13,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       if (error instanceof ZodError) {
         return reply.status(400).send({
           error: 'Validation error',
-          details: error.errors,
+          details: error.issues,
         });
       }
       throw error;
@@ -32,7 +32,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       if (error instanceof ZodError) {
         return reply.status(400).send({
           error: 'Validation error',
-          details: error.errors,
+          details: error.issues,
         });
       }
       throw error;
@@ -51,7 +51,7 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       if (error instanceof ZodError) {
         return reply.status(400).send({
           error: 'Validation error',
-          details: error.errors,
+          details: error.issues,
         });
       }
       throw error;

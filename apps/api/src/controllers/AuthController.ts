@@ -70,7 +70,7 @@ export class AuthController {
     }
 
     try {
-      const { verifyAndRotateRefreshToken } = await import('../utils/refreshToken');
+      const { verifyAndRotateRefreshToken } = await import('../utils/refreshToken.js');
       const redisConnection = (request.server as any).redis;
       const result = await verifyAndRotateRefreshToken(
         refreshToken,
@@ -93,7 +93,7 @@ export class AuthController {
         maxAge: 60 * 15,
       });
 
-      reply.setCookie('refreshToken', result.newRefreshToken, {
+      reply.setCookie('refreshToken', result.refreshToken, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -119,7 +119,8 @@ export class AuthController {
         await request.jwtVerify();
         const user = (request as any).user;
         if (user?.id) {
-          await revokeAllUserRefreshTokens(user.id);
+          const redis = (request.server as any).redis;
+          await revokeAllUserRefreshTokens(user.id, redis);
         }
       } catch {
         // Token might be invalid, but we still want to clear cookies

@@ -71,9 +71,6 @@ const deploymentQueue = new Queue('deployments', {
 import { registerInstance } from './di';
 registerInstance(Symbol.for('DeploymentQueue'), deploymentQueue);
 
-// Store redis connection on fastify instance for route access
-(fastify as any).redis = redisConnection;
-
 // Helper to create and queue deployment
 async function createAndQueueDeployment(service: any, commitHash: string) {
   const deployment = await deploymentRepository.create({
@@ -190,96 +187,6 @@ async function deleteService(id: string, userId?: string) {
   await serviceRepository.delete(id);
 }
 
-// Helper to get metrics for a service
-async function getServiceMetrics(
-  id: string,
-  dockerInstance?: any,
-  containerList?: any[],
-  serviceInfo?: { name: string; type: string; status?: string },
-) {
-  const Docker = (await import('dockerode')).default;
-  const docker = dockerInstance || new Docker();
-
-  const containers = containerList || (await docker.listContainers({ all: true }));
-
-  // Use either the explicit serviceInfo or try to find it from labels if missing
-  // (though callers should provide it for accuracy with COMPOSE)
-  const allServiceContainers = containers.filter(
-    (c: any) =>
-      c.Labels['helvetia.serviceId'] === id ||
-      (serviceInfo?.type === 'COMPOSE' &&
-        c.Labels['com.docker.compose.project'] === serviceInfo?.name),
-  );
-
-  // Determine aggregate status
-  let status: string;
-  if (serviceInfo?.status === 'DEPLOYING') {
-    status = 'DEPLOYING';
-  } else if (allServiceContainers.length > 0) {
-    if (allServiceContainers.some((c: any) => c.State === 'running')) {
-      status = 'RUNNING';
-    } else if (allServiceContainers.some((c: any) => ['restarting', 'created'].includes(c.State))) {
-      status = 'DEPLOYING';
-    } else if (
-      allServiceContainers.some((c: any) => c.State === 'exited' && c.Status.includes('Exited (0)'))
-    ) {
-      // If it's a one-off task that finished successfully
-      status = 'STOPPED';
-    } else {
-      status = 'FAILED';
-    }
-  } else {
-    status = 'NOT_RUNNING';
-  }
-
-  const runningContainers = allServiceContainers.filter((c: any) => c.State === 'running');
-
-  if (runningContainers.length === 0) {
-    return { cpu: 0, memory: 0, memoryLimit: 0, status };
-  }
-
-  let totalCpu = 0;
-  let totalMemory = 0;
-  let totalMemoryLimit = 0;
-
-  // Process all running containers and sum their metrics
-  await Promise.all(
-    runningContainers.map(async (containerInfo: any) => {
-      try {
-        const container = docker.getContainer(containerInfo.Id);
-        const stats = await container.stats({ stream: false });
-
-        if (stats.cpu_stats && stats.precpu_stats) {
-          const cpuDelta =
-            stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-          const systemDelta =
-            stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-          const onlineCpus = stats.cpu_stats.online_cpus || 1;
-
-          if (systemDelta > 0 && cpuDelta > 0) {
-            totalCpu += (cpuDelta / systemDelta) * onlineCpus * 100.0;
-          }
-        }
-
-        if (stats.memory_stats) {
-          const usage = stats.memory_stats.usage - (stats.memory_stats.stats.cache || 0);
-          totalMemory += usage / 1024 / 1024;
-          totalMemoryLimit += stats.memory_stats.limit / 1024 / 1024;
-        }
-      } catch {
-        // Ignore stats errors for individual containers
-      }
-    }),
-  );
-
-  return {
-    cpu: parseFloat(totalCpu.toFixed(2)),
-    memory: parseFloat(totalMemory.toFixed(2)),
-    memoryLimit: parseFloat(totalMemoryLimit.toFixed(2)),
-    status,
-  };
-}
-
 // Helper to validate JWT token from request
 async function validateToken(request: any): Promise<boolean> {
   try {
@@ -289,33 +196,6 @@ async function validateToken(request: any): Promise<boolean> {
   } catch (error) {
     // Token is invalid or expired
     console.log('Token validation failed:', (error as Error).message);
-    return false;
-  }
-}
-
-// GitHub webhook signature verification
-function verifyGitHubSignature(
-  payload: string | Buffer,
-  signature: string,
-  secret: string,
-): boolean {
-  if (!signature || !secret) {
-    return false;
-  }
-
-  try {
-    const hmac = crypto.createHmac('sha256', secret);
-    const digest = 'sha256=' + hmac.update(payload).digest('hex');
-
-    const signatureBuffer = Buffer.from(signature);
-    const digestBuffer = Buffer.from(digest);
-    if (signatureBuffer.length !== digestBuffer.length) {
-      return false;
-    }
-    // Use timingSafeEqual to prevent timing attacks
-    return crypto.timingSafeEqual(signatureBuffer, digestBuffer);
-  } catch (error) {
-    console.error('Error verifying GitHub signature:', error);
     return false;
   }
 }
@@ -449,6 +329,9 @@ export const fastify = Fastify({
   // Disable automatic request logging (we'll do it manually for more control)
   disableRequestLogging: !LOG_REQUESTS && !LOG_RESPONSES,
 });
+
+// Store redis connection on fastify instance for route access
+(fastify as any).redis = redisConnection;
 
 // Export CORS helper functions and body limits for testing
 export {

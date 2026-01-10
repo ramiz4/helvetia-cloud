@@ -40,7 +40,7 @@ export async function verifyAndRotateRefreshToken(
   token: string,
   fastify: FastifyInstance,
   redis: IORedis,
-): Promise<{ accessToken: string; refreshToken: string; userId: string } | null> {
+): Promise<{ accessToken: string; refreshToken: string; userId: string; user: any } | null> {
   // Check if token is in revocation list (Redis)
   const isRevoked = await redis.get(`revoked:refresh:${token}`);
   if (isRevoked) {
@@ -91,6 +91,7 @@ export async function verifyAndRotateRefreshToken(
     accessToken,
     refreshToken: newRefreshToken,
     userId: user.id,
+    user,
   };
 }
 
