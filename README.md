@@ -200,7 +200,7 @@ Install dependencies, prepare the database, and run in development mode:
 
 ```bash
 pnpm install
-pnpm db:push
+pnpm migrate:dev
 pnpm dev
 ```
 
@@ -265,7 +265,7 @@ export REDIS_URL="redis://localhost:6380"
 3. Push database schema:
 
 ```bash
-pnpm --filter database db:push
+pnpm migrate:dev
 ```
 
 4. Run tests:

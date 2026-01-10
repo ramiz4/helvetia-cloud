@@ -162,20 +162,58 @@ model User {
 ### Development
 
 1. **Edit schema**: Modify `packages/database/prisma/schema.prisma`
-2. **Push changes** (dev only): `pnpm db:push`
-   - Syncs schema to database without migrations
-   - Good for rapid prototyping
-3. **Generate client**: `pnpm generate`
-   - Regenerates Prisma Client after schema changes
-   - Run after any schema modification
+2. **Create migration**: `pnpm migrate:dev`
+   - Creates a new migration with your schema changes
+   - Applies it to your local database
+   - Generates Prisma Client
+3. **Name your migration**: Use descriptive names (e.g., `add_user_email`, `create_notifications_table`)
+4. **Review SQL**: Check `prisma/migrations/<timestamp>_<name>/migration.sql`
+5. **Test changes**: Run tests to ensure migration works correctly
+6. **Commit**: Add migration files to Git
 
 ### Production (Migrations)
 
-1. **Create migration**: `cd packages/database && pnpm prisma migrate dev --name <migration-name>`
-2. **Apply migration**: `pnpm prisma migrate deploy` (in production)
-3. **Generate client**: `pnpm generate`
+1. **Apply migrations**: `pnpm migrate:deploy`
+   - Applies all pending migrations to production database
+   - Does not create new migrations
+   - Safe for production use
+2. **Generate client**: `pnpm generate`
+   - Updates Prisma Client after migrations
 
-Note: This project uses `db:push` for development. Use migrations for production deployments.
+### Migration Commands
+
+```bash
+# Create and apply a new migration (development)
+pnpm migrate:dev
+
+# Create migration without applying (for review)
+pnpm migrate:create
+
+# Apply pending migrations (production)
+pnpm migrate:deploy
+
+# Check migration status
+pnpm migrate:status
+
+# Reset database (⚠️ DESTRUCTIVE - dev only)
+pnpm migrate:reset
+```
+
+**Important**:
+
+- Use `migrate:dev` in development to create and test migrations
+- Use `migrate:deploy` in production to apply migrations
+- Never use `migrate:reset` in production
+- Always review generated SQL before committing
+
+### Legacy Command (Deprecated)
+
+⚠️ `db:push` is deprecated and should not be used:
+
+- No migration history
+- Risk of data loss
+- Not suitable for production
+- Use `migrate:dev` instead
 
 ## Using Prisma Client
 
