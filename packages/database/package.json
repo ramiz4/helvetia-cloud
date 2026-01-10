@@ -14,6 +14,11 @@
   "scripts": {
     "generate": "prisma generate",
     "db:push": "prisma db push",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status",
+    "migrate:reset": "prisma migrate reset",
+    "migrate:create": "prisma migrate dev --create-only",
     "build": "tsc"
   },
   "dependencies": {

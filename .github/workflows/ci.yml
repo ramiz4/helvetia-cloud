@@ -76,8 +76,8 @@ jobs:
       - name: Build database package
         run: pnpm --filter database build
 
-      - name: Push database schema
-        run: pnpm --filter database db:push
+      - name: Run database migrations
+        run: pnpm migrate:deploy
 
       - name: Run Tests with Coverage
         run: pnpm test:coverage
