@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
+import { DockerContainerOrchestrator } from '../orchestration';
 import { TOKENS } from './tokens';
 
 /**
@@ -8,7 +9,7 @@ import { TOKENS } from './tokens';
  *
  * Note: Actual implementations will be registered here by other issues:
  * - #95: Repository implementations
- * - #97: Container orchestrator implementation
+ * - #97: Container orchestrator implementation ✅
  */
 
 /**
@@ -16,7 +17,9 @@ import { TOKENS } from './tokens';
  * This should be called at application startup
  */
 export function initializeContainer(): void {
-  // Container is ready for registration
+  // Register container orchestrator implementation
+  container.registerSingleton(TOKENS.ContainerOrchestrator, DockerContainerOrchestrator);
+
   // Implementations will be registered by respective issues
   // Example registration (to be replaced by actual implementations):
   // container.register(TOKENS.ServiceRepository, { useClass: PrismaServiceRepository });
