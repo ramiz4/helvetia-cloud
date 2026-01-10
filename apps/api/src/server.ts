@@ -20,6 +20,10 @@ import {
   CONNECTION_TIMEOUT_MS,
   CONTAINER_CPU_NANOCPUS,
   CONTAINER_MEMORY_LIMIT_BYTES,
+  LOG_LEVEL,
+  LOG_REDACT_PATHS,
+  LOG_REQUESTS,
+  LOG_RESPONSES,
   METRICS_UPDATE_INTERVAL_MS,
 } from './config/constants';
 import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
@@ -419,9 +423,102 @@ function verifyGitHubSignature(
 
 // Body size limits are imported from config/constants.ts
 
+/**
+ * Logger Configuration
+ *
+ * Fastify uses Pino for logging with the following features:
+ * - Automatic request ID generation for correlation
+ * - Structured JSON logging in production
+ * - Pretty printing in development
+ * - Configurable log levels per environment
+ * - Sensitive data redaction
+ *
+ * Log Levels (in order of verbosity):
+ * - fatal: Application crash (level 60)
+ * - error: Errors that need attention (level 50)
+ * - warn: Warning conditions (level 40)
+ * - info: General informational messages (level 30) - default
+ * - debug: Debug messages (level 20)
+ * - trace: Very detailed debug messages (level 10)
+ *
+ * Request/Response Logging:
+ * - Each request is assigned a unique request ID (reqId)
+ * - Request logging includes: method, url, query params, user ID, IP
+ * - Response logging includes: statusCode, responseTime (ms), request ID
+ * - Sensitive headers (Authorization, Cookie) are automatically redacted
+ *
+ * Environment Variables:
+ * - LOG_LEVEL: Set log level (default: 'info')
+ * - LOG_REQUESTS: Enable request logging (default: true)
+ * - LOG_RESPONSES: Enable response logging (default: true)
+ */
+const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export const fastify = Fastify({
-  logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
+  logger: isTestEnv
+    ? false
+    : {
+        level: LOG_LEVEL,
+        // Use pretty printing in development, JSON in production
+        transport: isDevelopment
+          ? {
+              target: 'pino-pretty',
+              options: {
+                translateTime: 'HH:MM:ss Z',
+                ignore: 'pid,hostname',
+                colorize: true,
+                singleLine: false,
+              },
+            }
+          : undefined,
+        // Redact sensitive information
+        redact: {
+          paths: LOG_REDACT_PATHS,
+          remove: true,
+        },
+        // Serialize errors properly
+        serializers: {
+          req(request) {
+            return {
+              method: request.method,
+              url: request.url,
+              path: request.routeOptions?.url,
+              params: request.params,
+              query: request.query,
+              headers: {
+                host: request.headers.host,
+                'user-agent': request.headers['user-agent'],
+                'content-type': request.headers['content-type'],
+              },
+              remoteAddress: request.ip,
+              userId: (request as any).user?.id,
+            };
+          },
+          res(reply) {
+            return {
+              statusCode: reply.statusCode,
+            };
+          },
+          err(error) {
+            return {
+              type: error.name,
+              message: error.message,
+              stack: error.stack || '',
+              code: (error as any).code,
+              statusCode: (error as any).statusCode,
+            };
+          },
+        },
+      },
   bodyLimit: BODY_LIMIT_GLOBAL,
+  // Generate unique request IDs for correlation
+  genReqId: (req) => {
+    // Use existing request ID header if provided, otherwise generate new one
+    return (req.headers['x-request-id'] as string) || crypto.randomUUID();
+  },
+  // Disable automatic request logging (we'll do it manually for more control)
+  disableRequestLogging: !LOG_REQUESTS && !LOG_RESPONSES,
 });
 
 // Export CORS helper functions and body limits for testing
@@ -433,6 +530,67 @@ export {
   getSafeOrigin,
   isOriginAllowed,
 };
+
+/**
+ * Request Logging Hook
+ *
+ * Logs incoming requests with structured context including:
+ * - Request ID for correlation across logs
+ * - HTTP method and URL
+ * - User ID (if authenticated)
+ * - Client IP address
+ * - Query parameters and route path
+ *
+ * This hook runs before request processing begins.
+ */
+if (LOG_REQUESTS && !isTestEnv) {
+  fastify.addHook('onRequest', async (request, reply) => {
+    const user = (request as any).user;
+    request.log.info(
+      {
+        reqId: request.id,
+        method: request.method,
+        url: request.url,
+        path: request.routeOptions?.url,
+        query: request.query,
+        userId: user?.id,
+        ip: request.ip,
+        userAgent: request.headers['user-agent'],
+      },
+      `Incoming request: ${request.method} ${request.url}`,
+    );
+  });
+}
+
+/**
+ * Response Logging Hook
+ *
+ * Logs outgoing responses with structured context including:
+ * - Request ID for correlation
+ * - HTTP status code
+ * - Response time in milliseconds
+ * - Error information (if applicable)
+ *
+ * This hook runs after the response is sent to the client.
+ */
+if (LOG_RESPONSES && !isTestEnv) {
+  fastify.addHook('onResponse', async (request, reply) => {
+    const responseTime = reply.elapsedTime.toFixed(2);
+    const level = reply.statusCode >= 500 ? 'error' : reply.statusCode >= 400 ? 'warn' : 'info';
+
+    request.log[level](
+      {
+        reqId: request.id,
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+        responseTime: `${responseTime}ms`,
+        userId: (request as any).user?.id,
+      },
+      `Request completed: ${request.method} ${request.url} - ${reply.statusCode} (${responseTime}ms)`,
+    );
+  });
+}
 
 fastify.register(cors, {
   origin: (origin, cb) => {
