@@ -175,7 +175,7 @@
     "labels": ["P2", "database", "deployment"],
     "body": "Using `db:push` instead of migrations is dangerous for production.\n\n**Issues:**\n\n- No migration history\n- Can cause data loss\n- Can't rollback changes\n- No team collaboration on schema changes\n\n**Acceptance Criteria:**\n\n- [ ] Switch to Prisma Migrate\n- [ ] Create initial migration\n- [ ] Update deployment scripts\n- [ ] Document migration workflow\n- [ ] Add rollback procedures\n- [ ] Update CI/CD pipeline",
     "number": 81,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/81",
     "synced": true
   },
@@ -193,7 +193,7 @@
     "labels": ["P2", "infrastructure", "resource-management"],
     "body": "No cleanup for dangling, failed, or old Docker images, leading to disk space issues.\n\n**Acceptance Criteria:**\n\n- [ ] Implement periodic cleanup job\n- [ ] Remove dangling images\n- [ ] Remove old image versions\n- [ ] Add retention policy\n- [ ] Monitor disk usage\n- [ ] Add configuration options",
     "number": 83,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/83",
     "synced": true
   },
@@ -358,5 +358,41 @@
     "state": "OPEN",
     "synced": true,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/132"
+  },
+  {
+    "title": "[MEDIUM] Phase 4: Migrate Service Routes to ServiceController",
+    "labels": ["P2", "refactoring", "api", "di-migration"],
+    "body": "Migrate service-related routes from `server.ts` to `ServiceController` and `service.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `GET /services`\n- `POST /services` (creation)\n- `GET /services/:id`\n- `PATCH /services/:id`\n- `DELETE /services/:id`\n- `GET /services/:id/health`\n- `GET /services/:id/metrics`\n- `GET /services/metrics/stream` (SSE)\n\n**Tasks:**\n- [ ] Implement `ServiceController` using injected repositories and services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/service.routes.ts` and register it in `index.ts`\n- [ ] Ensure all middleware (auth, validation) is correctly applied\n- [ ] Add unit tests for `ServiceController`",
+    "synced": true,
+    "number": 146,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/146"
+  },
+  {
+    "title": "[MEDIUM] Phase 4: Migrate Deployment Routes to DeploymentController",
+    "labels": ["P2", "refactoring", "api", "di-migration"],
+    "body": "Migrate deployment-related routes from `server.ts` to `DeploymentController` and `deployment.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `POST /services/:id/deploy`\n- `POST /services/:id/restart`\n- `GET /services/:id/deployments`\n- `GET /deployments/:id/logs`\n- `GET /deployments/:id/logs/stream` (SSE)\n\n**Tasks:**\n- [ ] Implement `DeploymentController` using injected repositories and services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/deployment.routes.ts` and register it in `index.ts`\n- [ ] Ensure all middleware (auth, validation) is correctly applied\n- [ ] Add unit tests for `DeploymentController`",
+    "synced": true,
+    "number": 147,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/147"
+  },
+  {
+    "title": "[MEDIUM] Phase 4: Migrate GitHub Proxy Routes to GitHubController",
+    "labels": ["P2", "refactoring", "api", "di-migration"],
+    "body": "Migrate GitHub proxy routes from `server.ts` to `GitHubController` and `github.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `GET /github/orgs`\n- `GET /github/repos`\n- `GET /github/repos/:owner/:name/branches`\n\n**Tasks:**\n- [ ] Implement `GitHubController` using injected services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/github.routes.ts` and register it in `index.ts`\n- [ ] Ensure GitHub API error handling is preserved\n- [ ] Add unit tests for `GitHubController`",
+    "synced": true,
+    "number": 148,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/148"
+  },
+  {
+    "title": "[MEDIUM] Phase 4: Migrate Webhook Routes to WebhookController",
+    "labels": ["P2", "refactoring", "api", "di-migration"],
+    "body": "Migrate GitHub webhook routes from `server.ts` to `WebhookController` and `webhook.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `POST /webhooks/github`\n\n**Tasks:**\n- [ ] Implement `WebhookController` and move signature verification logic\n- [ ] Move PR and Push event handling logic to controller methods\n- [ ] Create `apps/api/src/routes/webhook.routes.ts` and register it in `index.ts`\n- [ ] Ensure raw body parsing for signature verification is correctly handled in the new structure\n- [ ] Add unit tests for `WebhookController`",
+    "synced": true,
+    "number": 149,
+    "state": "OPEN",
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/149"
   }
 ]
