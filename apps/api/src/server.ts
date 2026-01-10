@@ -54,7 +54,7 @@ const deploymentQueue = new Queue('deployments', {
 
 // Register deployment queue in DI container after creation
 import { registerInstance } from './di';
-registerInstance(Symbol.for('DeploymentQueue'), deploymentQueue);
+registerInstance('DeploymentQueue', deploymentQueue);
 
 // Helper to create and queue deployment
 async function createAndQueueDeployment(service: any, commitHash: string) {
