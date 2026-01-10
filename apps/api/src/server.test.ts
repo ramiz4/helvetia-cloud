@@ -53,9 +53,11 @@ vi.mock('database', () => {
       service: {
         findMany: vi.fn(),
         findUnique: vi.fn(),
-        updateMany: vi.fn(),
-        upsert: vi.fn(),
         findFirst: vi.fn(),
+        updateMany: vi.fn(),
+        update: vi.fn(),
+        upsert: vi.fn(),
+        create: vi.fn(),
         delete: vi.fn(),
       },
       user: {
@@ -142,6 +144,7 @@ describe('API Server', () => {
     // Mock Prisma
     const { prisma } = await import('database');
     vi.mocked(prisma.service.findMany).mockResolvedValue(mockServices as unknown as never);
+    vi.mocked(prisma.deployment.findMany).mockResolvedValue([] as unknown as never);
 
     // Generate a mock token
     const token = fastify.jwt.sign(mockUser);
@@ -169,8 +172,9 @@ describe('API Server', () => {
     };
 
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(null); // Not taken
-    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as unknown as never);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue(null); // Check if name taken by another user - not found
+    vi.mocked(prisma.service.findFirst).mockResolvedValueOnce(null); // findByNameAndUserId - not found
+    vi.mocked(prisma.service.create).mockResolvedValue(mockService as unknown as never);
 
     const token = fastify.jwt.sign(mockUser);
 
@@ -202,8 +206,9 @@ describe('API Server', () => {
     };
 
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as unknown as never);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue(null); // Check if name taken - not found
+    vi.mocked(prisma.service.findFirst).mockResolvedValueOnce(null); // findByNameAndUserId - not found
+    vi.mocked(prisma.service.create).mockResolvedValue(mockService as unknown as never);
 
     const token = fastify.jwt.sign(mockUser);
 
@@ -223,11 +228,11 @@ describe('API Server', () => {
     const json = response.json();
     expect(json.name).toBe('my-postgres');
 
-    // Verify upsert was called with correct port and credentials
-    const upsertCall = vi.mocked(prisma.service.upsert).mock.calls[0][0];
-    const envVars = upsertCall.create.envVars as Record<string, string>;
-    expect(upsertCall.create.port).toBe(5444);
-    expect(upsertCall.create.type).toBe('POSTGRES');
+    // Verify create was called with correct port and credentials
+    const createCall = vi.mocked(prisma.service.create).mock.calls[0][0];
+    const envVars = createCall.data.envVars as Record<string, string>;
+    expect(createCall.data.port).toBe(5444);
+    expect(createCall.data.type).toBe('POSTGRES');
     expect(envVars).toHaveProperty('POSTGRES_USER', 'postgres');
     expect(envVars).toHaveProperty('POSTGRES_PASSWORD');
     expect(envVars).toHaveProperty('POSTGRES_DB', 'app');
@@ -246,8 +251,9 @@ describe('API Server', () => {
     };
 
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as unknown as never);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.service.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.service.create).mockResolvedValue(mockService as unknown as never);
 
     const token = fastify.jwt.sign(mockUser);
 
@@ -267,11 +273,11 @@ describe('API Server', () => {
     const json = response.json();
     expect(json.name).toBe('my-redis');
 
-    // Verify upsert was called with correct port and credentials
-    const upsertCall = vi.mocked(prisma.service.upsert).mock.calls[0][0];
-    const envVars = upsertCall.create.envVars as Record<string, string>;
-    expect(upsertCall.create.port).toBe(6379);
-    expect(upsertCall.create.type).toBe('REDIS');
+    // Verify create was called with correct port and credentials
+    const createCall = vi.mocked(prisma.service.create).mock.calls[0][0];
+    const envVars = createCall.data.envVars as Record<string, string>;
+    expect(createCall.data.port).toBe(6379);
+    expect(createCall.data.type).toBe('REDIS');
     expect(envVars).toHaveProperty('REDIS_PASSWORD');
     // Verify password is a hex string (32 chars for 16 bytes)
     expect(envVars.REDIS_PASSWORD).toMatch(/^[a-f0-9]{32}$/);
@@ -288,8 +294,9 @@ describe('API Server', () => {
     };
 
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as unknown as never);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.service.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.service.create).mockResolvedValue(mockService as unknown as never);
 
     const token = fastify.jwt.sign(mockUser);
 
@@ -309,11 +316,11 @@ describe('API Server', () => {
     const json = response.json();
     expect(json.name).toBe('my-mysql');
 
-    // Verify upsert was called with correct port and credentials
-    const upsertCall = vi.mocked(prisma.service.upsert).mock.calls[0][0];
-    const envVars = upsertCall.create.envVars as Record<string, string>;
-    expect(upsertCall.create.port).toBe(3306);
-    expect(upsertCall.create.type).toBe('MYSQL');
+    // Verify create was called with correct port and credentials
+    const createCall = vi.mocked(prisma.service.create).mock.calls[0][0];
+    const envVars = createCall.data.envVars as Record<string, string>;
+    expect(createCall.data.port).toBe(3306);
+    expect(createCall.data.type).toBe('MYSQL');
     expect(envVars).toHaveProperty('MYSQL_ROOT_PASSWORD');
     expect(envVars).toHaveProperty('MYSQL_DATABASE', 'app');
     // Verify password is a hex string (32 chars for 16 bytes)
@@ -331,8 +338,9 @@ describe('API Server', () => {
     };
 
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as unknown as never);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.service.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.service.create).mockResolvedValue(mockService as unknown as never);
 
     const token = fastify.jwt.sign(mockUser);
 
@@ -356,8 +364,8 @@ describe('API Server', () => {
     expect(response.statusCode).toBe(200);
 
     // Verify user-provided password is preserved
-    const upsertCall = vi.mocked(prisma.service.upsert).mock.calls[0][0];
-    const envVars = upsertCall.create.envVars as Record<string, string>;
+    const createCall = vi.mocked(prisma.service.create).mock.calls[0][0];
+    const envVars = createCall.data.envVars as Record<string, string>;
     expect(envVars.POSTGRES_PASSWORD).toBe(customPassword);
     expect(envVars.CUSTOM_VAR).toBe('custom-value');
   });
@@ -373,8 +381,9 @@ describe('API Server', () => {
     };
 
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.service.upsert).mockResolvedValue(mockService as unknown as never);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.service.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.service.create).mockResolvedValue(mockService as unknown as never);
 
     const token = fastify.jwt.sign(mockUser);
 
@@ -394,9 +403,9 @@ describe('API Server', () => {
     expect(response.statusCode).toBe(200);
 
     // Verify port is set to 80 for static sites
-    const upsertCall = vi.mocked(prisma.service.upsert).mock.calls[0][0];
-    expect(upsertCall.create.port).toBe(80);
-    expect(upsertCall.create.type).toBe('STATIC');
+    const createCall = vi.mocked(prisma.service.create).mock.calls[0][0];
+    expect(createCall.data.port).toBe(80);
+    expect(createCall.data.type).toBe('STATIC');
   });
   it('should logout user and clear cookie', async () => {
     const response = await fastify.inject({

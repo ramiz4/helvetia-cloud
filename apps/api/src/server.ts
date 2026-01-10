@@ -952,26 +952,9 @@ fastify.get('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const service = await serviceRepository.findByNameAndUserId(id, user.id);
-
-  if (!service || service.id !== id) {
-    // Try by ID if name search failed
-    const serviceById = await serviceRepository.findById(id);
-    if (!serviceById || serviceById.userId !== user.id) {
-      return reply.status(404).send({ error: 'Service not found' });
-    }
-    const deployments = await deploymentRepository.findByServiceId(serviceById.id, { take: 1 });
-
-    // Enrich service with actual Docker container status
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
-    const containers = await docker.listContainers({ all: true });
-
-    return {
-      ...serviceById,
-      deployments,
-      status: determineServiceStatus({ ...serviceById, deployments }, containers),
-    };
+  const service = await serviceRepository.findById(id);
+  if (!service || service.userId !== user.id || service.deletedAt) {
+    return reply.status(404).send({ error: 'Service not found' });
   }
 
   const deployments = await deploymentRepository.findByServiceId(service.id, { take: 1 });
@@ -1093,7 +1076,8 @@ fastify.post(
     const user = (request as any).user;
     const userId = user.id;
 
-    // Check if another user owns this service name
+    // Check if another user owns this service name - use raw Prisma for complex query
+    // since repository doesn't have this specific method
     const existingByName = await prisma.service.findFirst({
       where: { name, userId: { not: userId }, deletedAt: null },
     });
