@@ -171,6 +171,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
           ],
           branch: 'main',
           isPreview: false,
+          deletedAt: null,
         },
       });
     });
@@ -222,6 +223,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
           ],
           branch: 'main',
           isPreview: false,
+          deletedAt: null,
         },
       });
     });
@@ -271,6 +273,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
           ],
           branch: 'main',
           isPreview: false,
+          deletedAt: null,
         },
       });
     });
@@ -345,6 +348,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
             { repoUrl: 'https://github.com/user/repo.git' },
           ],
           isPreview: false,
+          deletedAt: null,
         },
       });
     });
@@ -408,6 +412,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
             { repoUrl: 'https://github.com/user/repo.git' },
           ],
           isPreview: false,
+          deletedAt: null,
         },
       });
     });
@@ -469,6 +474,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
             { repoUrl: 'https://github.com/user/repo.git' },
           ],
           isPreview: true,
+          deletedAt: null,
         },
       });
     });

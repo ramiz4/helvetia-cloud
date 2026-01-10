@@ -81,6 +81,7 @@ vi.mock('database', () => {
         findFirst: vi.fn(),
         findUnique: vi.fn(),
         delete: vi.fn(),
+        update: vi.fn(),
       },
       deployment: {
         findMany: vi.fn(),
@@ -103,7 +104,7 @@ describe('Service Deletion Cleanup', () => {
     await fastify.ready();
   });
 
-  it('should remove containers, images, and volumes when a service is deleted', async () => {
+  it('should soft delete a service without removing Docker resources', async () => {
     const { prisma } = await import('database');
     const serviceId = 'test-service-id';
     const mockService = {
@@ -111,54 +112,42 @@ describe('Service Deletion Cleanup', () => {
       name: 'test-app',
       userId: 'user-1',
       type: 'DOCKER',
+      deletedAt: null,
+      deleteProtected: false,
     };
 
-    const mockDeployments = [
-      { id: 'dep-1', imageTag: 'helvetia/test-app:dep-1' },
-      { id: 'dep-2', imageTag: 'helvetia/test-app:dep-2' },
-    ];
-
     vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
-    vi.mocked(prisma.deployment.findMany).mockResolvedValue(mockDeployments as never);
-    vi.mocked(prisma.deployment.deleteMany).mockResolvedValue({
-      count: mockDeployments.length,
+    vi.mocked(prisma.service.update).mockResolvedValue({
+      ...mockService,
+      deletedAt: new Date(),
     } as never);
-    vi.mocked(prisma.service.delete).mockResolvedValue(mockService as never);
-
-    mockDocker.listContainers.mockResolvedValue([
-      { Id: 'container-1', Labels: { 'helvetia.serviceId': serviceId } },
-    ]);
 
     const token = fastify.jwt.sign({ id: 'user-1' });
 
-    const consoleSpy = vi.spyOn(console, 'error');
     const response = await fastify.inject({
       method: 'DELETE',
       url: `/services/${serviceId}`,
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (response.statusCode !== 200) {
-      console.log('Error Response:', response.body);
-      console.log('Console Errors:', consoleSpy.mock.calls);
-    }
     expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body);
+    expect(body.success).toBe(true);
+    expect(body.message).toContain('soft deleted');
 
-    // Verify container cleanup
-    expect(mockDocker.getContainer).toHaveBeenCalledWith('container-1');
-    expect(mockContainer.stop).toHaveBeenCalled();
-    expect(mockContainer.remove).toHaveBeenCalled();
+    // Verify soft deletion was called (update, not delete)
+    expect(prisma.service.update).toHaveBeenCalledWith({
+      where: { id: serviceId },
+      data: { deletedAt: expect.any(Date) },
+    });
 
-    // Verify image cleanup
-    expect(mockDocker.getImage).toHaveBeenCalledWith('helvetia/test-app:dep-1');
-    expect(mockDocker.getImage).toHaveBeenCalledWith('helvetia/test-app:dep-2');
-    expect(mockImage.remove).toHaveBeenCalledTimes(2);
-
-    // Verify volume cleanup (for DOCKER services we might want to remove named volumes if they exist)
+    // Verify Docker resources were NOT touched (soft delete doesn't clean up immediately)
+    expect(mockDocker.getContainer).not.toHaveBeenCalled();
+    expect(mockContainer.stop).not.toHaveBeenCalled();
+    expect(mockContainer.remove).not.toHaveBeenCalled();
   });
 
-  it('should remove all resources for a COMPOSE service', async () => {
+  it('should soft delete a COMPOSE service', async () => {
     const { prisma } = await import('database');
     const serviceId = 'compose-service-id';
     const mockService = {
@@ -166,23 +155,15 @@ describe('Service Deletion Cleanup', () => {
       name: 'my-compose-app',
       userId: 'user-1',
       type: 'COMPOSE',
+      deletedAt: null,
+      deleteProtected: false,
     };
 
     vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
-    vi.mocked(prisma.deployment.findMany).mockResolvedValue([]); // No individual images in DB for compose yet
-
-    mockDocker.listContainers.mockResolvedValue([
-      { Id: 'c1', Labels: { 'com.docker.compose.project': 'my-compose-app' } },
-      { Id: 'c2', Labels: { 'com.docker.compose.project': 'my-compose-app' } },
-    ]);
-
-    // Mock volume list
-    mockDocker.listVolumes = vi.fn().mockResolvedValue({
-      Volumes: [
-        { Name: 'my-compose-app_data', Labels: { 'com.docker.compose.project': 'my-compose-app' } },
-      ],
-    });
+    vi.mocked(prisma.service.update).mockResolvedValue({
+      ...mockService,
+      deletedAt: new Date(),
+    } as never);
 
     const token = fastify.jwt.sign({ id: 'user-1' });
 
@@ -193,13 +174,11 @@ describe('Service Deletion Cleanup', () => {
     });
 
     expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body);
+    expect(body.success).toBe(true);
 
-    // Should have removed both containers
-    expect(mockDocker.getContainer).toHaveBeenCalledWith('c1');
-    expect(mockDocker.getContainer).toHaveBeenCalledWith('c2');
-
-    // Should have removed the project volume
-    expect(mockDocker.getVolume).toHaveBeenCalledWith('my-compose-app_data');
-    expect(mockVolume.remove).toHaveBeenCalled();
+    // Verify soft deletion, not hard deletion
+    expect(prisma.service.update).toHaveBeenCalled();
+    expect(prisma.service.delete).not.toHaveBeenCalled();
   });
 });
