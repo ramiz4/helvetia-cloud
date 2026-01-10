@@ -378,12 +378,48 @@ function verifyGitHubSignature(
   }
 }
 
+/**
+ * Body Size Limits Configuration
+ *
+ * Request body size limits protect against DoS attacks by preventing
+ * attackers from sending extremely large payloads that could exhaust
+ * server resources (memory, CPU, network bandwidth).
+ *
+ * Limits:
+ * - Global: 10MB - Maximum size for any request body
+ * - Standard: 1MB - For endpoints handling moderate data (webhooks, logs)
+ * - Small: 100KB - For simple requests (auth, service configs)
+ *
+ * Routes with specific limits:
+ * - POST/PATCH /services: 100KB (service configuration)
+ * - POST /auth/github: 100KB (authentication)
+ * - POST /webhooks/github: 1MB (GitHub webhook payloads)
+ *
+ * Error Response (413 Payload Too Large):
+ * {
+ *   "statusCode": 413,
+ *   "error": "Payload Too Large",
+ *   "message": "Request body exceeds the maximum allowed size of XMB"
+ * }
+ */
+const BODY_LIMIT_GLOBAL = 10 * 1024 * 1024; // 10MB
+const BODY_LIMIT_STANDARD = 1 * 1024 * 1024; // 1MB for most endpoints
+const BODY_LIMIT_SMALL = 100 * 1024; // 100KB for simple requests
+
 export const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
+  bodyLimit: BODY_LIMIT_GLOBAL,
 });
 
-// Export CORS helper functions for testing
-export { getAllowedOrigins, getSafeOrigin, isOriginAllowed };
+// Export CORS helper functions and body limits for testing
+export {
+  BODY_LIMIT_GLOBAL,
+  BODY_LIMIT_SMALL,
+  BODY_LIMIT_STANDARD,
+  getAllowedOrigins,
+  getSafeOrigin,
+  isOriginAllowed,
+};
 
 fastify.register(cors, {
   origin: (origin, cb) => {
@@ -485,6 +521,22 @@ const wsRateLimitConfig = {
   },
 };
 
+// Error handler for body size limit exceeded
+fastify.setErrorHandler((error: Error & { code?: string }, request, reply) => {
+  // Handle FST_ERR_CTP_BODY_TOO_LARGE error (Fastify body too large error)
+  if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
+    const limit = error.message.match(/(\d+)/)?.[0] || 'unknown';
+    return reply.status(413).send({
+      statusCode: 413,
+      error: 'Payload Too Large',
+      message: `Request body exceeds the maximum allowed size of ${Math.floor(parseInt(limit) / 1024 / 1024)}MB`,
+    });
+  }
+
+  // Re-throw the error for other error handlers
+  throw error;
+});
+
 // Auth hook
 fastify.addHook('onRequest', async (request, reply) => {
   const publicRoutes = [
@@ -510,7 +562,10 @@ fastify.get('/health', async () => {
 
 fastify.post(
   '/auth/github',
-  { config: { rateLimit: authRateLimitConfig } },
+  {
+    config: { rateLimit: authRateLimitConfig },
+    bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for auth requests
+  },
   async (request, reply) => {
     const { code } = request.body as any;
 
@@ -740,168 +795,180 @@ fastify.get('/services/:id', async (request, reply) => {
   };
 });
 
-fastify.patch('/services/:id', async (request, reply) => {
-  const { id } = request.params as any;
+fastify.patch(
+  '/services/:id',
+  {
+    bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for service updates
+  },
+  async (request, reply) => {
+    const { id } = request.params as any;
 
-  // Validate and parse request body
-  let validatedData;
-  try {
-    validatedData = ServiceUpdateSchema.parse(request.body);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return reply.status(400).send({
-        error: 'Validation failed',
-        details: error.issues.map((e) => ({
-          field: e.path.join('.'),
-          message: e.message,
-        })),
-      });
+    // Validate and parse request body
+    let validatedData;
+    try {
+      validatedData = ServiceUpdateSchema.parse(request.body);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return reply.status(400).send({
+          error: 'Validation failed',
+          details: error.issues.map((e) => ({
+            field: e.path.join('.'),
+            message: e.message,
+          })),
+        });
+      }
+      throw error;
     }
-    throw error;
-  }
 
-  const {
-    name,
-    repoUrl,
-    branch,
-    buildCommand,
-    startCommand,
-    port,
-    envVars,
-    customDomain,
-    type,
-    staticOutputDir,
-  } = validatedData;
-
-  const user = (request as any).user;
-  const service = await prisma.service.updateMany({
-    where: { id, userId: user.id },
-    data: {
+    const {
       name,
       repoUrl,
       branch,
       buildCommand,
       startCommand,
-      port: port ?? (type ? getDefaultPortForServiceType(type) : undefined),
+      port,
       envVars,
       customDomain,
-      type: type,
+      type,
       staticOutputDir,
-    },
-  });
+    } = validatedData;
 
-  if (service.count === 0)
-    return reply.status(404).send({ error: 'Service not found or unauthorized' });
+    const user = (request as any).user;
+    const service = await prisma.service.updateMany({
+      where: { id, userId: user.id },
+      data: {
+        name,
+        repoUrl,
+        branch,
+        buildCommand,
+        startCommand,
+        port: port ?? (type ? getDefaultPortForServiceType(type) : undefined),
+        envVars,
+        customDomain,
+        type: type,
+        staticOutputDir,
+      },
+    });
 
-  return prisma.service.findUnique({ where: { id } });
-});
+    if (service.count === 0)
+      return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
-fastify.post('/services', async (request, reply) => {
-  // Validate and parse request body
-  let validatedData;
-  try {
-    validatedData = ServiceCreateSchema.parse(request.body);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return reply.status(400).send({
-        error: 'Validation failed',
-        details: error.issues.map((e) => ({
-          field: e.path.join('.'),
-          message: e.message,
-        })),
-      });
+    return prisma.service.findUnique({ where: { id } });
+  },
+);
+
+fastify.post(
+  '/services',
+  {
+    bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for service creation
+  },
+  async (request, reply) => {
+    // Validate and parse request body
+    let validatedData;
+    try {
+      validatedData = ServiceCreateSchema.parse(request.body);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return reply.status(400).send({
+          error: 'Validation failed',
+          details: error.issues.map((e) => ({
+            field: e.path.join('.'),
+            message: e.message,
+          })),
+        });
+      }
+      throw error;
     }
-    throw error;
-  }
 
-  const {
-    name,
-    repoUrl,
-    branch,
-    buildCommand,
-    startCommand,
-    port,
-    customDomain,
-    type,
-    staticOutputDir,
-    envVars,
-  } = validatedData;
-
-  const finalType = type || 'DOCKER';
-  const user = (request as any).user;
-  const userId = user.id;
-
-  // Check ownership if exists
-  const existing = await prisma.service.findUnique({ where: { name } });
-  if (existing && existing.userId !== userId) {
-    return reply.status(403).send({ error: 'Service name taken by another user' });
-  }
-
-  let finalPort = port || 3000;
-  let finalEnvVars = envVars || {};
-
-  if (finalType === 'STATIC') finalPort = 80;
-  if (finalType === 'POSTGRES') {
-    finalPort = 5444;
-    // Generate default credentials if not provided
-    if (!finalEnvVars.POSTGRES_PASSWORD) {
-      finalEnvVars = {
-        ...finalEnvVars,
-        POSTGRES_USER: 'postgres',
-        POSTGRES_PASSWORD: crypto.randomBytes(16).toString('hex'),
-        POSTGRES_DB: 'app',
-      };
-    }
-  }
-  if (finalType === 'REDIS') {
-    finalPort = 6379;
-    // Generate default Redis password if not provided
-    if (!finalEnvVars.REDIS_PASSWORD) {
-      finalEnvVars = {
-        ...finalEnvVars,
-        REDIS_PASSWORD: crypto.randomBytes(16).toString('hex'),
-      };
-    }
-  }
-  if (finalType === 'MYSQL') {
-    finalPort = 3306;
-    if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
-      finalEnvVars = {
-        ...finalEnvVars,
-        MYSQL_ROOT_PASSWORD: crypto.randomBytes(16).toString('hex'),
-        MYSQL_DATABASE: 'app',
-      };
-    }
-  }
-
-  return prisma.service.upsert({
-    where: { name },
-    update: {
-      repoUrl,
-      branch: branch || 'main',
-      buildCommand,
-      startCommand,
-      port: finalPort,
-      customDomain,
-      type: finalType,
-      staticOutputDir: staticOutputDir || 'dist',
-      envVars: finalEnvVars,
-    },
-    create: {
+    const {
       name,
-      repoUrl: repoUrl || null,
-      branch: branch || 'main',
+      repoUrl,
+      branch,
       buildCommand,
       startCommand,
-      port: finalPort,
-      userId,
+      port,
       customDomain,
-      type: finalType,
-      staticOutputDir: staticOutputDir || 'dist',
-      envVars: finalEnvVars,
-    },
-  });
-});
+      type,
+      staticOutputDir,
+      envVars,
+    } = validatedData;
+
+    const finalType = type || 'DOCKER';
+    const user = (request as any).user;
+    const userId = user.id;
+
+    // Check ownership if exists
+    const existing = await prisma.service.findUnique({ where: { name } });
+    if (existing && existing.userId !== userId) {
+      return reply.status(403).send({ error: 'Service name taken by another user' });
+    }
+
+    let finalPort = port || 3000;
+    let finalEnvVars = envVars || {};
+
+    if (finalType === 'STATIC') finalPort = 80;
+    if (finalType === 'POSTGRES') {
+      finalPort = 5444;
+      // Generate default credentials if not provided
+      if (!finalEnvVars.POSTGRES_PASSWORD) {
+        finalEnvVars = {
+          ...finalEnvVars,
+          POSTGRES_USER: 'postgres',
+          POSTGRES_PASSWORD: crypto.randomBytes(16).toString('hex'),
+          POSTGRES_DB: 'app',
+        };
+      }
+    }
+    if (finalType === 'REDIS') {
+      finalPort = 6379;
+      // Generate default Redis password if not provided
+      if (!finalEnvVars.REDIS_PASSWORD) {
+        finalEnvVars = {
+          ...finalEnvVars,
+          REDIS_PASSWORD: crypto.randomBytes(16).toString('hex'),
+        };
+      }
+    }
+    if (finalType === 'MYSQL') {
+      finalPort = 3306;
+      if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
+        finalEnvVars = {
+          ...finalEnvVars,
+          MYSQL_ROOT_PASSWORD: crypto.randomBytes(16).toString('hex'),
+          MYSQL_DATABASE: 'app',
+        };
+      }
+    }
+
+    return prisma.service.upsert({
+      where: { name },
+      update: {
+        repoUrl,
+        branch: branch || 'main',
+        buildCommand,
+        startCommand,
+        port: finalPort,
+        customDomain,
+        type: finalType,
+        staticOutputDir: staticOutputDir || 'dist',
+        envVars: finalEnvVars,
+      },
+      create: {
+        name,
+        repoUrl: repoUrl || null,
+        branch: branch || 'main',
+        buildCommand,
+        startCommand,
+        port: finalPort,
+        userId,
+        customDomain,
+        type: finalType,
+        staticOutputDir: staticOutputDir || 'dist',
+        envVars: finalEnvVars,
+      },
+    });
+  },
+);
 
 fastify.delete('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
@@ -1490,7 +1557,10 @@ fastify.register(async (scope) => {
 
   scope.post(
     '/webhooks/github',
-    { config: { rateLimit: authRateLimitConfig } },
+    {
+      config: { rateLimit: authRateLimitConfig },
+      bodyLimit: BODY_LIMIT_STANDARD, // 1MB limit for webhook payloads
+    },
     async (request, reply) => {
       // Verify GitHub webhook signature
       const signature = request.headers['x-hub-signature-256'] as string;

@@ -446,10 +446,11 @@ describe('Service Input Validation', () => {
       const { prisma } = await import('database');
       vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
 
-      // Create envVars that exceed 10KB
+      // Create envVars that exceed 10KB but stay under 100KB body limit
+      // 250 vars × 30 chars = ~10.4KB envVars, ~10.4KB total payload
       const largeEnvVars: Record<string, string> = {};
-      for (let i = 0; i < 1000; i++) {
-        largeEnvVars[`VAR_${i}`] = 'x'.repeat(100);
+      for (let i = 0; i < 250; i++) {
+        largeEnvVars[`VAR_${i}`] = 'x'.repeat(30);
       }
 
       const token = getAuthToken();
