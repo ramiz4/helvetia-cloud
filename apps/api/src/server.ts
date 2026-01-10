@@ -34,8 +34,6 @@ import {
   verifyAndRotateRefreshToken,
 } from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
-import { withStatusLock } from './utils/statusLock';
-import { validateToken } from './utils/tokenValidation';
 
 // Initialize DI container
 initializeContainer();
@@ -50,16 +48,13 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
   maxRetriesPerRequest: null,
 });
 
-// Separate connection for subscriptions
-const subConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379');
-
 const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
 });
 
 // Register deployment queue in DI container after creation
 import { registerInstance } from './di';
-registerInstance(Symbol.for('DeploymentQueue'), deploymentQueue);
+registerInstance('DeploymentQueue', deploymentQueue);
 
 // Helper to create and queue deployment
 async function createAndQueueDeployment(service: any, commitHash: string) {
@@ -488,7 +483,7 @@ fastify.register(rateLimit, {
 });
 
 // Create rate limit configs
-const { authRateLimitConfig, wsRateLimitConfig } = createRateLimitConfigs(redisConnection);
+const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
 // Error handler for body size limit exceeded
 fastify.setErrorHandler((error: Error & { code?: string }, request, reply) => {
@@ -538,6 +533,10 @@ fastify.register(metricsRoutes);
 // Register service routes
 import { serviceRoutes } from './routes/service.routes';
 fastify.register(serviceRoutes);
+
+// Register deployment routes
+import { deploymentRoutes } from './routes/deployment.routes';
+fastify.register(deploymentRoutes);
 
 fastify.post(
   '/auth/github',
@@ -845,156 +844,6 @@ fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
   }
 });
 
-// Deployment Routes
-fastify.post(
-  '/services/:id/deploy',
-  { config: { rateLimit: wsRateLimitConfig } },
-  async (request, reply) => {
-    const { id } = request.params as any;
-    const user = (request as any).user;
-
-    const service = await prisma.service.findFirst({
-      where: { id, userId: user.id, deletedAt: null },
-    });
-    if (!service) return reply.status(404).send({ error: 'Service not found' });
-
-    const deployment = await deploymentRepository.create({
-      serviceId: id,
-      status: 'QUEUED',
-    });
-
-    // Update service status to DEPLOYING with distributed lock
-    await withStatusLock(id, async () => {
-      await serviceRepository.update(id, { status: 'DEPLOYING' });
-    });
-
-    // Inject token if available
-    let repoUrl = service.repoUrl;
-    const dbUser = await userRepository.findById(user.id);
-    if (dbUser?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
-      const decryptedToken = decrypt(dbUser.githubAccessToken);
-      repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
-    }
-
-    await deploymentQueue.add('build', {
-      deploymentId: deployment.id,
-      serviceId: service.id,
-      repoUrl,
-      branch: service.branch,
-      buildCommand: service.buildCommand,
-      startCommand: service.startCommand,
-      serviceName: service.name,
-      port: service.port,
-      envVars: service.envVars,
-      customDomain: (service as any).customDomain,
-      type: (service as any).type,
-      staticOutputDir: (service as any).staticOutputDir,
-    });
-
-    return deployment;
-  },
-);
-
-// Restart a container without rebuilding
-fastify.post('/services/:id/restart', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
-  if (!service) return reply.status(404).send({ error: 'Service not found' });
-
-  if ((service as any).type === 'COMPOSE') {
-    return reply.status(400).send({
-      error:
-        'Please use "Redeploy" for Docker Compose services to apply environment variables and configuration changes correctly.',
-    });
-  }
-
-  const Docker = (await import('dockerode')).default;
-  const docker = new Docker();
-
-  try {
-    // Find existing containers for this service
-    const containers = await docker.listContainers({ all: true });
-    const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
-
-    if (serviceContainers.length === 0) {
-      return reply.status(404).send({ error: 'No running container found. Please deploy first.' });
-    }
-
-    // Get the image tag from the first container
-    const existingContainer = docker.getContainer(serviceContainers[0].Id);
-    const containerInfo = await existingContainer.inspect();
-    const imageTag = containerInfo.Config.Image;
-
-    // Generate a new container name
-    const postfix = Math.random().toString(36).substring(2, 8);
-    const containerName = `${service.name}-${postfix}`;
-
-    const traefikRule = (service as any).customDomain
-      ? `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`) || Host(\`${(service as any).customDomain}\`)`
-      : `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`)`;
-
-    // Create new container with updated config
-    const newContainer = await docker.createContainer({
-      Image: imageTag,
-      name: containerName,
-      Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
-      Cmd:
-        (service as any).type === 'REDIS' &&
-        (service.envVars as Record<string, any>)?.REDIS_PASSWORD
-          ? [
-              'redis-server',
-              '--requirepass',
-              (service.envVars as Record<string, any>).REDIS_PASSWORD,
-            ]
-          : undefined,
-      Labels: {
-        'helvetia.serviceId': service.id,
-        'helvetia.type': (service as any).type || 'DOCKER',
-        'traefik.enable': 'true',
-        [`traefik.http.routers.${service.name}.rule`]: traefikRule,
-        [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
-        [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
-          service.port || getDefaultPortForServiceType((service as any).type || 'DOCKER')
-        ).toString(),
-      },
-      HostConfig: {
-        NetworkMode: 'helvetia-net',
-        RestartPolicy: { Name: 'always' },
-        Memory: CONTAINER_MEMORY_LIMIT_BYTES,
-        NanoCpus: CONTAINER_CPU_NANOCPUS,
-        Binds:
-          (service as any).type === 'POSTGRES'
-            ? [`helvetia-data-${service.name}:/var/lib/postgresql/data`]
-            : (service as any).type === 'REDIS'
-              ? [`helvetia-data-${service.name}:/data`]
-              : (service as any).type === 'MYSQL'
-                ? [`helvetia-data-${service.name}:/var/lib/mysql`]
-                : [],
-        LogConfig: {
-          Type: 'json-file',
-          Config: {},
-        },
-      },
-    });
-
-    await newContainer.start();
-
-    // Stop and remove old containers
-    for (const old of serviceContainers) {
-      const container = docker.getContainer(old.Id);
-      await container.stop().catch(() => {});
-      await container.remove().catch(() => {});
-    }
-
-    return { success: true, message: 'Container restarted successfully' };
-  } catch (error) {
-    console.error('Restart error:', error);
-    return reply.status(500).send({ error: 'Failed to restart container' });
-  }
-});
-
 // Webhook scope to capture raw body
 fastify.register(async (scope) => {
   scope.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
@@ -1185,239 +1034,6 @@ fastify.register(async (scope) => {
     },
   );
 });
-
-fastify.get('/services/:id/deployments', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  // Verify ownership
-  const service = await prisma.service.findFirst({
-    where: { id, userId: user.id, deletedAt: null },
-  });
-  if (!service) return reply.status(404).send({ error: 'Service not found' });
-
-  return prisma.deployment.findMany({
-    where: { serviceId: id },
-    orderBy: { createdAt: 'desc' },
-  });
-});
-
-fastify.get('/deployments/:id/logs', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  const deployment = await deploymentRepository.findById(id);
-
-  if (!deployment) {
-    return reply.status(404).send({ error: 'Deployment not found' });
-  }
-
-  // Verify ownership by checking the service
-  const service = await serviceRepository.findById(deployment.serviceId);
-  if (!service || service.userId !== user.id) {
-    return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
-  }
-
-  return { logs: deployment.logs };
-});
-
-// SSE endpoint for real-time deployment logs
-fastify.get(
-  '/deployments/:id/logs/stream',
-  { config: { rateLimit: wsRateLimitConfig } },
-  async (request, reply) => {
-    const { id } = request.params as any;
-    const user = (request as any).user;
-
-    // Verify deployment belongs to user
-    const deployment = await deploymentRepository.findById(id);
-
-    if (!deployment) {
-      return reply.status(404).send({ error: 'Deployment not found' });
-    }
-
-    // Verify ownership
-    const service = await serviceRepository.findById(deployment.serviceId);
-    if (!service || service.userId !== user.id) {
-      return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
-    }
-
-    // Set SSE headers with CORS support
-    reply.raw.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no',
-      'Access-Control-Allow-Origin': getSafeOrigin(request.headers.origin),
-      'Access-Control-Allow-Credentials': 'true',
-    });
-
-    console.log(`SSE client connected for live logs: ${id}`);
-
-    // Track connection state for better observability
-    const connectionState = {
-      isValid: true,
-      startTime: Date.now(),
-      messagesReceived: 0,
-      validationAttempts: 0,
-      errorCount: 0,
-    };
-
-    // Store interval references for cleanup
-    let tokenValidationInterval: NodeJS.Timeout | null = null;
-    let timeoutHandle: NodeJS.Timeout | null = null;
-    let isSubscribed = false;
-
-    // Cleanup function to ensure all resources are freed
-    const cleanup = async () => {
-      if (!connectionState.isValid) return; // Already cleaned up
-
-      connectionState.isValid = false;
-
-      if (tokenValidationInterval) {
-        clearInterval(tokenValidationInterval);
-        tokenValidationInterval = null;
-      }
-
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
-      }
-
-      // Clean up Redis subscription
-      if (isSubscribed) {
-        try {
-          subConnection.removeListener('message', onMessage);
-          await subConnection.unsubscribe(channel);
-          isSubscribed = false;
-        } catch (err) {
-          console.error(`Error unsubscribing from channel ${channel}:`, err);
-        }
-      }
-
-      console.log(
-        `SSE logs connection cleaned up for deployment ${id}. ` +
-          `Duration: ${Date.now() - connectionState.startTime}ms, ` +
-          `Messages: ${connectionState.messagesReceived}, ` +
-          `Validations: ${connectionState.validationAttempts}, ` +
-          `Errors: ${connectionState.errorCount}`,
-      );
-    };
-
-    const channel = `deployment-logs:${id}`;
-
-    const onMessage = (chan: string, message: string) => {
-      if (!connectionState.isValid) return;
-      if (chan === channel) {
-        try {
-          // Send log line as an SSE event
-          reply.raw.write(`data: ${message}\n\n`);
-          connectionState.messagesReceived++;
-        } catch (err) {
-          connectionState.errorCount++;
-          console.error(`Error writing log message for deployment ${id}:`, err);
-
-          // If write fails, connection is likely broken
-          if (connectionState.errorCount >= 3) {
-            console.error(`Too many write errors for deployment ${id}, closing connection`);
-            void cleanup();
-          }
-        }
-      }
-    };
-
-    // Set up periodic token validation (every 30 seconds)
-    tokenValidationInterval = setInterval(async () => {
-      if (!connectionState.isValid) {
-        await cleanup();
-        return;
-      }
-
-      try {
-        connectionState.validationAttempts++;
-        const isValid = await validateToken(request);
-        if (!isValid) {
-          console.log(`Token expired for user ${user.id}, closing logs stream`);
-          // Send error event to client
-          try {
-            reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
-            );
-            reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing token expiration message:', writeErr);
-          }
-          await cleanup();
-        }
-      } catch (err) {
-        connectionState.errorCount++;
-        console.error(`Error during token validation for deployment ${id}:`, err);
-
-        // If validation fails repeatedly, close connection
-        if (connectionState.errorCount >= 3) {
-          console.error(`Too many validation errors for deployment ${id}, closing connection`);
-          try {
-            reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
-            );
-            reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing error message:', writeErr);
-          }
-          await cleanup();
-        }
-      }
-    }, 30000); // Check every 30 seconds
-
-    // Subscribe to Redis channel for logs
-    try {
-      await subConnection.subscribe(channel);
-      isSubscribed = true;
-      subConnection.on('message', onMessage);
-    } catch (err) {
-      console.error(`Error subscribing to channel ${channel}:`, err);
-      return reply.status(500).send({ error: 'Failed to establish log stream' });
-    }
-
-    // Implement connection timeout (60 minutes for logs)
-    const LOGS_CONNECTION_TIMEOUT_MS = 60 * 60 * 1000;
-    timeoutHandle = setTimeout(
-      async () => {
-        console.log(`SSE logs connection timeout for deployment ${id}`);
-        try {
-          reply.raw.write(
-            `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
-          );
-          reply.raw.end();
-        } catch (err) {
-          console.error('Error writing timeout message:', err);
-        }
-        await cleanup();
-      },
-      isTestEnv ? 100 : LOGS_CONNECTION_TIMEOUT_MS,
-    );
-
-    // Clean up on client disconnect
-    request.raw.on('close', async () => {
-      console.log(`SSE client disconnected from live logs: ${id}`);
-      await cleanup();
-    });
-
-    // Clean up on error
-    request.raw.on('error', async (err) => {
-      console.error(`SSE logs connection error for deployment ${id}:`, err);
-      await cleanup();
-    });
-
-    reply.raw.on('error', async (err) => {
-      console.error(`SSE logs reply error for deployment ${id}:`, err);
-      await cleanup();
-    });
-
-    // Keep the connection open
-    return reply;
-  },
-);
 
 // Export a factory function for testing
 export async function buildServer() {

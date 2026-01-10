@@ -4,5 +4,6 @@
  */
 
 export * from './auth.routes';
+export * from './deployment.routes';
 export * from './health.routes';
 export * from './service.routes';

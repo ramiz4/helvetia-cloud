@@ -156,11 +156,11 @@ describe('DeploymentOrchestratorService', () => {
       );
     });
 
-    it('should throw ForbiddenError if user does not own the service', async () => {
+    it('should throw NotFoundError if user does not own the service', async () => {
       vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
 
       await expect(service.createAndQueueDeployment('service-1', 'user-2')).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
     });
 
@@ -255,11 +255,11 @@ describe('DeploymentOrchestratorService', () => {
       );
     });
 
-    it('should throw ForbiddenError if user does not own the service', async () => {
+    it('should throw NotFoundError if user does not own the service', async () => {
       vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
 
       await expect(service.getServiceDeployments('service-1', 'user-2')).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
     });
   });
@@ -310,11 +310,11 @@ describe('DeploymentOrchestratorService', () => {
       );
     });
 
-    it('should throw ForbiddenError if user does not own the service', async () => {
+    it('should throw NotFoundError if user does not own the service', async () => {
       vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
 
       await expect(service.deleteServiceDeployments('service-1', 'user-2')).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
     });
   });
@@ -338,11 +338,11 @@ describe('DeploymentOrchestratorService', () => {
       );
     });
 
-    it('should throw ForbiddenError if user does not own the service', async () => {
+    it('should throw NotFoundError if user does not own the service', async () => {
       vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
 
       await expect(service.getDeploymentCount('service-1', 'user-2')).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
     });
   });
