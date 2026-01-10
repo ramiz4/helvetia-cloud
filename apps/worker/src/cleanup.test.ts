@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Docker
@@ -107,7 +108,11 @@ describe('Service Cleanup Worker', () => {
     mockPrisma.service.delete.mockResolvedValue(oldDeletedService);
 
     mockDocker.listContainers.mockResolvedValue([
-      { Id: 'container-1', Labels: { 'helvetia.serviceId': 'old-service-id' } },
+      {
+        Id: 'container-1',
+        Names: ['/container-1'],
+        Labels: { 'helvetia.serviceId': 'old-service-id' },
+      },
     ]);
 
     // Execute the worker processor
@@ -205,7 +210,7 @@ describe('Service Cleanup Worker', () => {
     mockPrisma.service.delete.mockResolvedValue(composeService);
 
     mockDocker.listContainers.mockResolvedValue([
-      { Id: 'c1', Labels: { 'com.docker.compose.project': 'compose-app' } },
+      { Id: 'c1', Names: ['/c1'], Labels: { 'com.docker.compose.project': 'compose-app' } },
     ]);
 
     mockDocker.listVolumes.mockResolvedValue({

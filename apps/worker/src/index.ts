@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import 'reflect-metadata';
 
 // Load environment variables as early as possible
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });

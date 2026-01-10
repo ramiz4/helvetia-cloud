@@ -4,6 +4,7 @@ import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
 import path from 'path';
+import { DockerContainerOrchestrator, VolumeManager } from './orchestration';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -27,20 +28,22 @@ async function permanentlyDeleteService(id: string) {
   console.log(`Permanently deleting service ${service.name} (${id})`);
 
   const docker = new Docker();
+  const orchestrator = new DockerContainerOrchestrator(docker);
+  const volumeManager = new VolumeManager(docker);
 
   // 1. Stop and remove containers
-  const containers = await docker.listContainers({ all: true });
+  const containers = await orchestrator.listContainers({ all: true });
   const serviceContainers = containers.filter(
     (c) =>
-      c.Labels['helvetia.serviceId'] === id ||
-      (service.type === 'COMPOSE' && c.Labels['com.docker.compose.project'] === service.name),
+      c.labels['helvetia.serviceId'] === id ||
+      (service.type === 'COMPOSE' && c.labels['com.docker.compose.project'] === service.name),
   );
 
   for (const containerInfo of serviceContainers) {
-    const container = docker.getContainer(containerInfo.Id);
-    console.log(`Stopping and removing container ${containerInfo.Id} for service ${id}`);
-    await container.stop().catch(() => {});
-    await container.remove().catch(() => {});
+    const container = await orchestrator.getContainer(containerInfo.id);
+    console.log(`Stopping and removing container ${containerInfo.id} for service ${id}`);
+    await orchestrator.stopContainer(container).catch(() => {});
+    await orchestrator.removeContainer(container).catch(() => {});
   }
 
   // 2. Clean up volumes
@@ -48,8 +51,7 @@ async function permanentlyDeleteService(id: string) {
   if (serviceType && ['POSTGRES', 'REDIS', 'MYSQL'].includes(serviceType)) {
     const volumeName = `helvetia-data-${service.name}`;
     try {
-      const volume = docker.getVolume(volumeName);
-      await volume.remove();
+      await volumeManager.removeVolume(volumeName);
       console.log(`Removed volume ${volumeName} for service ${service.name}`);
     } catch (err) {
       if ((err as any).statusCode !== 404) {
@@ -58,14 +60,12 @@ async function permanentlyDeleteService(id: string) {
     }
   } else if (serviceType === 'COMPOSE') {
     try {
-      const { Volumes } = await docker.listVolumes();
-      const projectVolumes = Volumes.filter(
-        (v) => v.Labels && v.Labels['com.docker.compose.project'] === service.name,
-      );
+      const volumes = await volumeManager.listVolumes({
+        label: [`com.docker.compose.project=${service.name}`],
+      });
 
-      for (const volumeInfo of projectVolumes) {
-        const volume = docker.getVolume(volumeInfo.Name);
-        await volume.remove();
+      for (const volumeInfo of volumes) {
+        await volumeManager.removeVolume(volumeInfo.Name);
         console.log(`Removed volume ${volumeInfo.Name} for compose project ${service.name}`);
       }
     } catch (err) {
@@ -80,12 +80,12 @@ async function permanentlyDeleteService(id: string) {
   });
 
   const imageTags = new Set(
-    deployments.map((d) => d.imageTag).filter((tag): tag is string => !!tag),
+    deployments.map((d: any) => d.imageTag).filter((tag: any): tag is string => !!tag),
   );
 
   for (const tag of imageTags) {
     try {
-      const image = docker.getImage(tag);
+      const image = docker.getImage(tag as string);
       await image.remove({ force: true });
       console.log(`Removed image ${tag}`);
     } catch (err) {
