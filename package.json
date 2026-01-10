@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "pnpm --filter '*' --parallel dev",
+    "dev": "pnpm --filter '*' --parallel --stream dev",
     "build": "pnpm -r build",
     "start": "pnpm --filter '*' --parallel start",
     "db:push": "pnpm --filter database db:push",

@@ -90,7 +90,23 @@ export default function NewServicePage() {
         );
       }
 
-      toast.success(t.common.success);
+      const createdService = await res.json();
+
+      // Automatically Start Deployment
+      const deployRes = await fetchWithAuth(
+        `${API_BASE_URL}/services/${createdService.id}/deploy`,
+        {
+          method: 'POST',
+        },
+      );
+
+      if (deployRes.ok) {
+        toast.success(t.dashboard.newService.deploySuccess);
+      } else {
+        toast.success(t.common.success);
+        toast.error(t.dashboard.actions.deployTriggerFailed);
+      }
+
       router.push('/');
     } catch (err) {
       console.error(err);

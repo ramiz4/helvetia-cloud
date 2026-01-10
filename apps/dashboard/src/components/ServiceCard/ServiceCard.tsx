@@ -148,9 +148,9 @@ export function ServiceCard({
             />
           </button>
           <button
-            onClick={() => service.deployments[0] && onViewLogs(service.deployments[0].id)}
+            onClick={() => service.deployments?.[0] && onViewLogs(service.deployments[0].id)}
             className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed group/btn"
-            disabled={!service.deployments[0]}
+            disabled={!service.deployments?.[0]}
             aria-label={`${t.actions.logs} for ${service.name}`}
             title={t.actions.logs}
           >
