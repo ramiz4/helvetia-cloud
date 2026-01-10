@@ -4,7 +4,10 @@ import { z } from 'zod';
  * Helper for optional string fields that should treat empty strings as undefined
  */
 const optionalString = (schema: z.ZodString) =>
-  schema.optional().transform((val) => (val === '' ? undefined : val));
+  schema
+    .nullable()
+    .optional()
+    .transform((val) => (val === '' || val === null ? undefined : val));
 
 /**
  * Common field validations shared between create and update schemas

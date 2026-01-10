@@ -1126,6 +1126,7 @@ fastify.post(
         type: finalType,
         staticOutputDir: staticOutputDir || 'dist',
         envVars: finalEnvVars,
+        deletedAt: null, // Resurrect service if it was soft-deleted
       },
       create: {
         name,

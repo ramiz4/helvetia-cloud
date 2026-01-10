@@ -23,7 +23,16 @@ export type Env = z.infer<typeof envSchema>;
  */
 export function validateEnv(): Env {
   try {
-    return envSchema.parse(process.env);
+    // Explicitly access process.env to allow Next.js to inline values at build time
+    // This is required because process.env is not a real object in the browser
+    const envVars = {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+      NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
+      NODE_ENV: process.env.NODE_ENV,
+    };
+    return envSchema.parse(envVars);
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errors = (error.issues || []).map((err) => {
