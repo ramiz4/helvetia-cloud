@@ -21,6 +21,18 @@ const start = async () => {
     statusReconciliationService.start(STATUS_RECONCILIATION_INTERVAL_MS);
   } catch (err) {
     fastify.log.error(err);
+
+    // If the address is already in use, kill the parent process (likely the watcher)
+    // to force an immediate exit instead of waiting for file changes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((err as any).code === 'EADDRINUSE') {
+      try {
+        process.kill(process.ppid);
+      } catch (e) {
+        console.error('Failed to kill parent process:', e);
+      }
+    }
+
     process.exit(1);
   }
 };
