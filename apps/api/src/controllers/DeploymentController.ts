@@ -83,7 +83,9 @@ export class DeploymentController {
       const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
 
       if (serviceContainers.length === 0) {
-        return reply.status(404).send({ error: 'No running container found. Please deploy first.' });
+        return reply
+          .status(404)
+          .send({ error: 'No running container found. Please deploy first.' });
       }
 
       // Get the image tag from the first container
