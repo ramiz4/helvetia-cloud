@@ -75,9 +75,15 @@ export class GitHubController {
       return repos;
     } catch (error: any) {
       console.error('GitHub Repos API error:', error.data || error.message);
-      return reply
-        .status(error.status || 500)
-        .send(error.data || { error: 'Failed to fetch GitHub repositories' });
+
+      // Propagate GitHub API error with original status and message
+      if (error.status && error.data) {
+        const responseData = error.data.message ? { message: error.data.message } : error.data;
+        return reply.status(error.status).send(responseData);
+      }
+
+      // Fallback to generic error
+      return reply.status(500).send({ error: 'Failed to fetch GitHub repositories' });
     }
   }
 
@@ -108,9 +114,15 @@ export class GitHubController {
       }
 
       console.error('GitHub API error:', error.data || error.message);
-      return reply
-        .status(error.status || 500)
-        .send(error.data || { error: 'Failed to fetch branches' });
+
+      // Propagate GitHub API error with original status and message
+      if (error.status && error.data) {
+        const responseData = error.data.message ? { message: error.data.message } : error.data;
+        return reply.status(error.status).send(responseData);
+      }
+
+      // Fallback to generic error
+      return reply.status(500).send({ error: 'Failed to fetch branches' });
     }
   }
 
