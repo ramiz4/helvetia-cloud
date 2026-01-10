@@ -41,17 +41,10 @@ export const LOCK_RETRY_DELAY_MS = parseInt(process.env.LOCK_RETRY_DELAY_MS || '
 export const LOCK_RETRY_JITTER_MS = parseInt(process.env.LOCK_RETRY_JITTER_MS || '100', 10);
 
 // Body Size Limits (bytes)
-export const BODY_LIMIT_GLOBAL = parseInt(
-  process.env.BODY_LIMIT_GLOBAL_MB || '10',
-  10,
-) * 1024 * 1024;
+export const BODY_LIMIT_GLOBAL =
+  parseInt(process.env.BODY_LIMIT_GLOBAL_MB || '10', 10) * 1024 * 1024;
 
-export const BODY_LIMIT_STANDARD = parseInt(
-  process.env.BODY_LIMIT_STANDARD_MB || '1',
-  10,
-) * 1024 * 1024;
+export const BODY_LIMIT_STANDARD =
+  parseInt(process.env.BODY_LIMIT_STANDARD_MB || '1', 10) * 1024 * 1024;
 
-export const BODY_LIMIT_SMALL = parseInt(
-  process.env.BODY_LIMIT_SMALL_KB || '100',
-  10,
-) * 1024;
+export const BODY_LIMIT_SMALL = parseInt(process.env.BODY_LIMIT_SMALL_KB || '100', 10) * 1024;

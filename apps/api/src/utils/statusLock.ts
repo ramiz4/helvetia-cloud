@@ -1,10 +1,6 @@
 import IORedis from 'ioredis';
 import Redlock from 'redlock';
-import {
-  LOCK_RETRY_DELAY_MS,
-  LOCK_RETRY_JITTER_MS,
-  STATUS_LOCK_TTL_MS,
-} from '../config/constants';
+import { LOCK_RETRY_DELAY_MS, LOCK_RETRY_JITTER_MS, STATUS_LOCK_TTL_MS } from '../config/constants';
 
 // Type for Lock from redlock
 // Note: Custom type definition needed due to incompatibilities between
@@ -51,7 +47,10 @@ export function getStatusLockKey(serviceId: string): string {
  * @param ttl - Time to live in milliseconds (default from config)
  * @returns Lock instance
  */
-export async function acquireStatusLock(serviceId: string, ttl = STATUS_LOCK_TTL_MS): Promise<Lock> {
+export async function acquireStatusLock(
+  serviceId: string,
+  ttl = STATUS_LOCK_TTL_MS,
+): Promise<Lock> {
   const lockKey = getStatusLockKey(serviceId);
   try {
     // Note: Type assertion needed due to redlock beta version type incompatibilities

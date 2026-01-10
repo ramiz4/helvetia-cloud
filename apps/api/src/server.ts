@@ -13,15 +13,6 @@ import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
 import { ZodError } from 'zod';
-import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
-import { decrypt, encrypt } from './utils/crypto';
-import {
-  createRefreshToken,
-  revokeAllUserRefreshTokens,
-  verifyAndRotateRefreshToken,
-} from './utils/refreshToken';
-import { getRepoUrlMatchCondition } from './utils/repoUrl';
-import { withStatusLock } from './utils/statusLock';
 import {
   BODY_LIMIT_GLOBAL,
   BODY_LIMIT_SMALL,
@@ -31,6 +22,15 @@ import {
   CONTAINER_MEMORY_LIMIT_BYTES,
   METRICS_UPDATE_INTERVAL_MS,
 } from './config/constants';
+import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
+import { decrypt, encrypt } from './utils/crypto';
+import {
+  createRefreshToken,
+  revokeAllUserRefreshTokens,
+  verifyAndRotateRefreshToken,
+} from './utils/refreshToken';
+import { getRepoUrlMatchCondition } from './utils/repoUrl';
+import { withStatusLock } from './utils/statusLock';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 

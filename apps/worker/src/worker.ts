@@ -4,16 +4,16 @@ import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
 import path from 'path';
-import { formatValidationErrors, validateGeneratedDockerfile } from './utils/dockerfile-validator';
-import { generateComposeOverride } from './utils/generators';
-import { createScrubber } from './utils/logs';
-import { withStatusLock } from './utils/statusLock';
-import { getSecureBindMounts } from './utils/workspace';
 import {
   CONTAINER_CPU_NANOCPUS,
   CONTAINER_MEMORY_LIMIT_BYTES,
   MAX_LOG_SIZE_CHARS,
 } from './config/constants';
+import { formatValidationErrors, validateGeneratedDockerfile } from './utils/dockerfile-validator';
+import { generateComposeOverride } from './utils/generators';
+import { createScrubber } from './utils/logs';
+import { withStatusLock } from './utils/statusLock';
+import { getSecureBindMounts } from './utils/workspace';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 

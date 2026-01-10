@@ -1,6 +1,6 @@
+import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
 import { fastify } from './server';
 import { statusReconciliationService } from './utils/statusReconciliation';
-import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
 
 const start = async () => {
   try {
