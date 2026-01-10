@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { prisma } from 'database';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
+import { ServiceController } from '../controllers/ServiceController';
 import { DockerContainerOrchestrator } from '../orchestration';
 import {
   PrismaDeploymentRepository,
@@ -40,6 +41,9 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
   container.registerSingleton(TOKENS.DeploymentOrchestratorService, DeploymentOrchestratorService);
   container.registerSingleton(TOKENS.AuthenticationService, AuthenticationService);
+
+  // Register controllers
+  container.registerSingleton(Symbol.for('ServiceController'), ServiceController);
 }
 
 /**

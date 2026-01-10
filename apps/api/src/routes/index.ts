@@ -5,3 +5,4 @@
 
 export * from './auth.routes';
 export * from './health.routes';
+export * from './service.routes';
