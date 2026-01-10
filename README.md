@@ -39,6 +39,46 @@ Clone the repository and copy the example environment variables:
 cp .env.example .env
 ```
 
+#### Environment Variable Validation
+
+Helvetia Cloud uses [Zod](https://github.com/colinhacks/zod) to validate all environment variables on startup, ensuring that your configuration is correct before the application starts. This prevents runtime errors caused by missing or invalid environment variables.
+
+**How it works:**
+
+- **API, Worker, and Dashboard** each validate their respective environment variables when they start
+- **Clear error messages** are displayed if required variables are missing or invalid
+- **Type safety** is provided through TypeScript types derived from the validation schema
+- **Automatic defaults** are applied for optional variables
+
+**If validation fails:**
+
+The application will display a clear error message like this:
+
+```
+❌ Invalid environment variables:
+  - DATABASE_URL: Invalid input: expected string, received undefined
+  - REDIS_URL: Invalid input: expected string, received undefined
+  - JWT_SECRET: Invalid input: expected string, received undefined
+
+Please check your .env file and ensure all required variables are set.
+Refer to .env.example for the expected format.
+```
+
+**Testing environment validation:**
+
+You can run the validation tests to ensure the schemas are working correctly:
+
+```bash
+# Test API environment validation
+pnpm --filter api test src/config/env.test.ts
+
+# Test Worker environment validation
+pnpm --filter worker test src/config/env.test.ts
+
+# Test Dashboard environment validation
+pnpm --filter dashboard test src/lib/env.test.ts
+```
+
 #### Required Configuration
 
 **GitHub OAuth** (Required):
