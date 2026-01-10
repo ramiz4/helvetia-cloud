@@ -291,6 +291,6 @@ upstream worker_backend {
 
 ## Related Documentation
 
-- [Worker Service Architecture](../../../ARCHITECTURE.md)
-- [Docker Compose Setup](../../../docker-compose.yml)
-- [Environment Configuration](../../../.env.example)
+- [Worker Service Architecture](../ARCHITECTURE.md)
+- [Docker Compose Setup](../../docker-compose.yml)
+- [Environment Configuration](../../.env.example)

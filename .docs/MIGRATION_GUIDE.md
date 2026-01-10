@@ -212,7 +212,7 @@ pnpm --filter api test src/errors/ src/di/
 
 ## Questions?
 
-- See `src/di/README.md` for detailed usage guide
+- See [apps/api/src/di/README.md](../apps/api/src/di/README.md) for detailed usage guide
 - Check interface files for API documentation
 - Review tests for usage examples
 

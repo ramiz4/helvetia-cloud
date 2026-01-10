@@ -88,39 +88,95 @@ services:
       - helvetia-net
 
   # API Service (Placeholder for now)
-  api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./api:/app
-      - /app/node_modules
-    environment:
-      DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
-      REDIS_URL: redis://redis:6379
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
-    depends_on:
-      - postgres
-      - redis
+  # api:
+  #   build:
+  #     context: ./apps/api
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - ./apps/api:/app
+  #     - /app/node_modules
+  #   environment:
+  #     DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
+  #     REDIS_URL: redis://redis:6379
+  #     GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+  #     GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   networks:
+  #     - helvetia-net
+
+  # Worker Service (Placeholder for now)
+  # worker:
+  #   build:
+  #     context: ./apps/worker
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - ./apps/worker:/app
+  #     - /app/node_modules
+  #   environment:
+  #     REDIS_URL: redis://redis:6379
+  #     DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
+  #     DOCKER_HOST: tcp://docker-socket-proxy:2375 # Use socket proxy instead of direct socket
+  #   depends_on:
+  #     - redis
+  #     - docker-socket-proxy
+  #   networks:
+  #     - helvetia-net
+
+  # Monitoring Stack: Logs (Loki + Promtail)
+  loki:
+    image: grafana/loki:2.9.4
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/local-config.yaml
     networks:
       - helvetia-net
 
-  # Worker Service (Placeholder for now)
-  worker:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile.dev
+  promtail:
+    image: grafana/promtail:2.9.4
     volumes:
-      - ./worker:/app
-      - /app/node_modules
-    environment:
-      REDIS_URL: redis://redis:6379
-      DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
-      DOCKER_HOST: tcp://docker-socket-proxy:2375 # Use socket proxy instead of direct socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
     depends_on:
-      - redis
-      - docker-socket-proxy
+      - loki
+    networks:
+      - helvetia-net
+
+  # Monitoring Stack: Metrics (Prometheus)
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - '9090:9090'
+    networks:
+      - helvetia-net
+
+  # Visualization (Grafana)
+  grafana:
+    image: grafana/grafana:10.3.3
+    ports:
+      - '3010:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana-dashboard.json:/var/lib/grafana/dashboards/helvetia.json
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_LOG_LEVEL=debug
+    depends_on:
+      - prometheus
+      - loki
     networks:
       - helvetia-net
 
@@ -130,3 +186,5 @@ networks:
 
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:

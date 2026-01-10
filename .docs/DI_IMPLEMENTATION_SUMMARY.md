@@ -96,9 +96,9 @@ Similar structure with relevant subset of interfaces.
 
 ### Documentation
 
-- `MIGRATION_GUIDE.md` - How to adopt DI in existing/new code
-- `apps/api/src/di/README.md` - Detailed DI usage guide
-- `apps/worker/src/di/README.md` - Worker DI guide
+- `MIGRATION_GUIDE.md` - [Adoption Guide](./MIGRATION_GUIDE.md)
+- [apps/api/src/di/README.md](../apps/api/src/di/README.md) - Detailed DI usage guide
+- [apps/worker/src/di/README.md](../apps/worker/src/di/README.md) - Worker DI guide
 
 ## Key Features
 
@@ -241,8 +241,8 @@ expect(mockRepo.findAll).toHaveBeenCalled();
 - [TSyringe Documentation](https://github.com/microsoft/tsyringe)
 - [Dependency Injection Pattern](https://en.wikipedia.org/wiki/Dependency_injection)
 - [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
-- See `MIGRATION_GUIDE.md` for adoption guide
-- See `apps/api/src/di/README.md` for usage details
+- See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for adoption guide
+- See [apps/api/src/di/README.md](../apps/api/src/di/README.md) for usage details
 
 ---
 
