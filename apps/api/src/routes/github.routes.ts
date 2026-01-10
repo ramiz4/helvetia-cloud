@@ -1,13 +1,13 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { GitHubController } from '../controllers/GitHubController';
-import { resolve } from '../di';
+import { resolve, TOKENS } from '../di';
 
 /**
  * GitHub routes plugin
  * Handles GitHub API proxy endpoints
  */
 export const githubRoutes: FastifyPluginAsync = async (fastify) => {
-  const controller = resolve<GitHubController>(Symbol.for('GitHubController'));
+  const controller = resolve<GitHubController>(TOKENS.GitHubController);
 
   /**
    * GET /github/orgs

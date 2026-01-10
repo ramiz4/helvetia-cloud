@@ -23,6 +23,11 @@ export const TOKENS = {
   AuthenticationService: Symbol.for('AuthenticationService'),
   GitHubService: Symbol.for('IGitHubService'),
 
+  // Controllers
+  ServiceController: Symbol.for('ServiceController'),
+  DeploymentController: Symbol.for('DeploymentController'),
+  GitHubController: Symbol.for('GitHubController'),
+
   // External dependencies
   PrismaClient: Symbol.for('PrismaClient'),
   Redis: Symbol.for('Redis'),

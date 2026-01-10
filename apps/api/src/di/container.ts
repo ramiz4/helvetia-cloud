@@ -47,9 +47,9 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.GitHubService, GitHubService);
 
   // Register controllers
-  container.registerSingleton(Symbol.for('ServiceController'), ServiceController);
-  container.registerSingleton(Symbol.for('DeploymentController'), DeploymentController);
-  container.registerSingleton(Symbol.for('GitHubController'), GitHubController);
+  container.registerSingleton(TOKENS.ServiceController, ServiceController);
+  container.registerSingleton(TOKENS.DeploymentController, DeploymentController);
+  container.registerSingleton(TOKENS.GitHubController, GitHubController);
 }
 
 /**

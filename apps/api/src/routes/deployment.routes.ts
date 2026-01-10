@@ -1,14 +1,14 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { createRateLimitConfigs } from '../config/rateLimit';
 import { DeploymentController } from '../controllers/DeploymentController';
-import { resolve } from '../di';
+import { resolve, TOKENS } from '../di';
 
 /**
  * Deployment routes plugin
  * Handles all deployment-related endpoints
  */
 export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
-  const controller = resolve<DeploymentController>(Symbol.for('DeploymentController'));
+  const controller = resolve<DeploymentController>(TOKENS.DeploymentController);
 
   // Get rate limit config
   const redis = (fastify as any).redis;
