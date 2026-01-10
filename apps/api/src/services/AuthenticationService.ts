@@ -4,7 +4,7 @@ import type { AuthResponseDto, GitHubUserDto } from '../dto';
 import { UnauthorizedError } from '../errors';
 import type { IUserRepository } from '../interfaces';
 import { decrypt, encrypt } from '../utils/crypto';
-import { createRefreshToken, verifyAndRotateRefreshToken } from '../utils/refreshToken';
+import { createRefreshToken } from '../utils/refreshToken';
 
 /**
  * AuthenticationService
@@ -72,28 +72,42 @@ export class AuthenticationService {
 
   /**
    * Refresh access token using refresh token
+   * Note: This is a simplified version. In production, you'd want to inject
+   * FastifyInstance and Redis to use verifyAndRotateRefreshToken utility
    */
   async refreshAccessToken(
     refreshToken: string,
     jwtSign: (payload: any) => string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string; userId: string } | null> {
     if (!refreshToken) {
       throw new UnauthorizedError('Refresh token is required');
     }
 
-    // Verify and rotate refresh token
-    const userId = await verifyAndRotateRefreshToken(refreshToken);
+    // For now, we'll implement a basic version
+    // In a full implementation, you'd inject Redis and use the utility function
+    const { prisma } = await import('database');
 
-    if (!userId) {
-      throw new UnauthorizedError('Invalid or expired refresh token');
+    // Find the refresh token in database
+    const refreshTokenRecord = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
+
+    if (!refreshTokenRecord) {
+      throw new UnauthorizedError('Invalid refresh token');
     }
 
-    // Get user details
-    const user = await this.userRepository.findById(userId);
-
-    if (!user) {
-      throw new UnauthorizedError('User not found');
+    // Check if token is revoked
+    if (refreshTokenRecord.revoked) {
+      throw new UnauthorizedError('Refresh token has been revoked');
     }
+
+    // Check if token is expired
+    if (new Date() > refreshTokenRecord.expiresAt) {
+      throw new UnauthorizedError('Refresh token has expired');
+    }
+
+    const user = refreshTokenRecord.user;
 
     // Generate new JWT access token
     const newAccessToken = jwtSign({ id: user.id, username: user.username });
@@ -101,9 +115,16 @@ export class AuthenticationService {
     // Generate new refresh token
     const newRefreshToken = await createRefreshToken(user.id);
 
+    // Mark old refresh token as revoked
+    await prisma.refreshToken.update({
+      where: { id: refreshTokenRecord.id },
+      data: { revoked: true },
+    });
+
     return {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
+      userId: user.id,
     };
   }
 

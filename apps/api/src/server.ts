@@ -64,7 +64,7 @@ const deploymentQueue = new Queue('deployments', {
 
 // Register deployment queue in DI container after creation
 import { registerInstance } from './di';
-registerInstance('DeploymentQueue', deploymentQueue);
+registerInstance(Symbol.for('DeploymentQueue'), deploymentQueue);
 
 // Helper function to parse and get allowed origins from environment
 function getAllowedOrigins(): string[] {
