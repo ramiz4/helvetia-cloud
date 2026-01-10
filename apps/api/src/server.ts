@@ -21,6 +21,7 @@ import {
   verifyAndRotateRefreshToken,
 } from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
+import { withStatusLock } from './utils/statusLock';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 
@@ -1180,10 +1181,12 @@ fastify.post(
       },
     });
 
-    // Update service status to DEPLOYING
-    await prisma.service.update({
-      where: { id },
-      data: { status: 'DEPLOYING' },
+    // Update service status to DEPLOYING with distributed lock
+    await withStatusLock(id, async () => {
+      await prisma.service.update({
+        where: { id },
+        data: { status: 'DEPLOYING' },
+      });
     });
 
     // Inject token if available

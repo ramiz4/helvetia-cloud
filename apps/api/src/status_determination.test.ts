@@ -17,6 +17,24 @@ vi.mock('ioredis', () => {
   };
 });
 
+vi.mock('redlock', () => {
+  const mockLock = {
+    value: 'test-lock-value',
+    attempts: [],
+    expiration: Date.now() + 10000,
+    release: vi.fn().mockResolvedValue(undefined),
+    extend: vi.fn().mockResolvedValue(undefined),
+  };
+  return {
+    default: vi.fn(function () {
+      return {
+        acquire: vi.fn().mockResolvedValue(mockLock),
+        on: vi.fn(),
+      };
+    }),
+  };
+});
+
 vi.mock('bullmq', () => {
   return {
     Queue: vi.fn(function () {
