@@ -48,3 +48,16 @@ export const BODY_LIMIT_STANDARD =
   parseInt(process.env.BODY_LIMIT_STANDARD_MB || '1', 10) * 1024 * 1024;
 
 export const BODY_LIMIT_SMALL = parseInt(process.env.BODY_LIMIT_SMALL_KB || '100', 10) * 1024;
+
+// Logging Configuration
+export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+export const LOG_REDACT_PATHS = [
+  'req.headers.authorization',
+  'req.headers.cookie',
+  'req.body.password',
+  'req.body.token',
+  'req.body.secret',
+  'req.body.githubAccessToken',
+];
+export const LOG_REQUESTS = process.env.LOG_REQUESTS !== 'false'; // Default to true
+export const LOG_RESPONSES = process.env.LOG_RESPONSES !== 'false'; // Default to true
