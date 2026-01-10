@@ -57,8 +57,32 @@ jobs:
       - name: Build database package
         run: pnpm --filter database build
 
-      - name: Run Tests
-        run: pnpm test
+      - name: Run Tests with Coverage
+        run: pnpm test:coverage
+
+      - name: Upload API Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/api/coverage/lcov.info
+          flags: api
+          name: api-coverage
+          fail_ci_if_error: false
+
+      - name: Upload Worker Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/worker/coverage/lcov.info
+          flags: worker
+          name: worker-coverage
+          fail_ci_if_error: false
+
+      - name: Upload Dashboard Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/dashboard/coverage/lcov.info
+          flags: dashboard
+          name: dashboard-coverage
+          fail_ci_if_error: false
 
   security:
     name: Dependency Audit

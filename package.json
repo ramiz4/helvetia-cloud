@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "pnpm --filter '*' --parallel test",
+    "test:coverage": "pnpm --filter '*' --parallel test:coverage",
     "prepare": "husky",
     "semantic-release": "semantic-release"
   },
