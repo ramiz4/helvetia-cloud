@@ -16,16 +16,17 @@ Direct access to the Docker socket (`/var/run/docker.sock`) provides **root-equi
 
 ### Security Risks Mitigated
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Container Escape | **Critical** | Socket proxy prevents privileged container creation |
-| Host System Compromise | **Critical** | Read-only socket mount + ACL restrictions |
-| Privilege Escalation | **High** | Limited API access through proxy |
-| Unauthorized API Access | **High** | Only whitelisted Docker operations allowed |
+| Risk                    | Impact       | Mitigation                                          |
+| ----------------------- | ------------ | --------------------------------------------------- |
+| Container Escape        | **Critical** | Socket proxy prevents privileged container creation |
+| Host System Compromise  | **Critical** | Read-only socket mount + ACL restrictions           |
+| Privilege Escalation    | **High**     | Limited API access through proxy                    |
+| Unauthorized API Access | **High**     | Only whitelisted Docker operations allowed          |
 
 ### Docker Socket Proxy Implementation
 
 **Architecture**:
+
 ```
 ┌──────────┐         ┌─────────────────┐         ┌──────────┐
 │  Worker  │────────>│  Socket Proxy   │────────>│  Docker  │
@@ -35,12 +36,14 @@ Direct access to the Docker socket (`/var/run/docker.sock`) provides **root-equi
 ```
 
 **Configuration** (`docker-compose.yml`):
+
 - Service: `docker-socket-proxy` (tecnativa/docker-socket-proxy)
 - Socket Mount: Read-only (`/var/run/docker.sock:ro`)
 - Network: `helvetia-net` (shared with Worker and Traefik)
 - Port: 2375 (HTTP, not exposed externally)
 
 **Allowed Operations**:
+
 - ✅ Build images (required for deployments)
 - ✅ Create/start/stop containers (required for deployments)
 - ✅ List containers and images (required for status monitoring)
@@ -48,6 +51,7 @@ Direct access to the Docker socket (`/var/run/docker.sock`) provides **root-equi
 - ✅ Manage networks and volumes (required for networking and persistence)
 
 **Denied Operations**:
+
 - ❌ Docker Swarm operations (services, tasks, swarm)
 - ❌ Privileged container creation (blocked by proxy)
 - ❌ Direct socket access (only proxy can access socket)
@@ -66,17 +70,17 @@ The socket proxy is configured via environment variables in `docker-compose.yml`
 
 ```yaml
 environment:
-  CONTAINERS: 1     # List, inspect containers
-  POST: 1           # Create containers/exec
-  BUILD: 1          # Build images
-  IMAGES: 1         # Manage images
-  NETWORKS: 1       # Manage networks (Traefik)
-  VOLUMES: 1        # Manage volumes (persistence)
-  EXEC: 1           # Execute commands
-  ALLOW_START: 1    # Start containers
-  ALLOW_STOP: 1     # Stop containers
-  SERVICES: 0       # Deny Swarm services
-  SWARM: 0          # Deny Swarm management
+  CONTAINERS: 1 # List, inspect containers
+  POST: 1 # Create containers/exec
+  BUILD: 1 # Build images
+  IMAGES: 1 # Manage images
+  NETWORKS: 1 # Manage networks (Traefik)
+  VOLUMES: 1 # Manage volumes (persistence)
+  EXEC: 1 # Execute commands
+  ALLOW_START: 1 # Start containers
+  ALLOW_STOP: 1 # Stop containers
+  SERVICES: 0 # Deny Swarm services
+  SWARM: 0 # Deny Swarm management
 ```
 
 ### Usage in Services
@@ -90,6 +94,7 @@ worker:
 ```
 
 In code (automatically uses `DOCKER_HOST`):
+
 ```typescript
 import Docker from 'dockerode';
 const docker = new Docker(); // Connects to proxy

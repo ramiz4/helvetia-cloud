@@ -6,34 +6,34 @@ services:
     image: tecnativa/docker-socket-proxy:latest
     container_name: docker-socket-proxy
     restart: unless-stopped
-    privileged: true  # Required to access Docker socket
+    privileged: true # Required to access Docker socket
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # Read-only mount for security
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Read-only mount for security
     environment:
       # Allow only required operations
-      CONTAINERS: 1     # List, inspect containers (required for Traefik and Worker)
-      POST: 1           # Create containers/exec (required for Worker)
-      BUILD: 1          # Build images (required for Worker)
-      COMMIT: 1         # Commit containers (required for Worker)
-      IMAGES: 1         # List, inspect images (required for Worker)
-      NETWORKS: 1       # Manage networks (required for Traefik)
-      VOLUMES: 1        # Manage volumes (for data persistence)
-      EXEC: 1           # Execute commands in containers (required for Worker)
-      ALLOW_START: 1    # Allow starting containers (required for Worker)
-      ALLOW_STOP: 1     # Allow stopping containers (required for Worker)
+      CONTAINERS: 1 # List, inspect containers (required for Traefik and Worker)
+      POST: 1 # Create containers/exec (required for Worker)
+      BUILD: 1 # Build images (required for Worker)
+      COMMIT: 1 # Commit containers (required for Worker)
+      IMAGES: 1 # List, inspect images (required for Worker)
+      NETWORKS: 1 # Manage networks (required for Traefik)
+      VOLUMES: 1 # Manage volumes (for data persistence)
+      EXEC: 1 # Execute commands in containers (required for Worker)
+      ALLOW_START: 1 # Allow starting containers (required for Worker)
+      ALLOW_STOP: 1 # Allow stopping containers (required for Worker)
       ALLOW_RESTARTS: 1 # Allow restart policy configuration (required for Worker)
-      
+
       # Deny dangerous operations
-      SERVICES: 0       # Disable Docker Swarm services
-      TASKS: 0          # Disable Docker Swarm tasks
-      SWARM: 0          # Disable Swarm management
-      INFO: 1           # Allow Docker info (useful for debugging)
-      VERSION: 1        # Allow Docker version (useful for debugging)
-      PING: 1           # Allow Docker ping (health checks)
+      SERVICES: 0 # Disable Docker Swarm services
+      TASKS: 0 # Disable Docker Swarm tasks
+      SWARM: 0 # Disable Swarm management
+      INFO: 1 # Allow Docker info (useful for debugging)
+      VERSION: 1 # Allow Docker version (useful for debugging)
+      PING: 1 # Allow Docker ping (health checks)
     networks:
       - helvetia-net
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:2375/version"]
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:2375/version']
       interval: 10s
       timeout: 5s
       retries: 3
@@ -48,7 +48,7 @@ services:
       - '--providers.docker.exposedbydefault=false'
       - '--log.level=DEBUG'
       - '--entrypoints.web.address=:80'
-      - '--providers.docker.endpoint=tcp://docker-socket-proxy:2375'  # Use socket proxy
+      - '--providers.docker.endpoint=tcp://docker-socket-proxy:2375' # Use socket proxy
     ports:
       - '80:80'
       - '8090:8080'
@@ -110,7 +110,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgresql://helvetia:password@postgres:5432/helvetia?schema=public
-      DOCKER_HOST: tcp://docker-socket-proxy:2375  # Use socket proxy instead of direct socket
+      DOCKER_HOST: tcp://docker-socket-proxy:2375 # Use socket proxy instead of direct socket
     depends_on:
       - redis
       - docker-socket-proxy

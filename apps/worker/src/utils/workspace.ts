@@ -34,7 +34,7 @@ export function getSecureBindMounts(): string[] {
   if (process.env.DOCKER_HOST && process.env.DOCKER_HOST.includes('docker-socket-proxy')) {
     return []; // No bind mounts needed - using socket proxy
   }
-  
+
   // Fallback for local development without proxy
   return ['/var/run/docker.sock:/var/run/docker.sock'];
 }

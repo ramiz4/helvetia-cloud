@@ -38,12 +38,12 @@ Both the API and Worker services currently require Docker socket access to:
 
 ### Risk Assessment
 
-| Risk | Severity | Impact |
-|------|----------|--------|
-| Container Escape | **Critical** | Full host system compromise |
-| Privilege Escalation | **High** | Attacker gains root access |
-| Data Exposure | **High** | Access to all container data |
-| Service Disruption | **High** | Ability to stop all containers |
+| Risk                 | Severity     | Impact                         |
+| -------------------- | ------------ | ------------------------------ |
+| Container Escape     | **Critical** | Full host system compromise    |
+| Privilege Escalation | **High**     | Attacker gains root access     |
+| Data Exposure        | **High**     | Access to all container data   |
+| Service Disruption   | **High**     | Ability to stop all containers |
 
 ---
 
@@ -56,6 +56,7 @@ Both the API and Worker services currently require Docker socket access to:
 A Docker Socket Proxy acts as a security layer between services and the Docker daemon, restricting which Docker API endpoints can be accessed.
 
 **Benefits**:
+
 - Limits API access to only required operations
 - Prevents privileged container creation
 - Blocks host filesystem mounts
@@ -70,11 +71,13 @@ A Docker Socket Proxy acts as a security layer between services and the Docker d
 Running Docker in rootless mode eliminates root-level access even if the socket is compromised.
 
 **Benefits**:
+
 - Containers run as non-root user
 - Limits blast radius of compromise
 - Improved security isolation
 
 **Limitations**:
+
 - Some features unavailable (e.g., AppArmor, overlay networks)
 - Slightly reduced performance
 - Requires systemd or similar init system
@@ -88,6 +91,7 @@ Running Docker in rootless mode eliminates root-level access even if the socket 
 Mandatory Access Control (MAC) systems provide an additional security layer.
 
 **Benefits**:
+
 - Restricts container capabilities at kernel level
 - Prevents unauthorized system calls
 - Limits file system access
@@ -101,6 +105,7 @@ Mandatory Access Control (MAC) systems provide an additional security layer.
 For large-scale deployments, Kubernetes provides better security primitives.
 
 **Benefits**:
+
 - Built-in RBAC and network policies
 - Pod Security Standards
 - No Docker socket access required (uses CRI)
@@ -131,46 +136,46 @@ docker-socket-proxy:
   image: tecnativa/docker-socket-proxy
   container_name: docker-socket-proxy
   restart: unless-stopped
-  privileged: true  # Required to access Docker socket
+  privileged: true # Required to access Docker socket
   volumes:
-    - /var/run/docker.sock:/var/run/docker.sock:ro  # Read-only mount
+    - /var/run/docker.sock:/var/run/docker.sock:ro # Read-only mount
   environment:
     # Allow only required operations
-    CONTAINERS: 1     # List, inspect containers
-    POST: 1           # Create containers/exec
-    BUILD: 1          # Build images
-    COMMIT: 1         # Commit containers
-    IMAGES: 1         # List, inspect images
-    NETWORKS: 1       # Manage networks (required for Traefik)
-    VOLUMES: 1        # Manage volumes (for data persistence)
-    EXEC: 1           # Execute commands in containers
-    
+    CONTAINERS: 1 # List, inspect containers
+    POST: 1 # Create containers/exec
+    BUILD: 1 # Build images
+    COMMIT: 1 # Commit containers
+    IMAGES: 1 # List, inspect images
+    NETWORKS: 1 # Manage networks (required for Traefik)
+    VOLUMES: 1 # Manage volumes (for data persistence)
+    EXEC: 1 # Execute commands in containers
+
     # Deny dangerous operations
-    ALLOW_START: 1    # Allow starting containers
-    ALLOW_STOP: 1     # Allow stopping containers  
+    ALLOW_START: 1 # Allow starting containers
+    ALLOW_STOP: 1 # Allow stopping containers
     ALLOW_RESTARTS: 1 # Allow restart policy configuration
-    SERVICES: 0       # Disable Docker Swarm services
-    TASKS: 0          # Disable Docker Swarm tasks
-    SWARM: 0          # Disable Swarm management
+    SERVICES: 0 # Disable Docker Swarm services
+    TASKS: 0 # Disable Docker Swarm tasks
+    SWARM: 0 # Disable Swarm management
   networks:
     - helvetia-net
 ```
 
 ### Configuration Options
 
-| Environment Variable | Default | Description |
-|---------------------|---------|-------------|
-| `CONTAINERS` | 0 | Allow container operations (list, inspect) |
-| `POST` | 0 | Allow POST requests (create resources) |
-| `BUILD` | 0 | Allow image builds |
-| `COMMIT` | 0 | Allow committing containers to images |
-| `IMAGES` | 0 | Allow image operations |
-| `NETWORKS` | 0 | Allow network operations |
-| `VOLUMES` | 0 | Allow volume operations |
-| `EXEC` | 0 | Allow executing commands in containers |
-| `ALLOW_START` | 0 | Allow starting containers |
-| `ALLOW_STOP` | 0 | Allow stopping containers |
-| `ALLOW_RESTARTS` | 0 | Allow restart policies |
+| Environment Variable | Default | Description                                |
+| -------------------- | ------- | ------------------------------------------ |
+| `CONTAINERS`         | 0       | Allow container operations (list, inspect) |
+| `POST`               | 0       | Allow POST requests (create resources)     |
+| `BUILD`              | 0       | Allow image builds                         |
+| `COMMIT`             | 0       | Allow committing containers to images      |
+| `IMAGES`             | 0       | Allow image operations                     |
+| `NETWORKS`           | 0       | Allow network operations                   |
+| `VOLUMES`            | 0       | Allow volume operations                    |
+| `EXEC`               | 0       | Allow executing commands in containers     |
+| `ALLOW_START`        | 0       | Allow starting containers                  |
+| `ALLOW_STOP`         | 0       | Allow stopping containers                  |
+| `ALLOW_RESTARTS`     | 0       | Allow restart policies                     |
 
 **Security Note**: Set only the permissions required for your use case. The proxy blocks all operations by default.
 
@@ -195,7 +200,7 @@ const docker = new Docker();
 // Or explicitly specify:
 const docker = new Docker({
   host: 'docker-socket-proxy',
-  port: 2375
+  port: 2375,
 });
 ```
 
@@ -224,11 +229,13 @@ SELinux (Security-Enhanced Linux) provides Mandatory Access Control (MAC) on RHE
 #### Enable SELinux for Docker
 
 1. **Verify SELinux Status**:
+
    ```bash
    sestatus
    ```
 
 2. **Set Docker Directory Context**:
+
    ```bash
    sudo semanage fcontext -a -t svirt_sandbox_file_t "/var/lib/docker(/.*)?"
    sudo restorecon -R /var/lib/docker
@@ -236,6 +243,7 @@ SELinux (Security-Enhanced Linux) provides Mandatory Access Control (MAC) on RHE
 
 3. **Enable SELinux in Docker**:
    Edit `/etc/docker/daemon.json`:
+
    ```json
    {
      "selinux-enabled": true
@@ -265,24 +273,25 @@ AppArmor is used on Ubuntu and Debian systems.
 #### Create AppArmor Profile
 
 1. **Create Profile** (`/etc/apparmor.d/docker-helvetia`):
+
    ```
    #include <tunables/global>
-   
+
    profile docker-helvetia flags=(attach_disconnected,mediate_deleted) {
      #include <abstractions/base>
-     
+
      # Allow Docker operations
      /var/run/docker.sock rw,
-     
+
      # Deny sensitive paths
      deny /root/** rwklx,
      deny /home/** rwklx,
      deny /etc/shadow r,
      deny /etc/passwd w,
-     
+
      # Allow workspace directory
      /tmp/helvetia-workspaces/** rw,
-     
+
      # Allow container operations
      capability net_admin,
      capability sys_admin,
@@ -290,6 +299,7 @@ AppArmor is used on Ubuntu and Debian systems.
    ```
 
 2. **Load Profile**:
+
    ```bash
    sudo apparmor_parser -r /etc/apparmor.d/docker-helvetia
    ```
@@ -317,13 +327,39 @@ Create `docker-seccomp.json`:
   "syscalls": [
     {
       "names": [
-        "accept", "accept4", "access", "bind", "chdir",
-        "clone", "close", "connect", "dup", "dup2",
-        "execve", "exit", "exit_group", "fchdir", "fcntl",
-        "fork", "fstat", "getdents", "getpid", "listen",
-        "mkdir", "open", "openat", "read", "readlink",
-        "recvfrom", "recvmsg", "sendmsg", "sendto",
-        "socket", "stat", "write", "writev"
+        "accept",
+        "accept4",
+        "access",
+        "bind",
+        "chdir",
+        "clone",
+        "close",
+        "connect",
+        "dup",
+        "dup2",
+        "execve",
+        "exit",
+        "exit_group",
+        "fchdir",
+        "fcntl",
+        "fork",
+        "fstat",
+        "getdents",
+        "getpid",
+        "listen",
+        "mkdir",
+        "open",
+        "openat",
+        "read",
+        "readlink",
+        "recvfrom",
+        "recvmsg",
+        "sendmsg",
+        "sendto",
+        "socket",
+        "stat",
+        "write",
+        "writev"
       ],
       "action": "SCMP_ACT_ALLOW"
     }
@@ -358,17 +394,20 @@ Rootless Docker runs the Docker daemon and containers as a non-root user, signif
 ### Installation
 
 1. **Install Rootless Docker**:
+
    ```bash
    curl -fsSL https://get.docker.com/rootless | sh
    ```
 
 2. **Set Environment Variables** (add to `~/.bashrc`):
+
    ```bash
    export PATH=/home/$USER/bin:$PATH
    export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock
    ```
 
 3. **Enable Service**:
+
    ```bash
    systemctl --user enable docker
    systemctl --user start docker
@@ -407,11 +446,13 @@ Rootless Docker runs the Docker daemon and containers as a non-root user, signif
 ### When to Use Rootless Docker
 
 ✅ **Use Rootless Docker If**:
+
 - Running on a single-user development machine
 - Security is paramount and you can accept limitations
 - You don't need AppArmor/SELinux integration
 
 ❌ **Don't Use Rootless Docker If**:
+
 - You need AppArmor/SELinux (prefer socket proxy instead)
 - You require overlay networks
 - Performance is critical (use socket proxy + seccomp instead)
@@ -436,28 +477,30 @@ Kubernetes provides better security primitives for multi-tenant PaaS platforms:
 #### Phase 1: Local Development with Kind/Minikube
 
 1. **Install Kubernetes** (for testing):
+
    ```bash
    # Kind (Kubernetes in Docker)
    curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
    chmod +x ./kind
    sudo mv ./kind /usr/local/bin/kind
-   
+
    # Create cluster
    kind create cluster --name helvetia-dev
    ```
 
 2. **Create Namespaces**:
+
    ```yaml
    # namespaces.yaml
    apiVersion: v1
    kind: Namespace
    metadata:
-     name: helvetia-system  # Control plane
+     name: helvetia-system # Control plane
    ---
    apiVersion: v1
    kind: Namespace
    metadata:
-     name: helvetia-services  # User deployments
+     name: helvetia-services # User deployments
    ```
 
 3. **Deploy Control Plane**:
@@ -471,6 +514,7 @@ Kubernetes provides better security primitives for multi-tenant PaaS platforms:
 Replace Docker-in-Docker builds with one of:
 
 **Option A: Kaniko** (Recommended)
+
 - Builds images without Docker daemon
 - Runs as unprivileged container
 - No security risks
@@ -482,22 +526,24 @@ metadata:
   name: kaniko-build
 spec:
   containers:
-  - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
-    args:
-      - "--context=git://github.com/user/repo"
-      - "--destination=registry.example.com/image:tag"
-    volumeMounts:
-    - name: docker-config
-      mountPath: /kaniko/.docker/
+    - name: kaniko
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - '--context=git://github.com/user/repo'
+        - '--destination=registry.example.com/image:tag'
+      volumeMounts:
+        - name: docker-config
+          mountPath: /kaniko/.docker/
 ```
 
 **Option B: Buildah**
+
 - Daemonless container builds
 - Compatible with Dockerfiles
 - Rootless by default
 
 **Option C: BuildKit**
+
 - Modern Docker build backend
 - No daemon required (standalone mode)
 - Better caching and performance
@@ -523,18 +569,20 @@ await k8sApi.createNamespacedDeployment('helvetia-services', {
     template: {
       metadata: { labels: { app: serviceName } },
       spec: {
-        containers: [{
-          name: serviceName,
-          image: imageTag,
-          env: envVars,
-          resources: {
-            limits: { memory: '512Mi', cpu: '1000m' },
-            requests: { memory: '256Mi', cpu: '500m' }
-          }
-        }]
-      }
-    }
-  }
+        containers: [
+          {
+            name: serviceName,
+            image: imageTag,
+            env: envVars,
+            resources: {
+              limits: { memory: '512Mi', cpu: '1000m' },
+              requests: { memory: '256Mi', cpu: '500m' },
+            },
+          },
+        ],
+      },
+    },
+  },
 });
 ```
 
@@ -548,19 +596,19 @@ kind: Ingress
 metadata:
   name: user-services
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
 spec:
   rules:
-  - host: "*.helvetia.cloud"
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: dynamic-service
-            port:
-              number: 80
+    - host: '*.helvetia.cloud'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dynamic-service
+                port:
+                  number: 80
 ```
 
 #### Phase 5: Security Policies
@@ -591,19 +639,20 @@ spec:
 
 ### Timeline and Effort
 
-| Phase | Effort | Dependencies |
-|-------|--------|--------------|
-| **Phase 1**: Local K8s setup | 1-2 weeks | None |
-| **Phase 2**: Build system | 2-3 weeks | Phase 1 |
-| **Phase 3**: API migration | 3-4 weeks | Phase 2 |
-| **Phase 4**: Ingress setup | 1-2 weeks | Phase 3 |
-| **Phase 5**: Security policies | 1 week | Phase 4 |
-| **Testing & Hardening** | 2-3 weeks | All phases |
-| **Total** | **10-15 weeks** | - |
+| Phase                          | Effort          | Dependencies |
+| ------------------------------ | --------------- | ------------ |
+| **Phase 1**: Local K8s setup   | 1-2 weeks       | None         |
+| **Phase 2**: Build system      | 2-3 weeks       | Phase 1      |
+| **Phase 3**: API migration     | 3-4 weeks       | Phase 2      |
+| **Phase 4**: Ingress setup     | 1-2 weeks       | Phase 3      |
+| **Phase 5**: Security policies | 1 week          | Phase 4      |
+| **Testing & Hardening**        | 2-3 weeks       | All phases   |
+| **Total**                      | **10-15 weeks** | -            |
 
 ### Cost-Benefit Analysis
 
 #### Benefits
+
 - ✅ Eliminates Docker socket security risks
 - ✅ Better multi-tenancy isolation
 - ✅ Scales to large deployments
@@ -612,6 +661,7 @@ spec:
 - ✅ Better resource management
 
 #### Costs
+
 - ❌ Significant development effort (10-15 weeks)
 - ❌ Increased operational complexity
 - ❌ Requires Kubernetes expertise
@@ -621,11 +671,13 @@ spec:
 ### Recommendation
 
 **For Current Scale**: Use Docker Socket Proxy + SELinux/AppArmor
+
 - Adequate security for small-medium deployments
 - Much less complexity than Kubernetes
 - Can be implemented in days, not months
 
 **For Future Scale**: Migrate to Kubernetes
+
 - When supporting 100+ concurrent users
 - When multi-tenancy becomes critical
 - When security compliance requires stronger isolation
@@ -676,12 +728,14 @@ spec:
 ## Additional Resources
 
 ### Documentation
+
 - [Docker Security Best Practices](https://docs.docker.com/engine/security/)
 - [CIS Docker Benchmark](https://www.cisecurity.org/benchmark/docker)
 - [OWASP Docker Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html)
 - [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/)
 
 ### Tools
+
 - [Docker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy)
 - [Trivy](https://github.com/aquasecurity/trivy) - Container vulnerability scanner
 - [Falco](https://falco.org/) - Runtime security monitoring
@@ -689,6 +743,7 @@ spec:
 - [BuildKit](https://github.com/moby/buildkit) - Modern Docker build backend
 
 ### Community
+
 - [Docker Security Forum](https://forums.docker.com/c/security/18)
 - [Kubernetes Security SIG](https://github.com/kubernetes/community/tree/master/sig-security)
 - [Cloud Native Security Whitepaper](https://www.cncf.io/blog/2020/11/18/announcing-the-cloud-native-security-white-paper/)
@@ -700,7 +755,7 @@ spec:
 Docker socket access is a significant security risk, but it can be mitigated through a defense-in-depth approach:
 
 1. **Now**: Deploy Docker Socket Proxy with minimal permissions
-2. **Soon**: Add SELinux/AppArmor and Seccomp profiles  
+2. **Soon**: Add SELinux/AppArmor and Seccomp profiles
 3. **Later**: Consider Kubernetes migration for stronger isolation
 
 The implemented Docker Socket Proxy provides immediate security improvements while maintaining compatibility with existing workflows. For production deployments, additional hardening with MAC systems is strongly recommended.
