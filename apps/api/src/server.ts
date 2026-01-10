@@ -1027,7 +1027,10 @@ fastify.patch(
     if (service.count === 0)
       return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
-    return prisma.service.findUnique({ where: { id } });
+    return prisma.service.findUnique({
+      where: { id },
+      include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    });
   },
 );
 
@@ -1141,6 +1144,7 @@ fastify.post(
         staticOutputDir: staticOutputDir || 'dist',
         envVars: finalEnvVars,
       },
+      include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
     });
   },
 );
