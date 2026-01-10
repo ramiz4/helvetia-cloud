@@ -48,6 +48,13 @@ Helvetia Cloud is a production-realistic Platform-as-a-Service (PaaS) architecte
 - **Messaging**: Redis (BullMQ) for reliable background processing.
 - **Orchestration**: Docker Compose for local development; architected for future Kubernetes migration.
 
+### 6. Observability Stack (PLG)
+
+- **Prometheus**: Scrapes and stores time-series metrics from API and Worker services.
+- **Loki**: Aggregates logs from all platform containers via Promtail.
+- **Grafana**: Provides a unified dashboard for visualizing system health, deployment performance, and real-time logs.
+- **Auto-Provisioning**: Dashboard and data sources are automatically configured on startup for zero-config monitoring.
+
 ## 📊 Data Models
 
 ### User

@@ -11,7 +11,7 @@ A premium, production-realistic **Platform-as-a-Service (PaaS)** designed for se
 - **📦 Multi-Service Support**: Native support for **Docker-based** backends and optimized **Static Sites** (React, Vue, Angular).
 - **🛡️ Secure & Isolated**: Builds are performed in isolated Docker-in-Docker environments with resource limits (CPU/Memory) and secret scrubbing.
 - **🚦 Dynamic Routing**: Traefik-powered routing with support for custom domains and automatic health checks.
-- **📊 Real-time Monitoring**: Live log streaming (SSE/WebSockets), container resource usage metrics, and **Prometheus metrics** for comprehensive observability.
+- **📊 Comprehensive Observability**: Full PLG stack (Prometheus, Loki, Grafana) with automated dashboard provisioning and log aggregation.
 - **🏗️ Developer First**: Smart GitHub repository picker and branch selection for a seamless onboarding experience.
 
 ## 🛠 Tech Stack
@@ -207,6 +207,7 @@ pnpm dev
 ### 5. Access the Platform
 
 - **Dashboard**: [http://localhost:3000](http://localhost:3000)
+- **Observability (Grafana)**: [http://localhost:3010](http://localhost:3010) (`admin`/`admin`)
 - **API Engine**: [http://localhost:3001](http://localhost:3001)
 - **Worker Health Check**: [http://localhost:3002/health](http://localhost:3002/health)
 - **Traefik Dashboard**: [http://localhost:8090](http://localhost:8090)
@@ -275,10 +276,36 @@ pnpm test
 ```
 
 5. Cleanup:
+1. Start test containers:
 
-```bash
-docker-compose -f docker-compose.test.yml down -v
-```
+   ```bash
+   docker-compose -f docker-compose.test.yml up -d
+   ```
+
+1. Set test environment variables:
+
+   ```bash
+   export DATABASE_URL="postgresql://postgres:postgres@localhost:5433/helvetia_test"
+   export REDIS_URL="redis://localhost:6380"
+   ```
+
+1. Push database schema:
+
+   ```bash
+   pnpm migrate:dev
+   ```
+
+1. Run tests:
+
+   ```bash
+   pnpm test
+   ```
+
+1. Cleanup:
+
+   ```bash
+   docker-compose -f docker-compose.test.yml down -v
+   ```
 
 **Test Coverage**: The project maintains a minimum 80% code coverage threshold across all packages.
 
@@ -296,28 +323,23 @@ For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./.do
 
 ## 📊 Monitoring
 
-Helvetia Cloud includes comprehensive monitoring capabilities with built-in health checks and Prometheus metrics.
+Helvetia Cloud includes a full observability stack (PLG) for real-time monitoring of metrics and logs.
 
 ### Prometheus Metrics
 
-Both API and Worker services expose Prometheus metrics for monitoring:
+Both API and Worker services expose Prometheus metrics that are automatically scraped:
 
 - **API Metrics**: `http://localhost:3001/metrics`
 - **Worker Metrics**: `http://localhost:3002/metrics`
 
-**Available Metrics:**
+### Grafana Dashboards
 
-- HTTP request rates, latencies, and error rates
-- Deployment success/failure rates
-- Queue depths and processing times
-- Container resource usage (CPU, memory)
-- Service status metrics
-- Node.js process metrics
+A pre-configured Grafana dashboard is available at [http://localhost:3010](http://localhost:3010). It provides real-time visualization of deployment success rates, request latency, and container resource usage.
 
-**Documentation:**
+**Key Assets:**
 
 - [Complete Metrics Documentation](./METRICS.md)
-- [Grafana Dashboard](./grafana-dashboard.json)
+- [Grafana Dashboard Definition](./grafana-dashboard.json)
 
 **Example Prometheus Configuration:**
 
