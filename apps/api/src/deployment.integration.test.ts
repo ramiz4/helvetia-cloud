@@ -17,27 +17,40 @@ describeIf('Deployment Flow Integration Tests', () => {
     app = await buildServer();
     await app.ready();
 
+    // Ensure clean state for test user
+    await prisma.deployment.deleteMany({
+      where: { service: { user: { githubId: { in: ['test-gh-deployment', 'test-gh-other'] } } } },
+    });
+    await prisma.service.deleteMany({
+      where: { user: { githubId: { in: ['test-gh-deployment', 'test-gh-other'] } } },
+    });
+    await prisma.user.deleteMany({
+      where: { githubId: { in: ['test-gh-deployment', 'test-gh-other'] } },
+    });
+
     // Create a test user
     const testUser = await prisma.user.create({
       data: {
-        email: 'deployment-test@example.com',
+        username: 'deployment-test-user',
         githubId: 'test-gh-deployment',
-        name: 'Deployment Test User',
       },
     });
     testUserId = testUser.id;
 
     // Generate JWT token for auth
-    authToken = app.jwt.sign({ id: testUserId, email: testUser.email });
+    authToken = app.jwt.sign({ id: testUserId, username: testUser.username });
   });
 
   afterAll(async () => {
     // Cleanup test data
     if (testServiceId) {
-      await prisma.deployment.deleteMany({ where: { serviceId: testServiceId } });
-      await prisma.service.deleteMany({ where: { id: testServiceId } });
+      await prisma.deployment.deleteMany({ where: { serviceId: testServiceId } }).catch(() => {});
+      await prisma.service.deleteMany({ where: { id: testServiceId } }).catch(() => {});
     }
-    await prisma.user.delete({ where: { id: testUserId } });
+    if (testUserId) {
+      await prisma.service.deleteMany({ where: { userId: testUserId } }).catch(() => {});
+      await prisma.user.deleteMany({ where: { id: testUserId } }).catch(() => {});
+    }
     await app.close();
   });
 
@@ -109,9 +122,8 @@ describeIf('Deployment Flow Integration Tests', () => {
       // Create another user
       const otherUser = await prisma.user.create({
         data: {
-          email: 'other-test@example.com',
+          username: 'other-test-user',
           githubId: 'test-gh-other',
-          name: 'Other Test User',
         },
       });
 
@@ -201,7 +213,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
     it('should inject GitHub token into repo URL when available', async () => {
       // Mock encrypted token
-      const { encrypt } = await import('./utils/crypto');
+      const { encrypt } = await import('./utils/crypto.js');
       const encryptedToken = encrypt('test-github-token');
 
       await prisma.user.update({
@@ -317,7 +329,7 @@ describeIf('Deployment Flow Integration Tests', () => {
         where: { id: deployment.id },
         data: {
           status: 'FAILED',
-          errorLog: 'Build failed: Missing dependencies',
+          logs: 'Build failed: Missing dependencies',
         },
       });
 
@@ -326,7 +338,7 @@ describeIf('Deployment Flow Integration Tests', () => {
       });
 
       expect(failedDeployment?.status).toBe('FAILED');
-      expect(failedDeployment?.errorLog).toContain('Build failed');
+      expect(failedDeployment?.logs).toContain('Build failed');
     });
   });
 

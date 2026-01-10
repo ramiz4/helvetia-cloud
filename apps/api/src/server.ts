@@ -628,7 +628,7 @@ fastify.register(fastifyJwt, {
 
 // Global rate limiting
 fastify.register(rateLimit, {
-  max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+  max: isTestEnv ? 10000 : parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
   timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
   redis: redisConnection,
   nameSpace: 'helvetia-rate-limit:',
@@ -659,7 +659,7 @@ fastify.register(rateLimit, {
 
 // Stricter rate limiting for authentication endpoints
 const authRateLimitConfig = {
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
+  max: isTestEnv ? 10000 : parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
   timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',
   redis: redisConnection,
   nameSpace: 'helvetia-auth-rate-limit:',
@@ -678,7 +678,7 @@ const authRateLimitConfig = {
 
 // Stricter rate limiting for SSE/streaming endpoints
 const wsRateLimitConfig = {
-  max: parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
+  max: isTestEnv ? 10000 : parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
   timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
   redis: redisConnection,
   nameSpace: 'helvetia-ws-rate-limit:',
@@ -1401,18 +1401,21 @@ fastify.get(
     }, METRICS_UPDATE_INTERVAL_MS);
 
     // Implement connection timeout
-    timeoutHandle = setTimeout(() => {
-      console.log(`SSE metrics connection timeout for user ${user.id}`);
-      try {
-        reply.raw.write(
-          `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
-        );
-        reply.raw.end();
-      } catch (err) {
-        console.error('Error writing timeout message:', err);
-      }
-      cleanup();
-    }, CONNECTION_TIMEOUT_MS);
+    timeoutHandle = setTimeout(
+      () => {
+        console.log(`SSE metrics connection timeout for user ${user.id}`);
+        try {
+          reply.raw.write(
+            `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
+          );
+          reply.raw.end();
+        } catch (err) {
+          console.error('Error writing timeout message:', err);
+        }
+        cleanup();
+      },
+      isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
+    );
 
     // Clean up on client disconnect
     request.raw.on('close', () => {
@@ -1721,10 +1724,15 @@ fastify.register(async (scope) => {
   scope.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
     (req as any).rawBody = body;
     try {
-      const json = JSON.parse(body.toString());
+      const bodyString = body.toString();
+      if (!bodyString) {
+        return done(null, {});
+      }
+      const json = JSON.parse(bodyString);
       done(null, json);
     } catch (err: any) {
-      done(err, undefined);
+      // Pass the error to the handler via a special flag
+      done(null, { _isMalformed: true, _error: err.message });
     }
   });
 
@@ -1770,6 +1778,10 @@ fastify.register(async (scope) => {
 
       const payload = request.body as any;
 
+      if (payload?._isMalformed) {
+        return reply.status(400).send({ error: 'Invalid JSON payload', message: payload._error });
+      }
+
       // Handle Pull Request events
       if (payload.pull_request) {
         try {
@@ -1793,7 +1805,7 @@ fastify.register(async (scope) => {
 
             if (!baseService) {
               console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
-              return { skipped: 'No base service found' };
+              return reply.status(200).send({ skipped: 'No base service found' });
             }
 
             const previewName = `${baseService.name}-pr-${prNumber}`;
@@ -1825,7 +1837,7 @@ fastify.register(async (scope) => {
 
             await createAndQueueDeployment(service, pr.head.sha);
 
-            return { success: true, previewService: service.name };
+            return reply.status(200).send({ success: true, previewService: service.name });
           }
 
           if (action === 'closed') {
@@ -1841,15 +1853,18 @@ fastify.register(async (scope) => {
             if (previewService) {
               console.log(`Cleaning up preview environment for PR #${prNumber}`);
               await deleteService(previewService.id, previewService.userId);
-              return { success: true, deletedService: previewService.name };
+              return reply.status(200).send({ success: true, deletedService: previewService.name });
             }
-            return { skipped: 'No preview service found to delete' };
+            return reply.status(200).send({ skipped: 'No preview service found to delete' });
           }
 
-          return { skipped: `Action ${action} not handled` };
-        } catch (error) {
-          console.error('Error handling GitHub PR webhook:', error);
-          return { error: 'Internal server error while processing webhook' };
+          return reply.status(200).send({ skipped: `Action ${action} not handled` });
+        } catch (error: any) {
+          console.error('Error handling GitHub PR webhook:', error.message);
+          return reply.status(500).send({
+            error: 'Internal server error while processing webhook',
+            message: error.message,
+          });
         }
       }
 
@@ -1875,16 +1890,22 @@ fastify.register(async (scope) => {
 
       if (services.length === 0) {
         console.log(`No service found for ${repoUrl} on branch ${branch}`);
-        return { skipped: 'No matching service found' };
+        return reply.status(200).send({ skipped: 'No matching service found' });
       }
 
-      for (const service of services) {
-        console.log(`Triggering automated deployment for ${service.name}`);
-
-        await createAndQueueDeployment(service, payload.after);
+      try {
+        for (const service of services) {
+          console.log(`Triggering automated deployment for ${service.name}`);
+          await createAndQueueDeployment(service, payload.after);
+        }
+        return reply.status(200).send({ success: true, servicesTriggered: services.length });
+      } catch (error: any) {
+        console.error('Error handling GitHub push webhook:', error.message);
+        return reply.status(500).send({
+          error: 'Internal server error while processing webhook',
+          message: error.message,
+        });
       }
-
-      return { success: true, servicesTriggered: services.length };
     },
   );
 });
@@ -2076,19 +2097,22 @@ fastify.get(
     }
 
     // Implement connection timeout (60 minutes for logs)
-    const CONNECTION_TIMEOUT_MS = 60 * 60 * 1000;
-    timeoutHandle = setTimeout(async () => {
-      console.log(`SSE logs connection timeout for deployment ${id}`);
-      try {
-        reply.raw.write(
-          `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
-        );
-        reply.raw.end();
-      } catch (err) {
-        console.error('Error writing timeout message:', err);
-      }
-      await cleanup();
-    }, CONNECTION_TIMEOUT_MS);
+    const LOGS_CONNECTION_TIMEOUT_MS = 60 * 60 * 1000;
+    timeoutHandle = setTimeout(
+      async () => {
+        console.log(`SSE logs connection timeout for deployment ${id}`);
+        try {
+          reply.raw.write(
+            `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
+          );
+          reply.raw.end();
+        } catch (err) {
+          console.error('Error writing timeout message:', err);
+        }
+        await cleanup();
+      },
+      isTestEnv ? 100 : LOGS_CONNECTION_TIMEOUT_MS,
+    );
 
     // Clean up on client disconnect
     request.raw.on('close', async () => {
