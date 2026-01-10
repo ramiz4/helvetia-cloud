@@ -1,6 +1,12 @@
+import { scheduleCleanupJob } from './cleanup';
 import { worker } from './worker';
 
 console.log('Worker started and listening for jobs...');
+
+// Initialize cleanup scheduler
+scheduleCleanupJob().catch((error) => {
+  console.error('Failed to schedule cleanup job:', error);
+});
 
 // Graceful shutdown handlers
 process.on('SIGTERM', async () => {

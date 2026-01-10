@@ -703,7 +703,7 @@ fastify.get('/services', async (request) => {
   // Add authentication middleware in a real app
   const user = (request as any).user;
   const services = await prisma.service.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, deletedAt: null },
     include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
 
@@ -723,7 +723,7 @@ fastify.get('/services/:id', async (request, reply) => {
   const user = (request as any).user;
 
   const service = await prisma.service.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: user.id, deletedAt: null },
     include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
 
@@ -907,18 +907,82 @@ fastify.delete('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id, deletedAt: null },
+  });
   if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
 
-  await deleteService(id, user.id);
-  return { success: true };
+  // Check if service is protected from deletion
+  if (service.deleteProtected) {
+    return reply
+      .status(403)
+      .send({ error: 'Service is protected from deletion. Remove protection first.' });
+  }
+
+  // Perform soft deletion
+  await prisma.service.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
+
+  return { success: true, message: 'Service soft deleted. Can be recovered within 30 days.' };
+});
+
+// Recover a soft-deleted service
+fastify.post('/services/:id/recover', async (request, reply) => {
+  const { id } = request.params as any;
+  const user = (request as any).user;
+
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id, deletedAt: { not: null } },
+  });
+
+  if (!service) {
+    return reply.status(404).send({ error: 'Deleted service not found or unauthorized' });
+  }
+
+  // Restore the service
+  const restored = await prisma.service.update({
+    where: { id },
+    data: { deletedAt: null },
+  });
+
+  return { success: true, service: restored, message: 'Service recovered successfully' };
+});
+
+// Toggle delete protection for a service
+fastify.patch('/services/:id/protection', async (request, reply) => {
+  const { id } = request.params as any;
+  const user = (request as any).user;
+  const { deleteProtected } = request.body as any;
+
+  if (typeof deleteProtected !== 'boolean') {
+    return reply.status(400).send({ error: 'deleteProtected must be a boolean' });
+  }
+
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id, deletedAt: null },
+  });
+
+  if (!service) {
+    return reply.status(404).send({ error: 'Service not found or unauthorized' });
+  }
+
+  const updated = await prisma.service.update({
+    where: { id },
+    data: { deleteProtected },
+  });
+
+  return { success: true, service: updated };
 });
 
 fastify.get('/services/:id/health', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id, deletedAt: null },
+  });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
 
   const Docker = (await import('dockerode')).default;
@@ -947,7 +1011,9 @@ fastify.get('/services/:id/metrics', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id, deletedAt: null },
+  });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
 
   return getServiceMetrics(id, undefined, undefined, service);
@@ -1038,7 +1104,7 @@ fastify.get(
         const containers = await docker.listContainers({ all: true });
 
         const services = await prisma.service.findMany({
-          where: { userId: user.id },
+          where: { userId: user.id, deletedAt: null },
           select: { id: true, name: true, type: true, status: true },
         });
 
@@ -1263,7 +1329,9 @@ fastify.post(
     const { id } = request.params as any;
     const user = (request as any).user;
 
-    const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+    const service = await prisma.service.findFirst({
+      where: { id, userId: user.id, deletedAt: null },
+    });
     if (!service) return reply.status(404).send({ error: 'Service not found' });
 
     const deployment = await prisma.deployment.create({
@@ -1476,6 +1544,7 @@ fastify.register(async (scope) => {
               where: {
                 ...getRepoUrlMatchCondition(repoUrl),
                 isPreview: false,
+                deletedAt: null,
               },
             });
 
@@ -1522,6 +1591,7 @@ fastify.register(async (scope) => {
                 prNumber: prNumber,
                 ...getRepoUrlMatchCondition(repoUrl),
                 isPreview: true,
+                deletedAt: null,
               },
             });
 
@@ -1556,6 +1626,7 @@ fastify.register(async (scope) => {
           ...getRepoUrlMatchCondition(repoUrl),
           branch,
           isPreview: false, // Only trigger non-preview services for push events
+          deletedAt: null,
         },
       });
 
@@ -1580,7 +1651,9 @@ fastify.get('/services/:id/deployments', async (request, reply) => {
   const user = (request as any).user;
 
   // Verify ownership
-  const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id, deletedAt: null },
+  });
   if (!service) return reply.status(404).send({ error: 'Service not found' });
 
   return prisma.deployment.findMany({
