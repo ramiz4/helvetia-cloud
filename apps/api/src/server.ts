@@ -22,6 +22,15 @@ import {
 } from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 import { withStatusLock } from './utils/statusLock';
+import {
+  BODY_LIMIT_GLOBAL,
+  BODY_LIMIT_SMALL,
+  BODY_LIMIT_STANDARD,
+  CONNECTION_TIMEOUT_MS,
+  CONTAINER_CPU_NANOCPUS,
+  CONTAINER_MEMORY_LIMIT_BYTES,
+  METRICS_UPDATE_INTERVAL_MS,
+} from './config/constants';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
 
@@ -401,10 +410,14 @@ function verifyGitHubSignature(
  *   "error": "Payload Too Large",
  *   "message": "Request body exceeds the maximum allowed size of XMB"
  * }
+ *
+ * Configuration via environment variables:
+ * - BODY_LIMIT_GLOBAL_MB: Maximum size for any request body (default: 10MB)
+ * - BODY_LIMIT_STANDARD_MB: For endpoints handling moderate data (default: 1MB)
+ * - BODY_LIMIT_SMALL_KB: For simple requests (default: 100KB)
  */
-const BODY_LIMIT_GLOBAL = 10 * 1024 * 1024; // 10MB
-const BODY_LIMIT_STANDARD = 1 * 1024 * 1024; // 1MB for most endpoints
-const BODY_LIMIT_SMALL = 100 * 1024; // 100KB for simple requests
+
+// Body size limits are imported from config/constants.ts
 
 export const fastify = Fastify({
   logger: process.env.NODE_ENV !== 'test' && !process.env.VITEST,
@@ -1224,10 +1237,9 @@ fastify.get(
         return;
       }
       await sendMetrics();
-    }, 5000);
+    }, METRICS_UPDATE_INTERVAL_MS);
 
-    // Implement connection timeout (30 minutes)
-    const CONNECTION_TIMEOUT_MS = 30 * 60 * 1000;
+    // Implement connection timeout
     timeoutHandle = setTimeout(() => {
       console.log(`SSE metrics connection timeout for user ${user.id}`);
       try {
@@ -1510,8 +1522,8 @@ fastify.post('/services/:id/restart', async (request, reply) => {
       HostConfig: {
         NetworkMode: 'helvetia-net',
         RestartPolicy: { Name: 'always' },
-        Memory: 512 * 1024 * 1024,
-        NanoCpus: 1000000000,
+        Memory: CONTAINER_MEMORY_LIMIT_BYTES,
+        NanoCpus: CONTAINER_CPU_NANOCPUS,
         Binds:
           (service as any).type === 'POSTGRES'
             ? [`helvetia-data-${service.name}:/var/lib/postgresql/data`]

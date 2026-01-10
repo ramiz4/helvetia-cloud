@@ -1,5 +1,10 @@
 import IORedis from 'ioredis';
 import Redlock from 'redlock';
+import {
+  LOCK_RETRY_DELAY_MS,
+  LOCK_RETRY_JITTER_MS,
+  STATUS_LOCK_TTL_MS,
+} from '../config/constants';
 
 // Type for Lock from redlock
 // Note: Custom type definition needed due to incompatibilities between
@@ -22,8 +27,8 @@ const redisClient = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379
 const redlock = new Redlock([redisClient as any], {
   // Retry settings for lock acquisition
   retryCount: 10,
-  retryDelay: 200, // 200ms between retries
-  retryJitter: 100, // Add up to 100ms random jitter
+  retryDelay: LOCK_RETRY_DELAY_MS,
+  retryJitter: LOCK_RETRY_JITTER_MS,
   // Drift factor for clock drift tolerance
   driftFactor: 0.01,
 });
@@ -43,10 +48,10 @@ export function getStatusLockKey(serviceId: string): string {
 /**
  * Acquires a distributed lock for service status updates
  * @param serviceId - The service ID to lock
- * @param ttl - Time to live in milliseconds (default: 10000ms = 10s)
+ * @param ttl - Time to live in milliseconds (default from config)
  * @returns Lock instance
  */
-export async function acquireStatusLock(serviceId: string, ttl = 10000): Promise<Lock> {
+export async function acquireStatusLock(serviceId: string, ttl = STATUS_LOCK_TTL_MS): Promise<Lock> {
   const lockKey = getStatusLockKey(serviceId);
   try {
     // Note: Type assertion needed due to redlock beta version type incompatibilities
@@ -77,13 +82,13 @@ export async function releaseStatusLock(lock: Lock): Promise<void> {
  * Executes a function with a distributed lock for service status updates
  * @param serviceId - The service ID to lock
  * @param fn - The function to execute while holding the lock
- * @param ttl - Time to live in milliseconds (default: 10000ms = 10s)
+ * @param ttl - Time to live in milliseconds (default from config)
  * @returns The result of the function
  */
 export async function withStatusLock<T>(
   serviceId: string,
   fn: () => Promise<T>,
-  ttl = 10000,
+  ttl = STATUS_LOCK_TTL_MS,
 ): Promise<T> {
   let lock: Lock | null = null;
   try {

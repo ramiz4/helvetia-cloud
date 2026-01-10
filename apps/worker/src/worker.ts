@@ -9,6 +9,11 @@ import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
 import { withStatusLock } from './utils/statusLock';
 import { getSecureBindMounts } from './utils/workspace';
+import {
+  CONTAINER_CPU_NANOCPUS,
+  CONTAINER_MEMORY_LIMIT_BYTES,
+  MAX_LOG_SIZE_CHARS,
+} from './config/constants';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -457,8 +462,8 @@ EOF
         HostConfig: {
           NetworkMode: 'helvetia-net',
           RestartPolicy: { Name: 'always' },
-          Memory: 512 * 1024 * 1024, // 512MB limit
-          NanoCpus: 1000000000, // 1 CPU core limit
+          Memory: CONTAINER_MEMORY_LIMIT_BYTES,
+          NanoCpus: CONTAINER_CPU_NANOCPUS,
           Binds:
             type === 'POSTGRES'
               ? [`helvetia-data-${serviceName}:/var/lib/postgresql/data`]
@@ -570,7 +575,7 @@ EOF
           where: { id: deploymentId },
           data: {
             status: 'FAILED',
-            logs: fullErrorLog.substring(0, 50000), // Limit log size for database
+            logs: fullErrorLog.substring(0, MAX_LOG_SIZE_CHARS),
           },
         });
 

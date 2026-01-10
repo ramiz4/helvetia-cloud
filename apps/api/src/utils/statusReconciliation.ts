@@ -1,6 +1,7 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import { withStatusLock } from '../utils/statusLock';
+import { STATUS_RECONCILIATION_LOCK_TTL_MS } from '../config/constants';
 
 const docker = new Docker();
 
@@ -156,7 +157,7 @@ export class StatusReconciliationService {
             });
           }
         },
-        5000, // 5 second lock TTL for reconciliation
+        STATUS_RECONCILIATION_LOCK_TTL_MS,
       );
     } catch (error) {
       // Log but don't throw - continue with other services
