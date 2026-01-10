@@ -1,10 +1,10 @@
-import type { FastifyPluginAsync } from 'fastify';
-import { resolve, TOKENS } from '../di';
-import { AuthenticationService } from '../services';
-import type { IUserRepository } from '../interfaces';
-import { revokeAllUserRefreshTokens, verifyAndRotateRefreshToken } from '../utils/refreshToken';
-import { BODY_LIMIT_SMALL } from '../config/constants';
 import { prisma } from 'database';
+import type { FastifyPluginAsync } from 'fastify';
+import { BODY_LIMIT_SMALL } from '../config/constants';
+import { resolve, TOKENS } from '../di';
+import type { IUserRepository } from '../interfaces';
+import { AuthenticationService } from '../services';
+import { revokeAllUserRefreshTokens, verifyAndRotateRefreshToken } from '../utils/refreshToken';
 
 /**
  * Auth routes plugin
@@ -103,7 +103,10 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         maxAge: 60 * 60 * 24 * 30,
       });
 
-      return { user: { id: user.id, username: user.username, avatarUrl: user.avatarUrl }, token: result.accessToken };
+      return {
+        user: { id: user.id, username: user.username, avatarUrl: user.avatarUrl },
+        token: result.accessToken,
+      };
     } catch (err: any) {
       console.error('Refresh token error:', err.message);
       return reply.status(500).send({ error: 'Token refresh failed' });

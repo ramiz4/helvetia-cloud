@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 /**
  * List of routes that don't require authentication

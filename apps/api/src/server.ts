@@ -31,9 +31,14 @@ import {
   METRICS_UPDATE_INTERVAL_MS,
 } from './config/constants';
 import { initializeContainer, resolve, TOKENS } from './di';
+import { getServiceMetrics } from './handlers/metrics.handler';
+import { verifyGitHubSignature } from './handlers/webhook.handler';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
 import { decrypt, encrypt } from './utils/crypto';
+import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
+import { getDefaultPortForServiceType } from './utils/helpers/service.helper';
+import { determineServiceStatus } from './utils/helpers/status.helper';
 import {
   createRefreshToken,
   revokeAllUserRefreshTokens,
@@ -41,13 +46,6 @@ import {
 } from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 import { withStatusLock } from './utils/statusLock';
-import { errorHandler, authenticateMiddleware } from './middleware';
-import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
-import { getDefaultPortForServiceType } from './utils/helpers/service.helper';
-import { determineServiceStatus } from './utils/helpers/status.helper';
-import { getServiceMetrics } from './handlers/metrics.handler';
-import { verifyGitHubSignature } from './handlers/webhook.handler';
-import { authRoutes, healthRoutes } from './routes';
 
 // Initialize DI container
 initializeContainer();

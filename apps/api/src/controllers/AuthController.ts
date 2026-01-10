@@ -1,9 +1,9 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import { prisma } from 'database';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
+import type { IUserRepository } from '../interfaces';
 import { AuthenticationService } from '../services';
 import { revokeAllUserRefreshTokens } from '../utils/refreshToken';
-import type { IUserRepository } from '../interfaces';
-import { prisma } from 'database';
 
 /**
  * AuthController

@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ZodError, type ZodSchema } from 'zod';
 
 /**
