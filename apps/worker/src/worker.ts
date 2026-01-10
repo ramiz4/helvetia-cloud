@@ -4,6 +4,7 @@ import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
 import path from 'path';
+import { formatValidationErrors, validateGeneratedDockerfile } from './utils/dockerfile-validator';
 import { generateComposeOverride } from './utils/generators';
 import { createScrubber } from './utils/logs';
 import { withStatusLock } from './utils/statusLock';
@@ -58,6 +59,29 @@ export const worker = new Worker(
     const scrubLogs = createScrubber(secrets);
 
     console.log(`Starting deployment ${deploymentId} for service ${serviceName}`);
+
+    // Validate environment variables before proceeding
+    if (envVars && Object.keys(envVars).length > 0) {
+      console.log('Validating environment variables...');
+      const envValidation = validateGeneratedDockerfile({
+        dockerfileContent: 'FROM scratch', // Dummy dockerfile for env var validation only
+        envVars,
+      });
+
+      if (!envValidation.valid) {
+        const errorMessage = formatValidationErrors(envValidation);
+        console.error('Environment variable validation failed:', errorMessage);
+        throw new Error(
+          `Environment variable validation failed:\n${envValidation.errors.join('\n')}`,
+        );
+      }
+
+      if (envValidation.warnings.length > 0) {
+        console.warn('Environment variable warnings:', envValidation.warnings.join(', '));
+      }
+
+      console.log('✅ Environment variables validated successfully');
+    }
 
     try {
       await prisma.deployment.update({
@@ -233,6 +257,7 @@ EOF
         console.log(`Building image ${imageTag} in isolated environment...`);
 
         // 2. Prepare Build Script
+        /* eslint-disable no-useless-escape */
         const buildScript = `
         set -e
         apk add --no-cache git
@@ -316,9 +341,48 @@ EOF
           # We don't ignore 'dist' here because it might be the target
           # output directory for static sites in some configurations
           echo "temp" >> .dockerignore
+          
+          echo ""
+          echo "===== Validating Generated Dockerfile ====="
+          
+          # Display the generated Dockerfile for visibility
+          echo "Generated Dockerfile content:"
+          cat Dockerfile
+          echo ""
+          
+          # Basic validation checks
+          if ! grep -q "^FROM " Dockerfile; then
+            echo "ERROR: Dockerfile must start with a FROM instruction"
+            exit 1
+          fi
+          
+          # Check for required instructions in the Dockerfile
+          if ! grep -qE "^(CMD|ENTRYPOINT) " Dockerfile; then
+            echo "WARNING: Dockerfile should contain a CMD or ENTRYPOINT instruction"
+          fi
+          
+          # Validate EXPOSE instructions have valid port numbers
+          if grep -q "^EXPOSE " Dockerfile; then
+            while IFS= read -r expose_line; do
+              port_spec=\$(echo "\$expose_line" | sed 's/^EXPOSE //')
+              for port_val in \$port_spec; do
+                port_num=\$(echo "\$port_val" | cut -d'/' -f1)
+                if ! [ "\$port_num" -eq "\$port_num" ] 2>/dev/null || [ "\$port_num" -lt 1 ] || [ "\$port_num" -gt 65535 ]; then
+                  echo "ERROR: Invalid port number '\$port_val' in EXPOSE instruction"
+                  exit 1
+                fi
+              done
+            done < <(grep "^EXPOSE " Dockerfile)
+          fi
+          
+          echo "✅ Dockerfile syntax validation passed"
+          echo ""
         fi
+        
+        echo "===== Starting Docker Build ====="
         docker build -t ${imageTag} .
       `;
+        /* eslint-enable no-useless-escape */
 
         // 3. Execute Build
         const exec = await builder.exec({
