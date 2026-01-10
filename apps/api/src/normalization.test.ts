@@ -61,6 +61,11 @@ vi.mock('database', () => {
       user: {
         findUnique: vi.fn(),
       },
+      deployment: {
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
       refreshToken: {
         create: vi.fn(),
         findUnique: vi.fn(),
