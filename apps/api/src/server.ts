@@ -12,30 +12,22 @@ import crypto from 'crypto';
 import { prisma } from 'database';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
-import { ZodError } from 'zod';
 import {
   BODY_LIMIT_GLOBAL,
   BODY_LIMIT_SMALL,
   BODY_LIMIT_STANDARD,
-  CONNECTION_TIMEOUT_MS,
-  CONTAINER_CPU_NANOCPUS,
-  CONTAINER_MEMORY_LIMIT_BYTES,
   LOG_LEVEL,
   LOG_REDACT_PATHS,
   LOG_REQUESTS,
   LOG_RESPONSES,
-  METRICS_UPDATE_INTERVAL_MS,
 } from './config/constants';
+import { createRateLimitConfigs } from './config/rateLimit';
 import { initializeContainer, resolve, TOKENS } from './di';
-import { getServiceMetrics } from './handlers/metrics.handler';
 import { verifyGitHubSignature } from './handlers/webhook.handler';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
-import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
 import { metricsService } from './services/metrics.service';
 import { decrypt, encrypt } from './utils/crypto';
 import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
-import { getDefaultPortForServiceType } from './utils/helpers/service.helper';
-import { determineServiceStatus } from './utils/helpers/status.helper';
 import {
   createRefreshToken,
   revokeAllUserRefreshTokens,
@@ -43,6 +35,7 @@ import {
 } from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 import { withStatusLock } from './utils/statusLock';
+import { validateToken } from './utils/tokenValidation';
 
 // Initialize DI container
 initializeContainer();
@@ -182,19 +175,6 @@ async function deleteService(id: string, userId?: string) {
   // 2. Delete deployments and services from DB
   await deploymentRepository.deleteByServiceId(id);
   await serviceRepository.delete(id);
-}
-
-// Helper to validate JWT token from request
-async function validateToken(request: any): Promise<boolean> {
-  try {
-    // Try to verify the JWT token
-    await request.jwtVerify();
-    return true;
-  } catch (error) {
-    // Token is invalid or expired
-    console.log('Token validation failed:', (error as Error).message);
-    return false;
-  }
 }
 
 /**
@@ -507,43 +487,8 @@ fastify.register(rateLimit, {
   },
 });
 
-// Stricter rate limiting for authentication endpoints
-const authRateLimitConfig = {
-  max: isTestEnv ? 10000 : parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
-  timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',
-  redis: redisConnection,
-  nameSpace: 'helvetia-auth-rate-limit:',
-  skipOnError: true,
-  addHeadersOnExceeding: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-  addHeaders: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-};
-
-// Stricter rate limiting for SSE/streaming endpoints
-const wsRateLimitConfig = {
-  max: isTestEnv ? 10000 : parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
-  timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
-  redis: redisConnection,
-  nameSpace: 'helvetia-ws-rate-limit:',
-  skipOnError: true,
-  addHeadersOnExceeding: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-  addHeaders: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-};
+// Create rate limit configs
+const { authRateLimitConfig, wsRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
 // Error handler for body size limit exceeded
 fastify.setErrorHandler((error: Error & { code?: string }, request, reply) => {
@@ -589,6 +534,10 @@ fastify.get('/health', async () => {
 // Register metrics routes
 import { metricsRoutes } from './routes/metrics.routes';
 fastify.register(metricsRoutes);
+
+// Register service routes
+import { serviceRoutes } from './routes/service.routes';
+fastify.register(serviceRoutes);
 
 fastify.post(
   '/auth/github',
@@ -770,526 +719,6 @@ fastify.delete('/auth/github/disconnect', async (request) => {
   await userRepository.update(user.id, { githubAccessToken: null });
   return { success: true };
 });
-
-// Service Routes
-fastify.get('/services', async (request) => {
-  // Add authentication middleware in a real app
-  const user = (request as any).user;
-  const services = await serviceRepository.findByUserId(user.id);
-
-  // Fetch latest deployment for each service
-  const servicesWithDeployments = await Promise.all(
-    services.map(async (service) => {
-      const deployments = await deploymentRepository.findByServiceId(service.id, { take: 1 });
-      return {
-        ...service,
-        deployments,
-      };
-    }),
-  );
-
-  // Enrich services with actual Docker container status
-  const Docker = (await import('dockerode')).default;
-  const docker = new Docker();
-  const containers = await docker.listContainers({ all: true });
-
-  return servicesWithDeployments.map((service) => ({
-    ...service,
-    status: determineServiceStatus(service, containers),
-  }));
-});
-
-fastify.get('/services/:id', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  const service = await serviceRepository.findById(id);
-  if (!service || service.userId !== user.id || service.deletedAt) {
-    return reply.status(404).send({ error: 'Service not found' });
-  }
-
-  const deployments = await deploymentRepository.findByServiceId(service.id, { take: 1 });
-
-  // Enrich service with actual Docker container status
-  const Docker = (await import('dockerode')).default;
-  const docker = new Docker();
-  const containers = await docker.listContainers({ all: true });
-
-  return {
-    ...service,
-    deployments,
-    status: determineServiceStatus({ ...service, deployments }, containers),
-  };
-});
-
-fastify.patch(
-  '/services/:id',
-  {
-    bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for service updates
-  },
-  async (request, reply) => {
-    const { id } = request.params as any;
-
-    // Validate and parse request body
-    let validatedData;
-    try {
-      validatedData = ServiceUpdateSchema.parse(request.body);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return reply.status(400).send({
-          error: 'Validation failed',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
-        });
-      }
-      throw error;
-    }
-
-    const {
-      name,
-      repoUrl,
-      branch,
-      buildCommand,
-      startCommand,
-      port,
-      envVars,
-      customDomain,
-      type,
-      staticOutputDir,
-    } = validatedData;
-
-    const user = (request as any).user;
-
-    // First verify the service exists and user owns it
-    const existingService = await serviceRepository.findById(id);
-    if (!existingService || existingService.userId !== user.id) {
-      return reply.status(404).send({ error: 'Service not found or unauthorized' });
-    }
-
-    // Update the service
-    const updatedService = await serviceRepository.update(id, {
-      name,
-      repoUrl,
-      branch,
-      buildCommand,
-      startCommand,
-      port: port ?? (type ? getDefaultPortForServiceType(type) : undefined),
-      envVars,
-      customDomain,
-      type: type,
-      staticOutputDir,
-    });
-
-    const deployments = await deploymentRepository.findByServiceId(id, { take: 1 });
-    return { ...updatedService, deployments };
-  },
-);
-
-fastify.post(
-  '/services',
-  {
-    bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for service creation
-  },
-  async (request, reply) => {
-    // Validate and parse request body
-    let validatedData;
-    try {
-      validatedData = ServiceCreateSchema.parse(request.body);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return reply.status(400).send({
-          error: 'Validation failed',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
-        });
-      }
-      throw error;
-    }
-
-    const {
-      name,
-      repoUrl,
-      branch,
-      buildCommand,
-      startCommand,
-      port,
-      customDomain,
-      type,
-      staticOutputDir,
-      envVars,
-    } = validatedData;
-
-    const finalType = type || 'DOCKER';
-    const user = (request as any).user;
-    const userId = user.id;
-
-    // Check if another user owns this service name - use raw Prisma for complex query
-    // since repository doesn't have this specific method
-    const existingByName = await prisma.service.findFirst({
-      where: { name, userId: { not: userId }, deletedAt: null },
-    });
-    if (existingByName) {
-      return reply.status(403).send({ error: 'Service name taken by another user' });
-    }
-
-    let finalPort = port || 3000;
-    let finalEnvVars = envVars || {};
-
-    if (finalType === 'STATIC') finalPort = 80;
-    if (finalType === 'POSTGRES') {
-      finalPort = 5444;
-      // Generate default credentials if not provided
-      if (!finalEnvVars.POSTGRES_PASSWORD) {
-        finalEnvVars = {
-          ...finalEnvVars,
-          POSTGRES_USER: 'postgres',
-          POSTGRES_PASSWORD: crypto.randomBytes(16).toString('hex'),
-          POSTGRES_DB: 'app',
-        };
-      }
-    }
-    if (finalType === 'REDIS') {
-      finalPort = 6379;
-      // Generate default Redis password if not provided
-      if (!finalEnvVars.REDIS_PASSWORD) {
-        finalEnvVars = {
-          ...finalEnvVars,
-          REDIS_PASSWORD: crypto.randomBytes(16).toString('hex'),
-        };
-      }
-    }
-    if (finalType === 'MYSQL') {
-      finalPort = 3306;
-      if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
-        finalEnvVars = {
-          ...finalEnvVars,
-          MYSQL_ROOT_PASSWORD: crypto.randomBytes(16).toString('hex'),
-          MYSQL_DATABASE: 'app',
-        };
-      }
-    }
-
-    // Check if service exists
-    const existing = await serviceRepository.findByNameAndUserId(name, userId);
-
-    if (existing) {
-      // Update existing service
-      return serviceRepository.update(existing.id, {
-        repoUrl,
-        branch: branch || 'main',
-        buildCommand,
-        startCommand,
-        port: finalPort,
-        customDomain,
-        type: finalType,
-        staticOutputDir: staticOutputDir || 'dist',
-        envVars: finalEnvVars,
-        deletedAt: null, // Resurrect service if it was soft-deleted
-      });
-    } else {
-      // Create new service
-      return serviceRepository.create({
-        name,
-        repoUrl: repoUrl || null,
-        branch: branch || 'main',
-        buildCommand,
-        startCommand,
-        port: finalPort,
-        userId,
-        customDomain,
-        type: finalType,
-        staticOutputDir: staticOutputDir || 'dist',
-        envVars: finalEnvVars,
-      });
-    }
-  },
-);
-
-fastify.delete('/services/:id', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  const service = await serviceRepository.findById(id);
-  if (!service || service.userId !== user.id || service.deletedAt) {
-    return reply.status(404).send({ error: 'Service not found or unauthorized' });
-  }
-
-  // Check if service is protected from deletion
-  if (service.deleteProtected) {
-    return reply
-      .status(403)
-      .send({ error: 'Service is protected from deletion. Remove protection first.' });
-  }
-
-  // Perform soft deletion
-  await serviceRepository.update(id, { deletedAt: new Date() });
-
-  return { success: true, message: 'Service soft deleted. Can be recovered within 30 days.' };
-});
-
-// Recover a soft-deleted service
-fastify.post('/services/:id/recover', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  const service = await serviceRepository.findById(id);
-
-  if (!service || service.userId !== user.id || !service.deletedAt) {
-    return reply.status(404).send({ error: 'Deleted service not found or unauthorized' });
-  }
-
-  // Restore the service
-  const restored = await serviceRepository.update(id, { deletedAt: null });
-
-  return { success: true, service: restored, message: 'Service recovered successfully' };
-});
-
-// Toggle delete protection for a service
-fastify.patch('/services/:id/protection', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-  const { deleteProtected } = request.body as any;
-
-  if (typeof deleteProtected !== 'boolean') {
-    return reply.status(400).send({ error: 'deleteProtected must be a boolean' });
-  }
-
-  const service = await serviceRepository.findById(id);
-
-  if (!service || service.userId !== user.id || service.deletedAt) {
-    return reply.status(404).send({ error: 'Service not found or unauthorized' });
-  }
-
-  const updated = await serviceRepository.update(id, { deleteProtected });
-
-  return { success: true, service: updated };
-});
-
-fastify.get('/services/:id/health', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  const service = await prisma.service.findFirst({
-    where: { id, userId: user.id, deletedAt: null },
-  });
-  if (!service) return reply.status(404).send({ error: 'Service not found' });
-
-  const Docker = (await import('dockerode')).default;
-  const docker = new Docker();
-
-  const containers = await docker.listContainers({ all: true });
-  const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
-
-  if (serviceContainers.length === 0) {
-    return { status: 'NOT_RUNNING' };
-  }
-
-  const containerInfo = serviceContainers[0]; // Take the latest one
-  const container = docker.getContainer(containerInfo.Id);
-  const data = await container.inspect();
-
-  return {
-    status: data.State.Running ? 'RUNNING' : 'STOPPED',
-    health: data.State.Health?.Status || 'UNKNOWN',
-    startedAt: data.State.StartedAt,
-    exitCode: data.State.ExitCode,
-  };
-});
-
-fastify.get('/services/:id/metrics', async (request, reply) => {
-  const { id } = request.params as any;
-  const user = (request as any).user;
-
-  const service = await prisma.service.findFirst({
-    where: { id, userId: user.id, deletedAt: null },
-  });
-  if (!service) return reply.status(404).send({ error: 'Service not found' });
-
-  return getServiceMetrics(id, undefined, undefined, service);
-});
-
-// SSE endpoint for real-time metrics streaming
-fastify.get(
-  '/services/metrics/stream',
-  { config: { rateLimit: wsRateLimitConfig } },
-  async (request, reply) => {
-    const user = (request as any).user;
-
-    // Set SSE headers with CORS support
-    reply.raw.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no', // Disable nginx buffering
-      'Access-Control-Allow-Origin': getSafeOrigin(request.headers.origin),
-      'Access-Control-Allow-Credentials': 'true',
-    });
-
-    console.log(`SSE client connected for real-time metrics: ${user.id}`);
-
-    // Track connection state for better observability
-    const connectionState = {
-      isValid: true,
-      startTime: Date.now(),
-      metricsCount: 0,
-      errorCount: 0,
-    };
-
-    // Store interval reference for cleanup
-    let metricsInterval: NodeJS.Timeout | null = null;
-    let timeoutHandle: NodeJS.Timeout | null = null;
-
-    // Cleanup function to ensure all resources are freed
-    const cleanup = () => {
-      if (!connectionState.isValid) return; // Already cleaned up
-
-      connectionState.isValid = false;
-
-      if (metricsInterval) {
-        clearInterval(metricsInterval);
-        metricsInterval = null;
-      }
-
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
-      }
-
-      console.log(
-        `SSE metrics connection cleaned up for user ${user.id}. ` +
-          `Duration: ${Date.now() - connectionState.startTime}ms, ` +
-          `Metrics sent: ${connectionState.metricsCount}, ` +
-          `Errors: ${connectionState.errorCount}`,
-      );
-    };
-
-    const sendMetrics = async () => {
-      // Check connection validity before proceeding
-      if (!connectionState.isValid) {
-        cleanup();
-        return;
-      }
-
-      try {
-        // Validate token before sending metrics
-        const isValid = await validateToken(request);
-        if (!isValid) {
-          console.log(`Token expired for user ${user.id}, closing metrics stream`);
-          // Send error event to client
-          try {
-            reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
-            );
-            reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing token expiration message:', writeErr);
-          }
-          cleanup();
-          return;
-        }
-
-        const Docker = (await import('dockerode')).default;
-        const docker = new Docker();
-        const containers = await docker.listContainers({ all: true });
-
-        const services = await prisma.service.findMany({
-          where: { userId: user.id, deletedAt: null },
-          select: { id: true, name: true, type: true, status: true },
-        });
-
-        const metricsPromises = services.map(async (s) => ({
-          id: s.id,
-          metrics: await getServiceMetrics(s.id, docker, containers, s),
-        }));
-
-        const results = await Promise.all(metricsPromises);
-
-        // Check if still valid before writing
-        if (!connectionState.isValid) {
-          cleanup();
-          return;
-        }
-
-        // Send it as an SSE event
-        reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
-        connectionState.metricsCount++;
-      } catch (err) {
-        connectionState.errorCount++;
-        console.error(`Error sending metrics via SSE (user ${user.id}):`, err);
-
-        // If too many consecutive errors, close the connection
-        if (connectionState.errorCount >= 3) {
-          console.error(`Too many errors for user ${user.id}, closing connection`);
-          try {
-            reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
-            );
-            reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing error message:', writeErr);
-          }
-          cleanup();
-        }
-      }
-    };
-
-    // Send immediate connection acknowledgment (makes it feel instant)
-    reply.raw.write(': connected\n\n');
-
-    // Fetch and send initial metrics asynchronously (non-blocking)
-    await sendMetrics();
-
-    // Set up periodic metrics updates
-    metricsInterval = setInterval(async () => {
-      if (!connectionState.isValid) {
-        cleanup();
-        return;
-      }
-      await sendMetrics();
-    }, METRICS_UPDATE_INTERVAL_MS);
-
-    // Implement connection timeout
-    timeoutHandle = setTimeout(
-      () => {
-        console.log(`SSE metrics connection timeout for user ${user.id}`);
-        try {
-          reply.raw.write(
-            `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
-          );
-          reply.raw.end();
-        } catch (err) {
-          console.error('Error writing timeout message:', err);
-        }
-        cleanup();
-      },
-      isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
-    );
-
-    // Clean up on client disconnect
-    request.raw.on('close', () => {
-      console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
-      cleanup();
-    });
-
-    // Clean up on error
-    request.raw.on('error', (err) => {
-      console.error(`SSE metrics connection error for user ${user.id}:`, err);
-      cleanup();
-    });
-
-    reply.raw.on('error', (err) => {
-      console.error(`SSE metrics reply error for user ${user.id}:`, err);
-      cleanup();
-    });
-
-    // Keep the connection open
-    return reply;
-  },
-);
 
 // GitHub Proxy Routes
 fastify.get('/github/orgs', async (request, reply) => {
