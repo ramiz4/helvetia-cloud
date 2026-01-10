@@ -972,24 +972,67 @@ fastify.get(
 
     console.log(`SSE client connected for real-time metrics: ${user.id}`);
 
-    // Track if connection is still valid
-    let isConnectionValid = true;
+    // Track connection state for better observability
+    const connectionState = {
+      isValid: true,
+      startTime: Date.now(),
+      metricsCount: 0,
+      errorCount: 0,
+    };
+
+    // Store interval reference for cleanup
+    let metricsInterval: NodeJS.Timeout | null = null;
+    let timeoutHandle: NodeJS.Timeout | null = null;
+
+    // Cleanup function to ensure all resources are freed
+    const cleanup = () => {
+      if (!connectionState.isValid) return; // Already cleaned up
+
+      connectionState.isValid = false;
+
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+        metricsInterval = null;
+      }
+
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+        timeoutHandle = null;
+      }
+
+      console.log(
+        `SSE metrics connection cleaned up for user ${user.id}. ` +
+          `Duration: ${Date.now() - connectionState.startTime}ms, ` +
+          `Metrics sent: ${connectionState.metricsCount}, ` +
+          `Errors: ${connectionState.errorCount}`,
+      );
+    };
 
     const sendMetrics = async () => {
-      // Validate token before sending metrics
-      const isValid = await validateToken(request);
-      if (!isValid) {
-        console.log(`Token expired for user ${user.id}, closing metrics stream`);
-        isConnectionValid = false;
-        // Send error event to client
-        reply.raw.write(
-          `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
-        );
-        reply.raw.end();
+      // Check connection validity before proceeding
+      if (!connectionState.isValid) {
+        cleanup();
         return;
       }
 
       try {
+        // Validate token before sending metrics
+        const isValid = await validateToken(request);
+        if (!isValid) {
+          console.log(`Token expired for user ${user.id}, closing metrics stream`);
+          // Send error event to client
+          try {
+            reply.raw.write(
+              `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
+            );
+            reply.raw.end();
+          } catch (writeErr) {
+            console.error('Error writing token expiration message:', writeErr);
+          }
+          cleanup();
+          return;
+        }
+
         const Docker = (await import('dockerode')).default;
         const docker = new Docker();
         const containers = await docker.listContainers({ all: true });
@@ -1006,10 +1049,32 @@ fastify.get(
 
         const results = await Promise.all(metricsPromises);
 
+        // Check if still valid before writing
+        if (!connectionState.isValid) {
+          cleanup();
+          return;
+        }
+
         // Send it as an SSE event
         reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
+        connectionState.metricsCount++;
       } catch (err) {
-        console.error('Error sending metrics via SSE:', err);
+        connectionState.errorCount++;
+        console.error(`Error sending metrics via SSE (user ${user.id}):`, err);
+
+        // If too many consecutive errors, close the connection
+        if (connectionState.errorCount >= 3) {
+          console.error(`Too many errors for user ${user.id}, closing connection`);
+          try {
+            reply.raw.write(
+              `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
+            );
+            reply.raw.end();
+          } catch (writeErr) {
+            console.error('Error writing error message:', writeErr);
+          }
+          cleanup();
+        }
       }
     };
 
@@ -1018,19 +1083,46 @@ fastify.get(
 
     // Fetch and send initial metrics asynchronously (non-blocking)
     await sendMetrics();
-    const interval = setInterval(async () => {
-      if (!isConnectionValid) {
-        clearInterval(interval);
+
+    // Set up periodic metrics updates
+    metricsInterval = setInterval(async () => {
+      if (!connectionState.isValid) {
+        cleanup();
         return;
       }
       await sendMetrics();
     }, 5000);
 
+    // Implement connection timeout (30 minutes)
+    const CONNECTION_TIMEOUT_MS = 30 * 60 * 1000;
+    timeoutHandle = setTimeout(() => {
+      console.log(`SSE metrics connection timeout for user ${user.id}`);
+      try {
+        reply.raw.write(
+          `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
+        );
+        reply.raw.end();
+      } catch (err) {
+        console.error('Error writing timeout message:', err);
+      }
+      cleanup();
+    }, CONNECTION_TIMEOUT_MS);
+
     // Clean up on client disconnect
     request.raw.on('close', () => {
       console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
-      isConnectionValid = false;
-      clearInterval(interval);
+      cleanup();
+    });
+
+    // Clean up on error
+    request.raw.on('error', (err) => {
+      console.error(`SSE metrics connection error for user ${user.id}:`, err);
+      cleanup();
+    });
+
+    reply.raw.on('error', (err) => {
+      console.error(`SSE metrics reply error for user ${user.id}:`, err);
+      cleanup();
     });
 
     // Keep the connection open
@@ -1542,43 +1634,161 @@ fastify.get(
 
     console.log(`SSE client connected for live logs: ${id}`);
 
-    // Track if connection is still valid
-    let isConnectionValid = true;
+    // Track connection state for better observability
+    const connectionState = {
+      isValid: true,
+      startTime: Date.now(),
+      messagesReceived: 0,
+      validationAttempts: 0,
+      errorCount: 0,
+    };
 
-    // Set up periodic token validation (every 30 seconds)
-    const tokenValidationInterval = setInterval(async () => {
-      const isValid = await validateToken(request);
-      if (!isValid) {
-        console.log(`Token expired for user ${user.id}, closing logs stream`);
-        isConnectionValid = false;
-        // Send error event to client
-        reply.raw.write(
-          `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
-        );
-        reply.raw.end();
+    // Store interval references for cleanup
+    let tokenValidationInterval: NodeJS.Timeout | null = null;
+    let timeoutHandle: NodeJS.Timeout | null = null;
+    let isSubscribed = false;
+
+    // Cleanup function to ensure all resources are freed
+    const cleanup = async () => {
+      if (!connectionState.isValid) return; // Already cleaned up
+
+      connectionState.isValid = false;
+
+      if (tokenValidationInterval) {
         clearInterval(tokenValidationInterval);
+        tokenValidationInterval = null;
       }
-    }, 30000); // Check every 30 seconds
+
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+        timeoutHandle = null;
+      }
+
+      // Clean up Redis subscription
+      if (isSubscribed) {
+        try {
+          subConnection.removeListener('message', onMessage);
+          await subConnection.unsubscribe(channel);
+          isSubscribed = false;
+        } catch (err) {
+          console.error(`Error unsubscribing from channel ${channel}:`, err);
+        }
+      }
+
+      console.log(
+        `SSE logs connection cleaned up for deployment ${id}. ` +
+          `Duration: ${Date.now() - connectionState.startTime}ms, ` +
+          `Messages: ${connectionState.messagesReceived}, ` +
+          `Validations: ${connectionState.validationAttempts}, ` +
+          `Errors: ${connectionState.errorCount}`,
+      );
+    };
 
     const channel = `deployment-logs:${id}`;
 
     const onMessage = (chan: string, message: string) => {
-      if (!isConnectionValid) return;
+      if (!connectionState.isValid) return;
       if (chan === channel) {
-        // Send log line as an SSE event
-        reply.raw.write(`data: ${message}\n\n`);
+        try {
+          // Send log line as an SSE event
+          reply.raw.write(`data: ${message}\n\n`);
+          connectionState.messagesReceived++;
+        } catch (err) {
+          connectionState.errorCount++;
+          console.error(`Error writing log message for deployment ${id}:`, err);
+
+          // If write fails, connection is likely broken
+          if (connectionState.errorCount >= 3) {
+            console.error(`Too many write errors for deployment ${id}, closing connection`);
+            void cleanup();
+          }
+        }
       }
     };
 
-    subConnection.subscribe(channel);
-    subConnection.on('message', onMessage);
+    // Set up periodic token validation (every 30 seconds)
+    tokenValidationInterval = setInterval(async () => {
+      if (!connectionState.isValid) {
+        await cleanup();
+        return;
+      }
+
+      try {
+        connectionState.validationAttempts++;
+        const isValid = await validateToken(request);
+        if (!isValid) {
+          console.log(`Token expired for user ${user.id}, closing logs stream`);
+          // Send error event to client
+          try {
+            reply.raw.write(
+              `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
+            );
+            reply.raw.end();
+          } catch (writeErr) {
+            console.error('Error writing token expiration message:', writeErr);
+          }
+          await cleanup();
+        }
+      } catch (err) {
+        connectionState.errorCount++;
+        console.error(`Error during token validation for deployment ${id}:`, err);
+
+        // If validation fails repeatedly, close connection
+        if (connectionState.errorCount >= 3) {
+          console.error(`Too many validation errors for deployment ${id}, closing connection`);
+          try {
+            reply.raw.write(
+              `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
+            );
+            reply.raw.end();
+          } catch (writeErr) {
+            console.error('Error writing error message:', writeErr);
+          }
+          await cleanup();
+        }
+      }
+    }, 30000); // Check every 30 seconds
+
+    // Subscribe to Redis channel for logs
+    try {
+      await subConnection.subscribe(channel);
+      isSubscribed = true;
+      subConnection.on('message', onMessage);
+    } catch (err) {
+      console.error(`Error subscribing to channel ${channel}:`, err);
+      return reply.status(500).send({ error: 'Failed to establish log stream' });
+    }
+
+    // Implement connection timeout (60 minutes for logs)
+    const CONNECTION_TIMEOUT_MS = 60 * 60 * 1000;
+    timeoutHandle = setTimeout(async () => {
+      console.log(`SSE logs connection timeout for deployment ${id}`);
+      try {
+        reply.raw.write(
+          `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
+        );
+        reply.raw.end();
+      } catch (err) {
+        console.error('Error writing timeout message:', err);
+      }
+      await cleanup();
+    }, CONNECTION_TIMEOUT_MS);
 
     // Clean up on client disconnect
-    request.raw.on('close', () => {
+    request.raw.on('close', async () => {
       console.log(`SSE client disconnected from live logs: ${id}`);
-      isConnectionValid = false;
-      clearInterval(tokenValidationInterval);
-      subConnection.removeListener('message', onMessage);
+      await cleanup();
+    });
+
+    // Clean up on error
+    request.raw.on('error', async (err) => {
+      console.error(`SSE logs connection error for deployment ${id}:`, err);
+      await cleanup();
+    });
+
+    reply.raw.on('error', async (err) => {
+      console.error(`SSE logs reply error for deployment ${id}:`, err);
+      await cleanup();
     });
 
     // Keep the connection open
