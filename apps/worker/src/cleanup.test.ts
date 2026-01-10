@@ -51,9 +51,6 @@ vi.mock('bullmq', () => {
         add: vi.fn().mockResolvedValue({ id: 'job-id' }),
       };
     }),
-    QueueScheduler: vi.fn(function () {
-      return {};
-    }),
     Worker: vi.fn(function (name, processor) {
       return {
         name,
@@ -148,14 +145,6 @@ describe('Service Cleanup Worker', () => {
 
   it('should not delete services deleted less than 30 days ago', async () => {
     const { cleanupWorker } = await import('./cleanup');
-
-    const recentlyDeletedService = {
-      id: 'recent-service-id',
-      name: 'recent-deleted-app',
-      userId: 'user-1',
-      type: 'DOCKER',
-      deletedAt: new Date(), // Just deleted today
-    };
 
     // Return empty array - no services older than 30 days
     mockPrisma.service.findMany.mockResolvedValue([]);

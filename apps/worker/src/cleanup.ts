@@ -1,4 +1,4 @@
-import { Queue, QueueScheduler, Worker } from 'bullmq';
+import { Queue, Worker } from 'bullmq';
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import dotenv from 'dotenv';
@@ -13,11 +13,6 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 
 // Create cleanup queue
 export const cleanupQueue = new Queue('service-cleanup', {
-  connection: redisConnection,
-});
-
-// Create queue scheduler for repeatable jobs
-export const cleanupScheduler = new QueueScheduler('service-cleanup', {
   connection: redisConnection,
 });
 
@@ -110,7 +105,7 @@ async function permanentlyDeleteService(id: string) {
 // Worker to process cleanup jobs
 export const cleanupWorker = new Worker(
   'service-cleanup',
-  async (job) => {
+  async (_job) => {
     console.log('Running scheduled cleanup job for soft-deleted services');
 
     // Find services deleted more than 30 days ago
