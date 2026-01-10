@@ -80,6 +80,12 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(401).send({ error: 'Invalid or expired refresh token' });
       }
 
+      // Fetch user for response
+      const user = await userRepository.findById(result.userId);
+      if (!user) {
+        return reply.status(401).send({ error: 'User not found' });
+      }
+
       // Set new cookies
       reply.setCookie('token', result.accessToken, {
         path: '/',
@@ -89,7 +95,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         maxAge: 60 * 15,
       });
 
-      reply.setCookie('refreshToken', result.newRefreshToken, {
+      reply.setCookie('refreshToken', result.refreshToken, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -97,7 +103,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         maxAge: 60 * 60 * 24 * 30,
       });
 
-      return { user: result.user, token: result.accessToken };
+      return { user: { id: user.id, username: user.username, avatarUrl: user.avatarUrl }, token: result.accessToken };
     } catch (err: any) {
       console.error('Refresh token error:', err.message);
       return reply.status(500).send({ error: 'Token refresh failed' });
@@ -115,7 +121,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         await request.jwtVerify();
         const user = (request as any).user;
         if (user?.id) {
-          await revokeAllUserRefreshTokens(user.id);
+          const redisConnection = (fastify as any).redis;
+          await revokeAllUserRefreshTokens(user.id, redisConnection);
         }
       } catch {
         // Token might be invalid, but we still want to clear cookies

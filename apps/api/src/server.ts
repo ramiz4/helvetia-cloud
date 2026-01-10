@@ -41,6 +41,13 @@ import {
 } from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 import { withStatusLock } from './utils/statusLock';
+import { errorHandler, authenticateMiddleware } from './middleware';
+import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
+import { getDefaultPortForServiceType } from './utils/helpers/service.helper';
+import { determineServiceStatus } from './utils/helpers/status.helper';
+import { getServiceMetrics } from './handlers/metrics.handler';
+import { verifyGitHubSignature } from './handlers/webhook.handler';
+import { authRoutes, healthRoutes } from './routes';
 
 // Initialize DI container
 initializeContainer();
@@ -66,96 +73,8 @@ const deploymentQueue = new Queue('deployments', {
 import { registerInstance } from './di';
 registerInstance(Symbol.for('DeploymentQueue'), deploymentQueue);
 
-// Helper function to parse and get allowed origins from environment
-function getAllowedOrigins(): string[] {
-  const originsEnv =
-    process.env.ALLOWED_ORIGINS || process.env.APP_BASE_URL || 'http://localhost:3000';
-  return originsEnv
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
-}
-
-// Helper function to validate if an origin is allowed
-// Note: This returns false for undefined origins, but the CORS plugin
-// at the framework level allows no-origin requests (same-origin, curl, etc.)
-function isOriginAllowed(origin: string | undefined): boolean {
-  if (!origin) return false;
-  const allowedOrigins = getAllowedOrigins();
-  return allowedOrigins.includes(origin);
-}
-
-// Helper function to get a safe origin for CORS headers
-// Returns the validated request origin if allowed, otherwise the first allowed origin
-function getSafeOrigin(requestOrigin: string | undefined): string {
-  const allowedOrigins = getAllowedOrigins();
-
-  // Ensure we always have at least one allowed origin
-  if (allowedOrigins.length === 0) {
-    throw new Error('CORS misconfiguration: No allowed origins configured');
-  }
-
-  if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
-    return requestOrigin;
-  }
-  return allowedOrigins[0];
-}
-
-// Helper function to get the default port for service type
-function getDefaultPortForServiceType(serviceType: string): number {
-  const portMap: Record<string, number> = {
-    STATIC: 80,
-    POSTGRES: 5444,
-    REDIS: 6379,
-    MYSQL: 3306,
-    DOCKER: 3000,
-  };
-  return portMap[serviceType] || 3000;
-}
-
-// Helper to determine service status
-function determineServiceStatus(service: any, containers: any[]): string {
-  // If the service itself is marked as DEPLOYING in the database, respect that first
-  if (service.status === 'DEPLOYING') {
-    return 'DEPLOYING';
-  }
-
-  const serviceContainers = containers.filter(
-    (c) =>
-      c.Labels['helvetia.serviceId'] === service.id ||
-      (service.type === 'COMPOSE' && c.Labels['com.docker.compose.project'] === service.name),
-  );
-  const latestDeployment = service.deployments[0];
-
-  // If there's an active deployment in progress, it's DEPLOYING
-  if (latestDeployment && ['QUEUED', 'BUILDING'].includes(latestDeployment.status)) {
-    return 'DEPLOYING';
-  }
-
-  if (serviceContainers.length > 0) {
-    if (serviceContainers.some((c) => c.State === 'running')) {
-      return 'RUNNING';
-    }
-    if (serviceContainers.some((c) => c.State === 'restarting')) {
-      return 'CRASHING';
-    }
-    if (serviceContainers.every((c) => ['exited', 'dead', 'created'].includes(c.State))) {
-      return 'STOPPED';
-    }
-    return serviceContainers[0].State.toUpperCase();
-  }
-
-  if (latestDeployment) {
-    if (latestDeployment.status === 'FAILED') {
-      return 'FAILED';
-    }
-    if (latestDeployment.status === 'SUCCESS') {
-      return 'STOPPED';
-    }
-  }
-
-  return 'IDLE';
-}
+// Store redis connection on fastify instance for route access
+(fastify as any).redis = redisConnection;
 
 // Helper to create and queue deployment
 async function createAndQueueDeployment(service: any, commitHash: string) {
