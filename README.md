@@ -338,7 +338,7 @@ A pre-configured Grafana dashboard is available at [http://localhost:3010](http:
 
 **Key Assets:**
 
-- [Complete Metrics Documentation](./METRICS.md)
+- [Complete Metrics Documentation](./.docs/METRICS.md)
 - [Grafana Dashboard Definition](./grafana-dashboard.json)
 
 **Example Prometheus Configuration:**
