@@ -17,6 +17,11 @@ export const TOKENS = {
   Logger: Symbol.for('ILogger'),
   Cache: Symbol.for('ICache'),
 
+  // Services
+  ServiceManagementService: Symbol.for('ServiceManagementService'),
+  DeploymentOrchestratorService: Symbol.for('DeploymentOrchestratorService'),
+  AuthenticationService: Symbol.for('AuthenticationService'),
+
   // External dependencies
   PrismaClient: Symbol.for('PrismaClient'),
   Redis: Symbol.for('Redis'),

@@ -62,6 +62,10 @@ const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
 });
 
+// Register deployment queue in DI container after creation
+import { registerInstance } from './di';
+registerInstance(Symbol.for('DeploymentQueue'), deploymentQueue);
+
 // Helper function to parse and get allowed origins from environment
 function getAllowedOrigins(): string[] {
   const originsEnv =

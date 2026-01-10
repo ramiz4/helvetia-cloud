@@ -7,6 +7,11 @@ import {
   PrismaServiceRepository,
   PrismaUserRepository,
 } from '../repositories';
+import {
+  AuthenticationService,
+  DeploymentOrchestratorService,
+  ServiceManagementService,
+} from '../services';
 import { TOKENS } from './tokens';
 
 /**
@@ -26,6 +31,11 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.ServiceRepository, PrismaServiceRepository);
   container.registerSingleton(TOKENS.DeploymentRepository, PrismaDeploymentRepository);
   container.registerSingleton(TOKENS.UserRepository, PrismaUserRepository);
+
+  // Register service implementations
+  container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
+  container.registerSingleton(TOKENS.DeploymentOrchestratorService, DeploymentOrchestratorService);
+  container.registerSingleton(TOKENS.AuthenticationService, AuthenticationService);
 }
 
 /**
