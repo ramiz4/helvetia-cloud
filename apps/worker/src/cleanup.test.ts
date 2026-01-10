@@ -79,6 +79,18 @@ vi.mock('database', () => ({
   prisma: mockPrisma,
 }));
 
+// Mock image cleanup service
+const mockCleanupResult = {
+  danglingImagesRemoved: 2,
+  oldImagesRemoved: 3,
+  bytesFreed: 1024 * 1024 * 500, // 500 MB
+  errors: [],
+};
+
+vi.mock('./services/imageCleanup', () => ({
+  cleanupDockerImages: vi.fn().mockResolvedValue(mockCleanupResult),
+}));
+
 describe('Service Cleanup Worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -123,6 +135,9 @@ describe('Service Cleanup Worker', () => {
     } as any);
 
     expect(result.deletedCount).toBe(1);
+    expect(result.imageCleanup).toBeDefined();
+    expect(result.imageCleanup.danglingImagesRemoved).toBe(2);
+    expect(result.imageCleanup.oldImagesRemoved).toBe(3);
 
     // Verify services older than 30 days were queried
     expect(mockPrisma.service.findMany).toHaveBeenCalledWith(
@@ -245,5 +260,43 @@ describe('Service Cleanup Worker', () => {
         }),
       }),
     );
+  });
+
+  it('should cleanup Docker images during scheduled job', async () => {
+    const { cleanupWorker } = await import('./cleanup');
+    const { cleanupDockerImages } = await import('./services/imageCleanup');
+
+    mockPrisma.service.findMany.mockResolvedValue([]);
+
+    const result = await cleanupWorker.processor({
+      id: 'job-5',
+      name: 'daily-cleanup',
+      data: {},
+    } as any);
+
+    // Verify image cleanup was called
+    expect(cleanupDockerImages).toHaveBeenCalled();
+    expect(result.imageCleanup).toBeDefined();
+    expect(result.imageCleanup.danglingImagesRemoved).toBeGreaterThanOrEqual(0);
+    expect(result.imageCleanup.oldImagesRemoved).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should handle image cleanup errors gracefully', async () => {
+    const { cleanupWorker } = await import('./cleanup');
+    const { cleanupDockerImages } = await import('./services/imageCleanup');
+
+    mockPrisma.service.findMany.mockResolvedValue([]);
+    (cleanupDockerImages as any).mockRejectedValueOnce(new Error('Docker daemon error'));
+
+    const result = await cleanupWorker.processor({
+      id: 'job-6',
+      name: 'daily-cleanup',
+      data: {},
+    } as any);
+
+    // Should still complete despite image cleanup error
+    expect(result.deletedCount).toBe(0);
+    expect(result.imageCleanup).toBeDefined();
+    expect(result.imageCleanup.errors).toContain('Docker daemon error');
   });
 });

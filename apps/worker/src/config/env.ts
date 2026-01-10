@@ -90,6 +90,37 @@ const envSchema = z.object({
   DOCKER_HOST: z.string().optional(),
   WORKSPACE_DIR: z.string().default('/tmp/helvetia-workspaces'),
 
+  // Docker Image Cleanup Configuration
+  IMAGE_RETENTION_DAYS: z
+    .string()
+    .default('7')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10)),
+    ),
+  DISK_USAGE_THRESHOLD_PERCENT: z
+    .string()
+    .default('80')
+    .pipe(
+      z
+        .string()
+        .regex(/^\d+$/)
+        .transform((val) => parseInt(val, 10))
+        .refine((val) => val >= 0 && val <= 100, {
+          message: 'DISK_USAGE_THRESHOLD_PERCENT must be between 0 and 100',
+        }),
+    ),
+  CLEANUP_DANGLING_IMAGES: z
+    .string()
+    .default('true')
+    .transform((val) => val.toLowerCase() === 'true'),
+  CLEANUP_OLD_IMAGES: z
+    .string()
+    .default('true')
+    .transform((val) => val.toLowerCase() === 'true'),
+
   // Test Environment
   VITEST: z.string().optional(),
 });
