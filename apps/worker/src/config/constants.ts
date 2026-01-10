@@ -23,3 +23,12 @@ export const LOCK_RETRY_JITTER_MS = parseInt(process.env.LOCK_RETRY_JITTER_MS ||
 
 // Health Check Server
 export const WORKER_HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || '3002', 10);
+
+// Docker Image Cleanup Configuration
+export const IMAGE_RETENTION_DAYS = parseInt(process.env.IMAGE_RETENTION_DAYS || '7', 10);
+export const DISK_USAGE_THRESHOLD_PERCENT = parseInt(
+  process.env.DISK_USAGE_THRESHOLD_PERCENT || '80',
+  10,
+);
+export const CLEANUP_DANGLING_IMAGES = process.env.CLEANUP_DANGLING_IMAGES !== 'false';
+export const CLEANUP_OLD_IMAGES = process.env.CLEANUP_OLD_IMAGES !== 'false';

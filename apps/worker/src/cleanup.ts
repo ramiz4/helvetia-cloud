@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import IORedis from 'ioredis';
 import path from 'path';
 import { DockerContainerOrchestrator, VolumeManager } from './orchestration';
+import { cleanupDockerImages } from './services/imageCleanup';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -106,8 +107,10 @@ async function permanentlyDeleteService(id: string) {
 export const cleanupWorker = new Worker(
   'service-cleanup',
   async (_job) => {
-    console.log('Running scheduled cleanup job for soft-deleted services');
+    console.log('Running scheduled cleanup job for soft-deleted services and Docker images');
 
+    // 1. Cleanup soft-deleted services
+    console.log('\n=== Service Cleanup Phase ===');
     // Find services deleted more than 30 days ago
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -131,7 +134,30 @@ export const cleanupWorker = new Worker(
       }
     }
 
-    return { deletedCount: servicesToDelete.length };
+    // 2. Cleanup Docker images
+    console.log('\n=== Docker Image Cleanup Phase ===');
+    const docker = new Docker();
+    let imageCleanupResult;
+
+    try {
+      imageCleanupResult = await cleanupDockerImages(docker);
+      console.log(
+        `Image cleanup completed: ${imageCleanupResult.danglingImagesRemoved} dangling, ${imageCleanupResult.oldImagesRemoved} old images removed`,
+      );
+    } catch (error) {
+      console.error('Failed to cleanup Docker images:', error);
+      imageCleanupResult = {
+        danglingImagesRemoved: 0,
+        oldImagesRemoved: 0,
+        bytesFreed: 0,
+        errors: [error instanceof Error ? error.message : String(error)],
+      };
+    }
+
+    return {
+      deletedCount: servicesToDelete.length,
+      imageCleanup: imageCleanupResult,
+    };
   },
   { connection: redisConnection },
 );
@@ -147,5 +173,5 @@ export async function scheduleCleanupJob() {
       },
     },
   );
-  console.log('Scheduled daily cleanup job for soft-deleted services');
+  console.log('Scheduled daily cleanup job for soft-deleted services and Docker images');
 }
