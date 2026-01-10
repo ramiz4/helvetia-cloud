@@ -87,23 +87,23 @@ export class DockerContainerOrchestrator implements IContainerOrchestrator {
    * Build an image from a context
    */
   async buildImage(options: BuildImageOptions): Promise<NodeJS.ReadableStream> {
-    return await this.docker.buildImage(
+    return (await this.docker.buildImage(
       {
         context: options.context,
         src: options.src,
       },
       {
-        t: options.tags,
+        t: options.tags.join(','),
         buildargs: options.buildargs,
       },
-    );
+    )) as any as NodeJS.ReadableStream;
   }
 
   /**
    * Pull an image from a registry
    */
   async pullImage(imageName: string): Promise<NodeJS.ReadableStream> {
-    return await this.docker.pull(imageName);
+    return (await this.docker.pull(imageName)) as any as NodeJS.ReadableStream;
   }
 
   /**
@@ -120,11 +120,11 @@ export class DockerContainerOrchestrator implements IContainerOrchestrator {
     container: Docker.Container,
     options?: { stdout?: boolean; stderr?: boolean; tail?: number },
   ): Promise<NodeJS.ReadableStream> {
-    return await container.logs({
+    return (await container.logs({
       stdout: options?.stdout ?? true,
       stderr: options?.stderr ?? true,
       tail: options?.tail,
-    });
+    })) as any as NodeJS.ReadableStream;
   }
 
   /**

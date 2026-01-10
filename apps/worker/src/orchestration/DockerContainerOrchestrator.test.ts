@@ -202,7 +202,7 @@ describe('DockerContainerOrchestrator', () => {
           src: ['Dockerfile', 'package.json'],
         },
         {
-          t: ['myapp:latest', 'myapp:v1.0.0'],
+          t: 'myapp:latest,myapp:v1.0.0',
           buildargs: { NODE_ENV: 'production' },
         },
       );
