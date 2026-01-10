@@ -39,10 +39,13 @@ model Service {
   type            String       @default("DOCKER")
   isPreview       Boolean      @default(false)
   prNumber        Int?
+  deletedAt       DateTime?
+  deleteProtected Boolean      @default(false)
   deployments     Deployment[]
   user            User         @relation(fields: [userId], references: [id])
 
   @@index([repoUrl, prNumber, isPreview])
+  @@index([deletedAt])
 }
 
 model Deployment {
