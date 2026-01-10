@@ -1,11 +1,7 @@
-import dotenv from 'dotenv';
-import path from 'path';
-
-// Load environment variables as early as possible
-dotenv.config({ path: path.resolve(__dirname, '../../../.env'), override: true });
+import { env, initEnv } from './config/env';
+import './load-env';
 
 // Validate environment variables before doing anything else
-import { env, initEnv } from './config/env';
 initEnv();
 
 import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
