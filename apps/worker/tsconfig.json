@@ -9,6 +9,8 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "baseUrl": ".",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "paths": {
       "database": ["../../packages/database/src/index.ts"]
     }
