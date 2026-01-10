@@ -65,7 +65,8 @@ export class ServiceController {
 
     const service = await this.serviceRepository.findById(id);
     if (!service || service.userId !== user.id || service.deletedAt) {
-      return reply.status(404).send({ error: 'Service not found' });
+      const { NotFoundError, ErrorCode } = await import('../errors');
+      throw new NotFoundError(undefined, ErrorCode.SERVICE_NOT_FOUND);
     }
 
     const deployments = await this.deploymentRepository.findByServiceId(service.id, { take: 1 });
@@ -127,7 +128,11 @@ export class ServiceController {
       where: { name, userId: { not: userId }, deletedAt: null },
     });
     if (existingByName) {
-      return reply.status(403).send({ error: 'Service name taken by another user' });
+      const { ForbiddenError, ErrorCode } = await import('../errors');
+      throw new ForbiddenError(
+        'This service name is already taken by another user',
+        ErrorCode.SERVICE_NAME_TAKEN,
+      );
     }
 
     let finalPort = port || 3000;
@@ -247,7 +252,8 @@ export class ServiceController {
     // First verify the service exists and user owns it
     const existingService = await this.serviceRepository.findById(id);
     if (!existingService || existingService.userId !== user.id) {
-      return reply.status(404).send({ error: 'Service not found or unauthorized' });
+      const { NotFoundError, ErrorCode } = await import('../errors');
+      throw new NotFoundError('Service not found or access denied', ErrorCode.SERVICE_NOT_FOUND);
     }
 
     // Update the service
@@ -278,14 +284,17 @@ export class ServiceController {
 
     const service = await this.serviceRepository.findById(id);
     if (!service || service.userId !== user.id || service.deletedAt) {
-      return reply.status(404).send({ error: 'Service not found or unauthorized' });
+      const { NotFoundError, ErrorCode } = await import('../errors');
+      throw new NotFoundError('Service not found or access denied', ErrorCode.SERVICE_NOT_FOUND);
     }
 
     // Check if service is protected from deletion
     if (service.deleteProtected) {
-      return reply
-        .status(403)
-        .send({ error: 'Service is protected from deletion. Remove protection first.' });
+      const { ForbiddenError, ErrorCode } = await import('../errors');
+      throw new ForbiddenError(
+        'Service is protected from deletion. Remove protection first.',
+        ErrorCode.SERVICE_PROTECTED,
+      );
     }
 
     // Perform soft deletion
@@ -305,7 +314,11 @@ export class ServiceController {
     const service = await this.serviceRepository.findById(id);
 
     if (!service || service.userId !== user.id || !service.deletedAt) {
-      return reply.status(404).send({ error: 'Deleted service not found or unauthorized' });
+      const { NotFoundError, ErrorCode } = await import('../errors');
+      throw new NotFoundError(
+        'Deleted service not found or access denied',
+        ErrorCode.SERVICE_NOT_FOUND,
+      );
     }
 
     // Restore the service
