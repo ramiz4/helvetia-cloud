@@ -16,25 +16,32 @@ describeIf('SSE Streaming Integration Tests', () => {
     app = await buildServer();
     await app.ready();
 
+    // Ensure clean state for test user
+    await prisma.service.deleteMany({ where: { user: { githubId: 'test-gh-sse' } } });
+    await prisma.user.deleteMany({ where: { githubId: 'test-gh-sse' } });
+
     // Create a test user
     const testUser = await prisma.user.create({
       data: {
-        email: 'sse-test@example.com',
+        username: 'sse-test-user',
         githubId: 'test-gh-sse',
-        name: 'SSE Test User',
       },
     });
     testUserId = testUser.id;
 
     // Generate JWT token for auth
-    authToken = app.jwt.sign({ id: testUserId, email: testUser.email });
+    authToken = app.jwt.sign({ id: testUserId, username: testUser.username });
   });
 
   afterAll(async () => {
     // Cleanup test data
-    await prisma.deployment.deleteMany({ where: { service: { userId: testUserId } } });
-    await prisma.service.deleteMany({ where: { userId: testUserId } });
-    await prisma.user.delete({ where: { id: testUserId } });
+    if (testUserId) {
+      await prisma.deployment
+        .deleteMany({ where: { service: { userId: testUserId } } })
+        .catch(() => {});
+      await prisma.service.deleteMany({ where: { userId: testUserId } }).catch(() => {});
+      await prisma.user.deleteMany({ where: { id: testUserId } }).catch(() => {});
+    }
     await app.close();
   });
 
@@ -153,7 +160,7 @@ describeIf('SSE Streaming Integration Tests', () => {
     it('should handle expired token gracefully', async () => {
       // Create an expired token (1 second expiry)
       const expiredToken = app.jwt.sign(
-        { id: testUserId, email: 'sse-test@example.com' },
+        { id: testUserId, username: 'sse-test-user' },
         { expiresIn: '1ms' },
       );
 

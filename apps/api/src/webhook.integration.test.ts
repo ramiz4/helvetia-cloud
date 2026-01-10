@@ -28,12 +28,18 @@ describeIf('Webhook Processing Integration Tests', () => {
     app = await buildServer();
     await app.ready();
 
+    // Ensure clean state for test user
+    await prisma.deployment.deleteMany({
+      where: { service: { user: { githubId: 'test-gh-webhook' } } },
+    });
+    await prisma.service.deleteMany({ where: { user: { githubId: 'test-gh-webhook' } } });
+    await prisma.user.deleteMany({ where: { githubId: 'test-gh-webhook' } });
+
     // Create a test user
     const testUser = await prisma.user.create({
       data: {
-        email: 'webhook-test@example.com',
+        username: 'webhook-test-user',
         githubId: 'test-gh-webhook',
-        name: 'Webhook Test User',
       },
     });
     testUserId = testUser.id;
@@ -42,11 +48,13 @@ describeIf('Webhook Processing Integration Tests', () => {
   afterAll(async () => {
     // Cleanup test data
     if (testServiceId) {
-      await prisma.deployment.deleteMany({ where: { serviceId: testServiceId } });
-      await prisma.service.deleteMany({ where: { id: testServiceId } });
+      await prisma.deployment.deleteMany({ where: { serviceId: testServiceId } }).catch(() => {});
+      await prisma.service.deleteMany({ where: { id: testServiceId } }).catch(() => {});
     }
-    await prisma.service.deleteMany({ where: { userId: testUserId } });
-    await prisma.user.delete({ where: { id: testUserId } });
+    if (testUserId) {
+      await prisma.service.deleteMany({ where: { userId: testUserId } }).catch(() => {});
+      await prisma.user.deleteMany({ where: { id: testUserId } }).catch(() => {});
+    }
     await app.close();
   });
 
@@ -90,7 +98,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
     it('should accept webhook with valid signature', async () => {
       const payload = {
-        repository: { html_url: 'https://github.com/test/repo' },
+        repository: { html_url: 'https://github.com/webhook-test/repo' },
         ref: 'refs/heads/main',
         after: 'abc123',
       };
@@ -119,7 +127,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-push-service',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'main',
           type: 'DOCKER',
           port: 3000,
@@ -130,7 +138,7 @@ describeIf('Webhook Processing Integration Tests', () => {
       testServiceId = service.id;
 
       const payload = {
-        repository: { html_url: 'https://github.com/test/repo' },
+        repository: { html_url: 'https://github.com/webhook-test/repo' },
         ref: 'refs/heads/main',
         after: 'abc123def456',
       };
@@ -164,7 +172,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-branch-mismatch',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'main',
           type: 'DOCKER',
           port: 3000,
@@ -175,7 +183,7 @@ describeIf('Webhook Processing Integration Tests', () => {
       testServiceId = service.id;
 
       const payload = {
-        repository: { html_url: 'https://github.com/test/repo' },
+        repository: { html_url: 'https://github.com/webhook-test/repo' },
         ref: 'refs/heads/develop', // Different branch
         after: 'abc123def456',
       };
@@ -233,7 +241,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-push-preview',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'main',
           type: 'DOCKER',
           port: 3000,
@@ -244,7 +252,7 @@ describeIf('Webhook Processing Integration Tests', () => {
       });
 
       const payload = {
-        repository: { html_url: 'https://github.com/test/repo' },
+        repository: { html_url: 'https://github.com/webhook-test/repo' },
         ref: 'refs/heads/main',
         after: 'abc123def456',
       };
@@ -274,7 +282,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-base-service',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'main',
           type: 'DOCKER',
           port: 3000,
@@ -295,7 +303,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           },
           base: {
             repo: {
-              html_url: 'https://github.com/test/repo',
+              html_url: 'https://github.com/webhook-test/repo',
             },
           },
         },
@@ -336,7 +344,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-sync-base',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'main',
           type: 'DOCKER',
           port: 3000,
@@ -350,7 +358,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-sync-base-pr-43',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'old-feature-branch',
           type: 'DOCKER',
           port: 3000,
@@ -371,7 +379,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           },
           base: {
             repo: {
-              html_url: 'https://github.com/test/repo',
+              html_url: 'https://github.com/webhook-test/repo',
             },
           },
         },
@@ -400,8 +408,12 @@ describeIf('Webhook Processing Integration Tests', () => {
       expect(updatedPreview?.branch).toBe('updated-feature-branch');
 
       // Cleanup
-      await prisma.service.delete({ where: { id: baseService.id } });
-      await prisma.service.delete({ where: { id: previewService.id } });
+      await prisma.deployment
+        .deleteMany({ where: { serviceId: { in: [baseService.id, previewService.id] } } })
+        .catch(() => {});
+      await prisma.service
+        .deleteMany({ where: { id: { in: [baseService.id, previewService.id] } } })
+        .catch(() => {});
     });
 
     it('should delete preview environment on PR closed', async () => {
@@ -410,7 +422,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-close-base',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'main',
           type: 'DOCKER',
           port: 3000,
@@ -424,7 +436,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         data: {
           name: 'test-close-base-pr-44',
           userId: testUserId,
-          repoUrl: 'https://github.com/test/repo',
+          repoUrl: 'https://github.com/webhook-test/repo',
           branch: 'feature-branch',
           type: 'DOCKER',
           port: 3000,
@@ -445,7 +457,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           },
           base: {
             repo: {
-              html_url: 'https://github.com/test/repo',
+              html_url: 'https://github.com/webhook-test/repo',
             },
           },
         },
@@ -475,8 +487,12 @@ describeIf('Webhook Processing Integration Tests', () => {
       expect(deletedPreview?.deletedAt).not.toBeNull();
 
       // Cleanup
-      await prisma.service.delete({ where: { id: baseService.id } });
-      await prisma.service.delete({ where: { id: previewService.id } });
+      await prisma.deployment
+        .deleteMany({ where: { serviceId: { in: [baseService.id, previewService.id] } } })
+        .catch(() => {});
+      await prisma.service
+        .deleteMany({ where: { id: { in: [baseService.id, previewService.id] } } })
+        .catch(() => {});
     });
 
     it('should skip PR webhook when no base service exists', async () => {
@@ -526,7 +542,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           },
           base: {
             repo: {
-              html_url: 'https://github.com/test/repo',
+              html_url: 'https://github.com/webhook-test/repo',
             },
           },
         },
