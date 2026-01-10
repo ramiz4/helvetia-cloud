@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import path from 'path';
+import { workerMetricsService } from './services/metrics.service';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -118,6 +119,37 @@ healthServer.get('/health', async (_request, reply) => {
       error: 'Health check failed',
       timestamp: new Date().toISOString(),
     });
+  }
+});
+
+/**
+ * Metrics Endpoint
+ *
+ * Returns Prometheus metrics for the worker service
+ */
+healthServer.get('/metrics', async (_request, reply) => {
+  try {
+    const metrics = await workerMetricsService.getMetrics();
+    reply.type('text/plain; version=0.0.4; charset=utf-8');
+    return metrics;
+  } catch (error) {
+    console.error('Failed to collect metrics:', error);
+    return reply.status(500).send({ error: 'Failed to collect metrics' });
+  }
+});
+
+/**
+ * Metrics JSON Endpoint
+ *
+ * Returns metrics in JSON format for debugging
+ */
+healthServer.get('/metrics/json', async (_request, reply) => {
+  try {
+    const metrics = await workerMetricsService.getMetricsJSON();
+    return metrics;
+  } catch (error) {
+    console.error('Failed to collect metrics:', error);
+    return reply.status(500).send({ error: 'Failed to collect metrics' });
   }
 });
 
