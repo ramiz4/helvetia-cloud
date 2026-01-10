@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { injectable } from 'tsyringe';
 import type {
   GetRepositoriesParams,
@@ -116,16 +116,15 @@ export class GitHubService implements IGitHubService {
    * Handle GitHub API errors
    */
   private handleGitHubError(error: unknown, defaultMessage: string): never {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError;
-      if (axiosError.response) {
-        // GitHub API returned an error response
-        throw {
-          status: axiosError.response.status,
-          data: axiosError.response.data,
-          message: defaultMessage,
-        };
-      }
+    // Check if error has response property (axios error structure)
+    const err = error as any;
+    if (err?.response?.status && err?.response?.data) {
+      // GitHub API returned an error response
+      throw {
+        status: err.response.status,
+        data: err.response.data,
+        message: defaultMessage,
+      };
     }
 
     // Generic error
