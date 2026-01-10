@@ -80,8 +80,9 @@ vi.mock('database', () => {
       service: {
         findFirst: vi.fn(),
         findUnique: vi.fn(),
-        delete: vi.fn(),
+        create: vi.fn(),
         update: vi.fn(),
+        delete: vi.fn(),
       },
       deployment: {
         findMany: vi.fn(),
@@ -116,7 +117,7 @@ describe('Service Deletion Cleanup', () => {
       deleteProtected: false,
     };
 
-    vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+    vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
     vi.mocked(prisma.service.update).mockResolvedValue({
       ...mockService,
       deletedAt: new Date(),
@@ -159,7 +160,7 @@ describe('Service Deletion Cleanup', () => {
       deleteProtected: false,
     };
 
-    vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+    vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
     vi.mocked(prisma.service.update).mockResolvedValue({
       ...mockService,
       deletedAt: new Date(),

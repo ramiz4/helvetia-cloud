@@ -52,12 +52,19 @@ vi.mock('database', () => {
       service: {
         findMany: vi.fn(),
         findUnique: vi.fn(),
-        updateMany: vi.fn(),
-        upsert: vi.fn(),
         findFirst: vi.fn(),
+        updateMany: vi.fn(),
+        update: vi.fn(),
+        upsert: vi.fn(),
+        create: vi.fn(),
       },
       user: {
         findUnique: vi.fn(),
+      },
+      deployment: {
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
       },
       refreshToken: {
         create: vi.fn(),
@@ -84,8 +91,9 @@ describe('API Service Normalization', () => {
 
   it('should normalize lowercase service type to uppercase on creation', async () => {
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.service.upsert).mockResolvedValue({ id: 's1' } as never);
+    vi.mocked(prisma.service.findFirst).mockResolvedValue(null); // Check name taken - not found
+    vi.mocked(prisma.service.findFirst).mockResolvedValueOnce(null); // findByNameAndUserId - not found
+    vi.mocked(prisma.service.create).mockResolvedValue({ id: 's1' } as never);
 
     const response = await fastify.inject({
       method: 'POST',
@@ -98,14 +106,27 @@ describe('API Service Normalization', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const upsertCall = vi.mocked(prisma.service.upsert).mock.calls[0][0];
-    expect(upsertCall.create.type).toBe('COMPOSE');
+    const createCall = vi.mocked(prisma.service.create).mock.calls[0][0];
+    expect(createCall.data.type).toBe('COMPOSE');
   });
 
   it('should normalize lowercase service type to uppercase on update', async () => {
     const { prisma } = await import('database');
-    vi.mocked(prisma.service.updateMany).mockResolvedValue({ count: 1 } as never);
-    vi.mocked(prisma.service.findUnique).mockResolvedValue({ id: 's1' } as never);
+    const mockService = {
+      id: 's1',
+      userId: 'user-1',
+      name: 'test-service',
+      type: 'DOCKER',
+      port: 3000,
+      deletedAt: null,
+      deleteProtected: false,
+      status: 'IDLE',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
+    vi.mocked(prisma.service.update).mockResolvedValue({ ...mockService, type: 'STATIC' } as never);
+    vi.mocked(prisma.deployment.findMany).mockResolvedValue([] as never);
 
     const response = await fastify.inject({
       method: 'PATCH',
@@ -117,7 +138,7 @@ describe('API Service Normalization', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const updateCall = vi.mocked(prisma.service.updateMany).mock.calls[0][0];
+    const updateCall = vi.mocked(prisma.service.update).mock.calls[0][0];
     expect(updateCall.data.type).toBe('STATIC');
   });
 

@@ -30,6 +30,8 @@ import {
   LOG_RESPONSES,
   METRICS_UPDATE_INTERVAL_MS,
 } from './config/constants';
+import { initializeContainer, resolve, TOKENS } from './di';
+import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from './schemas/service.schema';
 import { decrypt, encrypt } from './utils/crypto';
 import {
@@ -39,6 +41,14 @@ import {
 } from './utils/refreshToken';
 import { getRepoUrlMatchCondition } from './utils/repoUrl';
 import { withStatusLock } from './utils/statusLock';
+
+// Initialize DI container
+initializeContainer();
+
+// Resolve repositories
+const serviceRepository = resolve<IServiceRepository>(TOKENS.ServiceRepository);
+const deploymentRepository = resolve<IDeploymentRepository>(TOKENS.DeploymentRepository);
+const userRepository = resolve<IUserRepository>(TOKENS.UserRepository);
 
 // Redis connection initialized after dotenv.config()
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
@@ -145,17 +155,15 @@ function determineServiceStatus(service: any, containers: any[]): string {
 
 // Helper to create and queue deployment
 async function createAndQueueDeployment(service: any, commitHash: string) {
-  const deployment = await prisma.deployment.create({
-    data: {
-      serviceId: service.id,
-      status: 'QUEUED',
-      commitHash: commitHash,
-    },
+  const deployment = await deploymentRepository.create({
+    serviceId: service.id,
+    status: 'QUEUED',
+    commitHash: commitHash,
   });
 
   // Inject token if available
   let repoUrlData = service.repoUrl;
-  const dbUser = await prisma.user.findUnique({ where: { id: service.userId } });
+  const dbUser = await userRepository.findById(service.userId);
   if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
     const decryptedToken = decrypt(dbUser.githubAccessToken);
     repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
@@ -181,7 +189,7 @@ async function createAndQueueDeployment(service: any, commitHash: string) {
 
 // Helper to delete a service and its resources
 async function deleteService(id: string, userId?: string) {
-  const service = await prisma.service.findUnique({ where: { id } });
+  const service = await serviceRepository.findById(id);
   if (!service) return;
 
   // Verify ownership if userId is provided
@@ -237,10 +245,7 @@ async function deleteService(id: string, userId?: string) {
   }
 
   // 1.5 Remove associated images
-  const deployments = await prisma.deployment.findMany({
-    where: { serviceId: id },
-    select: { imageTag: true },
-  });
+  const deployments = await deploymentRepository.findByServiceId(id);
 
   const imageTags = new Set(
     deployments.map((d) => d.imageTag).filter((tag): tag is string => !!tag),
@@ -260,8 +265,8 @@ async function deleteService(id: string, userId?: string) {
   }
 
   // 2. Delete deployments and services from DB
-  await prisma.deployment.deleteMany({ where: { serviceId: id } });
-  await prisma.service.delete({ where: { id } });
+  await deploymentRepository.deleteByServiceId(id);
+  await serviceRepository.delete(id);
 }
 
 // Helper to get metrics for a service
@@ -776,20 +781,20 @@ fastify.post(
 
       // 3. Upsert user in DB
       const encryptedToken = encrypt(access_token);
-      const user = await prisma.user.upsert({
-        where: { githubId: githubUser.id.toString() },
-        update: {
-          username: githubUser.login,
-          avatarUrl: githubUser.avatar_url,
-          githubAccessToken: encryptedToken,
-        },
-        create: {
+      const user = await userRepository.upsert(
+        { githubId: githubUser.id.toString() },
+        {
           githubId: githubUser.id.toString(),
           username: githubUser.login,
           avatarUrl: githubUser.avatar_url,
           githubAccessToken: encryptedToken,
         },
-      });
+        {
+          username: githubUser.login,
+          avatarUrl: githubUser.avatar_url,
+          githubAccessToken: encryptedToken,
+        },
+      );
 
       // 4. Generate access token (short-lived)
       const token = fastify.jwt.sign({ id: user.id, username: user.username });
@@ -900,16 +905,7 @@ fastify.post('/auth/logout', async (request, reply) => {
 
 fastify.get('/auth/me', async (request) => {
   const user = (request as any).user;
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: {
-      id: true,
-      username: true,
-      avatarUrl: true,
-      githubId: true,
-      githubAccessToken: true, // we check if it exists
-    },
-  });
+  const dbUser = await userRepository.findById(user.id);
 
   return {
     ...dbUser,
@@ -920,10 +916,7 @@ fastify.get('/auth/me', async (request) => {
 
 fastify.delete('/auth/github/disconnect', async (request) => {
   const user = (request as any).user;
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { githubAccessToken: null },
-  });
+  await userRepository.update(user.id, { githubAccessToken: null });
   return { success: true };
 });
 
@@ -931,17 +924,25 @@ fastify.delete('/auth/github/disconnect', async (request) => {
 fastify.get('/services', async (request) => {
   // Add authentication middleware in a real app
   const user = (request as any).user;
-  const services = await prisma.service.findMany({
-    where: { userId: user.id, deletedAt: null },
-    include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
-  });
+  const services = await serviceRepository.findByUserId(user.id);
+
+  // Fetch latest deployment for each service
+  const servicesWithDeployments = await Promise.all(
+    services.map(async (service) => {
+      const deployments = await deploymentRepository.findByServiceId(service.id, { take: 1 });
+      return {
+        ...service,
+        deployments,
+      };
+    }),
+  );
 
   // Enrich services with actual Docker container status
   const Docker = (await import('dockerode')).default;
   const docker = new Docker();
   const containers = await docker.listContainers({ all: true });
 
-  return services.map((service) => ({
+  return servicesWithDeployments.map((service) => ({
     ...service,
     status: determineServiceStatus(service, containers),
   }));
@@ -951,12 +952,12 @@ fastify.get('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const service = await prisma.service.findFirst({
-    where: { id, userId: user.id, deletedAt: null },
-    include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
-  });
+  const service = await serviceRepository.findById(id);
+  if (!service || service.userId !== user.id || service.deletedAt) {
+    return reply.status(404).send({ error: 'Service not found' });
+  }
 
-  if (!service) return reply.status(404).send({ error: 'Service not found' });
+  const deployments = await deploymentRepository.findByServiceId(service.id, { take: 1 });
 
   // Enrich service with actual Docker container status
   const Docker = (await import('dockerode')).default;
@@ -965,7 +966,8 @@ fastify.get('/services/:id', async (request, reply) => {
 
   return {
     ...service,
-    status: determineServiceStatus(service, containers),
+    deployments,
+    status: determineServiceStatus({ ...service, deployments }, containers),
   };
 });
 
@@ -1008,29 +1010,29 @@ fastify.patch(
     } = validatedData;
 
     const user = (request as any).user;
-    const service = await prisma.service.updateMany({
-      where: { id, userId: user.id },
-      data: {
-        name,
-        repoUrl,
-        branch,
-        buildCommand,
-        startCommand,
-        port: port ?? (type ? getDefaultPortForServiceType(type) : undefined),
-        envVars,
-        customDomain,
-        type: type,
-        staticOutputDir,
-      },
-    });
 
-    if (service.count === 0)
+    // First verify the service exists and user owns it
+    const existingService = await serviceRepository.findById(id);
+    if (!existingService || existingService.userId !== user.id) {
       return reply.status(404).send({ error: 'Service not found or unauthorized' });
+    }
 
-    return prisma.service.findUnique({
-      where: { id },
-      include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    // Update the service
+    const updatedService = await serviceRepository.update(id, {
+      name,
+      repoUrl,
+      branch,
+      buildCommand,
+      startCommand,
+      port: port ?? (type ? getDefaultPortForServiceType(type) : undefined),
+      envVars,
+      customDomain,
+      type: type,
+      staticOutputDir,
     });
+
+    const deployments = await deploymentRepository.findByServiceId(id, { take: 1 });
+    return { ...updatedService, deployments };
   },
 );
 
@@ -1074,9 +1076,12 @@ fastify.post(
     const user = (request as any).user;
     const userId = user.id;
 
-    // Check ownership if exists
-    const existing = await prisma.service.findUnique({ where: { name } });
-    if (existing && existing.userId !== userId) {
+    // Check if another user owns this service name - use raw Prisma for complex query
+    // since repository doesn't have this specific method
+    const existingByName = await prisma.service.findFirst({
+      where: { name, userId: { not: userId }, deletedAt: null },
+    });
+    if (existingByName) {
       return reply.status(403).send({ error: 'Service name taken by another user' });
     }
 
@@ -1117,9 +1122,12 @@ fastify.post(
       }
     }
 
-    return prisma.service.upsert({
-      where: { name },
-      update: {
+    // Check if service exists
+    const existing = await serviceRepository.findByNameAndUserId(name, userId);
+
+    if (existing) {
+      // Update existing service
+      return serviceRepository.update(existing.id, {
         repoUrl,
         branch: branch || 'main',
         buildCommand,
@@ -1130,8 +1138,10 @@ fastify.post(
         staticOutputDir: staticOutputDir || 'dist',
         envVars: finalEnvVars,
         deletedAt: null, // Resurrect service if it was soft-deleted
-      },
-      create: {
+      });
+    } else {
+      // Create new service
+      return serviceRepository.create({
         name,
         repoUrl: repoUrl || null,
         branch: branch || 'main',
@@ -1143,9 +1153,8 @@ fastify.post(
         type: finalType,
         staticOutputDir: staticOutputDir || 'dist',
         envVars: finalEnvVars,
-      },
-      include: { deployments: { orderBy: { createdAt: 'desc' }, take: 1 } },
-    });
+      });
+    }
   },
 );
 
@@ -1153,10 +1162,10 @@ fastify.delete('/services/:id', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const service = await prisma.service.findFirst({
-    where: { id, userId: user.id, deletedAt: null },
-  });
-  if (!service) return reply.status(404).send({ error: 'Service not found or unauthorized' });
+  const service = await serviceRepository.findById(id);
+  if (!service || service.userId !== user.id || service.deletedAt) {
+    return reply.status(404).send({ error: 'Service not found or unauthorized' });
+  }
 
   // Check if service is protected from deletion
   if (service.deleteProtected) {
@@ -1166,10 +1175,7 @@ fastify.delete('/services/:id', async (request, reply) => {
   }
 
   // Perform soft deletion
-  await prisma.service.update({
-    where: { id },
-    data: { deletedAt: new Date() },
-  });
+  await serviceRepository.update(id, { deletedAt: new Date() });
 
   return { success: true, message: 'Service soft deleted. Can be recovered within 30 days.' };
 });
@@ -1179,19 +1185,14 @@ fastify.post('/services/:id/recover', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const service = await prisma.service.findFirst({
-    where: { id, userId: user.id, deletedAt: { not: null } },
-  });
+  const service = await serviceRepository.findById(id);
 
-  if (!service) {
+  if (!service || service.userId !== user.id || !service.deletedAt) {
     return reply.status(404).send({ error: 'Deleted service not found or unauthorized' });
   }
 
   // Restore the service
-  const restored = await prisma.service.update({
-    where: { id },
-    data: { deletedAt: null },
-  });
+  const restored = await serviceRepository.update(id, { deletedAt: null });
 
   return { success: true, service: restored, message: 'Service recovered successfully' };
 });
@@ -1206,18 +1207,13 @@ fastify.patch('/services/:id/protection', async (request, reply) => {
     return reply.status(400).send({ error: 'deleteProtected must be a boolean' });
   }
 
-  const service = await prisma.service.findFirst({
-    where: { id, userId: user.id, deletedAt: null },
-  });
+  const service = await serviceRepository.findById(id);
 
-  if (!service) {
+  if (!service || service.userId !== user.id || service.deletedAt) {
     return reply.status(404).send({ error: 'Service not found or unauthorized' });
   }
 
-  const updated = await prisma.service.update({
-    where: { id },
-    data: { deleteProtected },
-  });
+  const updated = await serviceRepository.update(id, { deleteProtected });
 
   return { success: true, service: updated };
 });
@@ -1582,24 +1578,19 @@ fastify.post(
     });
     if (!service) return reply.status(404).send({ error: 'Service not found' });
 
-    const deployment = await prisma.deployment.create({
-      data: {
-        serviceId: id,
-        status: 'QUEUED',
-      },
+    const deployment = await deploymentRepository.create({
+      serviceId: id,
+      status: 'QUEUED',
     });
 
     // Update service status to DEPLOYING with distributed lock
     await withStatusLock(id, async () => {
-      await prisma.service.update({
-        where: { id },
-        data: { status: 'DEPLOYING' },
-      });
+      await serviceRepository.update(id, { status: 'DEPLOYING' });
     });
 
     // Inject token if available
     let repoUrl = service.repoUrl;
-    const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+    const dbUser = await userRepository.findById(user.id);
     if (dbUser?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
       const decryptedToken = decrypt(dbUser.githubAccessToken);
       repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
@@ -1935,15 +1926,19 @@ fastify.get('/deployments/:id/logs', async (request, reply) => {
   const { id } = request.params as any;
   const user = (request as any).user;
 
-  const deployment = await prisma.deployment.findUnique({
-    where: { id },
-    include: { service: true },
-  });
+  const deployment = await deploymentRepository.findById(id);
 
-  if (!deployment || deployment.service.userId !== user.id) {
+  if (!deployment) {
+    return reply.status(404).send({ error: 'Deployment not found' });
+  }
+
+  // Verify ownership by checking the service
+  const service = await serviceRepository.findById(deployment.serviceId);
+  if (!service || service.userId !== user.id) {
     return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
   }
-  return { logs: deployment?.logs };
+
+  return { logs: deployment.logs };
 });
 
 // SSE endpoint for real-time deployment logs
@@ -1955,12 +1950,15 @@ fastify.get(
     const user = (request as any).user;
 
     // Verify deployment belongs to user
-    const deployment = await prisma.deployment.findUnique({
-      where: { id },
-      include: { service: true },
-    });
+    const deployment = await deploymentRepository.findById(id);
 
-    if (!deployment || deployment.service.userId !== user.id) {
+    if (!deployment) {
+      return reply.status(404).send({ error: 'Deployment not found' });
+    }
+
+    // Verify ownership
+    const service = await serviceRepository.findById(deployment.serviceId);
+    if (!service || service.userId !== user.id) {
       return reply.status(404).send({ error: 'Deployment not found or unauthorized' });
     }
 

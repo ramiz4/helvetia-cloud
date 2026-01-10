@@ -1,14 +1,17 @@
+import { PrismaClient } from '@prisma/client';
+import { prisma } from 'database';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
+import {
+  PrismaDeploymentRepository,
+  PrismaServiceRepository,
+  PrismaUserRepository,
+} from '../repositories';
 import { TOKENS } from './tokens';
 
 /**
  * DI Container configuration
  * This file sets up the dependency injection container
- *
- * Note: Actual implementations will be registered here by other issues:
- * - #95: Repository implementations
- * - #97: Container orchestrator implementation
  */
 
 /**
@@ -16,12 +19,13 @@ import { TOKENS } from './tokens';
  * This should be called at application startup
  */
 export function initializeContainer(): void {
-  // Container is ready for registration
-  // Implementations will be registered by respective issues
-  // Example registration (to be replaced by actual implementations):
-  // container.register(TOKENS.ServiceRepository, { useClass: PrismaServiceRepository });
-  // container.register(TOKENS.DeploymentRepository, { useClass: PrismaDeploymentRepository });
-  // etc.
+  // Register PrismaClient as a singleton
+  container.registerInstance<PrismaClient>('PrismaClient', prisma);
+
+  // Register repository implementations
+  container.registerSingleton(TOKENS.ServiceRepository, PrismaServiceRepository);
+  container.registerSingleton(TOKENS.DeploymentRepository, PrismaDeploymentRepository);
+  container.registerSingleton(TOKENS.UserRepository, PrismaUserRepository);
 }
 
 /**
