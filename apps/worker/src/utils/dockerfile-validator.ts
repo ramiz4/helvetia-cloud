@@ -214,7 +214,7 @@ export async function validateDockerfileDryRun(
     // Create a minimal tar archive for validation
     // Docker's buildImage API will validate the Dockerfile syntax
     // We use a very small timeout to abort quickly after validation
-    const stream = await docker.buildImage(
+    const stream = (await docker.buildImage(
       {
         context: contextPath,
         src: ['Dockerfile'],
@@ -224,11 +224,11 @@ export async function validateDockerfileDryRun(
         // Use a dummy tag to avoid conflicts
         t: `validation-${Date.now()}`,
         // Force pull to ensure base image is available
-        pull: 'false',
+        pull: false,
         // Don't use cache for validation
         nocache: false,
       },
-    );
+    )) as any;
 
     // Read the first few events to catch syntax errors
     let validationError: string | null = null;
