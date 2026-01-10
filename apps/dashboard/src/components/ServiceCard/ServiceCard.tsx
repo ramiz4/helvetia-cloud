@@ -52,22 +52,24 @@ export function ServiceCard({
           </h3>
           <div className="flex flex-wrap gap-2 items-center">
             <span
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-sm ${service.status === 'RUNNING'
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-sm ${
+                service.status === 'RUNNING'
                   ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
                   : service.status === 'DEPLOYING'
                     ? 'bg-amber-500/15 text-amber-400 border-amber-500/20 animate-pulse'
                     : service.status === 'FAILED'
                       ? 'bg-rose-500/15 text-rose-400 border-rose-500/20'
                       : 'bg-slate-500/15 text-slate-400 border-slate-500/20'
-                }`}
+              }`}
             >
               {service.status === 'NOT_RUNNING' ? t.status.notRunning : service.status}
             </span>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${service.type === 'STATIC'
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+                service.type === 'STATIC'
                   ? 'bg-sky-500/15 text-sky-400 border-sky-500/20'
                   : 'bg-purple-500/15 text-purple-400 border-purple-500/20'
-                }`}
+              }`}
             >
               {service.type === 'STATIC'
                 ? t.newService.staticSite
