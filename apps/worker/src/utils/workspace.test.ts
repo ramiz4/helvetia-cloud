@@ -28,8 +28,23 @@ describe('Workspace Utils', () => {
   });
 
   describe('getSecureBindMounts', () => {
-    it('should return secure bind mounts with docker socket only', () => {
-      delete process.env.WORKSPACE_DIR;
+    it('should return empty array when using docker socket proxy', () => {
+      process.env.DOCKER_HOST = 'tcp://docker-socket-proxy:2375';
+      const mounts = getSecureBindMounts();
+
+      expect(mounts).toHaveLength(0);
+    });
+
+    it('should return docker socket mount when not using proxy', () => {
+      delete process.env.DOCKER_HOST;
+      const mounts = getSecureBindMounts();
+
+      expect(mounts).toHaveLength(1);
+      expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
+    });
+
+    it('should return docker socket mount for local development', () => {
+      process.env.DOCKER_HOST = 'unix:///var/run/docker.sock';
       const mounts = getSecureBindMounts();
 
       expect(mounts).toHaveLength(1);
@@ -37,6 +52,7 @@ describe('Workspace Utils', () => {
     });
 
     it('should not include workspace mount', () => {
+      delete process.env.DOCKER_HOST;
       const mounts = getSecureBindMounts();
       const workspaceMount = mounts.find((m) => m.includes('/workspaces'));
 
@@ -44,12 +60,14 @@ describe('Workspace Utils', () => {
     });
 
     it('should not include /Users mount', () => {
+      delete process.env.DOCKER_HOST;
       const mounts = getSecureBindMounts();
 
       expect(mounts.some((m) => m.includes('/Users'))).toBe(false);
     });
 
     it('should not include root directory mounts', () => {
+      delete process.env.DOCKER_HOST;
       const mounts = getSecureBindMounts();
       const dangerousMounts = mounts.filter((m) => {
         const hostPath = m.split(':')[0];

@@ -143,14 +143,46 @@ describe('Worker Integration - Build Security', () => {
   });
 
   describe('Docker Socket Security', () => {
-    it('should only mount docker socket', async () => {
+    it('should only mount docker socket when not using proxy', async () => {
+      // Save original env
+      const originalDockerHost = process.env.DOCKER_HOST;
+
+      // Test without proxy
+      delete process.env.DOCKER_HOST;
       const mounts = getSecureBindMounts();
 
       expect(mounts).toHaveLength(1);
       expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
+
+      // Restore
+      if (originalDockerHost) {
+        process.env.DOCKER_HOST = originalDockerHost;
+      }
+    });
+
+    it('should not mount docker socket when using proxy', async () => {
+      // Save original env
+      const originalDockerHost = process.env.DOCKER_HOST;
+
+      // Test with proxy
+      process.env.DOCKER_HOST = 'tcp://docker-socket-proxy:2375';
+      const mounts = getSecureBindMounts();
+
+      expect(mounts).toHaveLength(0);
+
+      // Restore
+      if (originalDockerHost) {
+        process.env.DOCKER_HOST = originalDockerHost;
+      } else {
+        delete process.env.DOCKER_HOST;
+      }
     });
 
     it('should allow docker commands via socket but not host filesystem access', async () => {
+      // Save original env
+      const originalDockerHost = process.env.DOCKER_HOST;
+      delete process.env.DOCKER_HOST; // Test direct socket access
+
       const container = await docker.createContainer({
         Image: 'docker:cli',
         Cmd: [
@@ -193,6 +225,11 @@ describe('Worker Integration - Build Security', () => {
 
       await container.remove();
       testContainerId = null;
+
+      // Restore
+      if (originalDockerHost) {
+        process.env.DOCKER_HOST = originalDockerHost;
+      }
     }, 30000);
   });
 

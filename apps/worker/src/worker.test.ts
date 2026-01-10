@@ -61,6 +61,8 @@ describe('Worker', () => {
 
   describe('Security - Mount Configuration', () => {
     it('should not expose host filesystem via bind mounts', () => {
+      // Test without socket proxy (direct socket mount)
+      delete process.env.DOCKER_HOST;
       const mounts = getSecureBindMounts();
 
       // Check that dangerous mounts are not present
@@ -75,11 +77,19 @@ describe('Worker', () => {
       expect(hasDangerousMount).toBe(false);
     });
 
-    it('should only include docker socket', () => {
+    it('should only include docker socket when not using proxy', () => {
+      delete process.env.DOCKER_HOST;
       const mounts = getSecureBindMounts();
 
       expect(mounts).toHaveLength(1);
       expect(mounts[0]).toBe('/var/run/docker.sock:/var/run/docker.sock');
+    });
+
+    it('should not include any mounts when using socket proxy', () => {
+      process.env.DOCKER_HOST = 'tcp://docker-socket-proxy:2375';
+      const mounts = getSecureBindMounts();
+
+      expect(mounts).toHaveLength(0);
     });
   });
 });
