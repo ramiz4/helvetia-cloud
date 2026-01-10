@@ -2,14 +2,14 @@ import type { FastifyPluginAsync } from 'fastify';
 import { BODY_LIMIT_SMALL } from '../config/constants';
 import { createRateLimitConfigs } from '../config/rateLimit';
 import { ServiceController } from '../controllers/ServiceController';
-import { resolve } from '../di';
+import { resolve, TOKENS } from '../di';
 
 /**
  * Service routes plugin
  * Handles all service-related endpoints
  */
 export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
-  const controller = resolve<ServiceController>(Symbol.for('ServiceController'));
+  const controller = resolve<ServiceController>(TOKENS.ServiceController);
 
   // Get rate limit config
   const redis = (fastify as any).redis;
