@@ -2,7 +2,7 @@
 
 ## Overview
 
-Server-Sent Events (SSE) are used for real-time updates in the Helvetia Cloud platform. This document describes how SSE connections are managed, authenticated, and how token expiration is handled.
+Server-Sent Events (SSE) are used for real-time updates in the Helvetia Cloud platform. This document describes how SSE connections are managed, authenticated, how token expiration is handled, and the memory leak prevention measures implemented.
 
 ## SSE Endpoints
 
@@ -56,6 +56,7 @@ JWT tokens are configured with the following settings:
 3. If valid:
    - Connection established (HTTP 200)
    - SSE headers sent
+   - Connection state initialized with tracking metrics
    - Initial data transmitted
 4. If invalid:
    - Connection rejected (HTTP 401)
@@ -66,17 +67,20 @@ JWT tokens are configured with the following settings:
 **Metrics Stream:**
 
 - Every 5 seconds, server:
-  1. Validates JWT token using `validateToken()` function
-  2. If valid: Fetches and sends updated metrics
-  3. If invalid: Sends error event and closes connection
+  1. Checks connection validity
+  2. Validates JWT token using `validateToken()` function
+  3. If valid: Fetches and sends updated metrics
+  4. If invalid: Sends error event and calls cleanup()
+  5. On error: Increments error counter, closes after 3 consecutive errors
 
 **Logs Stream:**
 
 - Every 30 seconds, server validates JWT token
 - On each Redis message:
   1. Checks if connection is still valid
-  2. If valid: Forwards log line to client
+  2. If valid: Forwards log line to client (wrapped in try-catch)
   3. If invalid: Drops message (connection already closed)
+  4. On write error: Increments error counter, closes after 3 consecutive errors
 
 ### Token Expiration Handling
 
@@ -106,18 +110,147 @@ Connections can be closed by:
 
 1. **Client disconnect:** User navigates away or closes browser
    - Server detects `close` event on request
-   - Cleans up intervals and listeners
+   - Calls centralized `cleanup()` function
+   - Clears intervals, timeouts, and Redis subscriptions
+   - Logs connection statistics (duration, messages, errors)
 
 2. **Token expiration:** Token becomes invalid
    - Server sends error event
    - Server closes connection
+   - Calls `cleanup()` to free all resources
    - Client logs out user
 
 3. **Server error:** Unexpected error during operation
-   - Connection closed
+   - Error counter incremented
+   - After 3 consecutive errors, connection closed
+   - `cleanup()` called to free resources
    - Client's `onerror` handler triggers automatic reconnection
 
-## Security Considerations
+4. **Connection timeout:** Connection exceeds maximum duration
+   - Metrics stream: 30 minutes
+   - Logs stream: 60 minutes
+   - Server sends timeout error event
+   - `cleanup()` called to free all resources
+
+5. **Stream errors:** Error on request or reply stream
+   - Error event listener triggers `cleanup()`
+   - All resources freed immediately
+
+## Memory Leak Prevention
+
+### Problem Statement
+
+Long-lived SSE connections can cause memory leaks if resources are not properly cleaned up:
+
+1. **Interval leaks:** `setInterval` calls without corresponding `clearInterval`
+2. **Timeout leaks:** `setTimeout` calls without corresponding `clearTimeout`
+3. **Event listener leaks:** Event listeners not removed on disconnect
+4. **Redis subscription leaks:** Subscriptions not properly unsubscribed
+5. **Indefinite connections:** No timeout mechanism allowing connections to persist forever
+6. **Error accumulation:** Errors in callbacks not properly handled, resources not freed
+
+### Solution Implemented
+
+#### 1. Centralized Cleanup Function
+
+Both endpoints now have a centralized `cleanup()` function that:
+
+- Checks if already cleaned up (idempotent)
+- Clears all intervals
+- Clears all timeouts
+- Unsubscribes from Redis channels
+- Removes event listeners
+- Logs connection statistics for monitoring
+
+#### 2. Connection State Tracking
+
+Instead of a simple boolean, connection state is now a comprehensive object:
+
+```typescript
+const connectionState = {
+  isValid: boolean, // Connection validity flag
+  startTime: number, // Connection start timestamp
+  metricsCount: number, // Messages sent counter (metrics)
+  messagesReceived: number, // Messages received counter (logs)
+  validationAttempts: number, // Token validation attempts
+  errorCount: number, // Error counter for circuit breaker
+};
+```
+
+#### 3. Resource Tracking
+
+All resources are explicitly tracked:
+
+```typescript
+let metricsInterval: NodeJS.Timeout | null = null;
+let tokenValidationInterval: NodeJS.Timeout | null = null;
+let timeoutHandle: NodeJS.Timeout | null = null;
+let isSubscribed: boolean = false; // Redis subscription flag
+```
+
+#### 4. Error Handling
+
+- All async operations wrapped in try-catch
+- Error counter increments on failures
+- Connection closes after 3 consecutive errors
+- All write operations wrapped in try-catch to handle broken pipes
+- Cleanup called on all error paths
+
+#### 5. Connection Timeout
+
+- Metrics stream: 30 minutes (configurable via `CONNECTION_TIMEOUT_MS`)
+- Logs stream: 60 minutes (configurable via `CONNECTION_TIMEOUT_MS`)
+- Prevents indefinite connections from accumulating
+- Timeout sends error event to client before closing
+
+#### 6. Multiple Error Event Listeners
+
+Error handling on all possible failure points:
+
+- `request.raw.on('error')` - Client connection errors
+- `request.raw.on('close')` - Client disconnect
+- `reply.raw.on('error')` - Server write errors
+- Token validation errors
+- Redis subscription errors
+- Database query errors
+- Docker API errors
+
+#### 7. Graceful Degradation
+
+- Token validation failure → Close connection gracefully
+- Redis subscription failure → Return 500 error before establishing stream
+- Write errors → Increment counter, close after threshold
+- Database errors → Increment counter, close after threshold
+
+### Monitoring and Observability
+
+Connection statistics logged on cleanup:
+
+```
+SSE metrics connection cleaned up for user {userId}.
+Duration: {duration}ms, Metrics sent: {count}, Errors: {errorCount}
+```
+
+This helps identify:
+
+- Average connection duration
+- Message throughput
+- Error rates
+- Abnormal patterns (e.g., connections closing too quickly)
+
+### Testing
+
+See `apps/api/src/sse-memory-leak.test.ts` for comprehensive test coverage:
+
+- ✅ Error handling in callbacks
+- ✅ Multiple consecutive errors
+- ✅ Interval cleanup on disconnect
+- ✅ Timeout cleanup on disconnect
+- ✅ Redis subscription cleanup
+- ✅ Token expiration handling
+- ✅ Write error handling
+- ✅ Connection timeout mechanism
+- ✅ Connection state tracking
 
 ### Why Periodic Token Validation?
 
