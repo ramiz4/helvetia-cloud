@@ -21,6 +21,7 @@ import {
   LOG_REQUESTS,
   LOG_RESPONSES,
 } from './config/constants';
+import { createRateLimitConfigs } from './config/rateLimit';
 import { initializeContainer, resolve, TOKENS } from './di';
 import { verifyGitHubSignature } from './handlers/webhook.handler';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
@@ -486,43 +487,8 @@ fastify.register(rateLimit, {
   },
 });
 
-// Stricter rate limiting for authentication endpoints
-const authRateLimitConfig = {
-  max: isTestEnv ? 10000 : parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
-  timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',
-  redis: redisConnection,
-  nameSpace: 'helvetia-auth-rate-limit:',
-  skipOnError: true,
-  addHeadersOnExceeding: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-  addHeaders: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-};
-
-// Stricter rate limiting for SSE/streaming endpoints
-const wsRateLimitConfig = {
-  max: isTestEnv ? 10000 : parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
-  timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
-  redis: redisConnection,
-  nameSpace: 'helvetia-ws-rate-limit:',
-  skipOnError: true,
-  addHeadersOnExceeding: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-  addHeaders: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-};
+// Create rate limit configs
+const { authRateLimitConfig, wsRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
 // Error handler for body size limit exceeded
 fastify.setErrorHandler((error: Error & { code?: string }, request, reply) => {

@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { BODY_LIMIT_SMALL } from '../config/constants';
+import { createRateLimitConfigs } from '../config/rateLimit';
 import { ServiceController } from '../controllers/ServiceController';
 import { resolve } from '../di';
 
@@ -9,6 +10,10 @@ import { resolve } from '../di';
  */
 export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
   const controller = resolve<ServiceController>(Symbol.for('ServiceController'));
+
+  // Get rate limit config
+  const redis = (fastify as any).redis;
+  const { wsRateLimitConfig } = createRateLimitConfigs(redis);
 
   /**
    * GET /services
@@ -98,7 +103,13 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
    * GET /services/metrics/stream
    * SSE endpoint for real-time metrics streaming
    */
-  fastify.get('/services/metrics/stream', async (request, reply) => {
-    return controller.streamMetrics(request, reply);
-  });
+  fastify.get(
+    '/services/metrics/stream',
+    {
+      config: { rateLimit: wsRateLimitConfig },
+    },
+    async (request, reply) => {
+      return controller.streamMetrics(request, reply);
+    },
+  );
 };
