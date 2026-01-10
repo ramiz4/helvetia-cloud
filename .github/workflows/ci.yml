@@ -48,6 +48,9 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.7.0
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
