@@ -152,7 +152,7 @@ Start the core services (Database, Redis, Docker Socket Proxy, and Traefik):
 docker-compose up -d postgres redis docker-socket-proxy traefik
 ```
 
-> **Security Note**: The Docker Socket Proxy provides a security layer between services and the Docker daemon, restricting API access with ACLs. See [DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md) for details.
+> **Security Note**: The Docker Socket Proxy provides a security layer between services and the Docker daemon, restricting API access with ACLs. See [DOCKER_SECURITY_HARDENING.md](./.docs/DOCKER_SECURITY_HARDENING.md) for details.
 
 ### 4. Initialize & Start
 
@@ -242,17 +242,17 @@ docker-compose -f docker-compose.test.yml down -v
 
 **Test Coverage**: The project maintains a minimum 80% code coverage threshold across all packages.
 
-For detailed information about integration tests, see [INTEGRATION_TESTS.md](./INTEGRATION_TESTS.md).
+For detailed information about integration tests, see [INTEGRATION_TESTS.md](./.docs/INTEGRATION_TESTS.md).
 
 ---
 
 ## 🗺 Roadmap
 
-Stay updated with our progress and future plans in the [ROADMAP.md](./ROADMAP.md).
+Stay updated with our progress and future plans in the [ROADMAP.md](./.docs/ROADMAP.md).
 
 ## 🏗 Architecture
 
-For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./ARCHITECTURE.md).
+For a deep dive into how Helvetia Cloud works, check out [ARCHITECTURE.md](./.docs/ARCHITECTURE.md).
 
 ## 📊 Monitoring
 

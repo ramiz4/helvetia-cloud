@@ -384,7 +384,7 @@ docker logs -f docker-socket-proxy
 
 - [DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md) - Comprehensive security guide
 - [SECURITY.md](./SECURITY.md) - Overall security guidelines
-- [README.md](./README.md) - Setup instructions
+- [README.md](../README.md) - Setup instructions
 
 ## Further Improvements
 
