@@ -43,7 +43,8 @@ export class DeploymentOrchestratorService {
     }
 
     if (service.userId !== userId) {
-      throw new ForbiddenError('Unauthorized access to service');
+      // Return 404 instead of 403 to avoid leaking service existence
+      throw new NotFoundError('Service not found');
     }
 
     // Create deployment record
@@ -97,7 +98,8 @@ export class DeploymentOrchestratorService {
     }
 
     if (service.userId !== userId) {
-      throw new ForbiddenError('Unauthorized access to service');
+      // Return 404 instead of 403 to avoid leaking service existence
+      throw new NotFoundError('Service not found');
     }
 
     return this.deploymentRepository.findByServiceId(serviceId, options);
@@ -162,7 +164,8 @@ export class DeploymentOrchestratorService {
     }
 
     if (service.userId !== userId) {
-      throw new ForbiddenError('Unauthorized access to service');
+      // Return 404 instead of 403 to avoid leaking service existence
+      throw new NotFoundError('Service not found');
     }
 
     await this.deploymentRepository.deleteByServiceId(serviceId);
@@ -180,7 +183,8 @@ export class DeploymentOrchestratorService {
     }
 
     if (service.userId !== userId) {
-      throw new ForbiddenError('Unauthorized access to service');
+      // Return 404 instead of 403 to avoid leaking service existence
+      throw new NotFoundError('Service not found');
     }
 
     return this.deploymentRepository.countByServiceId(serviceId);

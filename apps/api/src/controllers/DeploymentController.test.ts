@@ -195,7 +195,7 @@ describe('DeploymentController', () => {
       expect(mockReply.send).toHaveBeenCalledWith({ error: 'Service not found' });
     });
 
-    it('should return 403 when user unauthorized', async () => {
+    it('should return 404 when user unauthorized', async () => {
       mockRequest.params = { id: 'service-1' };
       vi.mocked(mockDeploymentService.createAndQueueDeployment).mockRejectedValue(
         new ForbiddenError('Unauthorized access to service'),
@@ -203,8 +203,8 @@ describe('DeploymentController', () => {
 
       await controller.deployService(mockRequest as any, mockReply as any);
 
-      expect(mockReply.status).toHaveBeenCalledWith(403);
-      expect(mockReply.send).toHaveBeenCalledWith({ error: 'Unauthorized access to service' });
+      expect(mockReply.status).toHaveBeenCalledWith(404);
+      expect(mockReply.send).toHaveBeenCalledWith({ error: 'Service not found' });
     });
   });
 

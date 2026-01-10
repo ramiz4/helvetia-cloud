@@ -285,6 +285,7 @@ describe('Rate Limiting', () => {
     };
 
     vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as never);
+    vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
     vi.mocked(prisma.deployment.create).mockResolvedValue(mockDeployment as never);
     vi.mocked(prisma.service.update).mockResolvedValue(mockService as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);

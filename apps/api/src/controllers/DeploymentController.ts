@@ -35,19 +35,23 @@ export class DeploymentController {
     const user = (request as any).user;
 
     try {
+      // Create deployment (this includes service existence and ownership validation)
+      const deployment = await this.deploymentService.createAndQueueDeployment(id, user.id);
+
       // Update service status to DEPLOYING with distributed lock
+      // This is done after validation to avoid updating non-existent services
       await withStatusLock(id, async () => {
         await this.serviceRepository.update(id, { status: 'DEPLOYING' });
       });
 
-      const deployment = await this.deploymentService.createAndQueueDeployment(id, user.id);
       return deployment;
     } catch (error) {
       if (error instanceof NotFoundError) {
         return reply.status(404).send({ error: error.message });
       }
       if (error instanceof ForbiddenError) {
-        return reply.status(403).send({ error: error.message });
+        // Should not happen anymore, but keep for safety
+        return reply.status(404).send({ error: 'Service not found' });
       }
       throw error;
     }
@@ -177,7 +181,8 @@ export class DeploymentController {
         return reply.status(404).send({ error: error.message });
       }
       if (error instanceof ForbiddenError) {
-        return reply.status(403).send({ error: error.message });
+        // Should not happen anymore, but keep for safety
+        return reply.status(404).send({ error: 'Service not found' });
       }
       throw error;
     }
