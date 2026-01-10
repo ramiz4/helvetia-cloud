@@ -1,4 +1,11 @@
 services:
+  # ⚠️ DATABASE MIGRATIONS
+  # Before starting services, ensure database migrations are applied:
+  # 1. Start postgres: docker-compose up -d postgres
+  # 2. Run migrations: pnpm migrate:deploy
+  # 3. Start all services: docker-compose up -d
+  # See DATABASE_MIGRATIONS.md for detailed migration workflow
+
   # Docker Socket Proxy - Security layer for Docker API access
   # This service provides a secure proxy to the Docker socket with ACL-based restrictions
   # See DOCKER_SECURITY_HARDENING.md for details
