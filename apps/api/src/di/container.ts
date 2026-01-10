@@ -20,7 +20,7 @@ import { TOKENS } from './tokens';
  */
 export function initializeContainer(): void {
   // Register PrismaClient as a singleton
-  container.registerInstance<PrismaClient>(TOKENS.PrismaClient, prisma);
+  container.registerInstance<PrismaClient>('PrismaClient', prisma);
 
   // Register repository implementations
   container.registerSingleton(TOKENS.ServiceRepository, PrismaServiceRepository);

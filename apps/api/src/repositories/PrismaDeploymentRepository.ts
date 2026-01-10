@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import {
   Deployment,
   DeploymentCreateInput,
@@ -12,7 +12,7 @@ import {
  */
 @injectable()
 export class PrismaDeploymentRepository implements IDeploymentRepository {
-  constructor(private prisma: PrismaClient) {}
+  constructor(@inject('PrismaClient') private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Deployment | null> {
     return this.prisma.deployment.findUnique({ where: { id } });

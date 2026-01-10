@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { IServiceRepository, Service, ServiceCreateInput, ServiceUpdateInput } from '../interfaces';
 
 /**
@@ -7,7 +7,7 @@ import { IServiceRepository, Service, ServiceCreateInput, ServiceUpdateInput } f
  */
 @injectable()
 export class PrismaServiceRepository implements IServiceRepository {
-  constructor(private prisma: PrismaClient) {}
+  constructor(@inject('PrismaClient') private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Service | null> {
     return this.prisma.service.findUnique({ where: { id } });
