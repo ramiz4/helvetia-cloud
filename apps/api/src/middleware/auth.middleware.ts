@@ -1,0 +1,43 @@
+import type { FastifyRequest, FastifyReply } from 'fastify';
+
+/**
+ * List of routes that don't require authentication
+ */
+export const PUBLIC_ROUTES = [
+  '/health',
+  '/webhooks/github',
+  '/auth/github',
+  '/auth/refresh',
+  '/auth/logout',
+];
+
+/**
+ * Authentication middleware
+ * Verifies JWT token for protected routes
+ */
+export async function authenticateMiddleware(request: FastifyRequest, reply: FastifyReply) {
+  const isPublicRoute = PUBLIC_ROUTES.includes(request.routeOptions?.url || '');
+
+  if (isPublicRoute) {
+    return;
+  }
+
+  try {
+    await request.jwtVerify();
+  } catch (err) {
+    reply.send(err);
+  }
+}
+
+/**
+ * Utility function to validate token without throwing
+ * Used for SSE connections to check token expiration
+ */
+export async function validateToken(request: FastifyRequest): Promise<boolean> {
+  try {
+    await request.jwtVerify();
+    return true;
+  } catch {
+    return false;
+  }
+}
