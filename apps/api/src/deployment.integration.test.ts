@@ -88,7 +88,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const deployment = JSON.parse(response.body);
       expect(deployment).toHaveProperty('id');
-      expect(deployment.status).toMatch(/QUEUED|BUILDING/);
+      expect(deployment.status).toBe('QUEUED');
       expect(deployment.serviceId).toBe(service.id);
 
       // Verify deployment was created in database
@@ -96,7 +96,7 @@ describeIf('Deployment Flow Integration Tests', () => {
         where: { id: deployment.id },
       });
       expect(dbDeployment).toBeDefined();
-      expect(dbDeployment?.status).toMatch(/QUEUED|BUILDING/);
+      expect(dbDeployment?.status).toBe('QUEUED');
 
       // Verify service status was updated to DEPLOYING
       const updatedService = await prisma.service.findUnique({
@@ -181,7 +181,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const deployment = JSON.parse(response.body);
-      expect(deployment.status).toMatch(/QUEUED|BUILDING/);
+      expect(deployment.status).toBe('QUEUED');
     });
 
     it('should handle COMPOSE service deployment', async () => {
@@ -208,7 +208,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       expect(response.statusCode).toBe(200);
       const deployment = JSON.parse(response.body);
-      expect(deployment.status).toMatch(/QUEUED|BUILDING/);
+      expect(deployment.status).toBe('QUEUED');
     });
 
     it('should inject GitHub token into repo URL when available', async () => {
