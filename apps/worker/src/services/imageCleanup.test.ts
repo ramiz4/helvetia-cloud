@@ -22,6 +22,7 @@ vi.mock('../config/constants', () => ({
 }));
 
 describe('Image Cleanup Service', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDocker: any;
 
   beforeEach(() => {
@@ -264,7 +265,7 @@ describe('Image Cleanup Service', () => {
 
       mockDocker.listContainers.mockResolvedValue([]);
 
-      const conflictError: any = new Error('Conflict');
+      const conflictError: Error & { statusCode?: number } = new Error('Conflict');
       conflictError.statusCode = 409;
 
       const mockImage = {
@@ -340,7 +341,7 @@ describe('Image Cleanup Service', () => {
       const { cleanupDockerImages } = await import('./imageCleanup');
 
       // Mock dangling images
-      mockDocker.listImages.mockImplementation((opts?: any) => {
+      mockDocker.listImages.mockImplementation((opts?: { filters?: string }) => {
         if (opts?.filters) {
           // Dangling images
           return Promise.resolve([{ Id: 'sha256:dangling1', Size: 1024 * 1024 * 50 }]);

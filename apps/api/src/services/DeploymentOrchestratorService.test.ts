@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Queue } from 'bullmq';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

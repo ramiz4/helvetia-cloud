@@ -7,6 +7,7 @@ import type {
   IDeploymentRepository,
   IServiceRepository,
   IUserRepository,
+  Service,
 } from '../interfaces';
 import { decrypt } from '../utils/crypto';
 
@@ -123,7 +124,7 @@ export class DeploymentOrchestratorService {
    * Prepare deployment job data with GitHub token injection
    */
   private async prepareDeploymentJobData(
-    service: any,
+    service: Service,
     deploymentId: string,
     userId: string,
   ): Promise<QueueDeploymentJobDto> {

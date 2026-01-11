@@ -227,9 +227,16 @@ export class DeploymentController {
    * GET /deployments/:id/logs/stream
    * SSE endpoint for real-time deployment logs
    */
-  async streamDeploymentLogs(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async streamDeploymentLogs(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void | FastifyReply> {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     try {
       // Verify deployment belongs to user
@@ -268,6 +275,7 @@ export class DeploymentController {
     let isSubscribed = false;
 
     // Get Redis connection from fastify instance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const subConnection = (request.server as any).redis;
     const channel = `deployment-logs:${id}`;
 

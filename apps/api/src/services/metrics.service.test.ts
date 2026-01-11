@@ -83,7 +83,7 @@ describe('MetricsService', () => {
 
     // Verify it's an array
     expect(Array.isArray(metricsJSON)).toBe(true);
-    expect((metricsJSON as any[]).length).toBeGreaterThan(0);
+    expect((metricsJSON as unknown[]).length).toBeGreaterThan(0);
   });
 
   it('should reset metrics', async () => {

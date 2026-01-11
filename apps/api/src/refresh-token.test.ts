@@ -94,6 +94,7 @@ vi.mock('@fastify/rate-limit', () => {
   };
 });
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { fastify } from './server';
 
 // Get references to mocked modules after imports

@@ -42,11 +42,20 @@ export class GitHubController {
       const orgs = await this.githubService.getUserOrganizations(accessToken);
       console.log(`Fetched ${orgs.length} organizations for user ${user.id}`);
       return orgs;
-    } catch (error: any) {
-      console.error('GitHub Orgs API error:', error.data || error.message);
-      return reply
-        .status(error.status || 500)
-        .send(error.data || { error: 'Failed to fetch GitHub organizations' });
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
+      const status = err.status || 500;
+      const data = err.data || {};
+      const message = err.message || 'Failed to fetch GitHub organizations';
+
+      console.error('GitHub Orgs API error:', message);
+
+      if (err.status) {
+        return reply.status(status).send(data);
+      }
+
+      return reply.status(500).send({ error: message });
     }
   }
 
@@ -78,8 +87,8 @@ export class GitHubController {
       }
 
       const repos = await this.githubService.getRepositories(accessToken, {
-        sort: sort as any,
-        type: type as any,
+        sort: sort as 'created' | 'updated' | 'pushed' | 'full_name',
+        type: type as 'all' | 'owner' | 'public' | 'private' | 'member',
         per_page: per_page ? parseInt(per_page) : undefined,
         page: page ? parseInt(page) : undefined,
         org,
@@ -87,17 +96,19 @@ export class GitHubController {
 
       return repos;
     } catch (error: unknown) {
-      const err = error as Error & { status?: number; data?: { message?: string } };
-      console.error('GitHub Repos API error:', err.data || err.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
+      const status = err.status || 500;
+      const data = err.data || {};
+      const message = err.message || 'Failed to fetch GitHub repositories';
 
-      // Propagate GitHub API error with original status and message
-      if (err.status && err.data) {
-        const responseData = err.data.message ? { message: err.data.message } : err.data;
-        return reply.status(err.status).send(responseData);
+      console.error('GitHub Repos API error:', message);
+
+      if (err.status) {
+        return reply.status(status).send(data);
       }
 
-      // Fallback to generic error
-      return reply.status(500).send({ error: 'Failed to fetch GitHub repositories' });
+      return reply.status(500).send({ error: message });
     }
   }
 
@@ -124,22 +135,25 @@ export class GitHubController {
 
       const branches = await this.githubService.getRepositoryBranches(accessToken, owner, name);
       return branches;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
+      const status = err.status || 500;
+      const data = err.data || {};
+      const message = err.message || 'Failed to fetch branches';
+
       // Handle validation errors from the service
-      if (error.message?.includes('Invalid repository')) {
-        return reply.status(400).send({ error: error.message });
+      if (message?.includes('Invalid repository')) {
+        return reply.status(400).send({ error: message });
       }
 
-      console.error('GitHub API error:', error.data || error.message);
+      console.error('GitHub API error:', message);
 
-      // Propagate GitHub API error with original status and message
-      if (error.status && error.data) {
-        const responseData = error.data.message ? { message: error.data.message } : error.data;
-        return reply.status(error.status).send(responseData);
+      if (err.status) {
+        return reply.status(status).send(data);
       }
 
-      // Fallback to generic error
-      return reply.status(500).send({ error: 'Failed to fetch branches' });
+      return reply.status(500).send({ error: message });
     }
   }
 

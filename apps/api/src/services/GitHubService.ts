@@ -117,12 +117,11 @@ export class GitHubService implements IGitHubService {
    */
   private handleGitHubError(error: unknown, defaultMessage: string): never {
     // Check if error has response property (axios error structure)
-    const err = error as any;
-    if (err?.response?.status && err?.response?.data) {
+    if (axios.isAxiosError(error) && error.response) {
       // GitHub API returned an error response
       throw {
-        status: err.response.status,
-        data: err.response.data,
+        status: error.response.status,
+        data: error.response.data,
         message: defaultMessage,
       };
     }

@@ -220,7 +220,7 @@ export class AuthenticationService {
       });
 
       return response.data;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedError('Failed to fetch user information from GitHub');
     }
   }

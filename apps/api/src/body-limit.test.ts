@@ -110,6 +110,7 @@ vi.mock('axios', () => {
   };
 });
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BODY_LIMIT_GLOBAL, BODY_LIMIT_SMALL, BODY_LIMIT_STANDARD, fastify } from './server';
 
 describe('Request Body Size Limits', () => {

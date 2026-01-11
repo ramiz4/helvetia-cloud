@@ -1,4 +1,5 @@
 import Docker from 'dockerode';
+import { Readable } from 'stream';
 
 /**
  * Validation result for Dockerfile operations
@@ -228,7 +229,7 @@ export async function validateDockerfileDryRun(
         // Don't use cache for validation
         nocache: false,
       },
-    )) as any;
+    )) as unknown as Readable;
 
     // Read the first few events to catch syntax errors
     let validationError: string | null = null;

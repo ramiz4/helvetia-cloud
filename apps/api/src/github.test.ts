@@ -103,7 +103,16 @@ vi.mock('dockerode', () => {
   };
 });
 
-vi.mock('axios');
+vi.mock('axios', () => {
+  return {
+    default: {
+      post: vi.fn(),
+      get: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      isAxiosError: (payload: any) => !!(payload && payload.response),
+    },
+  };
+});
 vi.mock('./utils/crypto', () => ({
   encrypt: vi.fn((val) => val),
   decrypt: vi.fn((val) => val),

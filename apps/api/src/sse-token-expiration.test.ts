@@ -90,6 +90,7 @@ vi.mock('@fastify/rate-limit', () => {
   };
 });
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { fastify } from './server';
 
 describe('SSE Token Expiration Handling', () => {

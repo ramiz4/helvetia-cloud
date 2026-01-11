@@ -5,7 +5,9 @@ import { DatabaseDeploymentStrategy } from './DatabaseDeploymentStrategy';
 
 describe('DatabaseDeploymentStrategy', () => {
   let strategy: DatabaseDeploymentStrategy;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDocker: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockJob: any;
 
   beforeEach(() => {
@@ -61,9 +63,11 @@ describe('DatabaseDeploymentStrategy', () => {
     it('should deploy POSTGRES with correct image', async () => {
       const mockStream = {};
       mockDocker.pull.mockResolvedValue(mockStream);
-      mockDocker.modem.followProgress.mockImplementation((_stream: any, callback: any) => {
-        callback(null, []);
-      });
+      mockDocker.modem.followProgress.mockImplementation(
+        (_stream: unknown, callback: (err: unknown, result?: unknown[]) => void) => {
+          callback(null, []);
+        },
+      );
 
       const context: DeploymentContext = {
         job: mockJob,
@@ -87,9 +91,11 @@ describe('DatabaseDeploymentStrategy', () => {
     it('should deploy REDIS with correct image', async () => {
       const mockStream = {};
       mockDocker.pull.mockResolvedValue(mockStream);
-      mockDocker.modem.followProgress.mockImplementation((_stream: any, callback: any) => {
-        callback(null, []);
-      });
+      mockDocker.modem.followProgress.mockImplementation(
+        (_stream: unknown, callback: (err: unknown, result?: unknown[]) => void) => {
+          callback(null, []);
+        },
+      );
 
       const context: DeploymentContext = {
         job: mockJob,
@@ -112,9 +118,11 @@ describe('DatabaseDeploymentStrategy', () => {
     it('should deploy MYSQL with correct image', async () => {
       const mockStream = {};
       mockDocker.pull.mockResolvedValue(mockStream);
-      mockDocker.modem.followProgress.mockImplementation((_stream: any, callback: any) => {
-        callback(null, []);
-      });
+      mockDocker.modem.followProgress.mockImplementation(
+        (_stream: unknown, callback: (err: unknown, result?: unknown[]) => void) => {
+          callback(null, []);
+        },
+      );
 
       const context: DeploymentContext = {
         job: mockJob,
@@ -171,9 +179,11 @@ describe('DatabaseDeploymentStrategy', () => {
     it('should handle followProgress errors', async () => {
       const mockStream = {};
       mockDocker.pull.mockResolvedValue(mockStream);
-      mockDocker.modem.followProgress.mockImplementation((_stream: any, callback: any) => {
-        callback(new Error('Stream error'));
-      });
+      mockDocker.modem.followProgress.mockImplementation(
+        (_stream: unknown, callback: (err: unknown, result?: unknown[]) => void) => {
+          callback(new Error('Stream error'));
+        },
+      );
 
       const context: DeploymentContext = {
         job: mockJob,

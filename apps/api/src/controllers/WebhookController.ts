@@ -58,6 +58,7 @@ export class WebhookController {
   /**
    * Helper to create and queue deployment
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async createAndQueueDeployment(service: any, commitHash: string): Promise<any> {
     const deployment = await this.deploymentRepository.create({
       serviceId: service.id,
@@ -182,7 +183,10 @@ export class WebhookController {
    * POST /webhooks/github
    * Handle GitHub webhook events (Push and Pull Request)
    */
-  async handleGitHubWebhook(request: FastifyRequest, reply: FastifyReply): Promise<any> {
+  async handleGitHubWebhook(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void | FastifyReply> {
     // Verify GitHub webhook signature
     const signature = request.headers['x-hub-signature-256'] as string;
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
@@ -252,7 +256,11 @@ export class WebhookController {
   /**
    * Handle GitHub Pull Request events
    */
-  private async handlePullRequestEvent(payload: any, reply: FastifyReply): Promise<any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async handlePullRequestEvent(
+    payload: any,
+    reply: FastifyReply,
+  ): Promise<void | FastifyReply> {
     try {
       const pr = payload.pull_request;
       const action = payload.action;
@@ -330,11 +338,12 @@ export class WebhookController {
       }
 
       return reply.status(200).send({ skipped: `Action ${action} not handled` });
-    } catch (error: any) {
-      console.error('Error handling GitHub PR webhook:', error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error handling GitHub PR webhook:', err.message);
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
-        message: error.message,
+        message: err.message,
       });
     }
   }
@@ -342,7 +351,8 @@ export class WebhookController {
   /**
    * Handle GitHub Push events
    */
-  private async handlePushEvent(payload: any, reply: FastifyReply): Promise<any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async handlePushEvent(payload: any, reply: FastifyReply): Promise<void | FastifyReply> {
     // Basic check for push event
     if (!payload.repository || !payload.ref) {
       return reply.status(200).send({ skipped: 'Not a push or PR event' });
@@ -375,11 +385,12 @@ export class WebhookController {
         await this.createAndQueueDeployment(service, payload.after);
       }
       return reply.status(200).send({ success: true, servicesTriggered: services.length });
-    } catch (error: any) {
-      console.error('Error handling GitHub push webhook:', error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error handling GitHub push webhook:', err.message);
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
-        message: error.message,
+        message: err.message,
       });
     }
   }
