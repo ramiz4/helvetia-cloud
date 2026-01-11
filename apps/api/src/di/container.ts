@@ -5,6 +5,7 @@ import { container } from 'tsyringe';
 import { DeploymentController } from '../controllers/DeploymentController';
 import { GitHubController } from '../controllers/GitHubController';
 import { ServiceController } from '../controllers/ServiceController';
+import { WebhookController } from '../controllers/WebhookController';
 import { DockerContainerOrchestrator } from '../orchestration';
 import {
   PrismaDeploymentRepository,
@@ -50,6 +51,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.ServiceController, ServiceController);
   container.registerSingleton(TOKENS.DeploymentController, DeploymentController);
   container.registerSingleton(TOKENS.GitHubController, GitHubController);
+  container.registerSingleton(TOKENS.WebhookController, WebhookController);
 }
 
 /**
