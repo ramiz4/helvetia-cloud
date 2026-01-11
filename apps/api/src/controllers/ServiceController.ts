@@ -411,10 +411,10 @@ export class ServiceController {
     console.log(`SSE client connected for real-time metrics: ${user.id}`);
 
     // Import helper function for token validation
-    const { validateToken } = await import('../utils/tokenValidation');
+    const { validateToken } = await import('../utils/tokenValidation.js');
     const { prisma } = await import('database');
     const { METRICS_UPDATE_INTERVAL_MS, CONNECTION_TIMEOUT_MS } =
-      await import('../config/constants');
+      await import('../config/constants.js');
 
     // Track connection state for better observability
     const connectionState = {
