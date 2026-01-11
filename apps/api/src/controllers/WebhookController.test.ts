@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import 'reflect-metadata';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebhookController } from './WebhookController';
 
