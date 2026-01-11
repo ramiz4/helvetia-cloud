@@ -1,14 +1,17 @@
 import '../types/fastify';
 
+import { prisma } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
+import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/constants';
 import { getServiceMetrics } from '../handlers/metrics.handler';
 import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from '../schemas/service.schema';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { determineServiceStatus } from '../utils/helpers/status.helper';
+import { validateToken } from '../utils/tokenValidation';
 
 /**
  * ServiceController
@@ -428,183 +431,184 @@ export class ServiceController {
     if (!user) {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
+    try {
+      // Set SSE headers with CORS support
+      const origin = getSafeOrigin(request.headers.origin);
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Credentials': 'true',
+      });
 
-    // Set SSE headers with CORS support
-    reply.raw.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no', // Disable nginx buffering
-      'Access-Control-Allow-Origin': getSafeOrigin(request.headers.origin),
-      'Access-Control-Allow-Credentials': 'true',
-    });
+      console.log(`SSE client connected for real-time metrics: ${user.id}`);
 
-    console.log(`SSE client connected for real-time metrics: ${user.id}`);
+      // Track connection state for better observability
+      const connectionState = {
+        isValid: true,
+        startTime: Date.now(),
+        metricsCount: 0,
+        errorCount: 0,
+      };
 
-    // Import helper function for token validation
-    const { validateToken } = await import('../utils/tokenValidation.js');
-    const { prisma } = await import('database');
-    const { METRICS_UPDATE_INTERVAL_MS, CONNECTION_TIMEOUT_MS } =
-      await import('../config/constants.js');
+      // Store interval reference for cleanup
+      let metricsInterval: NodeJS.Timeout | null = null;
+      let timeoutHandle: NodeJS.Timeout | null = null;
 
-    // Track connection state for better observability
-    const connectionState = {
-      isValid: true,
-      startTime: Date.now(),
-      metricsCount: 0,
-      errorCount: 0,
-    };
+      // Cleanup function to ensure all resources are freed
+      const cleanup = () => {
+        if (!connectionState.isValid) return; // Already cleaned up
 
-    // Store interval reference for cleanup
-    let metricsInterval: NodeJS.Timeout | null = null;
-    let timeoutHandle: NodeJS.Timeout | null = null;
+        connectionState.isValid = false;
 
-    // Cleanup function to ensure all resources are freed
-    const cleanup = () => {
-      if (!connectionState.isValid) return; // Already cleaned up
-
-      connectionState.isValid = false;
-
-      if (metricsInterval) {
-        clearInterval(metricsInterval);
-        metricsInterval = null;
-      }
-
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
-      }
-
-      console.log(
-        `SSE metrics connection cleaned up for user ${user.id}. ` +
-          `Duration: ${Date.now() - connectionState.startTime}ms, ` +
-          `Metrics sent: ${connectionState.metricsCount}, ` +
-          `Errors: ${connectionState.errorCount}`,
-      );
-    };
-
-    const sendMetrics = async () => {
-      // Check connection validity before proceeding
-      if (!connectionState.isValid) {
-        cleanup();
-        return;
-      }
-
-      try {
-        // Validate token before sending metrics
-        const isValid = await validateToken(request);
-        if (!isValid) {
-          console.log(`Token expired for user ${user.id}, closing metrics stream`);
-          // Send error event to client
-          try {
-            reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
-            );
-            reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing token expiration message:', writeErr);
-          }
-          cleanup();
-          return;
+        if (metricsInterval) {
+          clearInterval(metricsInterval);
+          metricsInterval = null;
         }
 
-        const Docker = (await import('dockerode')).default;
-        const docker = new Docker();
-        const containers = await docker.listContainers({ all: true });
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+          timeoutHandle = null;
+        }
 
-        const services = await prisma.service.findMany({
-          where: { userId: user.id, deletedAt: null },
-          select: { id: true, name: true, type: true, status: true },
-        });
+        console.log(
+          `SSE metrics connection cleaned up for user ${user.id}. ` +
+            `Duration: ${Date.now() - connectionState.startTime}ms, ` +
+            `Metrics sent: ${connectionState.metricsCount}, ` +
+            `Errors: ${connectionState.errorCount}`,
+        );
+      };
 
-        const metricsPromises = services.map(async (s) => ({
-          id: s.id,
-          metrics: await getServiceMetrics(s.id, docker, containers, s),
-        }));
-
-        const results = await Promise.all(metricsPromises);
-
-        // Check if still valid before writing
+      const sendMetrics = async () => {
+        // Check connection validity before proceeding
         if (!connectionState.isValid) {
           cleanup();
           return;
         }
 
-        // Send it as an SSE event
-        reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
-        connectionState.metricsCount++;
-      } catch (err) {
-        connectionState.errorCount++;
-        console.error(`Error sending metrics via SSE (user ${user.id}):`, err);
+        try {
+          // Validate token before sending metrics
+          const isValid = await validateToken(request);
+          if (!isValid) {
+            console.log(`Token expired for user ${user.id}, closing metrics stream`);
+            // Send error event to client
+            try {
+              reply.raw.write(
+                `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
+              );
+              reply.raw.end();
+            } catch (writeErr) {
+              console.error('Error writing token expiration message:', writeErr);
+            }
+            cleanup();
+            return;
+          }
 
-        // If too many consecutive errors, close the connection
-        if (connectionState.errorCount >= 3) {
-          console.error(`Too many errors for user ${user.id}, closing connection`);
+          const Docker = (await import('dockerode')).default;
+          const docker = new Docker();
+          const containers = await docker.listContainers({ all: true });
+
+          const services = await prisma.service.findMany({
+            where: { userId: user.id, deletedAt: null },
+            select: { id: true, name: true, type: true, status: true },
+          });
+
+          const metricsPromises = services.map(async (s) => ({
+            id: s.id,
+            metrics: await getServiceMetrics(s.id, docker, containers, s),
+          }));
+
+          const results = await Promise.all(metricsPromises);
+
+          // Check if still valid before writing
+          if (!connectionState.isValid) {
+            cleanup();
+            return;
+          }
+
+          // Send it as an SSE event
+          reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
+          connectionState.metricsCount++;
+        } catch (err) {
+          connectionState.errorCount++;
+          console.error(`Error sending metrics via SSE (user ${user.id}):`, err);
+
+          // If too many consecutive errors, close the connection
+          if (connectionState.errorCount >= 3) {
+            console.error(`Too many errors for user ${user.id}, closing connection`);
+            try {
+              reply.raw.write(
+                `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
+              );
+              reply.raw.end();
+            } catch (writeErr) {
+              console.error('Error writing error message:', writeErr);
+            }
+            cleanup();
+          }
+        }
+      };
+
+      // Send immediate connection acknowledgment (makes it feel instant)
+      reply.raw.write(': connected\n\n');
+
+      // Fetch and send initial metrics asynchronously (non-blocking)
+      await sendMetrics();
+
+      // Set up periodic metrics updates
+      metricsInterval = setInterval(async () => {
+        if (!connectionState.isValid) {
+          cleanup();
+          return;
+        }
+        await sendMetrics();
+      }, METRICS_UPDATE_INTERVAL_MS);
+
+      const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
+
+      // Implement connection timeout
+      timeoutHandle = setTimeout(
+        () => {
+          console.log(`SSE metrics connection timeout for user ${user.id}`);
           try {
             reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
+              `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
             );
             reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing error message:', writeErr);
+          } catch (err) {
+            console.error('Error writing timeout message:', err);
           }
           cleanup();
-        }
-      }
-    };
+        },
+        isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
+      );
 
-    // Send immediate connection acknowledgment (makes it feel instant)
-    reply.raw.write(': connected\n\n');
-
-    // Fetch and send initial metrics asynchronously (non-blocking)
-    await sendMetrics();
-
-    // Set up periodic metrics updates
-    metricsInterval = setInterval(async () => {
-      if (!connectionState.isValid) {
+      // Clean up on client disconnect
+      request.raw.on('close', () => {
+        console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
         cleanup();
-        return;
-      }
-      await sendMetrics();
-    }, METRICS_UPDATE_INTERVAL_MS);
+      });
 
-    const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
-
-    // Implement connection timeout
-    timeoutHandle = setTimeout(
-      () => {
-        console.log(`SSE metrics connection timeout for user ${user.id}`);
-        try {
-          reply.raw.write(
-            `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
-          );
-          reply.raw.end();
-        } catch (err) {
-          console.error('Error writing timeout message:', err);
-        }
+      // Clean up on error
+      request.raw.on('error', (err) => {
+        console.error(`SSE metrics connection error for user ${user.id}:`, err);
         cleanup();
-      },
-      isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
-    );
+      });
 
-    // Clean up on client disconnect
-    request.raw.on('close', () => {
-      console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
-      cleanup();
-    });
+      reply.raw.on('error', (err) => {
+        console.error(`SSE metrics reply error for user ${user.id}:`, err);
+        cleanup();
+      });
 
-    // Clean up on error
-    request.raw.on('error', (err) => {
-      console.error(`SSE metrics connection error for user ${user.id}:`, err);
-      cleanup();
-    });
-
-    reply.raw.on('error', (err) => {
-      console.error(`SSE metrics reply error for user ${user.id}:`, err);
-      cleanup();
-    });
-
-    // Keep the connection open
-    return reply;
+      return reply;
+    } catch (err) {
+      console.error(`Error initializing SSE metrics stream for user ${user.id}:`, err);
+      if (!reply.raw.headersSent) {
+        return reply.status(500).send({ error: 'Failed to initialize metrics stream' });
+      }
+      return reply;
+    }
   }
 }

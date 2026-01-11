@@ -40,11 +40,14 @@ export function errorHandler(
   // Log unexpected errors
   request.log.error(error, 'Unexpected error occurred');
 
+  // Handle other errors with statusCode (like Fastify errors)
+  const statusCode = (error as FastifyError).statusCode || 500;
+
   // Handle all other errors as internal server errors
   const systemError = new AppError(
     ErrorCode.SYSTEM_ERROR,
-    process.env.NODE_ENV === 'production' ? undefined : error.message,
-    500,
+    process.env.NODE_ENV === 'production' && statusCode === 500 ? undefined : error.message,
+    statusCode,
   );
-  return reply.status(500).send(systemError.toJSON());
+  return reply.status(statusCode).send(systemError.toJSON());
 }
