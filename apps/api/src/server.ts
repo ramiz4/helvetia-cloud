@@ -22,7 +22,7 @@ import {
   LOG_RESPONSES,
 } from './config/constants';
 import { createRateLimitConfigs } from './config/rateLimit';
-import { initializeContainer, resolve, TOKENS } from './di';
+import { initializeContainer, registerInstance, resolve, TOKENS } from './di';
 import { verifyGitHubSignature } from './handlers/webhook.handler';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
 import { metricsService } from './services/metrics.service';
@@ -53,8 +53,7 @@ const deploymentQueue = new Queue('deployments', {
 });
 
 // Register deployment queue in DI container after creation
-import { registerInstance } from './di';
-registerInstance('DeploymentQueue', deploymentQueue);
+registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
 
 // Helper to create and queue deployment
 async function createAndQueueDeployment(service: any, commitHash: string) {

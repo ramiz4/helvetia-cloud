@@ -52,14 +52,19 @@ export class AppError extends Error {
    * Convert error to standard error response format
    */
   toJSON(): ErrorResponse {
-    return {
+    const errorObj: ErrorResponse = {
       success: false,
       error: {
         code: this.code,
         message: this.message,
         statusCode: this.statusCode,
-        ...(this.details && { details: this.details }),
       },
     };
+
+    if (this.details) {
+      errorObj.error.details = this.details;
+    }
+
+    return errorObj;
   }
 }
