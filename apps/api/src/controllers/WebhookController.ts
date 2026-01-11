@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import '../types/fastify';
+
+import type { Queue } from 'bullmq';
 import crypto from 'crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
@@ -20,7 +22,7 @@ export class WebhookController {
     @inject(Symbol.for('IUserRepository'))
     private userRepository: IUserRepository,
     @inject(Symbol.for('IDeploymentQueue'))
-    private deploymentQueue: any,
+    private deploymentQueue: Queue,
   ) {}
 
   /**
@@ -82,9 +84,9 @@ export class WebhookController {
       serviceName: service.name,
       port: service.port,
       envVars: service.envVars,
-      customDomain: (service as any).customDomain,
-      type: (service as any).type,
-      staticOutputDir: (service as any).staticOutputDir,
+      customDomain: service.customDomain,
+      type: service.type,
+      staticOutputDir: service.staticOutputDir,
     });
 
     return deployment;
@@ -120,15 +122,16 @@ export class WebhookController {
     }
 
     // Clean up associated volumes for database services
-    const serviceType = (service as any).type;
+    const serviceType = service.type;
     if (serviceType && ['POSTGRES', 'REDIS', 'MYSQL'].includes(serviceType)) {
       const volumeName = `helvetia-data-${service.name}`;
       try {
         const volume = docker.getVolume(volumeName);
         await volume.remove();
         console.log(`Removed volume ${volumeName} for service ${service.name}`);
-      } catch (err) {
-        if ((err as any).statusCode !== 404) {
+      } catch (err: unknown) {
+        const error = err as Error & { statusCode?: number };
+        if (error.statusCode !== 404) {
           console.error(`Failed to remove volume ${volumeName}:`, err);
         }
       }
@@ -161,9 +164,10 @@ export class WebhookController {
         const image = docker.getImage(tag);
         await image.remove({ force: true });
         console.log(`Removed image ${tag}`);
-      } catch (err) {
+      } catch (err: unknown) {
+        const error = err as Error & { statusCode?: number };
         // Don't log error if image doesn't exist
-        if ((err as any).statusCode !== 404) {
+        if (error.statusCode !== 404) {
           console.error(`Failed to remove image ${tag}:`, err);
         }
       }
@@ -197,7 +201,7 @@ export class WebhookController {
     }
 
     // Get raw body for signature verification
-    const rawBody = (request as any).rawBody;
+    const rawBody = request.rawBody;
 
     if (!rawBody) {
       console.warn('GitHub webhook received without raw body');
@@ -212,7 +216,25 @@ export class WebhookController {
       return reply.status(401).send({ error: 'Invalid signature' });
     }
 
-    const payload = request.body as any;
+    const payload = request.body as {
+      _isMalformed?: boolean;
+      _error?: string;
+      action?: string;
+      pull_request?: {
+        merged?: boolean;
+        head?: { ref?: string; sha?: string };
+        base?: { ref?: string };
+      };
+      ref?: string;
+      after?: string;
+      repository?: {
+        full_name?: string;
+        clone_url?: string;
+        html_url?: string;
+        ssh_url?: string;
+        git_url?: string;
+      };
+    };
 
     if (payload?._isMalformed) {
       return reply.status(400).send({ error: 'Invalid JSON payload', message: payload._error });

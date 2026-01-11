@@ -1,8 +1,11 @@
+import '../types/fastify';
+
 import { prisma } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import type { IUserRepository } from '../interfaces';
 import { AuthenticationService } from '../services';
+import type { JwtPayload } from '../types';
 import { revokeAllUserRefreshTokens } from '../utils/refreshToken';
 
 /**
@@ -31,7 +34,7 @@ export class AuthController {
     }
 
     try {
-      const jwtSign = (payload: any) => (request.server as any).jwt.sign(payload);
+      const jwtSign = (payload: JwtPayload) => request.server.jwt.sign(payload);
       const result = await this.authService.authenticateWithGitHub(code, jwtSign);
 
       // Set cookies
@@ -52,8 +55,9 @@ export class AuthController {
       });
 
       return { user: result.user, token: result.accessToken };
-    } catch (err: any) {
-      console.error('Auth error:', err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Auth error:', error.message);
       return reply.status(500).send({ error: 'Authentication failed' });
     }
   }
@@ -71,10 +75,10 @@ export class AuthController {
 
     try {
       const { verifyAndRotateRefreshToken } = await import('../utils/refreshToken.js');
-      const redisConnection = (request.server as any).redis;
+      const redisConnection = request.server.redis;
       const result = await verifyAndRotateRefreshToken(
         refreshToken,
-        request.server as any,
+        request.server,
         redisConnection,
       );
 
@@ -102,8 +106,9 @@ export class AuthController {
       });
 
       return { user: result.user, token: result.accessToken };
-    } catch (err: any) {
-      console.error('Refresh token error:', err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Refresh token error:', error.message);
       return reply.status(500).send({ error: 'Token refresh failed' });
     }
   }
@@ -117,9 +122,9 @@ export class AuthController {
       // Try to get user from token if present
       try {
         await request.jwtVerify();
-        const user = (request as any).user;
+        const user = request.user;
         if (user?.id) {
-          const redis = (request.server as any).redis;
+          const redis = request.server.redis;
           await revokeAllUserRefreshTokens(user.id, redis);
         }
       } catch {
@@ -131,8 +136,9 @@ export class AuthController {
       reply.clearCookie('refreshToken', { path: '/' });
 
       return { success: true };
-    } catch (err: any) {
-      console.error('Logout error:', err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Logout error:', error.message);
       return reply.status(500).send({ error: 'Logout failed' });
     }
   }
@@ -142,7 +148,10 @@ export class AuthController {
    * Get current user info
    */
   async getCurrentUser(request: FastifyRequest) {
-    const user = (request as any).user;
+    const user = request.user;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
     const dbUser = await this.userRepository.findById(user.id);
 
     if (!dbUser) {
@@ -162,7 +171,10 @@ export class AuthController {
    * Disconnect GitHub account
    */
   async disconnectGitHub(request: FastifyRequest, reply: FastifyReply) {
-    const user = (request as any).user;
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     await prisma.user.update({
       where: { id: user.id },

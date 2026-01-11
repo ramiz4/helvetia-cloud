@@ -12,7 +12,7 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
   const controller = resolve<WebhookController>(TOKENS.WebhookController);
 
   // Get rate limit config
-  const redis = (fastify as any).redis;
+  const redis = fastify.redis;
   const { authRateLimitConfig } = createRateLimitConfigs(redis);
 
   /**
@@ -23,7 +23,7 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(async (scope) => {
     // Custom content type parser that preserves raw body
     scope.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
-      (req as any).rawBody = body;
+      req.rawBody = body;
       try {
         const bodyString = body.toString();
         if (!bodyString) {
@@ -31,9 +31,10 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
         }
         const json = JSON.parse(bodyString);
         done(null, json);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as Error;
         // Pass the error to the handler via a special flag
-        done(null, { _isMalformed: true, _error: err.message });
+        done(null, { _isMalformed: true, _error: error.message });
       }
     });
 

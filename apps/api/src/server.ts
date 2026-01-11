@@ -1,6 +1,6 @@
 import './load-env';
+import './types/fastify';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
@@ -154,7 +154,7 @@ export const fastify = Fastify({
                 'content-type': request.headers['content-type'],
               },
               remoteAddress: request.ip,
-              userId: (request as any).user?.id,
+              userId: request.user?.id,
             };
           },
           res(reply) {
@@ -162,13 +162,13 @@ export const fastify = Fastify({
               statusCode: reply.statusCode,
             };
           },
-          err(error) {
+          err(error: Error & { code?: string; statusCode?: number }) {
             return {
               type: error.name,
               message: error.message,
               stack: error.stack || '',
-              code: (error as any).code,
-              statusCode: (error as any).statusCode,
+              code: error.code,
+              statusCode: error.statusCode,
             };
           },
         },
@@ -184,7 +184,7 @@ export const fastify = Fastify({
 });
 
 // Store redis connection on fastify instance for route access
-(fastify as any).redis = redisConnection;
+fastify.redis = redisConnection;
 
 // Export CORS helper functions and body limits for testing
 export {
@@ -227,7 +227,7 @@ if (!isTestEnv) {
  */
 if (LOG_REQUESTS && !isTestEnv) {
   fastify.addHook('onRequest', async (request, reply) => {
-    const user = (request as any).user;
+    const user = request.user;
     request.log.info(
       {
         reqId: request.id,
@@ -267,7 +267,7 @@ if (LOG_RESPONSES && !isTestEnv) {
         url: request.url,
         statusCode: reply.statusCode,
         responseTime: `${responseTime}ms`,
-        userId: (request as any).user?.id,
+        userId: request.user?.id,
       },
       `Request completed: ${request.method} ${request.url} - ${reply.statusCode} (${responseTime}ms)`,
     );
@@ -287,13 +287,13 @@ if (LOG_RESPONSES && !isTestEnv) {
 fastify.addHook('onRequest', async (request, _reply) => {
   // Track in-progress requests
   const route = request.routeOptions?.url || request.url;
-  (request as any).metricsEndTimer = metricsService.startHttpRequest(request.method, route);
+  request.metricsEndTimer = metricsService.startHttpRequest(request.method, route);
 });
 
 fastify.addHook('onResponse', async (request, reply) => {
   // Record completed request metrics
   const route = request.routeOptions?.url || request.url;
-  const endTimer = (request as any).metricsEndTimer;
+  const endTimer = request.metricsEndTimer;
 
   if (endTimer) {
     const duration = endTimer();
@@ -422,7 +422,7 @@ fastify.post(
     bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for auth requests
   },
   async (request, reply) => {
-    const { code } = request.body as any;
+    const { code } = request.body as { code?: string };
 
     if (!code) {
       return reply.status(400).send({ error: 'Code is required' });
@@ -498,8 +498,9 @@ fastify.post(
       });
 
       return { user, token };
-    } catch (err: any) {
-      console.error('Auth error:', err.response?.data || err.message);
+    } catch (err: unknown) {
+      const error = err as Error & { response?: { data?: unknown } };
+      console.error('Auth error:', error.response?.data || error.message);
       return reply.status(500).send({ error: 'Authentication failed' });
     }
   },
@@ -544,14 +545,15 @@ fastify.post('/auth/refresh', async (request, reply) => {
       accessToken: result.accessToken,
       message: 'Token refreshed successfully',
     };
-  } catch (err: any) {
-    console.error('Refresh token error:', err.message);
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error('Refresh token error:', error.message);
     return reply.status(500).send({ error: 'Failed to refresh token' });
   }
 });
 
 fastify.post('/auth/logout', async (request, reply) => {
-  const user = (request as any).user;
+  const user = request.user;
 
   // Revoke all refresh tokens for the user
   if (user?.id) {
@@ -580,7 +582,10 @@ fastify.post('/auth/logout', async (request, reply) => {
 });
 
 fastify.get('/auth/me', async (request) => {
-  const user = (request as any).user;
+  const user = request.user;
+  if (!user) {
+    throw new UnauthorizedError('Authentication required');
+  }
   const dbUser = await userRepository.findById(user.id);
 
   return {
@@ -591,7 +596,10 @@ fastify.get('/auth/me', async (request) => {
 });
 
 fastify.delete('/auth/github/disconnect', async (request) => {
-  const user = (request as any).user;
+  const user = request.user;
+  if (!user) {
+    throw new UnauthorizedError('Authentication required');
+  }
   await userRepository.update(user.id, { githubAccessToken: null });
   return { success: true };
 });
