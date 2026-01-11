@@ -16,7 +16,7 @@ export const PUBLIC_ROUTES = [
  * Authentication middleware
  * Verifies JWT token for protected routes
  */
-export async function authenticateMiddleware(request: FastifyRequest, reply: FastifyReply) {
+export const authenticate = async (request: FastifyRequest, _reply: FastifyReply) => {
   const isPublicRoute = PUBLIC_ROUTES.includes(request.routeOptions?.url || '');
 
   if (isPublicRoute) {
@@ -25,10 +25,10 @@ export async function authenticateMiddleware(request: FastifyRequest, reply: Fas
 
   try {
     await request.jwtVerify();
-  } catch (err) {
+  } catch {
     throw new UnauthorizedError('Authentication required');
   }
-}
+};
 
 /**
  * Utility function to validate token without throwing

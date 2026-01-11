@@ -19,7 +19,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
    * GET /services
    * List all services for the authenticated user
    */
-  fastify.get('/services', async (request, reply) => {
+  fastify.get('/services', async (request, _reply) => {
     return controller.getAllServices(request);
   });
 

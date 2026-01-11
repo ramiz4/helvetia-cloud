@@ -212,6 +212,7 @@ describe('GitHubController', () => {
       vi.mocked(mockUserRepository.findById).mockResolvedValue(mockUser);
       vi.mocked(mockGitHubService.getRepositories).mockRejectedValue({
         status: 500,
+        message: 'Internal error',
         data: { error: 'Internal error' },
       });
 

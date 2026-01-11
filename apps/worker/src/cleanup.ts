@@ -55,7 +55,7 @@ async function permanentlyDeleteService(id: string) {
       await volumeManager.removeVolume(volumeName);
       console.log(`Removed volume ${volumeName} for service ${service.name}`);
     } catch (err) {
-      if ((err as any).statusCode !== 404) {
+      if ((err as { statusCode?: number }).statusCode !== 404) {
         console.error(`Failed to remove volume ${volumeName}:`, err);
       }
     }
@@ -81,7 +81,7 @@ async function permanentlyDeleteService(id: string) {
   });
 
   const imageTags = new Set(
-    deployments.map((d: any) => d.imageTag).filter((tag: any): tag is string => !!tag),
+    deployments.map((d) => d.imageTag).filter((tag): tag is string => !!tag),
   );
 
   for (const tag of imageTags) {
@@ -90,7 +90,7 @@ async function permanentlyDeleteService(id: string) {
       await image.remove({ force: true });
       console.log(`Removed image ${tag}`);
     } catch (err) {
-      if ((err as any).statusCode !== 404) {
+      if ((err as { statusCode?: number }).statusCode !== 404) {
         console.error(`Failed to remove image ${tag}:`, err);
       }
     }

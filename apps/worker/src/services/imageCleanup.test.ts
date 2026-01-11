@@ -38,7 +38,7 @@ describe('Image Cleanup Service', () => {
 
   describe('getDockerDiskUsage', () => {
     it('should calculate disk usage from images', async () => {
-      const { getDockerDiskUsage } = await import('./imageCleanup');
+      const { getDockerDiskUsage } = await import('./imageCleanup.js');
 
       mockDocker.listImages.mockResolvedValue([
         { Id: 'img1', Size: 1024 * 1024 * 100 }, // 100 MB
@@ -53,7 +53,7 @@ describe('Image Cleanup Service', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      const { getDockerDiskUsage } = await import('./imageCleanup');
+      const { getDockerDiskUsage } = await import('./imageCleanup.js');
 
       mockDocker.listImages.mockRejectedValue(new Error('Docker error'));
 
@@ -66,7 +66,7 @@ describe('Image Cleanup Service', () => {
 
   describe('removeDanglingImages', () => {
     it('should remove dangling images', async () => {
-      const { removeDanglingImages } = await import('./imageCleanup');
+      const { removeDanglingImages } = await import('./imageCleanup.js');
 
       const mockImage1 = { remove: vi.fn().mockResolvedValue(undefined) };
       const mockImage2 = { remove: vi.fn().mockResolvedValue(undefined) };
@@ -94,7 +94,7 @@ describe('Image Cleanup Service', () => {
     });
 
     it('should handle individual image removal failures', async () => {
-      const { removeDanglingImages } = await import('./imageCleanup');
+      const { removeDanglingImages } = await import('./imageCleanup.js');
 
       const mockImage1 = { remove: vi.fn().mockResolvedValue(undefined) };
       const mockImage2 = { remove: vi.fn().mockRejectedValue(new Error('Image in use')) };
@@ -128,7 +128,7 @@ describe('Image Cleanup Service', () => {
 
       // Re-import to get new constant value
       vi.resetModules();
-      const { removeDanglingImages } = await import('./imageCleanup');
+      const { removeDanglingImages } = await import('./imageCleanup.js');
 
       const result = await removeDanglingImages(mockDocker);
 
@@ -140,7 +140,7 @@ describe('Image Cleanup Service', () => {
 
   describe('removeOldImages', () => {
     it('should remove old images based on retention policy', async () => {
-      const { removeOldImages } = await import('./imageCleanup');
+      const { removeOldImages } = await import('./imageCleanup.js');
 
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 10); // 10 days ago
@@ -179,7 +179,7 @@ describe('Image Cleanup Service', () => {
     });
 
     it('should not remove latest deployment image', async () => {
-      const { removeOldImages } = await import('./imageCleanup');
+      const { removeOldImages } = await import('./imageCleanup.js');
 
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 10);
@@ -207,7 +207,7 @@ describe('Image Cleanup Service', () => {
     });
 
     it('should not remove images in use by running containers', async () => {
-      const { removeOldImages } = await import('./imageCleanup');
+      const { removeOldImages } = await import('./imageCleanup.js');
 
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 10);
@@ -244,7 +244,7 @@ describe('Image Cleanup Service', () => {
     });
 
     it('should skip images with conflict error (409)', async () => {
-      const { removeOldImages } = await import('./imageCleanup');
+      const { removeOldImages } = await import('./imageCleanup.js');
 
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 10);
@@ -264,7 +264,7 @@ describe('Image Cleanup Service', () => {
 
       mockDocker.listContainers.mockResolvedValue([]);
 
-      const conflictError: any = new Error('Conflict');
+      const conflictError: Error & { statusCode?: number } = new Error('Conflict');
       conflictError.statusCode = 409;
 
       const mockImage = {
@@ -284,7 +284,7 @@ describe('Image Cleanup Service', () => {
     });
 
     it('should handle non-existent images gracefully', async () => {
-      const { removeOldImages } = await import('./imageCleanup');
+      const { removeOldImages } = await import('./imageCleanup.js');
 
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 10);
@@ -326,7 +326,7 @@ describe('Image Cleanup Service', () => {
       }));
 
       vi.resetModules();
-      const { removeOldImages } = await import('./imageCleanup');
+      const { removeOldImages } = await import('./imageCleanup.js');
 
       const result = await removeOldImages(mockDocker);
 
@@ -337,10 +337,10 @@ describe('Image Cleanup Service', () => {
 
   describe('cleanupDockerImages', () => {
     it('should perform complete cleanup', async () => {
-      const { cleanupDockerImages } = await import('./imageCleanup');
+      const { cleanupDockerImages } = await import('./imageCleanup.js');
 
       // Mock dangling images
-      mockDocker.listImages.mockImplementation((opts?: any) => {
+      mockDocker.listImages.mockImplementation((opts?: { filters?: string }) => {
         if (opts?.filters) {
           // Dangling images
           return Promise.resolve([{ Id: 'sha256:dangling1', Size: 1024 * 1024 * 50 }]);
@@ -373,7 +373,7 @@ describe('Image Cleanup Service', () => {
     });
 
     it('should handle cleanup errors gracefully', async () => {
-      const { cleanupDockerImages } = await import('./imageCleanup');
+      const { cleanupDockerImages } = await import('./imageCleanup.js');
 
       mockDocker.listImages.mockRejectedValue(new Error('Docker daemon error'));
       mockDocker.listContainers.mockResolvedValue([]);

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { prisma } from 'database';
+import { prisma, User } from 'database';
 import type { FastifyInstance } from 'fastify';
 import type IORedis from 'ioredis';
 
@@ -40,7 +40,7 @@ export async function verifyAndRotateRefreshToken(
   token: string,
   fastify: FastifyInstance,
   redis: IORedis,
-): Promise<{ accessToken: string; refreshToken: string; userId: string; user: any } | null> {
+): Promise<{ accessToken: string; refreshToken: string; userId: string; user: User } | null> {
   // Check if token is in revocation list (Redis)
   const isRevoked = await redis.get(`revoked:refresh:${token}`);
   if (isRevoked) {

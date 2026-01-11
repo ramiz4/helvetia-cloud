@@ -29,8 +29,8 @@ import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpe
 initializeContainer();
 
 // Resolve repositories
-const serviceRepository = resolve<IServiceRepository>(TOKENS.ServiceRepository);
-const deploymentRepository = resolve<IDeploymentRepository>(TOKENS.DeploymentRepository);
+resolve<IServiceRepository>(TOKENS.ServiceRepository);
+resolve<IDeploymentRepository>(TOKENS.DeploymentRepository);
 
 // Redis connection initialized after dotenv.config()
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
@@ -217,7 +217,7 @@ if (!isTestEnv) {
  * This hook runs before request processing begins.
  */
 if (LOG_REQUESTS && !isTestEnv) {
-  fastify.addHook('onRequest', async (request, reply) => {
+  fastify.addHook('onRequest', async (request, _reply) => {
     const user = request.user;
     request.log.info(
       {
@@ -362,7 +362,7 @@ import { errorHandler } from './middleware/error.middleware';
 fastify.setErrorHandler(errorHandler);
 
 // Auth hook
-fastify.addHook('onRequest', async (request, reply) => {
+fastify.addHook('onRequest', async (request, _reply) => {
   const publicRoutes = [
     '/health',
     '/metrics',
@@ -377,7 +377,7 @@ fastify.addHook('onRequest', async (request, reply) => {
   }
   try {
     await request.jwtVerify();
-  } catch (err) {
+  } catch {
     throw new UnauthorizedError('Authentication required');
   }
 });

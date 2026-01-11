@@ -7,6 +7,48 @@ import { inject, injectable } from 'tsyringe';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from '../interfaces';
 import { getRepoUrlMatchCondition } from '../utils/repoUrl';
 
+interface PullRequestEvent {
+  action: string;
+  number: number;
+  pull_request: {
+    number: number;
+    head: {
+      ref: string;
+      sha: string;
+    };
+    base: {
+      repo: {
+        html_url: string;
+      };
+    };
+  };
+}
+
+interface PushEvent {
+  ref: string;
+  repository: {
+    clone_url: string;
+    full_name: string;
+    html_url: string;
+  };
+  after: string;
+}
+
+interface ServiceData {
+  id: string;
+  userId: string;
+  repoUrl?: string | null;
+  branch?: string | null;
+  buildCommand?: string | null;
+  startCommand?: string | null;
+  name: string;
+  port?: number | null;
+  envVars?: unknown;
+  customDomain?: string | null;
+  type: string;
+  staticOutputDir?: string | null;
+}
+
 /**
  * WebhookController
  * Handles GitHub webhook events (Push and Pull Request)
@@ -58,7 +100,10 @@ export class WebhookController {
   /**
    * Helper to create and queue deployment
    */
-  private async createAndQueueDeployment(service: any, commitHash: string): Promise<any> {
+  private async createAndQueueDeployment(
+    service: ServiceData,
+    commitHash: string,
+  ): Promise<unknown> {
     const deployment = await this.deploymentRepository.create({
       serviceId: service.id,
       status: 'QUEUED',
@@ -182,7 +227,10 @@ export class WebhookController {
    * POST /webhooks/github
    * Handle GitHub webhook events (Push and Pull Request)
    */
-  async handleGitHubWebhook(request: FastifyRequest, reply: FastifyReply): Promise<any> {
+  async handleGitHubWebhook(
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<void | FastifyReply> {
     // Verify GitHub webhook signature
     const signature = request.headers['x-hub-signature-256'] as string;
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
@@ -242,17 +290,20 @@ export class WebhookController {
 
     // Handle Pull Request events
     if (payload.pull_request) {
-      return this.handlePullRequestEvent(payload, reply);
+      return this.handlePullRequestEvent(payload as PullRequestEvent, reply);
     }
 
     // Handle Push events
-    return this.handlePushEvent(payload, reply);
+    return this.handlePushEvent(payload as PushEvent, reply);
   }
 
   /**
    * Handle GitHub Pull Request events
    */
-  private async handlePullRequestEvent(payload: any, reply: FastifyReply): Promise<any> {
+  private async handlePullRequestEvent(
+    payload: PullRequestEvent,
+    reply: FastifyReply,
+  ): Promise<void | FastifyReply> {
     try {
       const pr = payload.pull_request;
       const action = payload.action;
@@ -330,11 +381,12 @@ export class WebhookController {
       }
 
       return reply.status(200).send({ skipped: `Action ${action} not handled` });
-    } catch (error: any) {
-      console.error('Error handling GitHub PR webhook:', error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error handling GitHub PR webhook:', err.message);
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
-        message: error.message,
+        message: err.message,
       });
     }
   }
@@ -342,7 +394,10 @@ export class WebhookController {
   /**
    * Handle GitHub Push events
    */
-  private async handlePushEvent(payload: any, reply: FastifyReply): Promise<any> {
+  private async handlePushEvent(
+    payload: PushEvent,
+    reply: FastifyReply,
+  ): Promise<void | FastifyReply> {
     // Basic check for push event
     if (!payload.repository || !payload.ref) {
       return reply.status(200).send({ skipped: 'Not a push or PR event' });
@@ -375,11 +430,12 @@ export class WebhookController {
         await this.createAndQueueDeployment(service, payload.after);
       }
       return reply.status(200).send({ success: true, servicesTriggered: services.length });
-    } catch (error: any) {
-      console.error('Error handling GitHub push webhook:', error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error handling GitHub push webhook:', err.message);
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
-        message: error.message,
+        message: err.message,
       });
     }
   }

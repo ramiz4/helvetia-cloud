@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { BODY_LIMIT_SMALL } from '../config/constants';
 import { AuthController } from '../controllers/AuthController';
 import { resolve, TOKENS } from '../di';
+import { authenticate } from '../middleware/auth.middleware';
 
 /**
  * Auth routes plugin
@@ -42,7 +43,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
    * GET /auth/me
    * Get current user info
    */
-  fastify.get('/auth/me', (request, reply) => authController.getCurrentUser(request));
+  fastify.get('/me', { preHandler: authenticate }, async (request, _reply) =>
+    authController.getCurrentUser(request),
+  );
 
   /**
    * DELETE /auth/github/disconnect

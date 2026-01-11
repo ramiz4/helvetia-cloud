@@ -96,14 +96,14 @@ export class DockerContainerOrchestrator implements IContainerOrchestrator {
         t: options.tags.join(','),
         buildargs: options.buildargs,
       },
-    )) as any as NodeJS.ReadableStream;
+    )) as unknown as NodeJS.ReadableStream;
   }
 
   /**
    * Pull an image from a registry
    */
   async pullImage(imageName: string): Promise<NodeJS.ReadableStream> {
-    return (await this.docker.pull(imageName)) as any as NodeJS.ReadableStream;
+    return (await this.docker.pull(imageName)) as unknown as NodeJS.ReadableStream;
   }
 
   /**
@@ -124,7 +124,7 @@ export class DockerContainerOrchestrator implements IContainerOrchestrator {
       stdout: options?.stdout ?? true,
       stderr: options?.stderr ?? true,
       tail: options?.tail,
-    })) as any as NodeJS.ReadableStream;
+    })) as unknown as NodeJS.ReadableStream;
   }
 
   /**

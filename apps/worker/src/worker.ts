@@ -247,8 +247,14 @@ export const worker = new Worker(
             'Service status set to RUNNING after rollback attempt; previous containers may still be serving traffic',
           );
         }
-      } catch (dbError: any) {
-        if (dbError.code === 'P2025') {
+      } catch (dbError: unknown) {
+        // Check if it's a Prisma error safely
+        if (
+          typeof dbError === 'object' &&
+          dbError !== null &&
+          'code' in dbError &&
+          (dbError as Record<string, unknown>).code === 'P2025'
+        ) {
           console.error(
             `Failed to update database: Deployment ${deploymentId} was deleted during processing.`,
           );
