@@ -23,7 +23,7 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
   await fastify.register(async (scope) => {
     // Custom content type parser that preserves raw body
     scope.addContentTypeParser('application/json', { parseAs: 'buffer' }, (req, body, done) => {
-      req.rawBody = body;
+      req.rawBody = body as Buffer;
       try {
         const bodyString = body.toString();
         if (!bodyString) {

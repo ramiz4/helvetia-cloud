@@ -28,6 +28,7 @@ export const TOKENS = {
   DeploymentController: Symbol.for('DeploymentController'),
   GitHubController: Symbol.for('GitHubController'),
   WebhookController: Symbol.for('WebhookController'),
+  AuthController: Symbol.for('AuthController'),
 
   // External dependencies
   PrismaClient: Symbol.for('PrismaClient'),

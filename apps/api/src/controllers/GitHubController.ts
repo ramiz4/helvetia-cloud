@@ -78,8 +78,8 @@ export class GitHubController {
       }
 
       const repos = await this.githubService.getRepositories(accessToken, {
-        sort,
-        type,
+        sort: sort as any,
+        type: type as any,
         per_page: per_page ? parseInt(per_page) : undefined,
         page: page ? parseInt(page) : undefined,
         org,
