@@ -24,9 +24,9 @@ We use TypeScript declaration merging to extend Fastify's built-in types with ou
 
 ```typescript
 interface FastifyRequest {
-  user?: JwtPayload;           // Authenticated user from JWT
-  metricsEndTimer?: MetricsTimerFunction;  // Prometheus metrics timer
-  rawBody?: Buffer;             // Raw request body for webhook signature verification
+  user?: JwtPayload; // Authenticated user from JWT
+  metricsEndTimer?: MetricsTimerFunction; // Prometheus metrics timer
+  rawBody?: Buffer; // Raw request body for webhook signature verification
 }
 ```
 
@@ -34,7 +34,7 @@ interface FastifyRequest {
 
 ```typescript
 interface FastifyInstance {
-  redis: Redis;  // Redis connection for caching and rate limiting
+  redis: Redis; // Redis connection for caching and rate limiting
 }
 ```
 
@@ -46,10 +46,10 @@ Import the augmentation file at the top of files that use these properties:
 import '../types/fastify';
 
 export const myRoute: FastifyPluginAsync = async (fastify) => {
-  const redis = fastify.redis;  // ✅ Type-safe access
-  
+  const redis = fastify.redis; // ✅ Type-safe access
+
   fastify.get('/protected', async (request, reply) => {
-    const user = request.user;  // ✅ Type-safe access
+    const user = request.user; // ✅ Type-safe access
     if (!user) {
       return reply.status(401).send({ error: 'Unauthorized' });
     }
@@ -150,7 +150,7 @@ async handler(request: FastifyRequest, reply: FastifyReply) {
   if (!user) {
     return reply.status(401).send({ error: 'User not authenticated' });
   }
-  
+
   // Now user.id is safely accessible
   const services = await getServices(user.id);
 }
@@ -188,7 +188,7 @@ async getService(request: FastifyRequest, reply: FastifyReply) {
   if (!user) {
     return reply.status(401).send({ error: 'Unauthorized' });
   }
-  
+
   const service = await this.serviceRepository.findById(id);
   return service;
 }

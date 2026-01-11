@@ -1,8 +1,8 @@
 import '../types/fastify';
 
+import type { Queue } from 'bullmq';
 import crypto from 'crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { Queue } from 'bullmq';
 import { inject, injectable } from 'tsyringe';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from '../interfaces';
 import { getRepoUrlMatchCondition } from '../utils/repoUrl';

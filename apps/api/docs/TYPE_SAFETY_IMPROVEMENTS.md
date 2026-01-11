@@ -25,18 +25,19 @@ Created TypeScript declaration merging to extend Fastify's built-in types with c
 ```typescript
 declare module 'fastify' {
   interface FastifyRequest {
-    user?: JwtPayload;                    // Authenticated user from JWT
+    user?: JwtPayload; // Authenticated user from JWT
     metricsEndTimer?: MetricsTimerFunction; // Prometheus metrics timer
-    rawBody?: Buffer;                      // Raw body for webhook verification
+    rawBody?: Buffer; // Raw body for webhook verification
   }
 
   interface FastifyInstance {
-    redis: Redis;  // Redis connection instance
+    redis: Redis; // Redis connection instance
   }
 }
 ```
 
 **Benefits:**
+
 - Type-safe access to custom request properties
 - No more `(request as any).user` casts
 - Autocomplete support for custom properties
@@ -56,6 +57,7 @@ export interface JwtPayload {
 ```
 
 **Usage:**
+
 ```typescript
 // Before
 const jwtSign = (payload: any) => fastify.jwt.sign(payload);
@@ -67,6 +69,7 @@ const jwtSign = (payload: JwtPayload) => fastify.jwt.sign(payload);
 ### 3. Removed `as any` Casts
 
 #### Files Updated:
+
 - `src/server.ts` - 11 instances removed
 - `src/routes/auth.routes.ts` - 9 instances removed
 - `src/routes/service.routes.ts` - 1 instance removed
@@ -164,6 +167,7 @@ Enabled stricter TypeScript compiler options:
 **File:** `apps/api/docs/TYPE_PATTERNS.md`
 
 Created comprehensive documentation covering:
+
 - Fastify type augmentation usage
 - Request/response type patterns
 - Error handling best practices
@@ -174,16 +178,19 @@ Created comprehensive documentation covering:
 ## Impact
 
 ### Type Safety
+
 - **Before:** ~80+ unsafe type casts throughout the codebase
 - **After:** 0 unsafe type casts - all replaced with proper types
 
 ### Code Quality
+
 - Improved IDE support and autocomplete
 - Better compile-time error detection
 - Easier refactoring and maintenance
 - Self-documenting code through types
 
 ### Developer Experience
+
 - Clear error messages when types don't match
 - Type hints in IDE for all custom properties
 - Documentation of type patterns for future development
