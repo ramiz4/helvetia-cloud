@@ -23,7 +23,7 @@ export class DeploymentOrchestratorService {
     private deploymentRepository: IDeploymentRepository,
     @inject(Symbol.for('IUserRepository'))
     private userRepository: IUserRepository,
-    @inject('DeploymentQueue')
+    @inject(Symbol.for('IDeploymentQueue'))
     private deploymentQueue: Queue,
   ) {}
 

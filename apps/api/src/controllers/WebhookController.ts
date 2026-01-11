@@ -19,7 +19,7 @@ export class WebhookController {
     private deploymentRepository: IDeploymentRepository,
     @inject(Symbol.for('IUserRepository'))
     private userRepository: IUserRepository,
-    @inject('DeploymentQueue')
+    @inject(Symbol.for('IDeploymentQueue'))
     private deploymentQueue: any,
   ) {}
 

@@ -137,7 +137,9 @@ describe('CORS Security', () => {
 
       // Fastify CORS returns 500 when origin is not allowed
       expect(response.statusCode).toBe(500);
-      expect(response.json()).toHaveProperty('message');
+      const json = response.json();
+      expect(json).toHaveProperty('error');
+      expect(json.success).toBe(false);
     });
 
     it('should allow requests with no origin (same-origin or curl)', async () => {

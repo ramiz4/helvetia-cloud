@@ -160,9 +160,10 @@ describe('Request Body Size Limits', () => {
 
       expect(response.statusCode).toBe(413);
       const json = response.json();
-      expect(json.statusCode).toBe(413);
-      expect(json.error).toBe('Payload Too Large');
-      expect(json.message).toContain('exceeds the maximum allowed size');
+      expect(json.success).toBe(false);
+      expect(json.error.statusCode).toBe(413);
+
+      expect(json.error.message).toContain('exceeds the maximum allowed size');
     });
 
     it('should accept request with body under 100KB limit', async () => {
@@ -225,9 +226,10 @@ describe('Request Body Size Limits', () => {
 
       expect(response.statusCode).toBe(413);
       const json = response.json();
-      expect(json.statusCode).toBe(413);
-      expect(json.error).toBe('Payload Too Large');
-      expect(json.message).toContain('exceeds the maximum allowed size');
+      expect(json.success).toBe(false);
+      expect(json.error.statusCode).toBe(413);
+
+      expect(json.error.message).toContain('exceeds the maximum allowed size');
     });
 
     it('should accept request with body under 100KB limit', async () => {
@@ -284,8 +286,8 @@ describe('Request Body Size Limits', () => {
 
       expect(response.statusCode).toBe(413);
       const json = response.json();
-      expect(json.statusCode).toBe(413);
-      expect(json.error).toBe('Payload Too Large');
+      expect(json.success).toBe(false);
+      expect(json.error.statusCode).toBe(413);
     });
 
     it('should accept request with body under 100KB limit', async () => {
@@ -342,8 +344,8 @@ describe('Request Body Size Limits', () => {
 
       expect(response.statusCode).toBe(413);
       const json = response.json();
-      expect(json.statusCode).toBe(413);
-      expect(json.error).toBe('Payload Too Large');
+      expect(json.success).toBe(false);
+      expect(json.error.statusCode).toBe(413);
     });
 
     it('should accept webhook payload under 1MB limit', async () => {
@@ -396,11 +398,12 @@ describe('Request Body Size Limits', () => {
       const json = response.json();
 
       // Verify error response structure
-      expect(json).toHaveProperty('statusCode', 413);
-      expect(json).toHaveProperty('error', 'Payload Too Large');
-      expect(json).toHaveProperty('message');
-      expect(typeof json.message).toBe('string');
-      expect(json.message).toContain('exceeds the maximum allowed size');
+      expect(json).toHaveProperty('success', false);
+      expect(json).toHaveProperty('error');
+      expect(json.error).toHaveProperty('statusCode', 413);
+      expect(json.error).toHaveProperty('message');
+      expect(typeof json.error.message).toBe('string');
+      expect(json.error.message).toContain('exceeds the maximum allowed size');
     });
   });
 
