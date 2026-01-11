@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import '../types/fastify';
+
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import type { IGitHubService, IUserRepository } from '../interfaces';
@@ -22,8 +23,11 @@ export class GitHubController {
    * GET /github/orgs
    * Get user's GitHub organizations
    */
-  async getUserOrganizations(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const user = (request as any).user;
+  async getUserOrganizations(request: FastifyRequest, reply: FastifyReply) {
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     try {
       const accessToken = await this.getDecryptedGitHubToken(user.id);
@@ -50,9 +54,18 @@ export class GitHubController {
    * GET /github/repos
    * Get user's or organization's repositories
    */
-  async getRepositories(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const user = (request as any).user;
-    const { sort, per_page, type, page, org } = request.query as any;
+  async getRepositories(request: FastifyRequest, reply: FastifyReply) {
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+    const { sort, per_page, type, page, org } = request.query as {
+      sort?: string;
+      per_page?: string;
+      type?: string;
+      page?: string;
+      org?: string;
+    };
 
     try {
       const accessToken = await this.getDecryptedGitHubToken(user.id);
@@ -73,13 +86,14 @@ export class GitHubController {
       });
 
       return repos;
-    } catch (error: any) {
-      console.error('GitHub Repos API error:', error.data || error.message);
+    } catch (error: unknown) {
+      const err = error as Error & { status?: number; data?: { message?: string } };
+      console.error('GitHub Repos API error:', err.data || err.message);
 
       // Propagate GitHub API error with original status and message
-      if (error.status && error.data) {
-        const responseData = error.data.message ? { message: error.data.message } : error.data;
-        return reply.status(error.status).send(responseData);
+      if (err.status && err.data) {
+        const responseData = err.data.message ? { message: err.data.message } : err.data;
+        return reply.status(err.status).send(responseData);
       }
 
       // Fallback to generic error
@@ -91,9 +105,12 @@ export class GitHubController {
    * GET /github/repos/:owner/:name/branches
    * Get branches for a specific repository
    */
-  async getRepositoryBranches(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const user = (request as any).user;
-    const { owner, name } = request.params as any;
+  async getRepositoryBranches(request: FastifyRequest, reply: FastifyReply) {
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+    const { owner, name } = request.params as { owner: string; name: string };
 
     try {
       const accessToken = await this.getDecryptedGitHubToken(user.id);

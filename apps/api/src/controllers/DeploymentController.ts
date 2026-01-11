@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import '../types/fastify';
+
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
@@ -30,9 +31,12 @@ export class DeploymentController {
    * POST /services/:id/deploy
    * Trigger a new deployment for a service
    */
-  async deployService(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async deployService(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     try {
       // Create deployment (this includes service existence and ownership validation)
@@ -61,9 +65,12 @@ export class DeploymentController {
    * POST /services/:id/restart
    * Restart a service container without rebuilding
    */
-  async restartService(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async restartService(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     const { prisma } = await import('database');
     const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
@@ -71,7 +78,7 @@ export class DeploymentController {
       return reply.status(404).send({ error: 'Service not found' });
     }
 
-    if ((service as any).type === 'COMPOSE') {
+    if (service.type === 'COMPOSE') {
       return reply.status(400).send({
         error:
           'Please use "Redeploy" for Docker Compose services to apply environment variables and configuration changes correctly.',
@@ -101,8 +108,8 @@ export class DeploymentController {
       const postfix = Math.random().toString(36).substring(2, 8);
       const containerName = `${service.name}-${postfix}`;
 
-      const traefikRule = (service as any).customDomain
-        ? `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`) || Host(\`${(service as any).customDomain}\`)`
+      const traefikRule = service.customDomain
+        ? `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`) || Host(\`${service.customDomain}\`)`
         : `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`)`;
 
       // Create new container with updated config
@@ -111,22 +118,22 @@ export class DeploymentController {
         name: containerName,
         Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
         Cmd:
-          (service as any).type === 'REDIS' &&
-          (service.envVars as Record<string, any>)?.REDIS_PASSWORD
+          service.type === 'REDIS' &&
+          (service.envVars as Record<string, string> | undefined)?.REDIS_PASSWORD
             ? [
                 'redis-server',
                 '--requirepass',
-                (service.envVars as Record<string, any>).REDIS_PASSWORD,
+                (service.envVars as Record<string, string>).REDIS_PASSWORD,
               ]
             : undefined,
         Labels: {
           'helvetia.serviceId': service.id,
-          'helvetia.type': (service as any).type || 'DOCKER',
+          'helvetia.type': service.type || 'DOCKER',
           'traefik.enable': 'true',
           [`traefik.http.routers.${service.name}.rule`]: traefikRule,
           [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
           [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
-            service.port || getDefaultPortForServiceType((service as any).type || 'DOCKER')
+            service.port || getDefaultPortForServiceType(service.type || 'DOCKER')
           ).toString(),
         },
         HostConfig: {
@@ -135,11 +142,11 @@ export class DeploymentController {
           Memory: CONTAINER_MEMORY_LIMIT_BYTES,
           NanoCpus: CONTAINER_CPU_NANOCPUS,
           Binds:
-            (service as any).type === 'POSTGRES'
+            service.type === 'POSTGRES'
               ? [`helvetia-data-${service.name}:/var/lib/postgresql/data`]
-              : (service as any).type === 'REDIS'
+              : service.type === 'REDIS'
                 ? [`helvetia-data-${service.name}:/data`]
-                : (service as any).type === 'MYSQL'
+                : service.type === 'MYSQL'
                   ? [`helvetia-data-${service.name}:/var/lib/mysql`]
                   : [],
           LogConfig: {
@@ -169,9 +176,12 @@ export class DeploymentController {
    * GET /services/:id/deployments
    * Get all deployments for a service
    */
-  async getServiceDeployments(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async getServiceDeployments(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     try {
       const deployments = await this.deploymentService.getServiceDeployments(id, user.id);
@@ -192,9 +202,12 @@ export class DeploymentController {
    * GET /deployments/:id/logs
    * Get logs for a specific deployment
    */
-  async getDeploymentLogs(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async getDeploymentLogs(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     try {
       const deployment = await this.deploymentService.getDeployment(id, user.id);
