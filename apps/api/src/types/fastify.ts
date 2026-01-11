@@ -29,7 +29,7 @@ declare module 'fastify' {
      * Authenticated user information from JWT
      * Available after jwtVerify() is called
      */
-    user?: JwtPayload;
+    user: JwtPayload;
 
     /**
      * Metrics end timer function

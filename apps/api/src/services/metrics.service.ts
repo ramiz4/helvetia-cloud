@@ -150,7 +150,7 @@ class MetricsService {
   /**
    * Start tracking an HTTP request
    */
-  startHttpRequest(method: string, route: string): () => void {
+  startHttpRequest(method: string, route: string): () => number {
     this.httpRequestsInProgress.inc({ method, route });
     const startTime = Date.now();
 

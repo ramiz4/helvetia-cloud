@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { prisma } from 'database';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
+import { AuthController } from '../controllers/AuthController';
 import { DeploymentController } from '../controllers/DeploymentController';
 import { GitHubController } from '../controllers/GitHubController';
 import { ServiceController } from '../controllers/ServiceController';
@@ -52,6 +53,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.DeploymentController, DeploymentController);
   container.registerSingleton(TOKENS.GitHubController, GitHubController);
   container.registerSingleton(TOKENS.WebhookController, WebhookController);
+  container.registerSingleton(TOKENS.AuthController, AuthController);
 }
 
 /**

@@ -153,7 +153,7 @@ describe('GitHub Integration', () => {
 
       expect(response.statusCode).toBe(200);
       const json = response.json();
-      expect(json.user.githubAccessToken).toBe(mockAccessToken);
+      expect(json.user.id).toBe(mockDbUser.id);
 
       // Verify Prisma call
       expect(prisma.user.upsert).toHaveBeenCalledWith({

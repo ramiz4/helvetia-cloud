@@ -6,7 +6,6 @@ import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
 
-import axios from 'axios';
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import Fastify from 'fastify';
@@ -20,18 +19,11 @@ import {
   LOG_REQUESTS,
   LOG_RESPONSES,
 } from './config/constants';
-import { createRateLimitConfigs } from './config/rateLimit';
 import { initializeContainer, registerInstance, resolve, TOKENS } from './di';
 import { UnauthorizedError } from './errors';
-import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
+import type { IDeploymentRepository, IServiceRepository } from './interfaces';
 import { metricsService } from './services/metrics.service';
-import { encrypt } from './utils/crypto';
 import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
-import {
-  createRefreshToken,
-  revokeAllUserRefreshTokens,
-  verifyAndRotateRefreshToken,
-} from './utils/refreshToken';
 
 // Initialize DI container
 initializeContainer();
@@ -39,7 +31,6 @@ initializeContainer();
 // Resolve repositories
 const serviceRepository = resolve<IServiceRepository>(TOKENS.ServiceRepository);
 const deploymentRepository = resolve<IDeploymentRepository>(TOKENS.DeploymentRepository);
-const userRepository = resolve<IUserRepository>(TOKENS.UserRepository);
 
 // Redis connection initialized after dotenv.config()
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
@@ -364,7 +355,7 @@ fastify.register(rateLimit, {
 });
 
 // Create rate limit configs
-const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
+// const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
 // Register global error handler
 import { errorHandler } from './middleware/error.middleware';
@@ -415,194 +406,9 @@ fastify.register(githubRoutes);
 import { webhookRoutes } from './routes/webhook.routes';
 fastify.register(webhookRoutes);
 
-fastify.post(
-  '/auth/github',
-  {
-    config: { rateLimit: authRateLimitConfig },
-    bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for auth requests
-  },
-  async (request, reply) => {
-    const { code } = request.body as { code?: string };
-
-    if (!code) {
-      return reply.status(400).send({ error: 'Code is required' });
-    }
-
-    try {
-      // 1. Exchange code for access token
-      const tokenRes = await axios.post(
-        'https://github.com/login/oauth/access_token',
-        {
-          client_id: process.env.GITHUB_CLIENT_ID,
-          client_secret: process.env.GITHUB_CLIENT_SECRET,
-          code,
-        },
-        {
-          headers: { Accept: 'application/json' },
-        },
-      );
-
-      const { access_token, error } = tokenRes.data;
-
-      if (error) {
-        return reply.status(401).send({ error });
-      }
-
-      // 2. Fetch user info
-      const userRes = await axios.get('https://api.github.com/user', {
-        headers: { Authorization: `token ${access_token}` },
-      });
-
-      const githubUser = userRes.data;
-
-      // 3. Upsert user in DB
-      const encryptedToken = encrypt(access_token);
-      const user = await userRepository.upsert(
-        { githubId: githubUser.id.toString() },
-        {
-          githubId: githubUser.id.toString(),
-          username: githubUser.login,
-          avatarUrl: githubUser.avatar_url,
-          githubAccessToken: encryptedToken,
-        },
-        {
-          username: githubUser.login,
-          avatarUrl: githubUser.avatar_url,
-          githubAccessToken: encryptedToken,
-        },
-      );
-
-      // 4. Generate access token (short-lived)
-      const token = fastify.jwt.sign({ id: user.id, username: user.username });
-
-      // 5. Generate refresh token (long-lived)
-      const refreshToken = await createRefreshToken(user.id);
-
-      // 6. Set cookies and return user
-      // Access token cookie (15 minutes)
-      reply.setCookie('token', token, {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 15, // 15 minutes
-      });
-
-      // Refresh token cookie (30 days)
-      reply.setCookie('refreshToken', refreshToken, {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      });
-
-      return { user, token };
-    } catch (err: unknown) {
-      const error = err as Error & { response?: { data?: unknown } };
-      console.error('Auth error:', error.response?.data || error.message);
-      return reply.status(500).send({ error: 'Authentication failed' });
-    }
-  },
-);
-
-fastify.post('/auth/refresh', async (request, reply) => {
-  const refreshToken = request.cookies.refreshToken;
-
-  if (!refreshToken) {
-    return reply.status(401).send({ error: 'Refresh token not provided' });
-  }
-
-  try {
-    const result = await verifyAndRotateRefreshToken(refreshToken, fastify, redisConnection);
-
-    if (!result) {
-      // Clear invalid cookies
-      reply.clearCookie('token', { path: '/' });
-      reply.clearCookie('refreshToken', { path: '/' });
-      return reply.status(401).send({ error: 'Invalid or expired refresh token' });
-    }
-
-    // Set new access token cookie (15 minutes)
-    reply.setCookie('token', result.accessToken, {
-      path: '/',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 15, // 15 minutes
-    });
-
-    // Set new refresh token cookie (30 days)
-    reply.setCookie('refreshToken', result.refreshToken, {
-      path: '/',
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
-
-    return {
-      accessToken: result.accessToken,
-      message: 'Token refreshed successfully',
-    };
-  } catch (err: unknown) {
-    const error = err as Error;
-    console.error('Refresh token error:', error.message);
-    return reply.status(500).send({ error: 'Failed to refresh token' });
-  }
-});
-
-fastify.post('/auth/logout', async (request, reply) => {
-  const user = request.user;
-
-  // Revoke all refresh tokens for the user
-  if (user?.id) {
-    try {
-      await revokeAllUserRefreshTokens(user.id, redisConnection);
-    } catch (err) {
-      console.error('Error revoking refresh tokens:', err);
-    }
-  }
-
-  // Clear cookies
-  reply.clearCookie('token', {
-    path: '/',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-  });
-  reply.clearCookie('refreshToken', {
-    path: '/',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-  });
-
-  return { message: 'Logged out successfully' };
-});
-
-fastify.get('/auth/me', async (request) => {
-  const user = request.user;
-  if (!user) {
-    throw new UnauthorizedError('Authentication required');
-  }
-  const dbUser = await userRepository.findById(user.id);
-
-  return {
-    ...dbUser,
-    isGithubConnected: !!dbUser?.githubAccessToken,
-    githubAccessToken: undefined, // Don't send the token itself
-  };
-});
-
-fastify.delete('/auth/github/disconnect', async (request) => {
-  const user = request.user;
-  if (!user) {
-    throw new UnauthorizedError('Authentication required');
-  }
-  await userRepository.update(user.id, { githubAccessToken: null });
-  return { success: true };
-});
+// Register auth routes
+import { authRoutes } from './routes/auth.routes';
+fastify.register(authRoutes);
 
 // Export a factory function for testing
 export async function buildServer() {

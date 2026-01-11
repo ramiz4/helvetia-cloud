@@ -105,7 +105,10 @@ export class AuthController {
         maxAge: 60 * 60 * 24 * 30,
       });
 
-      return { user: result.user, token: result.accessToken };
+      return {
+        accessToken: result.accessToken,
+        message: 'Token refreshed successfully',
+      };
     } catch (err: unknown) {
       const error = err as Error;
       console.error('Refresh token error:', error.message);
@@ -132,10 +135,20 @@ export class AuthController {
       }
 
       // Clear cookies
-      reply.clearCookie('token', { path: '/' });
-      reply.clearCookie('refreshToken', { path: '/' });
+      reply.clearCookie('token', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      });
+      reply.clearCookie('refreshToken', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      });
 
-      return { success: true };
+      return { message: 'Logged out successfully' };
     } catch (err: unknown) {
       const error = err as Error;
       console.error('Logout error:', error.message);
