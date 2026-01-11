@@ -11,7 +11,6 @@ import {
   Combine,
   Database,
   FileCode,
-  FolderOpen,
   Github,
   Globe,
   Loader2,
@@ -26,7 +25,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
-type ImportType = 'github' | 'manual' | 'local' | 'compose' | 'database';
+type ImportType = 'github' | 'manual' | 'compose' | 'database';
 
 export default function NewServicePage() {
   const { t } = useLanguage();
@@ -211,11 +210,10 @@ export default function NewServicePage() {
         <div className="lg:col-span-9">
           {step === 1 ? (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { id: 'github', label: t.dashboard.newService.importGithub, icon: Github },
                   { id: 'compose', label: t.dashboard.newService.importCompose, icon: Combine },
-                  { id: 'local', label: t.dashboard.newService.importLocal, icon: FolderOpen },
                   { id: 'database', label: t.dashboard.newService.importDatabase, icon: Database },
                   { id: 'manual', label: t.dashboard.newService.importManual, icon: FileCode },
                 ].map((type) => (
@@ -244,47 +242,6 @@ export default function NewServicePage() {
                       setStep(2);
                     }}
                   />
-                )}
-
-                {importType === 'local' && (
-                  <div className="space-y-6 max-w-xl mx-auto py-12">
-                    <div className="text-center mb-8">
-                      <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
-                        <FolderOpen size={32} />
-                      </div>
-                      <h3 className="text-xl font-bold text-white">
-                        {t.dashboard.newService.importLocal}
-                      </h3>
-                      <p className="text-slate-400 text-sm mt-1">Deploy from your computer.</p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">
-                          {t.dashboard.newService.localPath}
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="/Users/name/projects/my-app"
-                          value={repoUrl}
-                          onChange={(e) => setRepoUrl(e.target.value)}
-                          className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-mono text-sm"
-                        />
-                        <p className="mt-2 text-[10px] text-slate-500 italic">
-                          {t.dashboard.newService.localPathHint}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => setStep(2)}
-                        disabled={!repoUrl}
-                        className="w-full h-12 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {t.common.next}
-                        <ChevronRight size={18} />
-                      </button>
-                    </div>
-                  </div>
                 )}
 
                 {['manual', 'database', 'compose'].includes(importType) &&
