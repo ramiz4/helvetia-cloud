@@ -82,15 +82,15 @@ describe('NewServicePage', () => {
   test('should send correct payload for Static Site Service', async () => {
     // Setup fetchWithAuth mocks
     // 1. Create service response
-    (fetchWithAuth as any).mockResolvedValueOnce({
+    vi.mocked(fetchWithAuth).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ id: 'new-service-id' }),
-    });
+    } as Response);
     // 2. Deploy service response
-    (fetchWithAuth as any).mockResolvedValueOnce({
+    vi.mocked(fetchWithAuth).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ id: 'new-deployment-id' }),
-    });
+    } as Response);
 
     render(<NewServicePage />);
 
@@ -127,11 +127,7 @@ describe('NewServicePage', () => {
 
     // Verify "Start Command" is NOT present (placeholder "npm start")
     const startCmdInput = screen.queryByPlaceholderText('npm start');
-    // Note: If the logic is correct, finding by placeholder "npm start" should fail or return the output dir input if they shared a placeholder (they don't: 'dist' vs 'npm start' in code)
-    // Actually in the code:
-    // placeholder={serviceType === 'docker' ? 'npm start' : 'dist'}
-    // value={serviceType === 'docker' ? startCommand : outputDirectory}
-    // So the input element is the same, just props change.
+    expect(startCmdInput).not.toBeInTheDocument();
 
     // Set Output Directory
     fireEvent.change(outputDirInput, { target: { value: 'dist/sigil/browser' } });
@@ -149,10 +145,10 @@ describe('NewServicePage', () => {
     });
 
     // Check payload of the first call (Create Service)
-    const createCall = (fetchWithAuth as any).mock.calls[0];
+    const createCall = vi.mocked(fetchWithAuth).mock.calls[0];
     const url = createCall[0];
-    const options = createCall[1];
-    const body = JSON.parse(options.body);
+    const options = createCall[1]!;
+    const body = JSON.parse(options.body as string);
 
     expect(url).toContain('/services');
     expect(options.method).toBe('POST');
@@ -172,5 +168,82 @@ describe('NewServicePage', () => {
 
     expect(body).not.toHaveProperty('startCommand');
     expect(body).not.toHaveProperty('outputDirectory'); // Should be mapped to staticOutputDir
+  });
+
+  test('should handle Docker Compose service type correctly', async () => {
+    // Setup fetchWithAuth mocks
+    vi.mocked(fetchWithAuth).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'compose-service-id' }),
+    } as Response);
+    vi.mocked(fetchWithAuth).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'new-deployment-id' }),
+    } as Response);
+
+    render(<NewServicePage />);
+
+    // Step 1: Verify 'Docker Compose' is NOT an option in Step 1
+    const step1ComposeBtn = screen.queryByText('Docker Compose');
+    expect(step1ComposeBtn).not.toBeInTheDocument();
+
+    // Select Manual Git Import
+    const manualImportBtn = screen.getByText('Manual Git Import');
+    fireEvent.click(manualImportBtn);
+
+    // Enter Repo URL
+    const repoInput = screen.getByPlaceholderText('https://github.com/...');
+    fireEvent.change(repoInput, { target: { value: 'https://github.com/test/compose-repo' } });
+
+    // Click Next
+    const nextBtn = screen.getByRole('button', { name: /Next/i });
+    fireEvent.click(nextBtn);
+
+    // Step 2: Verify 'Docker Compose' option exists
+    const composeServiceBtn = screen.getByText('Docker Compose');
+    expect(composeServiceBtn).toBeInTheDocument();
+    fireEvent.click(composeServiceBtn);
+
+    // Verify Compose fields appear
+    const composeFileInput = screen.getByPlaceholderText('docker-compose.yml');
+    const mainServiceInput = screen.getByPlaceholderText('app');
+    expect(composeFileInput).toBeInTheDocument();
+    expect(mainServiceInput).toBeInTheDocument();
+
+    // Verify "Build Command" is NOT present
+    const buildCmdInput = screen.queryByPlaceholderText('npm run build');
+    expect(buildCmdInput).not.toBeInTheDocument();
+
+    // Fill form
+    const nameInput = screen.getByPlaceholderText('my-awesome-service');
+    fireEvent.change(nameInput, { target: { value: 'my-compose-app' } });
+
+    fireEvent.change(composeFileInput, { target: { value: 'compose.prod.yml' } });
+    fireEvent.change(mainServiceInput, { target: { value: 'web' } });
+
+    // Submit
+    const deployBtn = screen.getByText('Deploy Project');
+    fireEvent.click(deployBtn);
+
+    await waitFor(() => {
+      expect(fetchWithAuth).toHaveBeenCalledTimes(2);
+    });
+
+    const createCall = vi.mocked(fetchWithAuth).mock.calls[0];
+    const options = createCall[1]!;
+    const body = JSON.parse(options.body as string);
+
+    expect(body).toEqual(
+      expect.objectContaining({
+        name: 'my-compose-app',
+        repoUrl: 'https://github.com/test/compose-repo',
+        type: 'COMPOSE',
+        composeFile: 'compose.prod.yml',
+        mainService: 'web',
+      }),
+    );
+
+    expect(body).not.toHaveProperty('buildCommand');
+    expect(body).not.toHaveProperty('startCommand');
   });
 });

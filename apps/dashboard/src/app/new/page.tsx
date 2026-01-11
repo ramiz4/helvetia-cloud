@@ -25,7 +25,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
-type ImportType = 'github' | 'manual' | 'compose' | 'database';
+type ImportType = 'github' | 'manual' | 'database';
 
 export default function NewServicePage() {
   const { t } = useLanguage();
@@ -39,7 +39,7 @@ export default function NewServicePage() {
   const [repoUrl, setRepoUrl] = useState('');
   const [branch, setBranch] = useState('main');
   const [projectName, setProjectName] = useState('');
-  const [serviceType, setServiceType] = useState<'docker' | 'static'>('docker');
+  const [serviceType, setServiceType] = useState<'docker' | 'static' | 'compose'>('docker');
   const [buildCommand, setBuildCommand] = useState('');
   const [startCommand, setStartCommand] = useState('');
   const [outputDirectory, setOutputDirectory] = useState('dist');
@@ -54,7 +54,7 @@ export default function NewServicePage() {
     setLoading(true);
     setError(null);
 
-    let finalType = importType === 'compose' ? 'COMPOSE' : serviceType.toUpperCase();
+    let finalType = serviceType === 'compose' ? 'COMPOSE' : serviceType.toUpperCase();
     if (importType === 'database') {
       finalType = dbEngine.toUpperCase();
     }
@@ -64,12 +64,12 @@ export default function NewServicePage() {
       repoUrl,
       branch,
       type: finalType,
-      buildCommand,
+      buildCommand: serviceType === 'compose' ? undefined : buildCommand,
       startCommand: serviceType === 'docker' ? startCommand : undefined,
       staticOutputDir: serviceType === 'static' ? outputDirectory : undefined,
-      port: serviceType === 'docker' || importType === 'compose' ? port : undefined,
-      composeFile: importType === 'compose' ? composeFile : undefined,
-      mainService: importType === 'compose' ? mainService : undefined,
+      port: serviceType === 'docker' || serviceType === 'compose' ? port : undefined,
+      composeFile: serviceType === 'compose' ? composeFile : undefined,
+      mainService: serviceType === 'compose' ? mainService : undefined,
       envVars: Object.fromEntries(envVars.map((ev) => [ev.key, ev.value])),
     };
 
@@ -213,7 +213,6 @@ export default function NewServicePage() {
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { id: 'github', label: t.dashboard.newService.importGithub, icon: Github },
-                  { id: 'compose', label: t.dashboard.newService.importCompose, icon: Combine },
                   { id: 'database', label: t.dashboard.newService.importDatabase, icon: Database },
                   { id: 'manual', label: t.dashboard.newService.importManual, icon: FileCode },
                 ].map((type) => (
@@ -244,75 +243,70 @@ export default function NewServicePage() {
                   />
                 )}
 
-                {['manual', 'database', 'compose'].includes(importType) &&
-                  importType !== 'github' && (
-                    <div className="space-y-6 max-w-xl mx-auto py-12">
-                      <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
-                          {importType === 'compose' ? (
-                            <Combine size={32} />
-                          ) : importType === 'database' ? (
-                            <Database size={32} />
-                          ) : (
-                            <FileCode size={32} />
-                          )}
-                        </div>
-                        <h3 className="text-xl font-bold text-white uppercase tracking-tighter">
-                          {importType === 'compose'
-                            ? t.dashboard.newService.importCompose
-                            : importType === 'database'
-                              ? t.dashboard.newService.importDatabase
-                              : t.dashboard.newService.importManual}
-                        </h3>
-                        <p className="text-slate-400 text-sm mt-1">Manual configuration.</p>
-                      </div>
-
-                      <div className="space-y-4">
-                        {importType !== 'database' && (
-                          <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">
-                              {t.dashboard.newService.repoUrl}
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="https://github.com/..."
-                              value={repoUrl}
-                              onChange={(e) => setRepoUrl(e.target.value)}
-                              className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-mono text-sm"
-                            />
-                          </div>
+                {['manual', 'database'].includes(importType) && importType !== 'github' && (
+                  <div className="space-y-6 max-w-xl mx-auto py-12">
+                    <div className="text-center mb-8">
+                      <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+                        {importType === 'database' ? (
+                          <Database size={32} />
+                        ) : (
+                          <FileCode size={32} />
                         )}
-
-                        {importType === 'database' && (
-                          <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">
-                              {t.dashboard.newService.databaseEngine}
-                            </label>
-                            <select
-                              value={dbEngine}
-                              onChange={(e) =>
-                                setDbEngine(e.target.value as 'postgres' | 'redis' | 'mysql')
-                              }
-                              className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white cursor-pointer appearance-none transition-all"
-                            >
-                              <option value="postgres">PostgreSQL</option>
-                              <option value="mysql">MySQL</option>
-                              <option value="redis">Redis</option>
-                            </select>
-                          </div>
-                        )}
-
-                        <button
-                          onClick={() => setStep(2)}
-                          disabled={importType !== 'database' && !repoUrl}
-                          className="w-full h-12 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                          {t.common.next}
-                          <ChevronRight size={18} />
-                        </button>
                       </div>
+                      <h3 className="text-xl font-bold text-white uppercase tracking-tighter">
+                        {importType === 'database'
+                          ? t.dashboard.newService.importDatabase
+                          : t.dashboard.newService.importManual}
+                      </h3>
+                      <p className="text-slate-400 text-sm mt-1">Manual configuration.</p>
                     </div>
-                  )}
+
+                    <div className="space-y-4">
+                      {importType !== 'database' && (
+                        <div>
+                          <label className="block text-sm font-medium text-slate-400 mb-2">
+                            {t.dashboard.newService.repoUrl}
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="https://github.com/..."
+                            value={repoUrl}
+                            onChange={(e) => setRepoUrl(e.target.value)}
+                            className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-mono text-sm"
+                          />
+                        </div>
+                      )}
+
+                      {importType === 'database' && (
+                        <div>
+                          <label className="block text-sm font-medium text-slate-400 mb-2">
+                            {t.dashboard.newService.databaseEngine}
+                          </label>
+                          <select
+                            value={dbEngine}
+                            onChange={(e) =>
+                              setDbEngine(e.target.value as 'postgres' | 'redis' | 'mysql')
+                            }
+                            className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white cursor-pointer appearance-none transition-all"
+                          >
+                            <option value="postgres">PostgreSQL</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="redis">Redis</option>
+                          </select>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => setStep(2)}
+                        disabled={importType !== 'database' && !repoUrl}
+                        className="w-full h-12 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {t.common.next}
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -397,6 +391,20 @@ export default function NewServicePage() {
                                 {t.dashboard.newService.staticSite}
                               </span>
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => setServiceType('compose')}
+                              className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                                serviceType === 'compose'
+                                  ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                                  : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
+                              }`}
+                            >
+                              <Combine size={18} />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">
+                                {t.dashboard.newService.importCompose}
+                              </span>
+                            </button>
                           </div>
                         </div>
 
@@ -415,7 +423,7 @@ export default function NewServicePage() {
                         </div>
                       </div>
 
-                      {importType === 'compose' ? (
+                      {serviceType === 'compose' ? (
                         <>
                           <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">
