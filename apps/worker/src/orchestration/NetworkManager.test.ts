@@ -4,7 +4,6 @@ import { NetworkManager } from './NetworkManager';
 
 describe('NetworkManager', () => {
   let networkManager: NetworkManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDocker: any;
 
   beforeEach(() => {

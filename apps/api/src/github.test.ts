@@ -108,8 +108,8 @@ vi.mock('axios', () => {
     default: {
       post: vi.fn(),
       get: vi.fn(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      isAxiosError: (payload: any) => !!(payload && payload.response),
+      isAxiosError: (payload: unknown) =>
+        !!(payload && typeof payload === 'object' && 'response' in (payload as object)),
     },
   };
 });

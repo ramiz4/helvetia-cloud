@@ -102,7 +102,6 @@ import { fastify } from './server';
 describe('GitHub Webhook - Repo URL Normalization', () => {
   const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || 'test-secret';
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockPrisma: any;
 
   beforeEach(async () => {

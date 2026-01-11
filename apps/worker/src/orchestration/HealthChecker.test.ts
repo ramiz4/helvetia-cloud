@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import Docker from 'dockerode';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HealthChecker } from './HealthChecker';

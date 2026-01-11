@@ -5,9 +5,7 @@ import { DatabaseDeploymentStrategy } from './DatabaseDeploymentStrategy';
 
 describe('DatabaseDeploymentStrategy', () => {
   let strategy: DatabaseDeploymentStrategy;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDocker: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockJob: any;
 
   beforeEach(() => {

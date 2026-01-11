@@ -18,10 +18,8 @@ const redisClient = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379
   maxRetriesPerRequest: null,
 });
 
-// Initialize Redlock with retry settings
-// Note: Using 'as any' due to type incompatibility between IORedis and redlock beta
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const redlock = new Redlock([redisClient as any], {
+// @ts-expect-error - Redlock beta typings are incompatible with IORedis 5.x
+const redlock = new Redlock([redisClient], {
   // Retry settings for lock acquisition
   retryCount: 10,
   retryDelay: LOCK_RETRY_DELAY_MS,

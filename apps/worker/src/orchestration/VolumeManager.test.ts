@@ -4,7 +4,6 @@ import { VolumeManager } from './VolumeManager';
 
 describe('VolumeManager', () => {
   let volumeManager: VolumeManager;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockDocker: any;
 
   beforeEach(() => {

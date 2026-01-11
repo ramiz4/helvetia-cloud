@@ -7,6 +7,48 @@ import { inject, injectable } from 'tsyringe';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from '../interfaces';
 import { getRepoUrlMatchCondition } from '../utils/repoUrl';
 
+interface PullRequestEvent {
+  action: string;
+  number: number;
+  pull_request: {
+    number: number;
+    head: {
+      ref: string;
+      sha: string;
+    };
+    base: {
+      repo: {
+        html_url: string;
+      };
+    };
+  };
+}
+
+interface PushEvent {
+  ref: string;
+  repository: {
+    clone_url: string;
+    full_name: string;
+    html_url: string;
+  };
+  after: string;
+}
+
+interface ServiceData {
+  id: string;
+  userId: string;
+  repoUrl?: string | null;
+  branch?: string | null;
+  buildCommand?: string | null;
+  startCommand?: string | null;
+  name: string;
+  port?: number | null;
+  envVars?: unknown;
+  customDomain?: string | null;
+  type: string;
+  staticOutputDir?: string | null;
+}
+
 /**
  * WebhookController
  * Handles GitHub webhook events (Push and Pull Request)
@@ -58,8 +100,10 @@ export class WebhookController {
   /**
    * Helper to create and queue deployment
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async createAndQueueDeployment(service: any, commitHash: string): Promise<any> {
+  private async createAndQueueDeployment(
+    service: ServiceData,
+    commitHash: string,
+  ): Promise<unknown> {
     const deployment = await this.deploymentRepository.create({
       serviceId: service.id,
       status: 'QUEUED',
@@ -246,19 +290,18 @@ export class WebhookController {
 
     // Handle Pull Request events
     if (payload.pull_request) {
-      return this.handlePullRequestEvent(payload, reply);
+      return this.handlePullRequestEvent(payload as PullRequestEvent, reply);
     }
 
     // Handle Push events
-    return this.handlePushEvent(payload, reply);
+    return this.handlePushEvent(payload as PushEvent, reply);
   }
 
   /**
    * Handle GitHub Pull Request events
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async handlePullRequestEvent(
-    payload: any,
+    payload: PullRequestEvent,
     reply: FastifyReply,
   ): Promise<void | FastifyReply> {
     try {
@@ -351,8 +394,10 @@ export class WebhookController {
   /**
    * Handle GitHub Push events
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async handlePushEvent(payload: any, reply: FastifyReply): Promise<void | FastifyReply> {
+  private async handlePushEvent(
+    payload: PushEvent,
+    reply: FastifyReply,
+  ): Promise<void | FastifyReply> {
     // Basic check for push event
     if (!payload.repository || !payload.ref) {
       return reply.status(200).send({ skipped: 'Not a push or PR event' });

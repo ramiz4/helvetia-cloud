@@ -20,8 +20,7 @@ const start = async () => {
 
     // If the address is already in use, kill the parent process (likely the watcher)
     // to force an immediate exit instead of waiting for file changes.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((err as any).code === 'EADDRINUSE') {
+    if (err instanceof Error && 'code' in err && err.code === 'EADDRINUSE') {
       try {
         process.kill(process.ppid);
       } catch (e) {

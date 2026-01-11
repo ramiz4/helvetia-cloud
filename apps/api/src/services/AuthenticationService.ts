@@ -23,7 +23,7 @@ export class AuthenticationService {
    */
   async authenticateWithGitHub(
     code: string,
-    jwtSign: (payload: any) => string,
+    jwtSign: (payload: { id: string; username: string }) => string,
   ): Promise<{ user: AuthResponseDto['user']; accessToken: string; refreshToken: string }> {
     if (!code) {
       throw new UnauthorizedError('Authorization code is required');
@@ -77,7 +77,7 @@ export class AuthenticationService {
    */
   async refreshAccessToken(
     refreshToken: string,
-    jwtSign: (payload: any) => string,
+    jwtSign: (payload: { id: string; username: string }) => string,
   ): Promise<{ accessToken: string; refreshToken: string; userId: string } | null> {
     if (!refreshToken) {
       throw new UnauthorizedError('Refresh token is required');

@@ -275,8 +275,7 @@ export class DeploymentController {
     let isSubscribed = false;
 
     // Get Redis connection from fastify instance
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const subConnection = (request.server as any).redis;
+    const subConnection = request.server.redis;
     const channel = `deployment-logs:${id}`;
 
     // Cleanup function to ensure all resources are freed

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -213,6 +212,7 @@ describe('GitHubController', () => {
       vi.mocked(mockUserRepository.findById).mockResolvedValue(mockUser);
       vi.mocked(mockGitHubService.getRepositories).mockRejectedValue({
         status: 500,
+        message: 'Internal error',
         data: { error: 'Internal error' },
       });
 

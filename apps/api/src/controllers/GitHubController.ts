@@ -10,6 +10,22 @@ import { decrypt } from '../utils/crypto';
  * Handles GitHub API proxy endpoints
  * Thin controller layer that delegates to GitHubService
  */
+interface GitHubApiError {
+  status?: number;
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      error?: string;
+    };
+  };
+  message?: string;
+  data?: {
+    message?: string;
+    error?: string;
+  };
+}
+
 @injectable()
 export class GitHubController {
   constructor(
@@ -43,15 +59,14 @@ export class GitHubController {
       console.log(`Fetched ${orgs.length} organizations for user ${user.id}`);
       return orgs;
     } catch (error: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const err = error as any;
-      const status = err.status || 500;
-      const data = err.data || {};
+      const err = error as GitHubApiError;
+      const status = err.status || err.response?.status || 500;
+      const data = err.data || err.response?.data || {};
       const message = err.message || 'Failed to fetch GitHub organizations';
 
       console.error('GitHub Orgs API error:', message);
 
-      if (err.status) {
+      if (status !== 500) {
         return reply.status(status).send(data);
       }
 
@@ -96,15 +111,14 @@ export class GitHubController {
 
       return repos;
     } catch (error: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const err = error as any;
-      const status = err.status || 500;
-      const data = err.data || {};
+      const err = error as GitHubApiError;
+      const status = err.status || err.response?.status || 500;
+      const data = err.data || err.response?.data || {};
       const message = err.message || 'Failed to fetch GitHub repositories';
 
       console.error('GitHub Repos API error:', message);
 
-      if (err.status) {
+      if (status !== 500) {
         return reply.status(status).send(data);
       }
 
@@ -136,10 +150,9 @@ export class GitHubController {
       const branches = await this.githubService.getRepositoryBranches(accessToken, owner, name);
       return branches;
     } catch (error: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const err = error as any;
-      const status = err.status || 500;
-      const data = err.data || {};
+      const err = error as GitHubApiError;
+      const status = err.status || err.response?.status || 500;
+      const data = err.data || err.response?.data || {};
       const message = err.message || 'Failed to fetch branches';
 
       // Handle validation errors from the service
@@ -149,7 +162,7 @@ export class GitHubController {
 
       console.error('GitHub API error:', message);
 
-      if (err.status) {
+      if (status !== 500) {
         return reply.status(status).send(data);
       }
 
