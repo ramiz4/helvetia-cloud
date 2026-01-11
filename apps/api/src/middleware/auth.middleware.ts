@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { UnauthorizedError } from '../errors';
 
 /**
  * List of routes that don't require authentication
@@ -25,7 +26,7 @@ export async function authenticateMiddleware(request: FastifyRequest, reply: Fas
   try {
     await request.jwtVerify();
   } catch (err) {
-    reply.send(err);
+    throw new UnauthorizedError('Authentication required');
   }
 }
 

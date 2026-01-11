@@ -22,6 +22,7 @@ import {
 } from './config/constants';
 import { createRateLimitConfigs } from './config/rateLimit';
 import { initializeContainer, registerInstance, resolve, TOKENS } from './di';
+import { UnauthorizedError } from './errors';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
 import { metricsService } from './services/metrics.service';
 import { encrypt } from './utils/crypto';
@@ -386,7 +387,7 @@ fastify.addHook('onRequest', async (request, reply) => {
   try {
     await request.jwtVerify();
   } catch (err) {
-    reply.send(err);
+    throw new UnauthorizedError('Authentication required');
   }
 });
 
