@@ -37,6 +37,7 @@ describe('ServiceManagementService', () => {
       findById: vi.fn(),
       findByUserId: vi.fn(),
       findByNameAndUserId: vi.fn(),
+      findByNameAll: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -63,7 +64,27 @@ describe('ServiceManagementService', () => {
       upsert: vi.fn(),
     };
 
-    service = new ServiceManagementService(mockServiceRepo, mockDeploymentRepo, mockUserRepo);
+    const mockContainerOrchestrator = {
+      listContainers: vi.fn().mockResolvedValue([]),
+      getContainer: vi.fn(),
+      createContainer: vi.fn(),
+      startContainer: vi.fn(),
+      stopContainer: vi.fn(),
+      removeContainer: vi.fn(),
+      buildImage: vi.fn(),
+      pullImage: vi.fn(),
+      inspectContainer: vi.fn(),
+      getContainerLogs: vi.fn(),
+      getContainerStats: vi.fn(),
+      getDockerInstance: vi.fn(),
+    };
+
+    service = new ServiceManagementService(
+      mockServiceRepo,
+      mockDeploymentRepo,
+      mockUserRepo,
+      mockContainerOrchestrator as any,
+    );
   });
 
   describe('getUserServices', () => {
@@ -111,6 +132,7 @@ describe('ServiceManagementService', () => {
   describe('createOrUpdateService', () => {
     it('should create a new service', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       const result = await service.createOrUpdateService({
@@ -130,9 +152,8 @@ describe('ServiceManagementService', () => {
     });
 
     it('should update existing service', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId)
-        .mockResolvedValueOnce(null) // First call for checking other users
-        .mockResolvedValueOnce(mockService); // Second call for checking current user
+      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null); // Checking other users
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(mockService); // Checking current user
       vi.mocked(mockServiceRepo.update).mockResolvedValue(mockService);
 
       const result = await service.createOrUpdateService({
@@ -160,6 +181,7 @@ describe('ServiceManagementService', () => {
 
     it('should set default port for STATIC type', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
@@ -177,6 +199,7 @@ describe('ServiceManagementService', () => {
 
     it('should set default credentials for POSTGRES type', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
@@ -199,6 +222,7 @@ describe('ServiceManagementService', () => {
 
     it('should set default credentials for REDIS type', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
@@ -219,6 +243,7 @@ describe('ServiceManagementService', () => {
 
     it('should set default credentials for MYSQL type', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
@@ -353,6 +378,7 @@ describe('ServiceManagementService', () => {
   describe('isServiceNameAvailable', () => {
     it('should return true if name is available', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
 
       const result = await service.isServiceNameAvailable('test-service', 'user-1');
 
@@ -362,6 +388,7 @@ describe('ServiceManagementService', () => {
     it('should return true if existing service is soft deleted', async () => {
       const deletedService = { ...mockService, deletedAt: new Date() };
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(deletedService);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(deletedService);
 
       const result = await service.isServiceNameAvailable('test-service', 'user-1');
 
@@ -370,6 +397,7 @@ describe('ServiceManagementService', () => {
 
     it('should return false if name is taken', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(mockService);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(mockService);
 
       const result = await service.isServiceNameAvailable('test-service', 'user-1');
 

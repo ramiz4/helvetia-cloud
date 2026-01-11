@@ -78,14 +78,12 @@ vi.mock('database', () => {
 
 vi.mock('dockerode', () => {
   return {
-    default: vi.fn(function () {
-      return {
-        listContainers: vi.fn().mockResolvedValue([]),
-        getContainer: vi.fn(),
-        listVolumes: vi.fn().mockResolvedValue({ Volumes: [] }),
-        getVolume: vi.fn(),
-      };
-    }),
+    default: class MockDocker {
+      listContainers = vi.fn().mockResolvedValue([]);
+      getContainer = vi.fn();
+      listVolumes = vi.fn().mockResolvedValue({ Volumes: [] });
+      getVolume = vi.fn();
+    },
   };
 });
 
@@ -97,16 +95,20 @@ vi.mock('@fastify/rate-limit', () => {
   };
 });
 
-import { fastify } from './server';
+import { buildServer } from './server';
 
 describe('GitHub Webhook - Repo URL Normalization', () => {
   const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || 'test-secret';
 
   let mockPrisma: any;
+  let app: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     process.env.GITHUB_WEBHOOK_SECRET = webhookSecret;
+
+    app = await buildServer();
+    await app.ready();
 
     // Get the mocked prisma instance
     const { prisma } = await import('database');
@@ -147,7 +149,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
       const payloadString = JSON.stringify(payload);
       const signature = generateSignature(payloadString);
 
-      const response = await fastify.inject({
+      const response = await app.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
@@ -200,7 +202,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
       const payloadString = JSON.stringify(payload);
       const signature = generateSignature(payloadString);
 
-      const response = await fastify.inject({
+      const response = await app.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
@@ -252,7 +254,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
       const payloadString = JSON.stringify(payload);
       const signature = generateSignature(payloadString);
 
-      const response = await fastify.inject({
+      const response = await app.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
@@ -325,7 +327,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
       const payloadString = JSON.stringify(payload);
       const signature = generateSignature(payloadString);
 
-      const response = await fastify.inject({
+      const response = await app.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
@@ -392,7 +394,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
       const payloadString = JSON.stringify(payload);
       const signature = generateSignature(payloadString);
 
-      const response = await fastify.inject({
+      const response = await app.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {
@@ -451,7 +453,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
       const payloadString = JSON.stringify(payload);
       const signature = generateSignature(payloadString);
 
-      const response = await fastify.inject({
+      const response = await app.inject({
         method: 'POST',
         url: '/webhooks/github',
         headers: {

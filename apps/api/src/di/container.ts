@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { prisma } from 'database';
+import Docker from 'dockerode';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/AuthController';
@@ -32,7 +33,11 @@ import { TOKENS } from './tokens';
  */
 export function initializeContainer(): void {
   // Register PrismaClient as a singleton
+  container.registerInstance<PrismaClient>(TOKENS.PrismaClient, prisma);
   container.registerInstance<PrismaClient>('PrismaClient', prisma);
+
+  // Register Docker instance
+  container.registerInstance(TOKENS.Docker, new Docker());
 
   // Register container orchestrator implementation
   container.registerSingleton(TOKENS.ContainerOrchestrator, DockerContainerOrchestrator);

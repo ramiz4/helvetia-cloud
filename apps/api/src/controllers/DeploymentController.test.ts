@@ -110,9 +110,12 @@ describe('DeploymentController', () => {
       findById: vi.fn(),
       findByUserId: vi.fn(),
       findByNameAndUserId: vi.fn(),
+      findByNameAll: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      findByStatus: vi.fn(),
+      findAll: vi.fn(),
     };
 
     mockDeploymentRepo = {
@@ -120,6 +123,7 @@ describe('DeploymentController', () => {
       findByServiceId: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
       deleteByServiceId: vi.fn(),
       countByServiceId: vi.fn(),
     };

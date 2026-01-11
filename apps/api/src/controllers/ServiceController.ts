@@ -1,13 +1,18 @@
-import '../types/fastify';
-
 import { prisma } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
 import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/constants';
+import { ForbiddenError, NotFoundError } from '../errors';
 import { getServiceMetrics } from '../handlers/metrics.handler';
-import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
+import type {
+  IContainerOrchestrator,
+  IDeploymentRepository,
+  IServiceRepository,
+} from '../interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from '../schemas/service.schema';
+import { ServiceManagementService } from '../services';
+import '../types/fastify';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { determineServiceStatus } from '../utils/helpers/status.helper';
@@ -25,6 +30,10 @@ export class ServiceController {
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
     private deploymentRepository: IDeploymentRepository,
+    @inject(Symbol.for('IContainerOrchestrator'))
+    private containerOrchestrator: IContainerOrchestrator,
+    @inject(Symbol.for('ServiceManagementService'))
+    private serviceManagement: ServiceManagementService,
   ) {}
 
   /**
@@ -134,87 +143,26 @@ export class ServiceController {
     }
     const userId = user.id;
 
-    // Check if another user owns this service name - use raw Prisma for complex query
-    const { prisma } = await import('database');
-    const existingByName = await prisma.service.findFirst({
-      where: { name, userId: { not: userId }, deletedAt: null },
-    });
-    if (existingByName) {
-      return reply.status(403).send({ error: 'Service name taken by another user' });
-    }
-
-    let finalPort = port || 3000;
-    let finalEnvVars = envVars || {};
-
-    if (finalType === 'STATIC') finalPort = 80;
-    if (finalType === 'POSTGRES') {
-      finalPort = 5444;
-      // Generate default credentials if not provided
-      if (!finalEnvVars.POSTGRES_PASSWORD) {
-        const crypto = await import('crypto');
-        finalEnvVars = {
-          ...finalEnvVars,
-          POSTGRES_USER: 'postgres',
-          POSTGRES_PASSWORD: crypto.default.randomBytes(16).toString('hex'),
-          POSTGRES_DB: 'app',
-        };
-      }
-    }
-    if (finalType === 'REDIS') {
-      finalPort = 6379;
-      // Generate default Redis password if not provided
-      if (!finalEnvVars.REDIS_PASSWORD) {
-        const crypto = await import('crypto');
-        finalEnvVars = {
-          ...finalEnvVars,
-          REDIS_PASSWORD: crypto.default.randomBytes(16).toString('hex'),
-        };
-      }
-    }
-    if (finalType === 'MYSQL') {
-      finalPort = 3306;
-      if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
-        const crypto = await import('crypto');
-        finalEnvVars = {
-          ...finalEnvVars,
-          MYSQL_ROOT_PASSWORD: crypto.default.randomBytes(16).toString('hex'),
-          MYSQL_DATABASE: 'app',
-        };
-      }
-    }
-
-    // Check if service exists
-    const existing = await this.serviceRepository.findByNameAndUserId(name, userId);
-
-    if (existing) {
-      // Update existing service
-      return this.serviceRepository.update(existing.id, {
-        repoUrl,
-        branch: branch || 'main',
-        buildCommand,
-        startCommand,
-        port: finalPort,
-        customDomain,
-        type: finalType,
-        staticOutputDir: staticOutputDir || 'dist',
-        envVars: finalEnvVars,
-        deletedAt: null, // Resurrect service if it was soft-deleted
-      });
-    } else {
-      // Create new service
-      return this.serviceRepository.create({
+    // Delegate to ServiceManagementService
+    try {
+      return await this.serviceManagement.createOrUpdateService({
         name,
-        repoUrl: repoUrl || null,
-        branch: branch || 'main',
+        userId,
+        repoUrl: repoUrl || undefined,
+        branch: branch || undefined,
         buildCommand,
         startCommand,
-        port: finalPort,
-        userId,
-        customDomain,
+        port,
+        customDomain: customDomain || undefined,
         type: finalType,
-        staticOutputDir: staticOutputDir || 'dist',
-        envVars: finalEnvVars,
+        staticOutputDir: staticOutputDir || undefined,
+        envVars,
       });
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        return reply.status(403).send({ error: error.message });
+      }
+      throw error;
     }
   }
 
@@ -295,22 +243,22 @@ export class ServiceController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    const service = await this.serviceRepository.findById(id);
-    if (!service || service.userId !== user.id || service.deletedAt) {
-      return reply.status(404).send({ error: 'Service not found or unauthorized' });
+    // Delegate to ServiceManagementService
+    try {
+      await this.serviceManagement.softDeleteService(id, user.id);
+      return {
+        success: true,
+        message: 'Service soft deleted. Can be recovered within 30 days.',
+      };
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({ error: error.message });
+      }
+      if (error instanceof ForbiddenError) {
+        return reply.status(403).send({ error: error.message });
+      }
+      throw error;
     }
-
-    // Check if service is protected from deletion
-    if (service.deleteProtected) {
-      return reply
-        .status(403)
-        .send({ error: 'Service is protected from deletion. Remove protection first.' });
-    }
-
-    // Perform soft deletion
-    await this.serviceRepository.update(id, { deletedAt: new Date() });
-
-    return { success: true, message: 'Service soft deleted. Can be recovered within 30 days.' };
   }
 
   /**

@@ -30,6 +30,12 @@ export class PrismaServiceRepository implements IServiceRepository {
     });
   }
 
+  async findByNameAll(name: string, userId: string): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: { name, userId },
+    });
+  }
+
   async create(data: ServiceCreateInput): Promise<Service> {
     return this.prisma.service.create({ data });
   }

@@ -86,6 +86,11 @@ export interface IServiceRepository {
   findByNameAndUserId(name: string, userId: string): Promise<Service | null>;
 
   /**
+   * Find a service by name and user ID including soft-deleted ones
+   */
+  findByNameAll(name: string, userId: string): Promise<Service | null>;
+
+  /**
    * Create a new service
    */
   create(data: ServiceCreateInput): Promise<Service>;

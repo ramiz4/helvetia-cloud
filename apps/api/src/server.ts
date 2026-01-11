@@ -372,7 +372,11 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/refresh',
     '/auth/logout',
   ];
-  if (publicRoutes.includes(request.routeOptions?.url || '')) {
+  const url = request.routeOptions?.url || request.url.split('?')[0];
+  if (process.env.NODE_ENV === 'test') {
+    console.log(`Auth hook: url=${url} rawUrl=${request.url} matched=${!!request.routeOptions}`);
+  }
+  if (publicRoutes.includes(url)) {
     return;
   }
   try {

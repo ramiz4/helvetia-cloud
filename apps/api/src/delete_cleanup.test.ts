@@ -47,26 +47,26 @@ vi.mock('bullmq', () => {
   };
 });
 
-const mockContainer = {
-  stop: vi.fn().mockResolvedValue(undefined),
-  remove: vi.fn().mockResolvedValue(undefined),
-};
-
-const mockImage = {
-  remove: vi.fn().mockResolvedValue(undefined),
-};
-
-const mockVolume = {
-  remove: vi.fn().mockResolvedValue(undefined),
-};
-
-const mockDocker = {
-  listContainers: vi.fn().mockResolvedValue([]),
-  listVolumes: vi.fn().mockResolvedValue({ Volumes: [] }),
-  getContainer: vi.fn(() => mockContainer),
-  getImage: vi.fn(() => mockImage),
-  getVolume: vi.fn(() => mockVolume),
-};
+const { mockContainer, mockDocker } = vi.hoisted(() => {
+  const mockContainer = {
+    stop: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
+  };
+  const mockImage = {
+    remove: vi.fn().mockResolvedValue(undefined),
+  };
+  const mockVolume = {
+    remove: vi.fn().mockResolvedValue(undefined),
+  };
+  const mockDocker = {
+    listContainers: vi.fn().mockResolvedValue([]),
+    listVolumes: vi.fn().mockResolvedValue({ Volumes: [] }),
+    getContainer: vi.fn(() => mockContainer),
+    getImage: vi.fn(() => mockImage),
+    getVolume: vi.fn(() => mockVolume),
+  };
+  return { mockContainer, mockImage, mockVolume, mockDocker };
+});
 
 vi.mock('dockerode', () => ({
   default: vi.fn(function () {
