@@ -35,7 +35,12 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // React Query hooks
-  const { data: services = [], isLoading, isError, error } = useServices();
+  const {
+    data: services = [],
+    isLoading,
+    isError,
+    error,
+  } = useServices({ enabled: !!isAuthenticated });
   const updateServiceMutation = useUpdateService();
   const deleteServiceMutation = useDeleteService();
   const deployServiceMutation = useDeployService();

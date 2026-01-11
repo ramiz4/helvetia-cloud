@@ -94,10 +94,11 @@ async function restartService(id: string): Promise<void> {
 }
 
 // Hook: Fetch all services
-export function useServices() {
+export function useServices(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: serviceKeys.lists(),
     queryFn: fetchServices,
+    ...options,
   });
 }
 
