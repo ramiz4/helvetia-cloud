@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import '../types/fastify';
+
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
@@ -27,8 +28,11 @@ export class ServiceController {
    * GET /services
    * List all services for the authenticated user
    */
-  async getAllServices(request: FastifyRequest): Promise<any> {
-    const user = (request as any).user;
+  async getAllServices(request: FastifyRequest) {
+    const user = request.user;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
     const services = await this.serviceRepository.findByUserId(user.id);
 
     // Fetch latest deployment for each service
@@ -59,9 +63,12 @@ export class ServiceController {
    * GET /services/:id
    * Get a specific service by ID
    */
-  async getServiceById(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async getServiceById(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     const service = await this.serviceRepository.findById(id);
     if (!service || service.userId !== user.id || service.deletedAt) {
@@ -86,7 +93,7 @@ export class ServiceController {
    * POST /services
    * Create a new service
    */
-  async createService(request: FastifyRequest, reply: FastifyReply): Promise<any> {
+  async createService(request: FastifyRequest, reply: FastifyReply) {
     // Validate and parse request body
     let validatedData;
     try {
@@ -118,7 +125,10 @@ export class ServiceController {
     } = validatedData;
 
     const finalType = type || 'DOCKER';
-    const user = (request as any).user;
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
     const userId = user.id;
 
     // Check if another user owns this service name - use raw Prisma for complex query
@@ -209,8 +219,8 @@ export class ServiceController {
    * PATCH /services/:id
    * Update an existing service
    */
-  async updateService(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
+  async updateService(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
 
     // Validate and parse request body
     let validatedData;
@@ -242,7 +252,10 @@ export class ServiceController {
       staticOutputDir,
     } = validatedData;
 
-    const user = (request as any).user;
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     // First verify the service exists and user owns it
     const existingService = await this.serviceRepository.findById(id);
@@ -272,9 +285,12 @@ export class ServiceController {
    * DELETE /services/:id
    * Soft delete a service
    */
-  async deleteService(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async deleteService(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     const service = await this.serviceRepository.findById(id);
     if (!service || service.userId !== user.id || service.deletedAt) {
@@ -298,9 +314,12 @@ export class ServiceController {
    * POST /services/:id/recover
    * Recover a soft-deleted service
    */
-  async recoverService(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async recoverService(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     const service = await this.serviceRepository.findById(id);
 
@@ -318,10 +337,13 @@ export class ServiceController {
    * PATCH /services/:id/protection
    * Toggle delete protection for a service
    */
-  async toggleProtection(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
-    const { deleteProtected } = request.body as any;
+  async toggleProtection(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+    const { deleteProtected } = request.body as { deleteProtected?: boolean };
 
     if (typeof deleteProtected !== 'boolean') {
       return reply.status(400).send({ error: 'deleteProtected must be a boolean' });
@@ -342,9 +364,12 @@ export class ServiceController {
    * GET /services/:id/health
    * Get health status of a service
    */
-  async getServiceHealth(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async getServiceHealth(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     const { prisma } = await import('database');
     const service = await prisma.service.findFirst({
@@ -378,9 +403,12 @@ export class ServiceController {
    * GET /services/:id/metrics
    * Get metrics for a specific service
    */
-  async getServiceMetrics(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const { id } = request.params as any;
-    const user = (request as any).user;
+  async getServiceMetrics(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     const { prisma } = await import('database');
     const service = await prisma.service.findFirst({
@@ -395,8 +423,11 @@ export class ServiceController {
    * GET /services/metrics/stream
    * Server-Sent Events endpoint for real-time metrics streaming
    */
-  async streamMetrics(request: FastifyRequest, reply: FastifyReply): Promise<any> {
-    const user = (request as any).user;
+  async streamMetrics(request: FastifyRequest, reply: FastifyReply) {
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
 
     // Set SSE headers with CORS support
     reply.raw.writeHead(200, {

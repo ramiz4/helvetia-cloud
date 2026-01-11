@@ -4,6 +4,7 @@ import { BODY_LIMIT_SMALL } from '../config/constants';
 import { resolve, TOKENS } from '../di';
 import type { IUserRepository } from '../interfaces';
 import { AuthenticationService } from '../services';
+import type { JwtPayload } from '../types';
 import { revokeAllUserRefreshTokens, verifyAndRotateRefreshToken } from '../utils/refreshToken';
 
 /**
@@ -31,7 +32,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const jwtSign = (payload: any) => fastify.jwt.sign(payload);
+        const jwtSign = (payload: JwtPayload) => fastify.jwt.sign(payload);
         const result = await authService.authenticateWithGitHub(code, jwtSign);
 
         // Set cookies
@@ -52,8 +53,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         });
 
         return { user: result.user, token: result.accessToken };
-      } catch (err: any) {
-        console.error('Auth error:', err.message);
+      } catch (err: unknown) {
+        const error = err as Error;
+        console.error('Auth error:', error.message);
         return reply.status(500).send({ error: 'Authentication failed' });
       }
     },
@@ -71,7 +73,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const redisConnection = (fastify as any).redis;
+      const redisConnection = fastify.redis;
       const result = await verifyAndRotateRefreshToken(refreshToken, fastify, redisConnection);
 
       if (!result) {
@@ -107,8 +109,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         user: { id: user.id, username: user.username, avatarUrl: user.avatarUrl },
         token: result.accessToken,
       };
-    } catch (err: any) {
-      console.error('Refresh token error:', err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Refresh token error:', error.message);
       return reply.status(500).send({ error: 'Token refresh failed' });
     }
   });
@@ -122,9 +125,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       // Try to get user from token if present
       try {
         await request.jwtVerify();
-        const user = (request as any).user;
+        const user = request.user;
         if (user?.id) {
-          const redisConnection = (fastify as any).redis;
+          const redisConnection = fastify.redis;
           await revokeAllUserRefreshTokens(user.id, redisConnection);
         }
       } catch {
@@ -136,8 +139,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       reply.clearCookie('refreshToken', { path: '/' });
 
       return { success: true };
-    } catch (err: any) {
-      console.error('Logout error:', err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Logout error:', error.message);
       return reply.status(500).send({ error: 'Logout failed' });
     }
   });
@@ -147,7 +151,10 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
    * Get current user info
    */
   fastify.get('/auth/me', async (request) => {
-    const user = (request as any).user;
+    const user = request.user;
+    if (!user) {
+      throw new Error('User not found');
+    }
     const dbUser = await userRepository.findById(user.id);
 
     if (!dbUser) {
@@ -167,7 +174,10 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
    * Disconnect GitHub account
    */
   fastify.delete('/auth/github/disconnect', async (request) => {
-    const user = (request as any).user;
+    const user = request.user;
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     await prisma.user.update({
       where: { id: user.id },

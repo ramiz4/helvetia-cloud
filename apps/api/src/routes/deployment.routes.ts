@@ -11,7 +11,7 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
   const controller = resolve<DeploymentController>(TOKENS.DeploymentController);
 
   // Get rate limit config
-  const redis = (fastify as any).redis;
+  const redis = fastify.redis;
   const { wsRateLimitConfig } = createRateLimitConfigs(redis);
 
   /**
