@@ -67,7 +67,7 @@ export class WebhookController {
     let repoUrlData = service.repoUrl;
     const dbUser = await this.userRepository.findById(service.userId);
     if (dbUser?.githubAccessToken && repoUrlData && repoUrlData.includes('github.com')) {
-      const { decrypt } = await import('../utils/crypto');
+      const { decrypt } = await import('../utils/crypto.js');
       const decryptedToken = decrypt(dbUser.githubAccessToken);
       repoUrlData = repoUrlData.replace('https://', `https://${decryptedToken}@`);
     }

@@ -22,8 +22,6 @@ import {
 } from './config/constants';
 import { createRateLimitConfigs } from './config/rateLimit';
 import { initializeContainer, registerInstance, resolve, TOKENS } from './di';
-import { verifyGitHubSignature } from './handlers/webhook.handler';
-import { initializeContainer, resolve, TOKENS } from './di';
 import type { IDeploymentRepository, IServiceRepository, IUserRepository } from './interfaces';
 import { metricsService } from './services/metrics.service';
 import { encrypt } from './utils/crypto';
