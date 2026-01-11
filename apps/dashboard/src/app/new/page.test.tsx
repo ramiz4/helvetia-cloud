@@ -33,7 +33,7 @@ vi.mock('../../lib/LanguageContext', () => ({
           title: 'Deploy a new Project',
           subtitle: 'Subtitle',
           importGithub: 'GitHub Import',
-          importManual: 'Manual Import',
+          importManual: 'Manual Git Import',
           importLocal: 'Local Folder',
           importCompose: 'Docker Compose',
           importDatabase: 'Database',
@@ -94,8 +94,8 @@ describe('NewServicePage', () => {
 
     render(<NewServicePage />);
 
-    // Step 1: Select Manual Import
-    const manualImportBtn = screen.getByText('Manual Import');
+    // Step 1: Select Manual Git Import
+    const manualImportBtn = screen.getByText('Manual Git Import');
     fireEvent.click(manualImportBtn);
 
     // Enter Repo URL

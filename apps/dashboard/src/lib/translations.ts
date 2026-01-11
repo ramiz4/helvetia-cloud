@@ -178,7 +178,7 @@ export const translations = {
         title: 'Deploy a new Project',
         subtitle: 'Import a Git repository to get started with your deployment.',
         importGithub: 'GitHub Import',
-        importManual: 'Manual Import',
+        importManual: 'Manual Git Import',
         importLocal: 'Local Folder',
         importCompose: 'Docker Compose',
         importDatabase: 'Database',
