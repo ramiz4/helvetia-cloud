@@ -1,6 +1,12 @@
+import path from 'path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      database: path.resolve(__dirname, '../../packages/database/src/index.ts'),
+    },
+  },
   test: {
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
