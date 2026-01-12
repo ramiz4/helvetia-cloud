@@ -17,39 +17,76 @@ vi.mock('../service-forms', () => ({
     onChange,
     data,
   }: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onChange: (d: any) => void;
+    onChange: (d: ServiceFormData) => void;
     data: { buildCommand: string };
   }) => (
     <div data-testid="compose-fields">
       <button
-        onClick={() => onChange({ buildCommand: 'new-compose.yml', startCommand: 'new-service' })}
+        onClick={() =>
+          onChange({
+            buildCommand: 'new-compose.yml',
+            startCommand: 'new-service',
+          } as ServiceFormData)
+        }
       >
         Update Compose
       </button>
       <span data-testid="compose-file">{data.buildCommand}</span>
     </div>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  DockerConfigFields: ({ onChange, data: _data }: { onChange: (d: any) => void; data: any }) => (
+  DockerConfigFields: ({
+    onChange,
+    data: _data,
+  }: {
+    onChange: (d: ServiceFormData) => void;
+    data: ServiceFormData;
+  }) => (
     <div data-testid="docker-fields">
-      <button onClick={() => onChange({ buildCommand: 'new-build', startCommand: 'new-start' })}>
+      <button
+        onClick={() =>
+          onChange({
+            buildCommand: 'new-build',
+            startCommand: 'new-start',
+          } as ServiceFormData)
+        }
+      >
         Update Docker
       </button>
     </div>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  GHCRConfigFields: ({ onChange, data: _data }: { onChange: (d: any) => void; data: any }) => (
+  GHCRConfigFields: ({
+    onChange,
+    data: _data,
+  }: {
+    onChange: (d: ServiceFormData) => void;
+    data: ServiceFormData;
+  }) => (
     <div data-testid="ghcr-fields">
-      <button onClick={() => onChange({ branch: 'new-tag' })}>Update GHCR</button>
+      <button
+        onClick={() =>
+          onChange({
+            branch: 'new-tag',
+          } as ServiceFormData)
+        }
+      >
+        Update GHCR
+      </button>
     </div>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  StaticConfigFields: ({ onChange, data: _data }: { onChange: (d: any) => void; data: any }) => (
+  StaticConfigFields: ({
+    onChange,
+    data: _data,
+  }: {
+    onChange: (d: ServiceFormData) => void;
+    data: ServiceFormData;
+  }) => (
     <div data-testid="static-fields">
       <button
         onClick={() =>
-          onChange({ buildCommand: 'new-static-build', staticOutputDir: 'new-output' })
+          onChange({
+            buildCommand: 'new-static-build',
+            staticOutputDir: 'new-output',
+          } as ServiceFormData)
         }
       >
         Update Static
@@ -103,7 +140,7 @@ const defaultData = {
   port: 8080,
   mainService: '',
   composeFile: '',
-} as unknown as ServiceFormData;
+} as ServiceFormData;
 
 const mockSetLanguage = vi.fn();
 
