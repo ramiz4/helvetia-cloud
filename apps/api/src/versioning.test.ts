@@ -41,8 +41,12 @@ describe('API Versioning', () => {
   afterAll(async () => {
     // Cleanup test data
     if (testUserId) {
-      await prisma.service.deleteMany({ where: { userId: testUserId } }).catch(() => {});
-      await prisma.user.deleteMany({ where: { id: testUserId } }).catch(() => {});
+      await prisma.service.deleteMany({ where: { userId: testUserId } }).catch((error) => {
+        console.error('Failed to cleanup test services:', error);
+      });
+      await prisma.user.deleteMany({ where: { id: testUserId } }).catch((error) => {
+        console.error('Failed to cleanup test user:', error);
+      });
     }
     await app.close();
   });
