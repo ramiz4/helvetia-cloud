@@ -3,8 +3,9 @@
 import { EditServiceModal } from '@/components/EditServiceModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LogsModal } from '@/components/LogsModal';
+import { NewEnvironmentModal } from '@/components/NewEnvironmentModal';
 import { ServiceCard } from '@/components/ServiceCard/ServiceCard';
-import { useProject } from '@/hooks/useProjects';
+import { useCreateEnvironment, useProject } from '@/hooks/useProjects';
 import {
   createUpdateServiceMetrics,
   useDeleteService,
@@ -46,6 +47,7 @@ export default function ProjectPage() {
   const [selectedLogs, setSelectedLogs] = useState<string | null>(null);
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [showNewEnvironmentModal, setShowNewEnvironmentModal] = useState(false);
 
   const { data: project, isLoading: projectLoading } = useProject(id);
   const { data: services = [], isLoading: servicesLoading } = useServices({
@@ -57,6 +59,7 @@ export default function ProjectPage() {
   const deployServiceMutation = useDeployService();
   const restartServiceMutation = useRestartService();
   const stopServiceMutation = useStopService();
+  const createEnvironmentMutation = useCreateEnvironment();
   const updateMetrics = createUpdateServiceMetrics(queryClient);
 
   useEffect(() => {
@@ -164,6 +167,16 @@ export default function ProjectPage() {
     }
   };
 
+  const handleCreateEnvironment = async (name: string) => {
+    try {
+      await createEnvironmentMutation.mutateAsync({ projectId: id, name });
+      toast.success('Environment created successfully');
+      setShowNewEnvironmentModal(false);
+    } catch {
+      toast.error('Failed to create environment');
+    }
+  };
+
   if (projectLoading || servicesLoading || isAuthenticated === null) {
     return (
       <div className="flex flex-col items-center justify-center py-64 gap-6">
@@ -231,6 +244,13 @@ export default function ProjectPage() {
               <button className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all border border-white/10 flex items-center gap-3 active:scale-95 shadow-xl">
                 <Settings size={20} />
                 Project Settings
+              </button>
+              <button
+                onClick={() => setShowNewEnvironmentModal(true)}
+                className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all border border-white/10 flex items-center gap-3 active:scale-95 shadow-xl"
+              >
+                <Plus size={20} />
+                New Environment
               </button>
               <Link
                 href={`/new?project=${id}`}
@@ -373,6 +393,13 @@ export default function ProjectPage() {
             onClose={() => setEditingService(null)}
             onSave={handleUpdateService}
             translations={t.dashboard}
+          />
+        )}
+
+        {showNewEnvironmentModal && (
+          <NewEnvironmentModal
+            onClose={() => setShowNewEnvironmentModal(false)}
+            onSave={handleCreateEnvironment}
           />
         )}
       </div>
