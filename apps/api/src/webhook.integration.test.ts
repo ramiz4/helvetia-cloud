@@ -12,6 +12,8 @@ describeIf('Webhook Processing Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let testServiceId: string;
+  let testProjectId: string;
+  let testEnvironmentId: string;
   const webhookSecret = 'test-webhook-secret-12345';
 
   // Helper function to generate GitHub webhook signature
@@ -43,6 +45,23 @@ describeIf('Webhook Processing Integration Tests', () => {
       },
     });
     testUserId = testUser.id;
+
+    // Create test project and environment
+    const testProject = await prisma.project.create({
+      data: {
+        name: 'webhook-test-project',
+        userId: testUserId,
+      },
+    });
+    testProjectId = testProject.id;
+
+    const testEnv = await prisma.environment.create({
+      data: {
+        name: 'production',
+        projectId: testProjectId,
+      },
+    });
+    testEnvironmentId = testEnv.id;
   });
 
   afterAll(async () => {
@@ -132,6 +151,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: false,
         },
       });
@@ -177,6 +197,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: false,
         },
       });
@@ -246,6 +267,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: true,
           prNumber: 123,
         },
@@ -287,6 +309,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: false,
         },
       });
@@ -349,6 +372,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: false,
         },
       });
@@ -363,6 +387,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: true,
           prNumber: 43,
         },
@@ -427,6 +452,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: false,
         },
       });
@@ -441,6 +467,7 @@ describeIf('Webhook Processing Integration Tests', () => {
           type: 'DOCKER',
           port: 3000,
           status: 'IDLE',
+          environmentId: testEnvironmentId,
           isPreview: true,
           prNumber: 44,
         },

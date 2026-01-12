@@ -20,7 +20,7 @@ describe('ServiceManagementService', () => {
     port: 3000,
     status: 'IDLE',
     userId: 'user-1',
-    environmentId: 'env-1',
+    environmentId: '123e4567-e89b-12d3-a456-426614174000',
     envVars: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -141,7 +141,7 @@ describe('ServiceManagementService', () => {
       const result = await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'DOCKER',
       });
 
@@ -162,7 +162,7 @@ describe('ServiceManagementService', () => {
       const result = await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'DOCKER',
       });
 
@@ -180,7 +180,6 @@ describe('ServiceManagementService', () => {
         service.createOrUpdateService({
           name: 'test-service',
           userId: 'user-1',
-          environmentId: 'env-1',
           type: 'DOCKER',
         }),
       ).rejects.toThrow(ConflictError);
@@ -193,7 +192,7 @@ describe('ServiceManagementService', () => {
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'STATIC',
       });
 
@@ -211,7 +210,7 @@ describe('ServiceManagementService', () => {
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'POSTGRES',
       });
 
@@ -234,7 +233,7 @@ describe('ServiceManagementService', () => {
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'REDIS',
       });
 
@@ -255,7 +254,7 @@ describe('ServiceManagementService', () => {
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'MYSQL',
       });
 

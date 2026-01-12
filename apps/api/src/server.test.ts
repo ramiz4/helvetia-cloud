@@ -187,7 +187,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'new-service',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         repoUrl: 'https://github.com/user/new-repo',
         type: 'DOCKER',
       },
@@ -222,7 +222,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-postgres',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'POSTGRES',
       },
     });
@@ -268,7 +268,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-redis',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'REDIS',
       },
     });
@@ -312,7 +312,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-mysql',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'MYSQL',
       },
     });
@@ -358,7 +358,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-postgres-custom',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'POSTGRES',
         envVars: {
           POSTGRES_PASSWORD: customPassword,
@@ -401,7 +401,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-static-site',
-        environmentId: 'env-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'STATIC',
         repoUrl: 'https://github.com/user/static-site',
       },

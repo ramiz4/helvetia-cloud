@@ -186,6 +186,7 @@ describe('Request Body Size Limits', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: '123e4567-e89b-12d3-a456-426614174000',
           type: 'DOCKER',
           repoUrl: 'https://github.com/user/repo',
           branch: 'main',
