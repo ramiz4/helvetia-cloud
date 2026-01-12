@@ -110,8 +110,8 @@ describeIf('API Versioning', () => {
       });
 
       expect(response.statusCode).toBe(401);
-      const error = JSON.parse(response.body);
-      expect(error.message).toBe('Authentication required');
+      const errorResponse = JSON.parse(response.body);
+      expect(errorResponse.error.message).toBe('Authentication required');
     });
 
     it('should access projects endpoint with v1 prefix', async () => {
@@ -181,7 +181,7 @@ describeIf('API Versioning', () => {
     it('should return 404 for unversioned API routes', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/services',
+        url: '/services',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
