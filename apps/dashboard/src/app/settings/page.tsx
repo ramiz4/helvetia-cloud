@@ -23,7 +23,7 @@ interface UserInfo {
   username: string;
   avatarUrl: string;
   githubId: string;
-  isGithubConnected: boolean;
+  hasGitHubConnected: boolean;
 }
 
 export default function SettingsPage() {
@@ -161,7 +161,7 @@ export default function SettingsPage() {
                 <div>
                   <div className="font-bold text-lg text-white flex items-center gap-3">
                     {user?.username}
-                    {user?.isGithubConnected ? (
+                    {user?.hasGitHubConnected ? (
                       <span className="text-[10px] uppercase tracking-widest bg-emerald-500/15 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5 font-bold shadow-sm">
                         <CheckCircle2 size={12} /> {t.settings.connected}
                       </span>
@@ -177,7 +177,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {user?.isGithubConnected ? (
+              {user?.hasGitHubConnected ? (
                 <button
                   onClick={disconnectGithub}
                   className="w-full sm:w-auto text-sm text-rose-400 hover:text-white font-bold transition-all flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 hover:bg-rose-500 rounded-xl border border-rose-500/20 shadow-md active:scale-95"
