@@ -111,7 +111,7 @@ export default function ConfigurationStep({
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-2">
-                  Edit Service Name
+                  Service Name
                 </label>
                 <input
                   type="text"
@@ -157,10 +157,11 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'docker' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'docker'
-                            ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                            : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                            }`}
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            serviceType === 'docker'
+                              ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                              : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
+                          }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -170,10 +171,11 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'static' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'static'
-                            ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                            : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                            }`}
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            serviceType === 'static'
+                              ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                              : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
+                          }`}
                         >
                           <Globe size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -183,10 +185,11 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'compose' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'compose'
-                            ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                            : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                            }`}
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            serviceType === 'compose'
+                              ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                              : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
+                          }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -286,8 +289,7 @@ export default function ConfigurationStep({
 
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       const u = updates as Record<string, any>;
-                      if (u.buildCommand !== undefined)
-                        mapping.buildCommand = u.buildCommand;
+                      if (u.buildCommand !== undefined) mapping.buildCommand = u.buildCommand;
                       if (u.staticOutputDir !== undefined)
                         mapping.outputDirectory = u.staticOutputDir;
                       updateData(mapping);

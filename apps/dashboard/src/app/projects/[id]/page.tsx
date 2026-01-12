@@ -252,13 +252,6 @@ export default function ProjectPage() {
                 <Plus size={20} />
                 New Environment
               </button>
-              <Link
-                href={`/new?project=${id}`}
-                className="h-14 px-8 rounded-2xl bg-indigo-500 text-white font-bold hover:bg-indigo-400 transition-all flex items-center gap-3 active:scale-95 shadow-2xl shadow-indigo-500/30"
-              >
-                <Plus size={20} />
-                New Service
-              </Link>
             </div>
           </div>
         </div>
@@ -331,7 +324,7 @@ export default function ProjectPage() {
                   className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-black text-xs uppercase tracking-widest transition-colors group"
                 >
                   <Plus size={16} />
-                  Add to {env.name}
+                  Add Service to {env.name}
                 </Link>
               </div>
 

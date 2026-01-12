@@ -48,7 +48,7 @@ model Environment {
 
 model Service {
   id              String       @id @default(uuid())
-  name            String       @unique
+  name            String
   repoUrl         String?
   branch          String       @default("main")
   buildCommand    String?
@@ -71,6 +71,7 @@ model Service {
   deployments     Deployment[]
   user            User         @relation(fields: [userId], references: [id])
 
+  @@unique([environmentId, name])
   @@index([repoUrl, prNumber, isPreview])
   @@index([deletedAt])
 }

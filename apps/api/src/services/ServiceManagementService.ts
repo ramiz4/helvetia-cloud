@@ -57,23 +57,21 @@ export class ServiceManagementService {
    * Handles type-specific defaults (POSTGRES, REDIS, MYSQL, STATIC)
    */
   async createOrUpdateService(dto: CreateServiceDto): Promise<Service> {
-    const { name, userId, type = 'DOCKER', port, envVars = {} } = dto;
+    const { name, userId, environmentId, type = 'DOCKER', port, envVars = {} } = dto;
 
-    // Check if another user owns this service name
-    const existingByOtherUser = await this.serviceRepository.findByNameAndUserId(name, '');
-    if (
-      existingByOtherUser &&
-      existingByOtherUser.userId !== userId &&
-      !existingByOtherUser.deletedAt
-    ) {
-      throw new ForbiddenError('Service name taken by another user');
+    if (!environmentId) {
+      throw new ConflictError('Environment ID is required');
     }
 
     // Determine final port and environment variables based on service type
     const { finalPort, finalEnvVars } = this.getServiceDefaults(type, port, envVars);
 
-    // Check if service exists for this user (including soft-deleted ones)
-    const existing = await this.serviceRepository.findByNameAll(name, userId);
+    // Check if service exists in this specific environment (including soft-deleted ones)
+    const existing = await this.serviceRepository.findByNameAndEnvironment(
+      name,
+      environmentId,
+      userId,
+    );
 
     if (existing) {
       // Update existing service (resurrect if soft-deleted)

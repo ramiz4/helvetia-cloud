@@ -43,10 +43,11 @@ export default function ImportSourceStep({
               // Clear repo/branch when switching types to avoid confusion?
               // updateData({ repoUrl: '', branch: 'main' });
             }}
-            className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${importType === type.id
-              ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-              : 'bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10 hover:border-white/20'
-              }`}
+            className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${
+              importType === type.id
+                ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
+                : 'bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10 hover:border-white/20'
+            }`}
           >
             <type.icon size={24} />
             <span className="text-xs font-bold tracking-tight">{type.label}</span>

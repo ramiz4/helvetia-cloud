@@ -102,6 +102,7 @@ describe('API Service Normalization', () => {
       headers: { Authorization: `Bearer ${token}` },
       payload: {
         name: 'test-service',
+        environmentId: 'env-1',
         type: 'compose', // lowercase
       },
     });
@@ -150,6 +151,7 @@ describe('API Service Normalization', () => {
       headers: { Authorization: `Bearer ${token}` },
       payload: {
         name: 'test-service',
+        environmentId: 'env-1',
         type: 'invalid_type',
       },
     });

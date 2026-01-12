@@ -125,10 +125,7 @@ describe('NewServicePage', () => {
       </QueryClientProvider>,
     );
 
-    // Step 1: Project Name
-    const nameInput = screen.getByPlaceholderText('my-awesome-service');
-    fireEvent.change(nameInput, { target: { value: 'my-static-site' } });
-
+    // Step 1: Select Project and Environment
     // Select Project
     const projectBtn = screen.getByText('My Project');
     fireEvent.click(projectBtn);
@@ -243,10 +240,7 @@ describe('NewServicePage', () => {
       </QueryClientProvider>,
     );
 
-    // Step 1: Project Name
-    const nameInput = screen.getByPlaceholderText('my-awesome-service');
-    fireEvent.change(nameInput, { target: { value: 'my-compose-app' } });
-
+    // Step 1: Select Project and Environment
     // Select Project
     const projectBtn = screen.getByText('My Project');
     fireEvent.click(projectBtn);

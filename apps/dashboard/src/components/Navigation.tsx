@@ -2,7 +2,7 @@
 
 import { API_BASE_URL } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
-import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Plus, Settings, X } from 'lucide-react';
+import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -69,7 +69,7 @@ export default function Navigation() {
       console.error('Logout failed', e);
       alert(
         t.nav.logoutNetworkError ||
-          'Network error during logout, but you will be logged out locally.',
+        'Network error during logout, but you will be logged out locally.',
       );
     } finally {
       localStorage.removeItem('user');
@@ -137,22 +137,20 @@ export default function Navigation() {
               <div className="flex gap-2">
                 <Link
                   href="/"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
-                    pathname === '/'
-                      ? 'bg-indigo-500/10 text-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${pathname === '/'
+                    ? 'bg-indigo-500/10 text-indigo-400'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
                 >
                   <LayoutDashboard size={18} />
                   <span>{t.nav.dashboard}</span>
                 </Link>
                 <a
                   href="/deployments"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
-                    pathname === '/deployments'
-                      ? 'bg-indigo-500/10 text-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${pathname === '/deployments'
+                    ? 'bg-indigo-500/10 text-indigo-400'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
                 >
                   <BookOpen size={18} />
                   <span>{t.nav.deployments}</span>
@@ -162,13 +160,6 @@ export default function Navigation() {
               <div className="flex items-center gap-4">
                 <LanguageSwitcher />
                 <div className="w-px h-6 bg-white/10 mx-1" />
-                <a
-                  href="/new"
-                  className="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium cursor-pointer transition-all border border-transparent text-[14px] gap-2 bg-indigo-500 text-white shadow-lg hover:bg-indigo-600 hover:-translate-y-0.5 active:scale-95"
-                >
-                  <Plus size={16} />
-                  <span>{t.nav.newService}</span>
-                </a>
                 {user && <UserMenu user={user} onLogout={handleLogout} />}
               </div>
             </div>
@@ -224,33 +215,30 @@ export default function Navigation() {
                 <div className="flex flex-col gap-2">
                   <Link
                     href="/"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
-                      pathname === '/'
-                        ? 'bg-indigo-500/10 text-indigo-400'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${pathname === '/'
+                      ? 'bg-indigo-500/10 text-indigo-400'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
                   >
                     <LayoutDashboard size={20} />
                     <span>{t.nav.dashboard}</span>
                   </Link>
                   <a
                     href="/deployments"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
-                      pathname === '/deployments'
-                        ? 'bg-indigo-500/10 text-indigo-400'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${pathname === '/deployments'
+                      ? 'bg-indigo-500/10 text-indigo-400'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
                   >
                     <BookOpen size={20} />
                     <span>{t.nav.deployments}</span>
                   </a>
                   <a
                     href="/settings"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
-                      pathname === '/settings'
-                        ? 'bg-indigo-500/10 text-indigo-400'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${pathname === '/settings'
+                      ? 'bg-indigo-500/10 text-indigo-400'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
                   >
                     <Settings size={20} />
                     <span>{t.nav.settings}</span>
@@ -266,14 +254,6 @@ export default function Navigation() {
                     </span>
                     <LanguageSwitcher variant="minimal" />
                   </div>
-
-                  <a
-                    href="/new"
-                    className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold bg-indigo-500 text-white shadow-lg gap-2"
-                  >
-                    <Plus size={20} />
-                    <span>{t.nav.newService}</span>
-                  </a>
 
                   {user && (
                     <div className="flex items-center gap-4 px-4 py-3 bg-white/5 rounded-2xl border border-white/10">

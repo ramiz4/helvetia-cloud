@@ -1,5 +1,6 @@
 'use client';
 
+import { useLanguage } from '@/lib/LanguageContext';
 import { Loader2, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,6 +10,7 @@ interface NewProjectModalProps {
 }
 
 export function NewProjectModal({ onClose, onSave }: NewProjectModalProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,7 +63,7 @@ export function NewProjectModal({ onClose, onSave }: NewProjectModalProps) {
               className="w-full h-14 px-6 bg-black/40 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-semibold transition-all placeholder:text-slate-600"
             />
             <p className="text-[11px] text-slate-500 font-medium">
-              Projects help you group related services and environments.
+              {t.dashboard.newService.projectNameHint}
             </p>
           </div>
 

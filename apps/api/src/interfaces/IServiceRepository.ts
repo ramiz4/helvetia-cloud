@@ -94,6 +94,15 @@ export interface IServiceRepository {
   findByNameAll(name: string, userId: string): Promise<Service | null>;
 
   /**
+   * Find a service by name and environment ID including soft-deleted ones
+   */
+  findByNameAndEnvironment(
+    name: string,
+    environmentId: string,
+    userId: string,
+  ): Promise<Service | null>;
+
+  /**
    * Create a new service
    */
   create(data: ServiceCreateInput): Promise<Service>;
