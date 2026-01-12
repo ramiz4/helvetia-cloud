@@ -1,5 +1,8 @@
+import { ServiceFormData } from '@/components/new-service/types';
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
-import { useLanguage } from '@/lib/LanguageContext';
+import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
+import { Project } from '@/types/project';
+import { UseQueryResult } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectNameStep from './ProjectNameStep';
@@ -56,24 +59,45 @@ const mockCreateMutateAsync = vi.fn();
 describe('ProjectNameStep', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useLanguage as any).mockReturnValue({ t: mockT });
-    (useProjects as any).mockReturnValue({
+    vi.mocked(useLanguage).mockReturnValue({ t: mockT } as LanguageContextType);
+    vi.mocked(useProjects).mockReturnValue({
       data: mockProjects,
       isLoading: false,
-    });
-    (useCreateProject as any).mockReturnValue({
+    } as UseQueryResult<Project[], Error>);
+    vi.mocked(useCreateProject).mockReturnValue({
       mutateAsync: mockCreateMutateAsync,
       isPending: false,
-    });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
   });
 
   it('renders projects and loading state', () => {
-    (useProjects as any).mockReturnValue({ data: [], isLoading: true });
-    render(<ProjectNameStep data={{} as any} updateData={() => {}} onNext={() => {}} />);
+    vi.mocked(useProjects).mockReturnValue({ data: undefined, isLoading: true } as UseQueryResult<
+      Project[],
+      Error
+    >);
+    render(
+      <ProjectNameStep
+        data={{} as unknown as ServiceFormData}
+        updateData={() => {}}
+        onNext={() => {}}
+      />,
+    );
     expect(screen.getByText('Loading Projects...')).toBeDefined();
 
-    (useProjects as any).mockReturnValue({ data: mockProjects, isLoading: false });
-    render(<ProjectNameStep data={{} as any} updateData={() => {}} onNext={() => {}} />);
+    vi.mocked(useProjects).mockReturnValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: mockProjects as any,
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    render(
+      <ProjectNameStep
+        data={{} as unknown as ServiceFormData}
+        updateData={() => {}}
+        onNext={() => {}}
+      />,
+    );
     expect(screen.getAllByText('Select Project')).toHaveLength(2);
     expect(screen.getByText('project-1')).toBeDefined();
     expect(screen.getByText('project-2')).toBeDefined();
@@ -81,7 +105,13 @@ describe('ProjectNameStep', () => {
 
   it('selects a project and updates data', () => {
     const updateData = vi.fn();
-    render(<ProjectNameStep data={{} as any} updateData={updateData} onNext={() => {}} />);
+    render(
+      <ProjectNameStep
+        data={{} as unknown as ServiceFormData}
+        updateData={updateData}
+        onNext={() => {}}
+      />,
+    );
 
     fireEvent.click(screen.getByText('project-1'));
 
@@ -94,7 +124,7 @@ describe('ProjectNameStep', () => {
   it('renders environments when project is selected', () => {
     render(
       <ProjectNameStep
-        data={{ projectId: 'p1', environmentId: 'e1' } as any}
+        data={{ projectId: 'p1', environmentId: 'e1' } as unknown as ServiceFormData}
         updateData={() => {}}
         onNext={() => {}}
       />,
@@ -111,7 +141,7 @@ describe('ProjectNameStep', () => {
     const updateData = vi.fn();
     render(
       <ProjectNameStep
-        data={{ projectId: 'p1', environmentId: 'e1' } as any}
+        data={{ projectId: 'p1', environmentId: 'e1' } as unknown as ServiceFormData}
         updateData={updateData}
         onNext={() => {}}
       />,
@@ -122,7 +152,13 @@ describe('ProjectNameStep', () => {
   });
 
   it('toggles new project creation mode', () => {
-    render(<ProjectNameStep data={{} as any} updateData={() => {}} onNext={() => {}} />);
+    render(
+      <ProjectNameStep
+        data={{} as unknown as ServiceFormData}
+        updateData={() => {}}
+        onNext={() => {}}
+      />,
+    );
 
     fireEvent.click(screen.getByText('New Project'));
     expect(screen.getByPlaceholderText('project-name')).toBeDefined();
@@ -140,7 +176,13 @@ describe('ProjectNameStep', () => {
       environments: [{ id: 'e4', name: 'production' }],
     });
 
-    render(<ProjectNameStep data={{} as any} updateData={updateData} onNext={() => {}} />);
+    render(
+      <ProjectNameStep
+        data={{} as unknown as ServiceFormData}
+        updateData={updateData}
+        onNext={() => {}}
+      />,
+    );
 
     fireEvent.click(screen.getByText('New Project'));
     fireEvent.change(screen.getByPlaceholderText('project-name'), {
@@ -161,7 +203,7 @@ describe('ProjectNameStep', () => {
     const onNext = vi.fn();
     render(
       <ProjectNameStep
-        data={{ projectId: 'p1', environmentId: 'e1' } as any}
+        data={{ projectId: 'p1', environmentId: 'e1' } as unknown as ServiceFormData}
         updateData={() => {}}
         onNext={onNext}
       />,
@@ -175,7 +217,7 @@ describe('ProjectNameStep', () => {
     const onNext = vi.fn();
     render(
       <ProjectNameStep
-        data={{ projectId: '', environmentId: '' } as any}
+        data={{ projectId: '', environmentId: '' } as unknown as ServiceFormData}
         updateData={() => {}}
         onNext={onNext}
       />,

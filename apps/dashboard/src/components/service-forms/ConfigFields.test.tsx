@@ -23,6 +23,7 @@ const mockTranslations = {
     buildCommand: 'Build Command',
     startCommand: 'Start Command',
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 describe('Service Config Fields', () => {

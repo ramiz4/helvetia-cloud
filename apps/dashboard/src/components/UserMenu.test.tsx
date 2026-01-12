@@ -10,7 +10,7 @@ vi.mock('@/lib/LanguageContext', () => ({
 
 // Mock next/image
 vi.mock('next/image', () => ({
-  default: (props: any) => <img {...props} />,
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
 }));
 
 const mockT = {
@@ -38,7 +38,8 @@ const mockUser = {
 describe('UserMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useLanguage as any).mockReturnValue({ t: mockT });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useLanguage).mockReturnValue({ t: mockT as any } as any);
   });
 
   it('renders user information correctly', () => {

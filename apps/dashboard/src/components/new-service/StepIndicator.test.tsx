@@ -19,7 +19,8 @@ const mockTranslations = {
 
 describe('StepIndicator', () => {
   it('renders all steps with correct titles', () => {
-    (useLanguage as any).mockReturnValue({ t: mockTranslations });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useLanguage).mockReturnValue({ t: mockTranslations } as any);
     render(<StepIndicator step={1} onStepClick={() => {}} />);
 
     expect(screen.getByText('Step 1 Name')).toBeDefined();
@@ -28,7 +29,8 @@ describe('StepIndicator', () => {
   });
 
   it('calls onStepClick when a clickable step is clicked', () => {
-    (useLanguage as any).mockReturnValue({ t: mockTranslations });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useLanguage).mockReturnValue({ t: mockTranslations } as any);
     const onStepClick = vi.fn();
     render(<StepIndicator step={2} onStepClick={onStepClick} />);
 
@@ -40,7 +42,8 @@ describe('StepIndicator', () => {
   });
 
   it('disables future steps and prevents click', () => {
-    (useLanguage as any).mockReturnValue({ t: mockTranslations });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useLanguage).mockReturnValue({ t: mockTranslations } as any);
     const onStepClick = vi.fn();
     render(<StepIndicator step={1} onStepClick={onStepClick} />);
 
@@ -52,7 +55,8 @@ describe('StepIndicator', () => {
   });
 
   it('highlights current step', () => {
-    (useLanguage as any).mockReturnValue({ t: mockTranslations });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useLanguage).mockReturnValue({ t: mockTranslations } as any);
     const { container } = render(<StepIndicator step={2} onStepClick={() => {}} />);
 
     // Check if step 2 has the active background class

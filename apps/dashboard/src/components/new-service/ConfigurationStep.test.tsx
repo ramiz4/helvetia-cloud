@@ -1,3 +1,4 @@
+import { ServiceFormData } from '@/components/new-service/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,7 +11,14 @@ vi.mock('@/lib/LanguageContext', () => ({
 
 // Mock sub-components to verify props passing and event handling
 vi.mock('../service-forms', () => ({
-  ComposeConfigFields: ({ onChange, data }: any) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ComposeConfigFields: ({
+    onChange,
+    data,
+  }: {
+    onChange: (d: any) => void;
+    data: { buildCommand: string };
+  }) => (
     <div data-testid="compose-fields">
       <button
         onClick={() => onChange({ buildCommand: 'new-compose.yml', startCommand: 'new-service' })}
@@ -20,19 +28,22 @@ vi.mock('../service-forms', () => ({
       <span data-testid="compose-file">{data.buildCommand}</span>
     </div>
   ),
-  DockerConfigFields: ({ onChange, data }: any) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  DockerConfigFields: ({ onChange, data: _data }: { onChange: (d: any) => void; data: any }) => (
     <div data-testid="docker-fields">
       <button onClick={() => onChange({ buildCommand: 'new-build', startCommand: 'new-start' })}>
         Update Docker
       </button>
     </div>
   ),
-  GHCRConfigFields: ({ onChange, data }: any) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  GHCRConfigFields: ({ onChange, data: _data }: { onChange: (d: any) => void; data: any }) => (
     <div data-testid="ghcr-fields">
       <button onClick={() => onChange({ branch: 'new-tag' })}>Update GHCR</button>
     </div>
   ),
-  StaticConfigFields: ({ onChange, data }: any) => (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  StaticConfigFields: ({ onChange, data: _data }: { onChange: (d: any) => void; data: any }) => (
     <div data-testid="static-fields">
       <button
         onClick={() =>
@@ -88,12 +99,13 @@ const defaultData = {
   port: 8080,
   mainService: '',
   composeFile: '',
-} as any;
+} as unknown as ServiceFormData;
 
 describe('ConfigurationStep', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useLanguage as any).mockReturnValue({ t: mockT });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useLanguage).mockReturnValue({ t: mockT as any } as any);
   });
 
   it('renders correctly with default data', () => {
@@ -155,7 +167,7 @@ describe('ConfigurationStep', () => {
 
   it('handles static config updates correctly (mapping outputDir)', () => {
     const updateData = vi.fn();
-    const staticData = { ...defaultData, serviceType: 'static' };
+    const staticData = { ...defaultData, serviceType: 'static' as const };
     render(
       <ConfigurationStep
         data={staticData}
@@ -179,7 +191,7 @@ describe('ConfigurationStep', () => {
 
   it('handles compose config updates correctly', () => {
     const updateData = vi.fn();
-    const composeData = { ...defaultData, serviceType: 'compose' };
+    const composeData = { ...defaultData, serviceType: 'compose' as const };
     render(
       <ConfigurationStep
         data={composeData}
@@ -202,7 +214,7 @@ describe('ConfigurationStep', () => {
   });
 
   it('renders GHCR fields when importType is github-image', () => {
-    const ghcrData = { ...defaultData, importType: 'github-image' };
+    const ghcrData = { ...defaultData, importType: 'github-image' as const };
     render(
       <ConfigurationStep
         data={ghcrData}

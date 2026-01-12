@@ -400,6 +400,7 @@ describe('useServices hooks', () => {
           },
           deployments: [],
           // Add other required fields if necessary
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       ];
       queryClient.setQueryData(serviceKeys.lists(), initialServices);
@@ -417,6 +418,7 @@ describe('useServices hooks', () => {
             diskWrite: '0',
           },
           status: 'RUNNING',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       ]);
 
@@ -441,6 +443,7 @@ describe('useServices hooks', () => {
             diskWrite: '0',
           },
           deployments: [],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       ];
       queryClient.setQueryData(serviceKeys.lists(), initialServices);
@@ -457,6 +460,7 @@ describe('useServices hooks', () => {
             diskRead: '0',
             diskWrite: '0',
           },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       ]);
 

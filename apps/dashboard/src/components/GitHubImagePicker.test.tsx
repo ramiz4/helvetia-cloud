@@ -14,6 +14,7 @@ vi.mock('@/lib/tokenRefresh', () => ({
 }));
 
 // Setup default mocks
+const mockSetLanguage = vi.fn();
 const mockT = {
   githubPicker: {
     loadingOrgs: 'Loading organizations...',
@@ -55,21 +56,25 @@ const mockOrgs = [{ login: 'acme-corp', avatar_url: '...' }];
 describe('GitHubImagePicker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useLanguage as any).mockReturnValue({ t: mockT });
-
+    vi.mocked(useLanguage).mockReturnValue({
+      language: 'en',
+      setLanguage: mockSetLanguage,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      t: mockT as any,
+    });
     // Default fetch mocks
-    (fetchWithAuth as any).mockImplementation((url: string) => {
+    vi.mocked(fetchWithAuth).mockImplementation((url: string) => {
       if (url.includes('/github/orgs')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockOrgs,
-        });
+        } as unknown as Response);
       }
       if (url.includes('/github/packages')) {
         return Promise.resolve({
           ok: true,
           json: async () => mockPackages,
-        });
+        } as unknown as Response);
       }
       return Promise.reject(new Error('Unknown URL'));
     });
@@ -109,7 +114,7 @@ describe('GitHubImagePicker', () => {
     const select = screen.getByRole('combobox');
 
     // Clear previous calls
-    (fetchWithAuth as any).mockClear();
+    vi.mocked(fetchWithAuth).mockClear();
 
     // Select org
     fireEvent.change(select, { target: { value: 'acme-corp' } });
@@ -144,15 +149,15 @@ describe('GitHubImagePicker', () => {
   });
 
   it('displays error message on fetch failure', async () => {
-    (fetchWithAuth as any).mockImplementation((url: string) => {
+    vi.mocked(fetchWithAuth).mockImplementation((url: string) => {
       if (url.includes('/github/packages')) {
         return Promise.resolve({
           ok: false,
           status: 500,
           json: async () => ({ message: 'Failed' }),
-        });
+        } as unknown as Response);
       }
-      return Promise.resolve({ ok: true, json: async () => [] });
+      return Promise.resolve({ ok: true, json: async () => [] } as unknown as Response);
     });
 
     render(<GitHubImagePicker onSelect={() => {}} />);
@@ -164,14 +169,14 @@ describe('GitHubImagePicker', () => {
 
   it('handles 401 error by clearing user and showing message', async () => {
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
-    (fetchWithAuth as any).mockImplementation((url: string) => {
+    vi.mocked(fetchWithAuth).mockImplementation((url: string) => {
       if (url.includes('/github/packages')) {
         return Promise.resolve({
           ok: false,
           status: 401,
-        });
+        } as unknown as Response);
       }
-      return Promise.resolve({ ok: true, json: async () => [] });
+      return Promise.resolve({ ok: true, json: async () => [] } as unknown as Response);
     });
 
     render(<GitHubImagePicker onSelect={() => {}} />);
