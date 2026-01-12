@@ -209,6 +209,8 @@ pnpm dev
 - **Dashboard**: [http://localhost:3000](http://localhost:3000)
 - **Observability (Grafana)**: [http://localhost:3010](http://localhost:3010) (`admin`/`admin`)
 - **API Engine**: [http://localhost:3001](http://localhost:3001)
+  - **API v1 Endpoints**: `http://localhost:3001/api/v1/*`
+  - See [API Versioning Strategy](./docs/API_VERSIONING.md) for details
 - **Worker Health Check**: [http://localhost:3002/health](http://localhost:3002/health)
 - **Traefik Dashboard**: [http://localhost:8090](http://localhost:8090)
 

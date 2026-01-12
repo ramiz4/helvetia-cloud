@@ -367,10 +367,10 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/health',
     '/metrics',
     '/metrics/json',
-    '/webhooks/github',
-    '/auth/github',
-    '/auth/refresh',
-    '/auth/logout',
+    '/api/v1/webhooks/github',
+    '/api/v1/auth/github',
+    '/api/v1/auth/refresh',
+    '/api/v1/auth/logout',
   ];
   const url = request.routeOptions?.url || request.url.split('?')[0];
   if (process.env.NODE_ENV === 'test') {
@@ -390,33 +390,13 @@ fastify.get('/health', async () => {
   return { status: 'ok' };
 });
 
-// Register metrics routes
+// Register metrics routes (unversioned - monitoring endpoints)
 import { metricsRoutes } from './routes/metrics.routes';
 fastify.register(metricsRoutes);
 
-// Register service routes
-import { serviceRoutes } from './routes/service.routes';
-fastify.register(serviceRoutes);
-
-// Register deployment routes
-import { deploymentRoutes } from './routes/deployment.routes';
-fastify.register(deploymentRoutes);
-
-// Register GitHub routes
-import { githubRoutes } from './routes/github.routes';
-fastify.register(githubRoutes);
-
-// Register project routes
-import { projectRoutes } from './routes/project.routes';
-fastify.register(projectRoutes);
-
-// Register webhook routes
-import { webhookRoutes } from './routes/webhook.routes';
-fastify.register(webhookRoutes);
-
-// Register auth routes
-import { authRoutes } from './routes/auth.routes';
-fastify.register(authRoutes);
+// Register API v1 routes under /api/v1 prefix
+import { v1Routes } from './routes/v1';
+fastify.register(v1Routes, { prefix: '/api/v1' });
 
 // Export a factory function for testing
 export async function buildServer() {
