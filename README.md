@@ -230,6 +230,30 @@ To run the optimized, built version of the application:
     ```
     This will start all services (`api`, `worker`, `dashboard`) using their built artifacts in `dist/` folders. It ensures better performance and mimics a real production environment.
 
+#### Graceful Shutdown
+
+All services implement graceful shutdown to handle termination signals properly:
+
+- **API Service**: Handles `SIGTERM`/`SIGINT` signals by:
+  - Stopping status reconciliation service
+  - Waiting for in-flight HTTP requests to complete
+  - Closing all connections (Fastify server, Redis, BullMQ)
+
+- **Worker Service**: Handles `SIGTERM`/`SIGINT` signals by:
+  - Stopping the health check server
+  - Closing BullMQ worker (waits for active jobs to complete)
+  - Closing all connections
+
+To gracefully stop services in production:
+
+```bash
+# Send SIGTERM signal (Docker, systemd, and most orchestrators use this)
+kill -TERM <pid>
+
+# Or use SIGINT (Ctrl+C in terminal)
+kill -INT <pid>
+```
+
 ---
 
 ## 🧪 Testing

@@ -32,4 +32,34 @@ const start = async () => {
   }
 };
 
+// Graceful shutdown handlers
+let isShuttingDown = false;
+
+const shutdown = async (signal: string) => {
+  if (isShuttingDown) {
+    console.log(`${signal} received but shutdown already in progress`);
+    return;
+  }
+
+  isShuttingDown = true;
+  console.log(`${signal} received, closing server gracefully...`);
+
+  try {
+    // Stop status reconciliation service
+    statusReconciliationService.stop();
+
+    // Close Fastify server (waits for in-flight requests to complete)
+    await fastify.close();
+    console.log('Fastify server closed');
+
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 start();
