@@ -33,7 +33,15 @@ const start = async () => {
 };
 
 // Graceful shutdown handlers
+let isShuttingDown = false;
+
 const shutdown = async (signal: string) => {
+  if (isShuttingDown) {
+    console.log(`${signal} received but shutdown already in progress`);
+    return;
+  }
+
+  isShuttingDown = true;
   console.log(`${signal} received, closing server gracefully...`);
 
   try {
