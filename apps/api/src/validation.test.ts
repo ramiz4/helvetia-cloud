@@ -225,6 +225,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-valid-service-123', // Valid format
+          environmentId: 'env-1',
           type: 'DOCKER',
         },
       });
@@ -249,6 +250,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: 'env-1',
           repoUrl: 'https://github.com/user/repo', // Valid URL
           type: 'DOCKER',
         },
@@ -297,6 +299,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: 'env-1',
           branch: 'feature/my-branch_123', // Valid branch name
           type: 'DOCKER',
         },
@@ -414,6 +417,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: 'env-1',
           port: 8080, // Valid port
           type: 'DOCKER',
         },
@@ -469,6 +473,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: 'env-1',
           envVars: {
             NODE_ENV: 'production',
             PORT: '3000',

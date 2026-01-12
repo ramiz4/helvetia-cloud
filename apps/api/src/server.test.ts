@@ -187,6 +187,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'new-service',
+        environmentId: 'env-1',
         repoUrl: 'https://github.com/user/new-repo',
         type: 'DOCKER',
       },
@@ -221,6 +222,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-postgres',
+        environmentId: 'env-1',
         type: 'POSTGRES',
       },
     });
@@ -266,6 +268,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-redis',
+        environmentId: 'env-1',
         type: 'REDIS',
       },
     });
@@ -309,6 +312,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-mysql',
+        environmentId: 'env-1',
         type: 'MYSQL',
       },
     });
@@ -354,6 +358,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-postgres-custom',
+        environmentId: 'env-1',
         type: 'POSTGRES',
         envVars: {
           POSTGRES_PASSWORD: customPassword,
@@ -396,6 +401,7 @@ describe('API Server', () => {
       },
       payload: {
         name: 'my-static-site',
+        environmentId: 'env-1',
         type: 'STATIC',
         repoUrl: 'https://github.com/user/static-site',
       },
