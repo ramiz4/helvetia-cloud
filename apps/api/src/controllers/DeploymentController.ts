@@ -190,7 +190,7 @@ export class DeploymentController {
         await container.remove().catch(() => {});
       }
 
-      return { success: true, message: 'Container restarted successfully' };
+      return { success: true, message: 'Container restarted successfully', containerName };
     } catch (error) {
       console.error('Restart error:', error);
       return reply.status(500).send({ error: 'Failed to restart container' });

@@ -247,7 +247,7 @@ export class ServiceController {
     }
 
     // Update the service
-    const updatedService = await this.serviceRepository.update(id, {
+    await this.serviceRepository.update(id, {
       name,
       repoUrl,
       branch,
@@ -261,8 +261,31 @@ export class ServiceController {
       environmentId,
     });
 
+    // Fetch the updated service with relations
+    const fullService = await this.serviceRepository.findById(id);
+    if (!fullService) {
+      throw new Error('Service not found after update');
+    }
+
     const deployments = await this.deploymentRepository.findByServiceId(id, { take: 1 });
-    return { ...updatedService, deployments };
+
+    // Enrich with actual Docker container status
+    const Docker = (await import('dockerode')).default;
+    const docker = new Docker();
+    const containers = await docker.listContainers({ all: true });
+
+    const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+    const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+
+    return {
+      ...fullService,
+      deployments,
+      projectName: fullService.environment?.project?.name,
+      environmentName: fullService.environment?.name,
+      username: user.username,
+      status: determineServiceStatus({ ...fullService, deployments }, containers),
+      containerName,
+    };
   }
 
   /**

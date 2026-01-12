@@ -306,6 +306,11 @@ describe('useServices hooks', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
+        json: async () => ({
+          success: true,
+          message: 'Container restarted successfully',
+          containerName: 'new-container',
+        }),
       });
 
       const { result } = renderHook(() => useRestartService(), {

@@ -237,6 +237,7 @@ describe('Request Body Size Limits', () => {
     it('should accept request with body under 100KB limit', async () => {
       const { prisma } = await import('database');
       vi.mocked(prisma.service.updateMany).mockResolvedValue({ count: 1 } as any);
+      vi.mocked(prisma.deployment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.service.findUnique).mockResolvedValue({
         id: 'service-1',
         name: 'my-service',

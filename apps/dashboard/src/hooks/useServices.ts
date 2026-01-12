@@ -83,7 +83,9 @@ async function deployService(id: string): Promise<{ id: string }> {
 }
 
 // Restart service
-async function restartService(id: string): Promise<void> {
+async function restartService(
+  id: string,
+): Promise<{ success: boolean; message: string; containerName?: string }> {
   const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}/restart`, {
     method: 'POST',
   });
@@ -91,6 +93,8 @@ async function restartService(id: string): Promise<void> {
   if (!response.ok) {
     throw new Error(await getErrorMessage(response, 'Failed to restart service'));
   }
+
+  return response.json();
 }
 
 // Hook: Fetch all services
@@ -202,6 +206,22 @@ export function useRestartService() {
       // Rollback to the previous value on error
       if (context?.previousServices) {
         queryClient.setQueryData(serviceKeys.lists(), context.previousServices);
+      }
+    },
+    onSuccess: (data, variables) => {
+      if (data.containerName) {
+        queryClient.setQueryData<Service[]>(serviceKeys.lists(), (old) =>
+          old
+            ? old.map((s) =>
+                s.id === variables
+                  ? { ...s, containerName: data.containerName, status: 'RUNNING' }
+                  : s,
+              )
+            : old,
+        );
+        queryClient.setQueryData<Service>(serviceKeys.detail(variables), (old) =>
+          old ? { ...old, containerName: data.containerName, status: 'RUNNING' } : old,
+        );
       }
     },
     onSettled: (_, __, serviceId) => {

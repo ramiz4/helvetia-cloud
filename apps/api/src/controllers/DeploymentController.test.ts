@@ -116,6 +116,8 @@ describe('DeploymentController', () => {
       delete: vi.fn(),
       findByStatus: vi.fn(),
       findAll: vi.fn(),
+      findByNameAndEnvironment: vi.fn(),
+      findByEnvironmentId: vi.fn(),
     };
 
     mockDeploymentRepo = {
@@ -287,7 +289,8 @@ describe('DeploymentController', () => {
 
       const result = await controller.restartService(mockRequest as any, mockReply as any);
 
-      expect(result).toEqual({ success: true, message: 'Container restarted successfully' });
+      expect(result).toMatchObject({ success: true, message: 'Container restarted successfully' });
+      expect(result).toHaveProperty('containerName');
     });
 
     it('should return 404 when service not found', async () => {
