@@ -4,14 +4,16 @@ import { BaseConfigFieldsProps } from './types';
 export const GHCRConfigFields: React.FC<BaseConfigFieldsProps> = ({
   data,
   onChange,
-  translations: t,
+  translations: translationsProp,
   disabled,
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const t = translationsProp as any;
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.newService.branch} (Tag)
+          {t.dashboard.newService.imageTag}
         </label>
         <input
           type="text"

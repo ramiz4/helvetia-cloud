@@ -217,6 +217,7 @@ export const translations = {
         mainServiceName: 'Main Service Name',
         mainServiceDesc: 'The service name in docker-compose.yml that receives HTTP traffic',
         composeFile: 'Compose File',
+        imageTag: 'Image Tag',
       },
     },
     settings: {
@@ -491,6 +492,7 @@ export const translations = {
         mainServiceDesc:
           'Der Name des Dienstes in der docker-compose.yml, der HTTP-Traffic empfängt',
         composeFile: 'Compose-Datei',
+        imageTag: 'Image Tag',
       },
     },
     settings: {
@@ -765,6 +767,7 @@ export const translations = {
         mainServiceName: 'Nom du service principal',
         mainServiceDesc: 'Le nom du service dans docker-compose.yml qui reçoit le trafic HTTP',
         composeFile: 'Fichier Compose',
+        imageTag: "Tag de l'image",
       },
     },
     settings: {
@@ -1036,6 +1039,7 @@ export const translations = {
         mainServiceName: 'Nome del servizio principale',
         mainServiceDesc: 'Il nome del servizio in docker-compose.yml che riceve il traffico HTTP',
         composeFile: 'File Compose',
+        imageTag: 'Tag Immagine',
       },
     },
     settings: {
@@ -1304,6 +1308,7 @@ export const translations = {
         mainServiceName: 'Haupt-Service Name',
         mainServiceDesc: 'De Name vom Dienscht im compose.yml für HTTP',
         composeFile: 'Compose Datei',
+        imageTag: 'Image Tag',
       },
     },
     settings: {
