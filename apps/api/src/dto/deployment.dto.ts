@@ -58,4 +58,5 @@ export interface QueueDeploymentJobDto {
   projectName?: string;
   environmentName?: string;
   username: string;
+  requestId?: string; // Request ID for tracing across services
 }

@@ -43,7 +43,12 @@ export class DeploymentController {
 
     try {
       // Create deployment (this includes service existence and ownership validation)
-      const deployment = await this.deploymentService.createAndQueueDeployment(id, user.id);
+      const deployment = await this.deploymentService.createAndQueueDeployment(
+        id,
+        user.id,
+        undefined,
+        request.id, // Pass request ID for tracing
+      );
 
       // Update service status to DEPLOYING with distributed lock
       // This is done after validation to avoid updating non-existent services

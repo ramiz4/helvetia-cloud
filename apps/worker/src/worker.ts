@@ -47,6 +47,7 @@ export const worker = new Worker(
       type,
       staticOutputDir,
       username,
+      requestId, // Extract request ID for tracing
     } = job.data;
 
     let newContainer: Docker.Container | null = null;
@@ -63,7 +64,9 @@ export const worker = new Worker(
       : [];
     const scrubLogs = createScrubber(secrets);
 
-    console.log(`Starting deployment ${deploymentId} for service ${serviceName}`);
+    // Log with request ID for correlation
+    const logPrefix = requestId ? `[reqId: ${requestId}] ` : '';
+    console.log(`${logPrefix}Starting deployment ${deploymentId} for service ${serviceName}`);
 
     // Verify deployment exists before starting
     const deploymentRecord = await prisma.deployment.findUnique({
@@ -71,13 +74,13 @@ export const worker = new Worker(
     });
 
     if (!deploymentRecord) {
-      console.error(`Deployment ${deploymentId} not found in database. Skipping job.`);
+      console.error(`${logPrefix}Deployment ${deploymentId} not found in database. Skipping job.`);
       return;
     }
 
     // Validate environment variables before proceeding
     if (envVars && Object.keys(envVars).length > 0) {
-      console.log('Validating environment variables...');
+      console.log(`${logPrefix}Validating environment variables...`);
       const envValidation = await validateGeneratedDockerfile({
         dockerfileContent: 'FROM scratch', // Dummy dockerfile for env var validation only
         envVars,
@@ -85,17 +88,20 @@ export const worker = new Worker(
 
       if (!envValidation.valid) {
         const errorMessage = formatValidationErrors(envValidation);
-        console.error('Environment variable validation failed:', errorMessage);
+        console.error(`${logPrefix}Environment variable validation failed:`, errorMessage);
         throw new Error(
           `Environment variable validation failed:\n${envValidation.errors.join('\n')}`,
         );
       }
 
       if (envValidation.warnings.length > 0) {
-        console.warn('Environment variable warnings:', envValidation.warnings.join(', '));
+        console.warn(
+          `${logPrefix}Environment variable warnings:`,
+          envValidation.warnings.join(', '),
+        );
       }
 
-      console.log('✅ Environment variables validated successfully');
+      console.log(`${logPrefix}✅ Environment variables validated successfully`);
     }
 
     try {
@@ -109,7 +115,9 @@ export const worker = new Worker(
       oldContainers = allContainers.filter(
         (c) => c.Labels['helvetia.serviceId'] === serviceId && c.State === 'running',
       );
-      console.log(`Found ${oldContainers.length} running containers for rollback if needed`);
+      console.log(
+        `${logPrefix}Found ${oldContainers.length} running containers for rollback if needed`,
+      );
 
       // Use strategy pattern to handle deployment based on type
       const strategy = strategyFactory.getStrategy(type);
@@ -176,7 +184,7 @@ export const worker = new Worker(
           status: 'SUCCESS',
           logs: scrubbedLogs,
         });
-        console.log(`Deployment ${deploymentId} successful!`);
+        console.log(`${logPrefix}Deployment ${deploymentId} successful!`);
         return;
       }
 
@@ -221,9 +229,9 @@ export const worker = new Worker(
       });
 
       deploymentStatus = 'SUCCESS';
-      console.log(`Deployment ${deploymentId} successful!`);
+      console.log(`${logPrefix}Deployment ${deploymentId} successful!`);
     } catch (error) {
-      console.error(`Deployment ${deploymentId} failed:`, error);
+      console.error(`${logPrefix}Deployment ${deploymentId} failed:`, error);
 
       // Comprehensive error logging
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -241,15 +249,15 @@ export const worker = new Worker(
 
       // Cleanup: Remove failed new container if it was created
       if (newContainer) {
-        console.log('Cleaning up failed new container...');
+        console.log(`${logPrefix}Cleaning up failed new container...`);
         try {
           await newContainer.stop({ t: 5 }).catch(() => {
-            console.log('Failed to stop new container (may not be running)');
+            console.log(`${logPrefix}Failed to stop new container (may not be running)`);
           });
           await newContainer.remove({ force: true });
-          console.log('Failed new container removed');
+          console.log(`${logPrefix}Failed new container removed`);
         } catch (cleanupError) {
-          console.error('Failed to cleanup new container:', cleanupError);
+          console.error(`${logPrefix}Failed to cleanup new container:`, cleanupError);
         }
       }
 
@@ -268,7 +276,7 @@ export const worker = new Worker(
 
         if (oldContainers.length > 0) {
           console.log(
-            'Service status set to RUNNING after rollback attempt; previous containers may still be serving traffic',
+            `${logPrefix}Service status set to RUNNING after rollback attempt; previous containers may still be serving traffic`,
           );
         }
       } catch (dbError: unknown) {
@@ -280,10 +288,10 @@ export const worker = new Worker(
           (dbError as Record<string, unknown>).code === 'P2025'
         ) {
           console.error(
-            `Failed to update database: Deployment ${deploymentId} was deleted during processing.`,
+            `${logPrefix}Failed to update database: Deployment ${deploymentId} was deleted during processing.`,
           );
         } else {
-          console.error('Failed to update database with error status:', dbError);
+          console.error(`${logPrefix}Failed to update database with error status:`, dbError);
         }
       }
 
