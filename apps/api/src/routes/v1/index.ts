@@ -15,7 +15,7 @@ import type { FastifyPluginAsync } from 'fastify';
  *
  * Version Negotiation:
  * - Clients should use the /api/v1 prefix for all requests
- * - Legacy clients without version prefix are redirected to v1 for backward compatibility
+ * - Legacy clients without version prefix must be updated to use /api/v1 (unversioned routes return 404)
  * - Future versions (v2, v3) will be registered in parallel
  *
  * Breaking Changes Policy:
