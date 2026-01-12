@@ -3,6 +3,7 @@ import IORedis from 'ioredis';
 import { z } from 'zod';
 import { createRateLimitConfigs } from '../config/rateLimit';
 import { resolve } from '../di';
+import { authenticate } from '../middleware/auth.middleware';
 import type { FeatureFlagService } from '../services';
 
 /**
@@ -68,7 +69,7 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/feature-flags',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [authenticate],
     },
     async (_request, reply) => {
       try {
@@ -90,7 +91,7 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
   }>(
     '/feature-flags/:id',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [authenticate],
     },
     async (request, reply) => {
       try {
@@ -115,7 +116,7 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/feature-flags',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [authenticate],
     },
     async (request, reply) => {
       try {
@@ -151,7 +152,7 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
   }>(
     '/feature-flags/:id',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [authenticate],
     },
     async (request, reply) => {
       try {
@@ -187,7 +188,7 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
   }>(
     '/feature-flags/:id/toggle',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [authenticate],
     },
     async (request, reply) => {
       try {
@@ -213,7 +214,7 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
   }>(
     '/feature-flags/:id',
     {
-      preHandler: [fastify.authenticate],
+      preHandler: [authenticate],
     },
     async (request, reply) => {
       try {
