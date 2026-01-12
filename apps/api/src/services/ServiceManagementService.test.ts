@@ -171,7 +171,6 @@ describe('ServiceManagementService', () => {
     });
 
     it('should throw ConflictError if environmentId is missing', async () => {
-      const otherUserService = { ...mockService, userId: 'user-2' };
       vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockRejectedValue(
         new Error('Should not be called when environmentId is missing'),
       );
