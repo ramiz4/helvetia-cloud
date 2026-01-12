@@ -75,7 +75,7 @@ describe('GitHubImagePicker', () => {
   });
 
   it('renders and fetches orgs and packages on mount', async () => {
-    render(<GitHubImagePicker onSelect={() => { }} />);
+    render(<GitHubImagePicker onSelect={() => {}} />);
 
     // Should start loading
     expect(screen.getByPlaceholderText('Search packages...')).toBeDefined();
@@ -89,7 +89,7 @@ describe('GitHubImagePicker', () => {
   });
 
   it('filters packages via search input', async () => {
-    render(<GitHubImagePicker onSelect={() => { }} />);
+    render(<GitHubImagePicker onSelect={() => {}} />);
 
     await waitFor(() => expect(screen.getByText('backend-service')).toBeDefined());
 
@@ -101,7 +101,7 @@ describe('GitHubImagePicker', () => {
   });
 
   it('fetches packages for selected organization', async () => {
-    render(<GitHubImagePicker onSelect={() => { }} />);
+    render(<GitHubImagePicker onSelect={() => {}} />);
 
     await waitFor(() => expect(screen.getByText('acme-corp')).toBeDefined());
 
@@ -130,7 +130,7 @@ describe('GitHubImagePicker', () => {
   });
 
   it('allows resetting selection', async () => {
-    render(<GitHubImagePicker onSelect={() => { }} />);
+    render(<GitHubImagePicker onSelect={() => {}} />);
 
     await waitFor(() => expect(screen.getByText('backend-service')).toBeDefined());
     fireEvent.click(screen.getByText('backend-service'));
@@ -154,7 +154,7 @@ describe('GitHubImagePicker', () => {
       return Promise.resolve({ ok: true, json: async () => [] } as unknown as Response);
     });
 
-    render(<GitHubImagePicker onSelect={() => { }} />);
+    render(<GitHubImagePicker onSelect={() => {}} />);
 
     await waitFor(() => {
       expect(screen.getByText('Failed to fetch packages')).toBeDefined();
@@ -173,7 +173,7 @@ describe('GitHubImagePicker', () => {
       return Promise.resolve({ ok: true, json: async () => [] } as unknown as Response);
     });
 
-    render(<GitHubImagePicker onSelect={() => { }} />);
+    render(<GitHubImagePicker onSelect={() => {}} />);
 
     await waitFor(() => {
       expect(screen.getByText('Session expired')).toBeDefined();
