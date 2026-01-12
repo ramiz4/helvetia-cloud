@@ -6,6 +6,12 @@ export {
   IDeploymentRepository,
 } from './IDeploymentRepository';
 export {
+  CreateFeatureFlagData,
+  FeatureFlag,
+  IFeatureFlagRepository,
+  UpdateFeatureFlagData,
+} from './IFeatureFlagRepository';
+export {
   Environment,
   EnvironmentCreateInput,
   IProjectRepository,

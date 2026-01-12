@@ -43,6 +43,27 @@ const LABEL_COLORS = {
   dashboard: '006b75',
   infrastructure: 'c5def5',
   database: 'bfd4f2',
+  // Additional specialized labels
+  maintainability: '3e4b9e',
+  observability: '5319e7',
+  testing: 'e99695',
+  quality: '0e8a16',
+  configuration: 'bfd4f2',
+  deployment: 'c2e0c6',
+  frontend: 'a2eeef',
+  monitoring: '006b75',
+  'type-safety': '1d76db',
+  ux: 'f9d0c4',
+  accessibility: 'f9d0c4',
+  a11y: 'f9d0c4',
+  'di-migration': 'bfd4f2',
+  dx: 'f9d0c4',
+  'resource-management': 'c5def5',
+  reliability: 'd1d1d1',
+  architecture: 'ffffff',
+  concurrency: '444444',
+  'data-loss': 'd73a4a',
+  performance: 'fbca04',
   // Fallback
   default: 'aaaaaa',
 };
@@ -108,15 +129,36 @@ const LabelManager = {
 
     log.info(`Checking ${requiredLabels.size} unique labels...`);
 
+    // Fetch existing labels to skip unnecessary updates
+    let existingLabels = [];
+    try {
+      const rawLabels = gh(['label', 'list', '--limit', '1000', '--json', 'name,color']);
+      existingLabels = JSON.parse(rawLabels);
+    } catch (e) {
+      log.warn(`Could not fetch existing labels: ${e.message}. Proceeding with fallback.`);
+    }
+
+    const existingMap = new Map(existingLabels.map((l) => [l.name, l.color.toLowerCase()]));
+    let syncCount = 0;
+
     for (const name of requiredLabels) {
-      const color = LABEL_COLORS[name] || LABEL_COLORS.default;
+      const targetColor = (LABEL_COLORS[name] || LABEL_COLORS.default).toLowerCase();
+      const existingColor = existingMap.get(name);
+
+      if (existingColor === targetColor) {
+        continue;
+      }
+
       try {
-        gh(['label', 'create', name, '--color', color, '--force']);
-        log.info(`Label ensured: ${name}`);
+        gh(['label', 'create', name, '--color', targetColor, '--force']);
+        log.info(`Label ensured: ${name} (${existingColor ? 'color update' : 'new'})`);
+        syncCount++;
       } catch (e) {
         log.warn(`Could not sync label '${name}': ${e.message}`);
       }
     }
+
+    log.success(`Label synchronization complete. ${syncCount} labels updated/created.`);
   },
 };
 

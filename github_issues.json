@@ -202,7 +202,7 @@
     "labels": ["P2", "observability", "monitoring"],
     "body": "No metrics exported for system monitoring.\n\n**Needed Metrics:**\n\n- Request rates and latencies\n- Error rates\n- Deployment success/failure rates\n- Queue depths\n- Resource usage\n\n**Acceptance Criteria:**\n\n- [ ] Install prom-client\n- [ ] Add /metrics endpoint\n- [ ] Implement custom metrics\n- [ ] Add Grafana dashboard\n- [ ] Document metrics\n- [ ] Set up alerting",
     "number": 84,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/84",
     "synced": true
   },
@@ -229,7 +229,7 @@
     "labels": ["P3", "refactoring", "type-safety"],
     "body": "Extensive use of `any` type reduces type safety benefits.\n\n**Acceptance Criteria:**\n\n- [ ] Add Fastify type augmentation\n- [ ] Create proper request/response types\n- [ ] Remove `as any` casts\n- [ ] Enable stricter TypeScript checks\n- [ ] Document type patterns",
     "number": 93,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/93",
     "synced": true
   },
@@ -238,7 +238,7 @@
     "labels": ["P3", "ux", "enhancement"],
     "body": "Error messages aren't user-friendly or consistent.\n\n**Acceptance Criteria:**\n\n- [ ] Create error response standard\n- [ ] Add error codes\n- [ ] Make messages user-friendly\n- [ ] Add i18n support for errors\n- [ ] Document error codes\n- [ ] Update frontend error handling",
     "number": 87,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/87",
     "synced": true
   },
@@ -247,7 +247,7 @@
     "labels": ["P3", "api", "architecture"],
     "body": "No API versioning strategy makes future changes risky.\n\n**Acceptance Criteria:**\n\n- [ ] Add version prefix (/api/v1)\n- [ ] Document versioning strategy\n- [ ] Plan v2 transition path\n- [ ] Update frontend API calls\n- [ ] Add version negotiation",
     "number": 88,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/88",
     "synced": true
   },
@@ -256,7 +256,7 @@
     "labels": ["P3", "observability", "enhancement"],
     "body": "Missing correlation IDs makes request tracing difficult.\n\n**Acceptance Criteria:**\n\n- [ ] Add request ID generation\n- [ ] Propagate IDs across services\n- [ ] Include in all log entries\n- [ ] Return in response headers\n- [ ] Document tracing setup",
     "number": 89,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/89",
     "synced": true
   },
@@ -274,7 +274,7 @@
     "labels": ["P3", "reliability", "enhancement"],
     "body": "Services don't handle SIGTERM/SIGINT gracefully.\n\n**Acceptance Criteria:**\n\n- [ ] Implement graceful shutdown\n- [ ] Wait for in-flight requests\n- [ ] Close connections properly\n- [ ] Update deployment docs\n- [ ] Add tests for shutdown",
     "number": 91,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/91",
     "synced": true
   },
@@ -337,7 +337,7 @@
     "labels": ["P2", "refactoring", "worker"],
     "body": "Use Strategy Pattern to handle different service deployment types.\n\n**Current Issue:**\n- Hardcoded if/else checks for service types\n- Adding new types requires modifying existing code\n- Violates Open/Closed Principle\n\n**Tasks:**\n\n- [ ] Create IDeploymentStrategy interface\n- [ ] Implement strategies (DockerDeploymentStrategy, StaticDeploymentStrategy, DatabaseDeploymentStrategy, ComposeDeploymentStrategy)\n- [ ] Update worker to use strategy pattern\n- [ ] Extract builders (DockerfileBuilder, ComposeFileBuilder)\n- [ ] Add strategy tests\n\n**Note:** Can work independently from API refactoring (#96, #98) since it focuses on worker.\n\n**Benefits:**\n- Easy to add new service types\n- Better code organization\n- Can work independently from API refactoring",
     "number": 130,
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/130"
   },
@@ -365,7 +365,7 @@
     "body": "Migrate service-related routes from `server.ts` to `ServiceController` and `service.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `GET /services`\n- `POST /services` (creation)\n- `GET /services/:id`\n- `PATCH /services/:id`\n- `DELETE /services/:id`\n- `GET /services/:id/health`\n- `GET /services/:id/metrics`\n- `GET /services/metrics/stream` (SSE)\n\n**Tasks:**\n- [ ] Implement `ServiceController` using injected repositories and services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/service.routes.ts` and register it in `index.ts`\n- [ ] Ensure all middleware (auth, validation) is correctly applied\n- [ ] Add unit tests for `ServiceController`",
     "synced": true,
     "number": 146,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/146"
   },
   {
@@ -374,7 +374,7 @@
     "body": "Migrate deployment-related routes from `server.ts` to `DeploymentController` and `deployment.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `POST /services/:id/deploy`\n- `POST /services/:id/restart`\n- `GET /services/:id/deployments`\n- `GET /deployments/:id/logs`\n- `GET /deployments/:id/logs/stream` (SSE)\n\n**Tasks:**\n- [ ] Implement `DeploymentController` using injected repositories and services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/deployment.routes.ts` and register it in `index.ts`\n- [ ] Ensure all middleware (auth, validation) is correctly applied\n- [ ] Add unit tests for `DeploymentController`",
     "synced": true,
     "number": 147,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/147"
   },
   {
@@ -383,7 +383,7 @@
     "body": "Migrate GitHub proxy routes from `server.ts` to `GitHubController` and `github.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `GET /github/orgs`\n- `GET /github/repos`\n- `GET /github/repos/:owner/:name/branches`\n\n**Tasks:**\n- [ ] Implement `GitHubController` using injected services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/github.routes.ts` and register it in `index.ts`\n- [ ] Ensure GitHub API error handling is preserved\n- [ ] Add unit tests for `GitHubController`",
     "synced": true,
     "number": 148,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/148"
   },
   {
@@ -392,7 +392,15 @@
     "body": "Migrate GitHub webhook routes from `server.ts` to `WebhookController` and `webhook.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `POST /webhooks/github`\n\n**Tasks:**\n- [ ] Implement `WebhookController` and move signature verification logic\n- [ ] Move PR and Push event handling logic to controller methods\n- [ ] Create `apps/api/src/routes/webhook.routes.ts` and register it in `index.ts`\n- [ ] Ensure raw body parsing for signature verification is correctly handled in the new structure\n- [ ] Add unit tests for `WebhookController`",
     "synced": true,
     "number": 149,
-    "state": "OPEN",
+    "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/149"
+  },
+  {
+    "title": "[MEDIUM] Standardize Zod Error Handling with z.treeifyError()",
+    "labels": ["P2", "refactoring", "api", "dx"],
+    "body": "Currently, controllers manually map ZodError issues into a flat array. We should migrate all controllers to use `z.treeifyError()` (formerly `error.flatten()`) for consistent, structured error responses that match the request body shape.\n\n**Benefits:**\n- zero boilerplate in error handlers\n- structured nested errors for complex forms\n- easier for frontend to map errors to specific fields\n\n**Tasks:**\n- [ ] Update `ServiceController.ts` to use `z.treeifyError()`\n- [ ] Update `FeatureFlagController.ts` to use `z.treeifyError()`\n- [ ] Audit and update any other controllers using Zod validation\n- [ ] Update Dashboard error handling to support the tree-like structure",
+    "number": 167,
+    "state": "OPEN",
+    "synced": true
   }
 ]

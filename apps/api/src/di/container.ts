@@ -5,6 +5,7 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/AuthController';
 import { DeploymentController } from '../controllers/DeploymentController';
+import { FeatureFlagController } from '../controllers/FeatureFlagController';
 import { GitHubController } from '../controllers/GitHubController';
 import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
@@ -12,6 +13,7 @@ import { WebhookController } from '../controllers/WebhookController';
 import { DockerContainerOrchestrator } from '../orchestration';
 import {
   PrismaDeploymentRepository,
+  PrismaFeatureFlagRepository,
   PrismaProjectRepository,
   PrismaServiceRepository,
   PrismaUserRepository,
@@ -19,6 +21,7 @@ import {
 import {
   AuthenticationService,
   DeploymentOrchestratorService,
+  FeatureFlagService,
   GitHubService,
   ProjectManagementService,
   ServiceManagementService,
@@ -50,6 +53,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.ProjectRepository, PrismaProjectRepository);
   container.registerSingleton(TOKENS.DeploymentRepository, PrismaDeploymentRepository);
   container.registerSingleton(TOKENS.UserRepository, PrismaUserRepository);
+  container.registerSingleton(TOKENS.FeatureFlagRepository, PrismaFeatureFlagRepository);
 
   // Register service implementations
   container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
@@ -57,6 +61,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.DeploymentOrchestratorService, DeploymentOrchestratorService);
   container.registerSingleton(TOKENS.AuthenticationService, AuthenticationService);
   container.registerSingleton(TOKENS.GitHubService, GitHubService);
+  container.registerSingleton(TOKENS.FeatureFlagService, FeatureFlagService);
 
   // Register controllers
   container.registerSingleton(TOKENS.ServiceController, ServiceController);
@@ -65,6 +70,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.GitHubController, GitHubController);
   container.registerSingleton(TOKENS.WebhookController, WebhookController);
   container.registerSingleton(TOKENS.AuthController, AuthController);
+  container.registerSingleton(TOKENS.FeatureFlagController, FeatureFlagController);
 }
 
 /**
