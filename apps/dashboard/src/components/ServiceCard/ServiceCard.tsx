@@ -1,7 +1,7 @@
 'use client';
 
 import type { Service } from '@/types/service';
-import { Cpu, Edit2, ExternalLink, FileText, Play, RotateCw, Trash2, Zap } from 'lucide-react';
+import { Cpu, Edit2, FileText, Globe, Play, RotateCw, Square, Trash2, Zap } from 'lucide-react';
 
 interface ServiceCardProps {
   service: Service;
@@ -9,6 +9,7 @@ interface ServiceCardProps {
   onDelete: (serviceId: string) => void;
   onDeploy: (serviceId: string) => void;
   onRestart: (serviceId: string) => void;
+  onStop: (serviceId: string) => void;
   onViewLogs: (deploymentId: string) => void;
   translations: {
     status: {
@@ -40,9 +41,12 @@ export function ServiceCard({
   onDelete,
   onDeploy,
   onRestart,
+  onStop,
   onViewLogs,
   translations: t,
 }: ServiceCardProps) {
+  const serviceUrl = `http://${service.projectName ? `${service.projectName}-${service.name}` : service.name}.localhost`;
+
   return (
     <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-white/10 hover:border-indigo-500/30 transition-all duration-500 group shadow-2xl flex flex-col">
       <div className="flex justify-between items-start mb-8">
@@ -99,9 +103,22 @@ export function ServiceCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-sm text-slate-500 mb-8 pb-4 border-b border-white/5">
-        <div className="w-2 h-2 rounded-full bg-slate-600 shadow-[0_0_8px_rgba(71,85,105,0.5)]" />
-        <span className="truncate font-medium">{service.repoUrl}</span>
+      <div className="flex flex-col gap-2 mb-8 pb-4 border-b border-white/5">
+        <div className="flex items-center gap-3 text-sm text-slate-500">
+          <div className="w-2 h-2 rounded-full bg-slate-600 shadow-[0_0_8px_rgba(71,85,105,0.5)]" />
+          <span className="truncate font-medium">{service.repoUrl}</span>
+        </div>
+        <div className="flex items-center gap-3 text-sm text-indigo-400/80 hover:text-indigo-400 transition-colors">
+          <Globe size={12} />
+          <a
+            href={serviceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="truncate font-medium hover:underline"
+          >
+            {serviceUrl.replace('http://', '')}
+          </a>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-10">
@@ -156,16 +173,14 @@ export function ServiceCard({
           >
             <FileText size={18} />
           </button>
-          <a
-            href={`http://${service.name}.localhost`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95"
-            aria-label={`${t.actions.visit} ${service.name} (opens in new tab)`}
-            title={t.actions.visit}
+          <button
+            onClick={() => onStop(service.id)}
+            className="flex items-center justify-center py-3.5 rounded-2xl bg-rose-500/10 text-rose-400 hover:text-white hover:bg-rose-500 transition-all border border-rose-500/10 shadow-sm active:scale-95 group/btn"
+            aria-label="Stop service"
+            title="Stop service"
           >
-            <ExternalLink size={18} />
-          </a>
+            <Square size={18} fill="currentColor" />
+          </button>
         </div>
       </div>
     </div>

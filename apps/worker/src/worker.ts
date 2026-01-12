@@ -127,6 +127,19 @@ export const worker = new Worker(
         customDomain,
         staticOutputDir,
         type,
+        githubToken: job.data.githubToken,
+        projectName: job.data.projectName,
+        environmentName: job.data.environmentName,
+        onLog: (log) => {
+          const sanitized = log
+            .replace(/\0/g, '')
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+          const scrubbed = scrubLogs(sanitized);
+          publishLogs(redisConnection, deploymentId, scrubbed).catch((err) =>
+            console.error('Failed to publish real-time logs:', err),
+          );
+        },
       };
 
       // Execute deployment using the appropriate strategy
@@ -176,9 +189,15 @@ export const worker = new Worker(
         port,
         envVars,
         customDomain,
+        projectName: context.projectName,
+        environmentName: context.environmentName,
+        onLog: context.onLog,
       });
       newContainer = containerResult.container;
       containerPostfix = containerResult.postfix;
+
+      context.onLog?.(`✅ Container ${containerResult.postfix} started successfully.\n`);
+      context.onLog?.(`\n==== Cleaning up old containers ====\n`);
 
       // Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
       await cleanupOldContainers({
@@ -187,6 +206,9 @@ export const worker = new Worker(
         serviceName,
         currentPostfix: containerPostfix,
       });
+
+      context.onLog?.(`✅ Cleanup complete.\n`);
+      context.onLog?.(`\n🚀 Deployment ${deploymentId} successful!\n`);
 
       // Update deployment and service status
       await updateDeploymentStatus({

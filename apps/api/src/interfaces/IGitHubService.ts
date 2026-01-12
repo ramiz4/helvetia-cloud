@@ -63,6 +63,26 @@ export interface GitHubBranch {
 }
 
 /**
+ * GitHub API package response
+ */
+export interface GitHubPackage {
+  id: number;
+  name: string;
+  package_type: string;
+  owner: {
+    login: string;
+    id: number;
+    avatar_url: string;
+  };
+  version_count: number;
+  visibility: string;
+  url: string;
+  created_at: string;
+  updated_at: string;
+  html_url: string;
+}
+
+/**
  * Query parameters for fetching repositories
  */
 export interface GetRepositoriesParams {
@@ -91,4 +111,9 @@ export interface IGitHubService {
    * Get branches for a specific repository
    */
   getRepositoryBranches(accessToken: string, owner: string, repo: string): Promise<GitHubBranch[]>;
+
+  /**
+   * Get container images for user or organization
+   */
+  getContainerImages(accessToken: string, org?: string): Promise<GitHubPackage[]>;
 }

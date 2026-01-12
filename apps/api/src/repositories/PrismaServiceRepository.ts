@@ -10,7 +10,16 @@ export class PrismaServiceRepository implements IServiceRepository {
   constructor(@inject('PrismaClient') private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Service | null> {
-    return this.prisma.service.findUnique({ where: { id } });
+    return this.prisma.service.findUnique({
+      where: { id },
+      include: {
+        environment: {
+          include: {
+            project: true,
+          },
+        },
+      },
+    });
   }
 
   async findByUserId(
@@ -21,6 +30,13 @@ export class PrismaServiceRepository implements IServiceRepository {
       where: { userId, deletedAt: null },
       take: options?.take,
       skip: options?.skip,
+      include: {
+        environment: {
+          include: {
+            project: true,
+          },
+        },
+      },
     });
   }
 
@@ -67,6 +83,12 @@ export class PrismaServiceRepository implements IServiceRepository {
       where: { deletedAt: null },
       take: options?.take,
       skip: options?.skip,
+    });
+  }
+
+  async findByEnvironmentId(environmentId: string): Promise<Service[]> {
+    return this.prisma.service.findMany({
+      where: { environmentId, deletedAt: null },
     });
   }
 }

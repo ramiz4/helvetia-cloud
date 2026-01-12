@@ -1,16 +1,35 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import NewServicePage from './page';
 
 // Mock dependencies
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
-}));
+vi.mock('next/navigation', async () => {
+  const actual = await vi.importActual<typeof import('next/navigation')>('next/navigation');
+  return {
+    ...actual,
+    useRouter: () => ({
+      push: vi.fn(),
+    }),
+    useSearchParams: () => ({
+      get: vi.fn(),
+    }),
+  };
+});
 
 vi.mock('../../lib/tokenRefresh', () => ({
   fetchWithAuth: vi.fn(),
+}));
+
+vi.mock('@/hooks/useProjects', () => ({
+  useProjects: () => ({
+    data: [{ id: 'proj-1', name: 'My Project', environments: [{ id: 'env-1', name: 'Pro' }] }],
+    isLoading: false,
+  }),
+  useCreateProject: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 // Mock GitHubRepoPicker
@@ -92,9 +111,32 @@ describe('NewServicePage', () => {
       json: async () => ({ id: 'new-deployment-id' }),
     } as Response);
 
-    render(<NewServicePage />);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
 
-    // Step 1: Select Manual Git Import
+    render(
+      <QueryClientProvider client={queryClient}>
+        <NewServicePage />
+      </QueryClientProvider>,
+    );
+
+    // Step 1: Project Name
+    const nameInput = screen.getByPlaceholderText('my-awesome-service');
+    fireEvent.change(nameInput, { target: { value: 'my-static-site' } });
+
+    // Select Project
+    const projectBtn = screen.getByText('My Project');
+    fireEvent.click(projectBtn);
+
+    const nextBtnStep1 = screen.getByText('Next');
+    fireEvent.click(nextBtnStep1);
+
+    // Step 2: Select Manual Git Import
     const manualImportBtn = screen.getByText('Manual Git Import');
     fireEvent.click(manualImportBtn);
 
@@ -102,17 +144,23 @@ describe('NewServicePage', () => {
     const repoInput = screen.getByPlaceholderText('https://github.com/...');
     fireEvent.change(repoInput, { target: { value: 'https://github.com/test/repo' } });
 
-    // Click Next
-    const nextBtn = screen.getByRole('button', { name: /Next/i });
-    fireEvent.click(nextBtn);
+    // Click Next (Step 2 -> Step 3)
+    // Note: The "Next" button might have the same text, but in Step 2 it's rendered freshly.
+    // Since we are moving forward, we can grab the button again.
+    // However, getting by text "Next" might act on the previous button if it were arguably still there (transition),
+    // but in React conditional rendering it should be replaced or the same one updated.
+    // To be safe, we can use getByText inside the step container if needed, but getByText('Next') usually works if only one is valid.
+    /*
+       Wait! In Step 2 manual import, the button says "Next".
+    */
+    const nextBtnStep2 = screen.getByText('Next');
+    fireEvent.click(nextBtnStep2);
 
-    // Step 2: Configure Project
-    // Fill Project Name
-    const nameInput = screen.getByPlaceholderText('my-awesome-service');
-    fireEvent.change(nameInput, { target: { value: 'my-static-site' } });
+    // Step 3: Configure Project
+    // Project Name is already filled and potentially read-only or editable, but we set it in Step 1.
+    // We don't need to fill it again unless we want to change it.
 
     // Select Static Site
-    // Instead of finding by text which might be inside a span, let's click the button that contains "Static Site"
     const staticSiteBtn = screen.getByText('Static Site').closest('button');
     expect(staticSiteBtn).toBeInTheDocument();
     fireEvent.click(staticSiteBtn!);
@@ -181,11 +229,52 @@ describe('NewServicePage', () => {
       json: async () => ({ id: 'new-deployment-id' }),
     } as Response);
 
-    render(<NewServicePage />);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
 
-    // Step 1: Verify 'Docker Compose' is NOT an option in Step 1
-    const step1ComposeBtn = screen.queryByText('Docker Compose');
-    expect(step1ComposeBtn).not.toBeInTheDocument();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <NewServicePage />
+      </QueryClientProvider>,
+    );
+
+    // Step 1: Project Name
+    const nameInput = screen.getByPlaceholderText('my-awesome-service');
+    fireEvent.change(nameInput, { target: { value: 'my-compose-app' } });
+
+    // Select Project
+    const projectBtn = screen.getByText('My Project');
+    fireEvent.click(projectBtn);
+
+    const nextBtnStep1 = screen.getByText('Next');
+    fireEvent.click(nextBtnStep1);
+
+    // Step 2: Select Manual Git Import (Compose is not in this list, it's a service type inside Config if not picked here?
+    // Wait, the mock says "Docker Compose" is importCompose in translated strings.
+    // In ImportSourceStep.tsx:
+    // { id: 'github', label: t.dashboard.newService.importGithub... }
+    // { id: 'github-image', ... }
+    // { id: 'database', ... }
+    // { id: 'manual', ... }
+    // Docker Compose is a SERVICE TYPE, not an IMPORT TYPE in the new code (except maybe subtly?).
+    // Actually, looking at ConfigurationStep.tsx, we have a button for 'docker', 'static', 'compose'.
+    // So distinct 'Compose' IMPORTER is likely gone or merged into Manual/GitHub.
+
+    // In the previous code, there was no separate 'Compose' Importer?
+    // Let's check ImportSourceStep in previous turn.
+    // It maps: github, github-image, database, manual.
+    // So we must select Manual or GitHub first.
+    // The test used to verify: "Verify 'Docker Compose' is NOT an option in Step 1" (Old Step 1 was Import Type).
+    // Now Step 2 is Import Type.
+
+    // So in Step 2, "Docker Compose" should NOT be visible as an import type.
+    const step2ComposeBtn = screen.queryByText('Docker Compose');
+    expect(step2ComposeBtn).not.toBeInTheDocument();
 
     // Select Manual Git Import
     const manualImportBtn = screen.getByText('Manual Git Import');
@@ -196,10 +285,12 @@ describe('NewServicePage', () => {
     fireEvent.change(repoInput, { target: { value: 'https://github.com/test/compose-repo' } });
 
     // Click Next
-    const nextBtn = screen.getByRole('button', { name: /Next/i });
-    fireEvent.click(nextBtn);
+    const nextBtnStep2 = screen.getByText('Next');
+    fireEvent.click(nextBtnStep2);
 
-    // Step 2: Verify 'Docker Compose' option exists
+    // Step 3: Configuration
+    // Verify 'Docker Compose' option exists (Service Type)
+    // Note: The button label is importCompose: 'Docker Compose' in mocks.
     const composeServiceBtn = screen.getByText('Docker Compose');
     expect(composeServiceBtn).toBeInTheDocument();
     fireEvent.click(composeServiceBtn);
@@ -214,10 +305,7 @@ describe('NewServicePage', () => {
     const buildCmdInput = screen.queryByPlaceholderText('npm run build');
     expect(buildCmdInput).not.toBeInTheDocument();
 
-    // Fill form
-    const nameInput = screen.getByPlaceholderText('my-awesome-service');
-    fireEvent.change(nameInput, { target: { value: 'my-compose-app' } });
-
+    // Fill form (Project Name already set in Step 1)
     fireEvent.change(composeFileInput, { target: { value: 'compose.prod.yml' } });
     fireEvent.change(mainServiceInput, { target: { value: 'web' } });
 

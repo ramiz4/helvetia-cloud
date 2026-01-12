@@ -173,6 +173,56 @@ export class DeploymentController {
   }
 
   /**
+   * POST /services/:id/stop
+   * Stop a running service container
+   */
+  async stopService(request: FastifyRequest, reply: FastifyReply) {
+    const { id } = request.params as { id: string };
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+
+    const { prisma } = await import('database');
+    const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+    if (!service) {
+      return reply.status(404).send({ error: 'Service not found' });
+    }
+
+    const Docker = (await import('dockerode')).default;
+    const docker = new Docker();
+
+    try {
+      // Find existing containers for this service
+      const containers = await docker.listContainers({ all: true });
+      const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+
+      if (serviceContainers.length === 0) {
+        return reply.status(400).send({ error: 'Service is not running' });
+      }
+
+      await Promise.all(
+        serviceContainers.map(async (c) => {
+          const container = docker.getContainer(c.Id);
+          if (c.State === 'running') {
+            await container.stop();
+          }
+        }),
+      );
+
+      // Update service status (optional, but good for UI responsiveness)
+      await withStatusLock(id, async () => {
+        await this.serviceRepository.update(id, { status: 'STOPPED' });
+      });
+
+      return { success: true, message: 'Service stopped successfully' };
+    } catch (error) {
+      console.error('Stop error:', error);
+      return reply.status(500).send({ error: 'Failed to stop service' });
+    }
+  }
+
+  /**
    * GET /services/:id/deployments
    * Get all deployments for a service
    */

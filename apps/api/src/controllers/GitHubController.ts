@@ -171,6 +171,45 @@ export class GitHubController {
   }
 
   /**
+   * GET /github/packages
+   * Get user's or organization's container images
+   */
+  async getContainerImages(request: FastifyRequest, reply: FastifyReply) {
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+    const { org } = request.query as { org?: string };
+
+    try {
+      const accessToken = await this.getDecryptedGitHubToken(user.id);
+
+      if (!accessToken) {
+        return reply.status(401).send({
+          error:
+            'GitHub authentication required or token expired. Please reconnect your GitHub account.',
+        });
+      }
+
+      const packages = await this.githubService.getContainerImages(accessToken, org);
+      return packages;
+    } catch (error: unknown) {
+      const err = error as GitHubApiError;
+      const status = err.status || err.response?.status || 500;
+      const data = err.data || err.response?.data || {};
+      const message = err.message || 'Failed to fetch container images';
+
+      console.error('GitHub Packages API error:', message);
+
+      if (status !== 500) {
+        return reply.status(status).send(data);
+      }
+
+      return reply.status(500).send({ error: message });
+    }
+  }
+
+  /**
    * Helper to get and decrypt GitHub access token for a user
    */
   private async getDecryptedGitHubToken(userId: string): Promise<string | null> {

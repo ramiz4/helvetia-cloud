@@ -25,6 +25,67 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
     } = context;
 
     let buildLogs = '';
+
+    // Check if repoUrl is actually a container image reference (not a URL)
+    const isContainerImage =
+      !repoUrl.startsWith('http://') &&
+      !repoUrl.startsWith('https://') &&
+      !repoUrl.startsWith('git@') &&
+      !repoUrl.startsWith('ssh://');
+
+    if (isContainerImage) {
+      // Use branch as tag if provided, defaulting to latest
+      const tag = branch && branch !== 'main' ? branch : 'latest';
+      const cleanRepoUrl = repoUrl.endsWith(':latest') ? repoUrl.replace(':latest', '') : repoUrl;
+      const fullImage = `${cleanRepoUrl}:${tag}`;
+      const { githubToken } = context;
+
+      context.onLog?.(`==== Pulling Pre-built Image: ${fullImage} ====\n`);
+
+      try {
+        const pullOptions: Record<string, unknown> = {};
+        if (githubToken && fullImage.includes('ghcr.io')) {
+          pullOptions.authconfig = {
+            username: 'x-access-token', // Works with GitHub tokens
+            password: githubToken,
+            serveraddress: 'ghcr.io',
+          };
+          context.onLog?.(`🔑 Using GitHub authentication for GHCR...\n`);
+        }
+
+        const stream = await docker.pull(fullImage, pullOptions);
+        await new Promise<void>((resolve, reject) => {
+          docker.modem.followProgress(
+            stream,
+            (err, _res) => {
+              if (err) reject(err);
+              else resolve();
+            },
+            (event) => {
+              const status = event.status || '';
+              const progress = event.progress || '';
+              const id = event.id ? `[${event.id}] ` : '';
+              const logLine = `${id}${status} ${progress}\n`;
+              buildLogs += logLine;
+              context.onLog?.(logLine);
+            },
+          );
+        });
+
+        context.onLog?.(`\n✅ Successfully pulled image: ${fullImage}\n`);
+
+        return {
+          imageTag: fullImage,
+          buildLogs: buildLogs || `Successfully pulled image: ${fullImage}`,
+          success: true,
+        };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        context.onLog?.(`\n❌ Failed to pull image: ${errorMessage}\n`);
+        throw error;
+      }
+    }
+
     const imageTag = `helvetia/${serviceName}:latest`;
 
     // 1. Create builder container
@@ -37,13 +98,17 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
       HostConfig: {
         AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: 'helvetia-net',
+        NetworkMode: context.projectName
+          ? `helvetia-${context.projectName}${context.environmentName ? `-${context.environmentName}` : ''}`
+          : 'helvetia-net',
       },
     });
 
     try {
       await builder.start();
-      console.log(`Building image ${imageTag} in isolated environment...`);
+      const startMsg = `Building image ${imageTag} in isolated environment...\n`;
+      buildLogs += startMsg;
+      context.onLog?.(startMsg);
 
       // 2. Generate Dockerfile content
       const dockerfileContent = DockerfileBuilder.buildNodeService({
@@ -106,8 +171,9 @@ EOF
 
       await new Promise<void>((resolve, reject) => {
         stream.on('data', (chunk: Buffer) => {
-          buildLogs += chunk.toString();
-          console.log(chunk.toString());
+          const log = chunk.toString();
+          buildLogs += log;
+          context.onLog?.(log);
         });
         stream.on('end', resolve);
         stream.on('error', reject);

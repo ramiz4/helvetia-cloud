@@ -28,6 +28,7 @@ describe('PrismaServiceRepository', () => {
     prNumber: null,
     deletedAt: null,
     deleteProtected: false,
+    environmentId: 'env-1',
   };
 
   beforeEach(() => {
@@ -55,6 +56,7 @@ describe('PrismaServiceRepository', () => {
       expect(result).toEqual(mockService);
       expect(mockPrisma.service.findUnique).toHaveBeenCalledWith({
         where: { id: 'service-1' },
+        include: { environment: { include: { project: true } } },
       });
     });
 
@@ -76,6 +78,7 @@ describe('PrismaServiceRepository', () => {
       expect(result).toEqual([mockService]);
       expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1', deletedAt: null },
+        include: { environment: { include: { project: true } } },
         take: undefined,
         skip: undefined,
       });
@@ -88,6 +91,7 @@ describe('PrismaServiceRepository', () => {
 
       expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1', deletedAt: null },
+        include: { environment: { include: { project: true } } },
         take: 10,
         skip: 5,
       });

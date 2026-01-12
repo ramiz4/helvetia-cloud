@@ -406,6 +406,10 @@ fastify.register(deploymentRoutes);
 import { githubRoutes } from './routes/github.routes';
 fastify.register(githubRoutes);
 
+// Register project routes
+import { projectRoutes } from './routes/project.routes';
+fastify.register(projectRoutes);
+
 // Register webhook routes
 import { webhookRoutes } from './routes/webhook.routes';
 fastify.register(webhookRoutes);

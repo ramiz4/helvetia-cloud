@@ -15,13 +15,18 @@ const optionalString = (schema: z.ZodString) =>
 const commonFieldValidations = {
   name: z
     .string()
-    .min(3, 'Service name must be at least 3 characters')
+    .min(2, 'Service name must be at least 2 characters')
     .max(63, 'Service name must not exceed 63 characters')
     .regex(
       /^[a-z0-9-]+$/,
       'Service name must contain only lowercase letters, numbers, and hyphens',
     ),
-  repoUrl: optionalString(z.string().url('Repository URL must be a valid URL')),
+  repoUrl: optionalString(
+    z
+      .string()
+      .min(1, 'Repository URL must not be empty')
+      .max(2000, 'Repository URL must not exceed 2000 characters'),
+  ),
   branch: optionalString(
     z
       .string()
@@ -101,6 +106,15 @@ export const ServiceCreateSchema = z.object({
 
   // Static output directory: limit length
   staticOutputDir: commonFieldValidations.staticOutputDir,
+
+  // Helper fields for COMPOSE type (mapped to buildCommand and startCommand)
+  composeFile: optionalString(
+    z.string().max(255, 'Compose file path must not exceed 255 characters'),
+  ),
+  mainService: optionalString(
+    z.string().max(63, 'Main service name must not exceed 63 characters'),
+  ),
+  environmentId: z.string().uuid('Invalid environment ID').optional(),
 });
 
 /**
@@ -137,6 +151,8 @@ export const ServiceUpdateSchema = z.object({
 
   // Static output directory: limit length
   staticOutputDir: commonFieldValidations.staticOutputDir,
+
+  environmentId: z.string().uuid('Invalid environment ID').optional(),
 });
 
 export type ServiceCreateInput = z.infer<typeof ServiceCreateSchema>;

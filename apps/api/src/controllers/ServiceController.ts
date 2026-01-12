@@ -67,6 +67,8 @@ export class ServiceController {
 
     return servicesWithDeployments.map((service) => ({
       ...service,
+      projectName: (service as { environment?: { project?: { name?: string } } }).environment
+        ?.project?.name,
       status: determineServiceStatus(service, containers),
     }));
   }
@@ -97,6 +99,8 @@ export class ServiceController {
     return {
       ...service,
       deployments,
+      projectName: (service as { environment?: { project?: { name?: string } } }).environment
+        ?.project?.name,
       status: determineServiceStatus({ ...service, deployments }, containers),
     };
   }
@@ -134,7 +138,20 @@ export class ServiceController {
       type,
       staticOutputDir,
       envVars,
+      // Helper fields for COMPOSE
+      composeFile,
+      mainService,
+      environmentId,
     } = validatedData;
+
+    let finalBuildCommand = buildCommand;
+    let finalStartCommand = startCommand;
+
+    // For COMPOSE type, map helper fields to command fields if provided
+    if (type?.toUpperCase() === 'COMPOSE') {
+      if (composeFile) finalBuildCommand = composeFile;
+      if (mainService) finalStartCommand = mainService;
+    }
 
     const finalType = type || 'DOCKER';
     const user = request.user;
@@ -148,10 +165,11 @@ export class ServiceController {
       return await this.serviceManagement.createOrUpdateService({
         name,
         userId,
+        environmentId,
         repoUrl: repoUrl || undefined,
         branch: branch || undefined,
-        buildCommand,
-        startCommand,
+        buildCommand: finalBuildCommand,
+        startCommand: finalStartCommand,
         port,
         customDomain: customDomain || undefined,
         type: finalType,
@@ -201,6 +219,7 @@ export class ServiceController {
       customDomain,
       type,
       staticOutputDir,
+      environmentId,
     } = validatedData;
 
     const user = request.user;
@@ -226,6 +245,7 @@ export class ServiceController {
       customDomain,
       type: type,
       staticOutputDir,
+      environmentId,
     });
 
     const deployments = await this.deploymentRepository.findByServiceId(id, { take: 1 });

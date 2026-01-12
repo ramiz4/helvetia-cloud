@@ -20,14 +20,14 @@ describe('Logging Configuration', () => {
     expect(LOG_LEVEL).toBe(process.env.LOG_LEVEL || 'info');
   });
 
-  it('should enable request logging by default', () => {
-    // LOG_REQUESTS should be true by default
-    expect(LOG_REQUESTS).toBe(process.env.LOG_REQUESTS !== 'false');
+  it('should disable request logging by default', () => {
+    // LOG_REQUESTS should be false by default
+    expect(LOG_REQUESTS).toBe(process.env.LOG_REQUESTS === 'true');
   });
 
-  it('should enable response logging by default', () => {
-    // LOG_RESPONSES should be true by default
-    expect(LOG_RESPONSES).toBe(process.env.LOG_RESPONSES !== 'false');
+  it('should disable response logging by default', () => {
+    // LOG_RESPONSES should be false by default
+    expect(LOG_RESPONSES).toBe(process.env.LOG_RESPONSES === 'true');
   });
 
   it('should redact sensitive paths', () => {

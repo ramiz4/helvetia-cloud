@@ -37,6 +37,14 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   /**
+   * POST /services/:id/stop
+   * Stop a running service container
+   */
+  fastify.post('/services/:id/stop', async (request, reply) => {
+    return controller.stopService(request, reply);
+  });
+
+  /**
    * GET /services/:id/deployments
    * Get all deployments for a service
    */

@@ -4,6 +4,7 @@ import type {
   GetRepositoriesParams,
   GitHubBranch,
   GitHubOrganization,
+  GitHubPackage,
   GitHubRepository,
   IGitHubService,
 } from '../interfaces';
@@ -109,6 +110,53 @@ export class GitHubService implements IGitHubService {
       return response.data;
     } catch (error) {
       this.handleGitHubError(error, 'Failed to fetch branches');
+    }
+  }
+
+  /**
+   * Get container images for user or organization
+   */
+  async getContainerImages(accessToken: string, org?: string): Promise<GitHubPackage[]> {
+    const fetchPackages = async (url: string): Promise<GitHubPackage[]> => {
+      try {
+        const response = await axios.get<GitHubPackage[]>(url, {
+          headers: {
+            Authorization: `token ${accessToken}`,
+            Accept: 'application/json',
+          },
+          params: {
+            package_type: 'container',
+          },
+        });
+        return response.data;
+      } catch (error) {
+        // If searching a specific org fails, we might want to propagate it,
+        // but if we are aggregating, we might want to suppress it.
+        // For now, if called directly with org, it will throw caught below.
+        if (org) throw error;
+        return [];
+      }
+    };
+
+    try {
+      if (org) {
+        return await fetchPackages(`${this.baseUrl}/orgs/${org}/packages`);
+      }
+
+      // If no org specified, fetch User packages + ALL Organization packages
+      const userPackagesPromise = fetchPackages(`${this.baseUrl}/user/packages`);
+
+      const orgs = await this.getUserOrganizations(accessToken);
+      const orgPackagesPromises = orgs.map((o) =>
+        fetchPackages(`${this.baseUrl}/orgs/${o.login}/packages`),
+      );
+
+      const allResults = await Promise.all([userPackagesPromise, ...orgPackagesPromises]);
+
+      // Flatten results
+      return allResults.flat();
+    } catch (error) {
+      this.handleGitHubError(error, 'Failed to fetch GitHub container images');
     }
   }
 

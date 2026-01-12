@@ -68,6 +68,7 @@ vi.mock('database', () => {
         deleteMany: vi.fn(),
       },
     },
+    PrismaClient: vi.fn(),
   };
 });
 

@@ -11,6 +11,7 @@ export interface Service {
   port: number;
   status: string;
   userId: string;
+  environmentId: string | null;
   envVars: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +37,7 @@ export interface ServiceCreateInput {
   port?: number;
   status?: string;
   userId: string;
+  environmentId?: string | null;
   envVars?: unknown;
   customDomain?: string | null;
   staticOutputDir?: string | null;
@@ -56,6 +58,7 @@ export interface ServiceUpdateInput {
   startCommand?: string | null;
   port?: number;
   status?: string;
+  environmentId?: string | null;
   envVars?: unknown;
   customDomain?: string | null;
   staticOutputDir?: string | null;
@@ -114,4 +117,9 @@ export interface IServiceRepository {
    * Find all services (for reconciliation)
    */
   findAll(options?: { take?: number; skip?: number }): Promise<Service[]>;
+
+  /**
+   * Find services by environment ID
+   */
+  findByEnvironmentId(environmentId: string): Promise<Service[]>;
 }

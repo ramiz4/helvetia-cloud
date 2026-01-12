@@ -87,6 +87,7 @@ export class ServiceManagementService {
         type,
         staticOutputDir: dto.staticOutputDir || 'dist',
         envVars: finalEnvVars,
+        environmentId: dto.environmentId,
         deletedAt: null,
       });
     } else {
@@ -99,6 +100,7 @@ export class ServiceManagementService {
         startCommand: dto.startCommand,
         port: finalPort,
         userId,
+        environmentId: dto.environmentId,
         customDomain: dto.customDomain,
         type,
         staticOutputDir: dto.staticOutputDir || 'dist',

@@ -67,6 +67,7 @@ vi.mock('database', () => ({
       deleteMany: vi.fn(),
     },
   },
+  PrismaClient: vi.fn(),
 }));
 
 const { mockListContainers, mockGetContainer } = vi.hoisted(() => ({

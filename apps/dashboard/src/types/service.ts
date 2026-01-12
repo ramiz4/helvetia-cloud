@@ -11,6 +11,8 @@ export interface Service {
   port: number;
   status: ServiceStatus;
   type: ServiceType;
+  environmentId?: string;
+  projectName?: string; // Populated from Environment -> Project
   staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;

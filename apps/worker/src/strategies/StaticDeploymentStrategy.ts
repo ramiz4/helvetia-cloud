@@ -36,15 +36,21 @@ export class StaticDeploymentStrategy implements IDeploymentStrategy {
       HostConfig: {
         AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: 'helvetia-net',
+        NetworkMode: context.projectName
+          ? `helvetia-${context.projectName}${context.environmentName ? `-${context.environmentName}` : ''}`
+          : 'helvetia-net',
       },
     });
 
     try {
       await builder.start();
-      console.log(`Building static site image ${imageTag}...`);
+      const startMsg = `==== Building static site image ${imageTag} ====\n`;
+      console.log(startMsg.trim());
+      context.onLog?.(startMsg);
+      buildLogs += startMsg;
 
       // 2. Generate Dockerfile content for static site
+      // ...
       const dockerfileContent = DockerfileBuilder.buildStaticSite({
         envVars,
         buildCommand,
@@ -119,8 +125,9 @@ NGINX_EOF
 
       await new Promise<void>((resolve, reject) => {
         stream.on('data', (chunk: Buffer) => {
-          buildLogs += chunk.toString();
-          console.log(chunk.toString());
+          const log = chunk.toString();
+          buildLogs += log;
+          context.onLog?.(log);
         });
         stream.on('end', resolve);
         stream.on('error', reject);

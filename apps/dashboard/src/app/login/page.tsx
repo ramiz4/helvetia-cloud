@@ -21,7 +21,7 @@ function LoginContent() {
     }
 
     const redirectUri = `${window.location.origin}/auth/callback`;
-    const githubUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=user,repo,read:org`;
+    const githubUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=user,repo,read:org,read:packages`;
 
     window.location.href = githubUrl;
   };

@@ -32,4 +32,12 @@ export const githubRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/github/repos/:owner/:name/branches', async (request, reply) => {
     return controller.getRepositoryBranches(request, reply);
   });
+
+  /**
+   * GET /github/packages
+   * Get user's or organization's container images
+   */
+  fastify.get('/github/packages', async (request, reply) => {
+    return controller.getContainerImages(request, reply);
+  });
 };

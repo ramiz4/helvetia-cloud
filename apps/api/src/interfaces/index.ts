@@ -6,6 +6,13 @@ export {
   IDeploymentRepository,
 } from './IDeploymentRepository';
 export {
+  Environment,
+  EnvironmentCreateInput,
+  IProjectRepository,
+  Project,
+  ProjectCreateInput,
+} from './IProjectRepository';
+export {
   IRefreshTokenRepository,
   RefreshToken,
   RefreshTokenCreateInput,
@@ -39,6 +46,7 @@ export {
   GetRepositoriesParams,
   GitHubBranch,
   GitHubOrganization,
+  GitHubPackage,
   GitHubRepository,
   IGitHubService,
 } from './IGitHubService';

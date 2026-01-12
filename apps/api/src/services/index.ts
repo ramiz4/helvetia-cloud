@@ -6,4 +6,5 @@
 export * from './AuthenticationService';
 export * from './DeploymentOrchestratorService';
 export * from './GitHubService';
+export * from './ProjectManagementService';
 export * from './ServiceManagementService';

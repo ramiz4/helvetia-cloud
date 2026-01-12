@@ -20,7 +20,8 @@ describe('ComposeFileBuilder', () => {
       expect(result).toContain('traefik.http.routers.my-app.entrypoints=web');
       expect(result).toContain('traefik.http.services.my-app.loadbalancer.server.port=8080');
       expect(result).toContain('networks:');
-      expect(result).toContain('default:');
+      expect(result).toContain('helvetia-net:');
+      expect(result).toContain('project-net:');
       expect(result).toContain('external: true');
       expect(result).toContain('name: helvetia-net');
     });
@@ -106,7 +107,7 @@ describe('ComposeFileBuilder', () => {
 
       // Basic YAML format checks
       expect(result).toMatch(/services:\s+app:/);
-      expect(result).toMatch(/networks:\s+default:/);
+      expect(result).toMatch(/networks:\s+helvetia-net:/);
       // Should not have duplicate keys
       const lines = result.split('\n');
       const serviceOccurrences = lines.filter((line) => line.match(/^services:/)).length;

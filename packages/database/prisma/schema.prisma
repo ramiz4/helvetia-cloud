@@ -18,7 +18,32 @@ model User {
   /// @sensitive - GitHub OAuth access token. Handle securely.
   githubAccessToken String?
   services          Service[]
+  projects          Project[]
   refreshTokens     RefreshToken[]
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  name         String
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  environments Environment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([userId, name])
+}
+
+model Environment {
+  id        String    @id @default(uuid())
+  name      String    @default("Production")
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  services  Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([projectId, name])
 }
 
 model Service {
@@ -31,6 +56,8 @@ model Service {
   port            Int          @default(3000)
   status          String       @default("IDLE")
   userId          String
+  environmentId   String?
+  environment     Environment? @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   envVars         Json?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -57,7 +84,7 @@ model Deployment {
   imageTag   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  service    Service  @relation(fields: [serviceId], references: [id])
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
 
 model RefreshToken {

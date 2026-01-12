@@ -83,7 +83,7 @@ describe('DatabaseDeploymentStrategy', () => {
       expect(mockDocker.pull).toHaveBeenCalledWith('postgres:15-alpine');
       expect(result.imageTag).toBe('postgres:15-alpine');
       expect(result.success).toBe(true);
-      expect(result.buildLogs).toContain('Managed service deployment');
+      expect(result.buildLogs).toContain('Managed database service');
     });
 
     it('should deploy REDIS with correct image', async () => {
