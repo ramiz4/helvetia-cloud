@@ -245,7 +245,7 @@ export class WebhookController {
         ip: request.ip,
         headers: request.headers,
       });
-      return reply.status(401).send({ error: 'Missing signature' });
+      return reply.status(400).send({ error: 'Missing signature' });
     }
 
     // Get raw body for signature verification

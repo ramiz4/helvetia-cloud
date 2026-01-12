@@ -111,13 +111,45 @@ These can be added to existing versions:
 
 ### Planned v2 Features
 
-The following breaking changes are planned for v2:
+The following breaking changes and enhancements are planned for v2:
 
 1. **Enhanced error responses** with standardized error codes
 2. **Pagination standardization** across all list endpoints
 3. **Webhook signature verification** changes
 4. **Response envelope** for consistent API responses
 5. **Rate limiting headers** standardization
+6. **Version tracking in metrics** - API metrics will include version labels
+7. **Deprecation warning headers** - Deprecated versions will include `Deprecation` and `Sunset` headers
+
+#### Version Usage Tracking (Planned)
+
+API metrics will include version information for better monitoring:
+
+```
+http_requests_total{version="v1", method="GET", route="/services"} 1234
+http_requests_total{version="v2", method="GET", route="/services"} 5678
+```
+
+This will enable:
+
+- Tracking adoption rates of new API versions
+- Identifying clients still using deprecated versions
+- Planning sunset timelines based on actual usage data
+
+#### Deprecation Warning Headers (Planned)
+
+When using deprecated versions, responses will include standard deprecation headers:
+
+```
+Deprecation: version="v1" date="2026-12-31"
+Sunset: Wed, 31 Dec 2026 23:59:59 GMT
+```
+
+These headers follow [RFC 8594](https://datatracker.ietf.org/doc/html/rfc8594) and will help clients:
+
+- Programmatically detect deprecated API usage
+- Plan migration timelines
+- Receive advance warning before version sunset
 
 ### Migration Process
 
@@ -127,7 +159,7 @@ When v2 is released:
 2. **Migration guide** will be published
 3. **Parallel testing period** where both versions are available
 4. **Gradual migration** encouraged, no forced upgrades
-5. **Deprecation notices** added to v1 API responses
+5. **Deprecation notices** added to v1 API responses via headers
 
 ### Example Migration
 
@@ -203,25 +235,6 @@ const publicRoutes = [
 3. **Test backward compatibility** - run regression tests before releases
 4. **Communicate deprecations** - announce deprecations early and clearly
 5. **Maintain version matrix** - track which features are in which versions
-
-## Monitoring and Metrics
-
-### Version Usage Tracking
-
-API metrics include version information:
-
-```
-http_requests_total{version="v1", method="GET", route="/services"} 1234
-```
-
-### Deprecation Warnings
-
-When using deprecated versions, responses include warning headers:
-
-```
-Deprecation: version="v1" date="2026-12-31"
-Sunset: Wed, 31 Dec 2026 23:59:59 GMT
-```
 
 ## FAQ
 

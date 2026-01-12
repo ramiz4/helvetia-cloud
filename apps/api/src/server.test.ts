@@ -484,7 +484,7 @@ describe('API Server', () => {
         payload,
       });
 
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(400);
       expect(response.json()).toEqual({ error: 'Missing signature' });
     });
 

@@ -374,23 +374,19 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/logout',
   ];
 
-  // Get both the route pattern and the full URL
-  const routeUrl = request.routeOptions?.url || '';
+  // Get the URL without query parameters
   const fullUrl = request.url.split('?')[0];
 
-  // Check if the route pattern itself is public (for routes registered with prefix, this won't have the prefix)
-  if (publicRoutes.includes(routeUrl)) {
-    return;
-  }
-
-  // Check if the full URL is public (handles unversioned routes)
+  // Check if it's a public route (unversioned)
   if (publicRoutes.includes(fullUrl)) {
     return;
   }
 
-  // Check if the full URL matches a versioned public route
-  for (const publicRoute of publicRoutes) {
-    if (fullUrl === `/api/v1${publicRoute}` || fullUrl.startsWith(`/api/v1${publicRoute}/`)) {
+  // Check if it's a versioned public route (e.g., /api/v1/auth/refresh)
+  // We need to check if the URL starts with /api/v1 and then matches a public route
+  if (fullUrl.startsWith('/api/v1/')) {
+    const pathWithoutVersion = fullUrl.substring(7); // Remove '/api/v1' prefix
+    if (publicRoutes.includes(pathWithoutVersion)) {
       return;
     }
   }

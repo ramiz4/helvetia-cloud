@@ -72,7 +72,7 @@ describe('WebhookController', () => {
       it('should reject webhook without signature', async () => {
         await controller.handleGitHubWebhook(mockRequest, mockReply);
 
-        expect(mockReply.status).toHaveBeenCalledWith(401);
+        expect(mockReply.status).toHaveBeenCalledWith(400);
         expect(mockReply.send).toHaveBeenCalledWith({ error: 'Missing signature' });
       });
 

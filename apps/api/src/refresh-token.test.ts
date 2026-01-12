@@ -143,7 +143,7 @@ describe('Refresh Token Flow', () => {
         url: '/api/v1/auth/refresh',
       });
 
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({
         error: 'Refresh token not provided',
       });

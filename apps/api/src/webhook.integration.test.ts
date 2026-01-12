@@ -93,7 +93,7 @@ describeIf('Webhook Processing Integration Tests', () => {
         payload,
       });
 
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(400);
       expect(JSON.parse(response.body)).toHaveProperty('error', 'Missing signature');
     });
 
