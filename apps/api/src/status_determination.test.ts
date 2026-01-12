@@ -119,7 +119,7 @@ describe('Service Status Determination', () => {
     const token = fastify.jwt.sign(mockUser);
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services',
+      url: '/api/v1/services',
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -155,7 +155,7 @@ describe('Service Status Determination', () => {
     const token = fastify.jwt.sign(mockUser);
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services',
+      url: '/api/v1/services',
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -191,7 +191,7 @@ describe('Service Status Determination', () => {
     const token = fastify.jwt.sign(mockUser);
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services',
+      url: '/api/v1/services',
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -224,7 +224,7 @@ describe('Service Status Determination', () => {
     const token = fastify.jwt.sign(mockUser);
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services',
+      url: '/api/v1/services',
       headers: { Authorization: `Bearer ${token}` },
     });
 

@@ -78,7 +78,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: `/services/${service.id}/deploy`,
+        url: `/api/v1/services/${service.id}/deploy`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -108,7 +108,7 @@ describeIf('Deployment Flow Integration Tests', () => {
     it('should return 404 for non-existent service', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/services/non-existent-id/deploy',
+        url: '/api/v1/services/non-existent-id/deploy',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -142,7 +142,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: `/services/${otherService.id}/deploy`,
+        url: `/api/v1/services/${otherService.id}/deploy`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -173,7 +173,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: `/services/${service.id}/deploy`,
+        url: `/api/v1/services/${service.id}/deploy`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -200,7 +200,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: `/services/${service.id}/deploy`,
+        url: `/api/v1/services/${service.id}/deploy`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -236,7 +236,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: `/services/${service.id}/deploy`,
+        url: `/api/v1/services/${service.id}/deploy`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -270,7 +270,7 @@ describeIf('Deployment Flow Integration Tests', () => {
       // Start deployment
       const deployResponse = await app.inject({
         method: 'POST',
-        url: `/services/${service.id}/deploy`,
+        url: `/api/v1/services/${service.id}/deploy`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -316,7 +316,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const deployResponse = await app.inject({
         method: 'POST',
-        url: `/services/${service.id}/deploy`,
+        url: `/api/v1/services/${service.id}/deploy`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -370,7 +370,7 @@ describeIf('Deployment Flow Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/services/${service.id}/deployments`,
+        url: `/api/v1/services/${service.id}/deployments`,
         headers: {
           authorization: `Bearer ${authToken}`,
         },

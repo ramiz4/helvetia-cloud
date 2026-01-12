@@ -140,7 +140,7 @@ describe('Refresh Token Flow', () => {
     it('should return 401 when refresh token is not provided', async () => {
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
       });
 
       expect(response.statusCode).toBe(401);
@@ -155,7 +155,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
         cookies: {
           refreshToken,
         },
@@ -172,7 +172,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
         cookies: {
           refreshToken,
         },
@@ -205,7 +205,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
         cookies: {
           refreshToken,
         },
@@ -239,7 +239,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
         cookies: {
           refreshToken,
         },
@@ -285,7 +285,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
         cookies: {
           refreshToken,
         },
@@ -320,7 +320,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/logout',
+        url: '/api/v1/auth/logout',
         headers: {
           cookie: `token=${token}; refreshToken=${refreshToken}`,
         },
@@ -375,7 +375,7 @@ describe('Refresh Token Flow', () => {
 
       const firstResponse = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
         cookies: {
           refreshToken: oldRefreshToken,
         },
@@ -415,7 +415,7 @@ describe('Refresh Token Flow', () => {
 
       const secondResponse = await fastify.inject({
         method: 'POST',
-        url: '/auth/refresh',
+        url: '/api/v1/auth/refresh',
         cookies: {
           refreshToken: oldRefreshToken,
         },
@@ -435,7 +435,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/services',
+        url: '/api/v1/services',
         headers: {
           Authorization: `Bearer ${expiredToken}`,
         },
@@ -452,7 +452,7 @@ describe('Refresh Token Flow', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/services',
+        url: '/api/v1/services',
         headers: {
           Authorization: `Bearer ${token}`,
         },

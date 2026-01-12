@@ -150,7 +150,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -182,7 +182,7 @@ describe('Request Body Size Limits', () => {
       // Create a reasonable payload under 100KB
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -219,7 +219,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: '/services/service-1',
+        url: '/api/v1/services/service-1',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           envVars: largeEnvVars,
@@ -248,7 +248,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: '/services/service-1',
+        url: '/api/v1/services/service-1',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'updated-service',
@@ -281,7 +281,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/github',
+        url: '/api/v1/auth/github',
         payload: {
           code: largeCode,
         },
@@ -310,7 +310,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/github',
+        url: '/api/v1/auth/github',
         payload: {
           code: 'github-auth-code',
         },
@@ -337,7 +337,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': 'sha256=fakesignature',
           'content-type': 'application/json',
@@ -364,7 +364,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': 'sha256=fakesignature',
           'content-type': 'application/json',
@@ -389,7 +389,7 @@ describe('Request Body Size Limits', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',

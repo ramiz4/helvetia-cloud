@@ -126,7 +126,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'a', // Too short
@@ -150,7 +150,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'a'.repeat(64), // Too long
@@ -172,7 +172,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'MyService', // Contains uppercase
@@ -194,7 +194,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my_service!@#', // Contains invalid characters
@@ -221,7 +221,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-valid-service-123', // Valid format
@@ -246,7 +246,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -267,7 +267,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -295,7 +295,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -316,7 +316,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -339,7 +339,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -362,7 +362,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -385,7 +385,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -413,7 +413,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -441,7 +441,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -469,7 +469,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -493,7 +493,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -516,7 +516,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
@@ -544,7 +544,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: '/services/service-1',
+        url: '/api/v1/services/service-1',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'Invalid_Name!', // Invalid format
@@ -568,7 +568,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: '/services/service-1',
+        url: '/api/v1/services/service-1',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           branch: 'feature@branch!', // Invalid characters
@@ -592,7 +592,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: '/services/service-1',
+        url: '/api/v1/services/service-1',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           port: 70000, // Out of range
@@ -619,7 +619,7 @@ describe('Service Input Validation', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: '/services/service-1',
+        url: '/api/v1/services/service-1',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'updated-service',

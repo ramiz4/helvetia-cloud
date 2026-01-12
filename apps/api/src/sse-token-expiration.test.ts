@@ -150,7 +150,7 @@ describe('SSE Token Expiration Handling', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/services',
+        url: '/api/v1/services',
         headers: {
           Authorization: `Bearer ${expiredToken}`,
         },
@@ -168,7 +168,7 @@ describe('SSE Token Expiration Handling', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/services',
+        url: '/api/v1/services',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -182,7 +182,7 @@ describe('SSE Token Expiration Handling', () => {
     it('should protect metrics stream endpoint with authentication', async () => {
       const response = await fastify.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
       });
 
       // Should be rejected without auth
@@ -192,7 +192,7 @@ describe('SSE Token Expiration Handling', () => {
     it('should protect logs stream endpoint with authentication', async () => {
       const response = await fastify.inject({
         method: 'GET',
-        url: '/deployments/test-deployment/logs/stream',
+        url: '/api/v1/deployments/test-deployment/logs/stream',
       });
 
       // Should be rejected without auth
@@ -205,7 +205,7 @@ describe('SSE Token Expiration Handling', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           Authorization: `Bearer ${expiredToken}`,
         },
@@ -220,7 +220,7 @@ describe('SSE Token Expiration Handling', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/deployments/test-deployment/logs/stream',
+        url: '/api/v1/deployments/test-deployment/logs/stream',
         headers: {
           Authorization: `Bearer ${expiredToken}`,
         },

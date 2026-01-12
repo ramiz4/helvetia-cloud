@@ -152,7 +152,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -205,7 +205,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -257,7 +257,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -330,7 +330,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -397,7 +397,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -456,7 +456,7 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
