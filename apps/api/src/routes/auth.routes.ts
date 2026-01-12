@@ -43,7 +43,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
    * GET /auth/me
    * Get current user info
    */
-  fastify.get('/me', { preHandler: authenticate }, async (request, _reply) =>
+  fastify.get('/auth/me', { preHandler: authenticate }, async (request, _reply) =>
     authController.getCurrentUser(request),
   );
 
