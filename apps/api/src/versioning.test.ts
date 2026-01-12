@@ -209,7 +209,7 @@ describeIf('API Versioning', () => {
         { method: 'GET', url: '/api/v1/services' },
         { method: 'GET', url: '/api/v1/projects' },
         { method: 'GET', url: '/api/v1/github/orgs' },
-      ];
+      ] as const;
 
       for (const endpoint of endpoints) {
         const response = await app.inject({
