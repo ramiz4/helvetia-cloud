@@ -5,6 +5,7 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/AuthController';
 import { DeploymentController } from '../controllers/DeploymentController';
+import { FeatureFlagController } from '../controllers/FeatureFlagController';
 import { GitHubController } from '../controllers/GitHubController';
 import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
@@ -69,6 +70,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.GitHubController, GitHubController);
   container.registerSingleton(TOKENS.WebhookController, WebhookController);
   container.registerSingleton(TOKENS.AuthController, AuthController);
+  container.registerSingleton(TOKENS.FeatureFlagController, FeatureFlagController);
 }
 
 /**
