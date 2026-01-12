@@ -12,6 +12,7 @@ import { WebhookController } from '../controllers/WebhookController';
 import { DockerContainerOrchestrator } from '../orchestration';
 import {
   PrismaDeploymentRepository,
+  PrismaFeatureFlagRepository,
   PrismaProjectRepository,
   PrismaServiceRepository,
   PrismaUserRepository,
@@ -19,6 +20,7 @@ import {
 import {
   AuthenticationService,
   DeploymentOrchestratorService,
+  FeatureFlagService,
   GitHubService,
   ProjectManagementService,
   ServiceManagementService,
@@ -50,6 +52,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.ProjectRepository, PrismaProjectRepository);
   container.registerSingleton(TOKENS.DeploymentRepository, PrismaDeploymentRepository);
   container.registerSingleton(TOKENS.UserRepository, PrismaUserRepository);
+  container.registerSingleton(TOKENS.FeatureFlagRepository, PrismaFeatureFlagRepository);
 
   // Register service implementations
   container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
@@ -57,6 +60,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.DeploymentOrchestratorService, DeploymentOrchestratorService);
   container.registerSingleton(TOKENS.AuthenticationService, AuthenticationService);
   container.registerSingleton(TOKENS.GitHubService, GitHubService);
+  container.registerSingleton(TOKENS.FeatureFlagService, FeatureFlagService);
 
   // Register controllers
   container.registerSingleton(TOKENS.ServiceController, ServiceController);

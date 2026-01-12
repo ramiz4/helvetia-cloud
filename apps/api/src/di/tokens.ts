@@ -11,6 +11,7 @@ export const TOKENS = {
   DeploymentRepository: Symbol.for('IDeploymentRepository'),
   UserRepository: Symbol.for('IUserRepository'),
   RefreshTokenRepository: Symbol.for('IRefreshTokenRepository'),
+  FeatureFlagRepository: Symbol.for('IFeatureFlagRepository'),
 
   // Infrastructure
   ContainerOrchestrator: Symbol.for('IContainerOrchestrator'),
@@ -24,6 +25,7 @@ export const TOKENS = {
   DeploymentOrchestratorService: Symbol.for('DeploymentOrchestratorService'),
   AuthenticationService: Symbol.for('AuthenticationService'),
   GitHubService: Symbol.for('IGitHubService'),
+  FeatureFlagService: Symbol.for('FeatureFlagService'),
 
   // Controllers
   ServiceController: Symbol.for('ServiceController'),

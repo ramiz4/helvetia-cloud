@@ -102,3 +102,18 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
 }
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  enabled     Boolean  @default(false)
+  // User segments for A/B testing (comma-separated user IDs or percentages)
+  segments    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@index([enabled])
+}
