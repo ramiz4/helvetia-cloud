@@ -1,15 +1,18 @@
 import { PrismaClient } from '@prisma/client';
 import { prisma } from 'database';
+import Docker from 'dockerode';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/AuthController';
 import { DeploymentController } from '../controllers/DeploymentController';
 import { GitHubController } from '../controllers/GitHubController';
+import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
 import { WebhookController } from '../controllers/WebhookController';
 import { DockerContainerOrchestrator } from '../orchestration';
 import {
   PrismaDeploymentRepository,
+  PrismaProjectRepository,
   PrismaServiceRepository,
   PrismaUserRepository,
 } from '../repositories';
@@ -17,6 +20,7 @@ import {
   AuthenticationService,
   DeploymentOrchestratorService,
   GitHubService,
+  ProjectManagementService,
   ServiceManagementService,
 } from '../services';
 import { TOKENS } from './tokens';
@@ -32,24 +36,31 @@ import { TOKENS } from './tokens';
  */
 export function initializeContainer(): void {
   // Register PrismaClient as a singleton
+  container.registerInstance<PrismaClient>(TOKENS.PrismaClient, prisma);
   container.registerInstance<PrismaClient>('PrismaClient', prisma);
+
+  // Register Docker instance
+  container.registerInstance(TOKENS.Docker, new Docker());
 
   // Register container orchestrator implementation
   container.registerSingleton(TOKENS.ContainerOrchestrator, DockerContainerOrchestrator);
 
   // Register repository implementations
   container.registerSingleton(TOKENS.ServiceRepository, PrismaServiceRepository);
+  container.registerSingleton(TOKENS.ProjectRepository, PrismaProjectRepository);
   container.registerSingleton(TOKENS.DeploymentRepository, PrismaDeploymentRepository);
   container.registerSingleton(TOKENS.UserRepository, PrismaUserRepository);
 
   // Register service implementations
   container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
+  container.registerSingleton(TOKENS.ProjectManagementService, ProjectManagementService);
   container.registerSingleton(TOKENS.DeploymentOrchestratorService, DeploymentOrchestratorService);
   container.registerSingleton(TOKENS.AuthenticationService, AuthenticationService);
   container.registerSingleton(TOKENS.GitHubService, GitHubService);
 
   // Register controllers
   container.registerSingleton(TOKENS.ServiceController, ServiceController);
+  container.registerSingleton(TOKENS.ProjectController, ProjectController);
   container.registerSingleton(TOKENS.DeploymentController, DeploymentController);
   container.registerSingleton(TOKENS.GitHubController, GitHubController);
   container.registerSingleton(TOKENS.WebhookController, WebhookController);

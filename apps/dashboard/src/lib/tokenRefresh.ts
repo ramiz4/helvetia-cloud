@@ -43,6 +43,14 @@ export async function refreshAccessToken(): Promise<boolean> {
 }
 
 /**
+ * Reset the internal state for testing purposes
+ */
+export function _resetRefreshState() {
+  isRefreshing = false;
+  refreshPromise = null;
+}
+
+/**
  * Enhanced fetch that automatically handles 401 errors by refreshing the token
  */
 export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {

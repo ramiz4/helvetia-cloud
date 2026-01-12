@@ -3,9 +3,10 @@ import { inject, injectable } from 'tsyringe';
 import type { CreateServiceDto, UpdateServiceDto } from '../dto';
 import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
 import type {
+  IContainerOrchestrator,
   IDeploymentRepository,
+  IServiceManagementService,
   IServiceRepository,
-  IUserRepository,
   Service,
 } from '../interfaces';
 
@@ -14,14 +15,14 @@ import type {
  * Handles business logic for service CRUD operations
  */
 @injectable()
-export class ServiceManagementService {
+export class ServiceManagementService implements IServiceManagementService {
   constructor(
     @inject(Symbol.for('IServiceRepository'))
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
     private deploymentRepository: IDeploymentRepository,
-    @inject(Symbol.for('IUserRepository'))
-    private userRepository: IUserRepository,
+    @inject(Symbol.for('IContainerOrchestrator'))
+    private containerOrchestrator: IContainerOrchestrator,
   ) {}
 
   /**
@@ -54,23 +55,21 @@ export class ServiceManagementService {
    * Handles type-specific defaults (POSTGRES, REDIS, MYSQL, STATIC)
    */
   async createOrUpdateService(dto: CreateServiceDto): Promise<Service> {
-    const { name, userId, type = 'DOCKER', port, envVars = {} } = dto;
+    const { name, userId, environmentId, type = 'DOCKER', port, envVars = {} } = dto;
 
-    // Check if another user owns this service name
-    const existingByOtherUser = await this.serviceRepository.findByNameAndUserId(name, '');
-    if (
-      existingByOtherUser &&
-      existingByOtherUser.userId !== userId &&
-      !existingByOtherUser.deletedAt
-    ) {
-      throw new ForbiddenError('Service name taken by another user');
+    if (!environmentId) {
+      throw new ConflictError('Environment ID is required');
     }
 
     // Determine final port and environment variables based on service type
     const { finalPort, finalEnvVars } = this.getServiceDefaults(type, port, envVars);
 
-    // Check if service exists for this user
-    const existing = await this.serviceRepository.findByNameAndUserId(name, userId);
+    // Check if service exists in this specific environment (including soft-deleted ones)
+    const existing = await this.serviceRepository.findByNameAndEnvironment(
+      name,
+      environmentId,
+      userId,
+    );
 
     if (existing) {
       // Update existing service (resurrect if soft-deleted)
@@ -84,6 +83,7 @@ export class ServiceManagementService {
         type,
         staticOutputDir: dto.staticOutputDir || 'dist',
         envVars: finalEnvVars,
+        environmentId: dto.environmentId,
         deletedAt: null,
       });
     } else {
@@ -96,6 +96,7 @@ export class ServiceManagementService {
         startCommand: dto.startCommand,
         port: finalPort,
         userId,
+        environmentId: dto.environmentId,
         customDomain: dto.customDomain,
         type,
         staticOutputDir: dto.staticOutputDir || 'dist',
@@ -128,6 +129,50 @@ export class ServiceManagementService {
     await this.serviceRepository.update(serviceId, {
       deletedAt: new Date(),
     });
+
+    // Cleanup infrastructure resources (Docker containers)
+    // We do this immediately to free up ports and names, even if DB record stays for 30 days
+    try {
+      const containersForService = await this.containerOrchestrator.listContainers({
+        all: true,
+        filters: {
+          label: [`helvetia.serviceId=${serviceId}`],
+        },
+      });
+
+      // Also check for COMPOSE services which might use project name instead of helvetia.serviceId label for some containers
+      if (service.type === 'COMPOSE') {
+        const composeContainers = await this.containerOrchestrator.listContainers({
+          all: true,
+          filters: {
+            label: [`com.docker.compose.project=${service.name}`],
+          },
+        });
+        // Merge without duplicates
+        for (const cc of composeContainers) {
+          if (!containersForService.find((c) => c.id === cc.id)) {
+            containersForService.push(cc);
+          }
+        }
+      }
+
+      await Promise.all(
+        containersForService.map(async (c) => {
+          try {
+            const container = await this.containerOrchestrator.getContainer(c.id);
+            if (c.state === 'running' || c.state === 'restarting') {
+              await this.containerOrchestrator.stopContainer(container, 5);
+            }
+            await this.containerOrchestrator.removeContainer(container, { force: true });
+          } catch (err) {
+            console.error(`Failed to remove container ${c.id} for service ${serviceId}:`, err);
+          }
+        }),
+      );
+    } catch (err) {
+      console.error(`Error cleaning up resources for service ${serviceId}:`, err);
+      // We continue since the DB is already updated
+    }
   }
 
   /**

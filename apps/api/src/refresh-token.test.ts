@@ -72,6 +72,7 @@ vi.mock('database', () => {
         findUnique: vi.fn(),
       },
     },
+    PrismaClient: vi.fn(),
   };
 });
 

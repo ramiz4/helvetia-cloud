@@ -79,6 +79,7 @@ vi.mock('database', () => {
         deleteMany: vi.fn(),
       },
     },
+    PrismaClient: vi.fn(),
   };
 });
 
@@ -185,6 +186,7 @@ describe('Request Body Size Limits', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: '123e4567-e89b-12d3-a456-426614174000',
           type: 'DOCKER',
           repoUrl: 'https://github.com/user/repo',
           branch: 'main',
@@ -235,6 +237,7 @@ describe('Request Body Size Limits', () => {
     it('should accept request with body under 100KB limit', async () => {
       const { prisma } = await import('database');
       vi.mocked(prisma.service.updateMany).mockResolvedValue({ count: 1 } as any);
+      vi.mocked(prisma.deployment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.service.findUnique).mockResolvedValue({
         id: 'service-1',
         name: 'my-service',

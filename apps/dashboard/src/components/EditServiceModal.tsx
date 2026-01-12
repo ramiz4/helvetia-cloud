@@ -1,43 +1,22 @@
 'use client';
 
 import FocusTrap from '@/components/FocusTrap';
+import { Translations } from '@/lib/translations';
 import type { Service, ServiceType } from '@/types/service';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import {
+  ComposeConfigFields,
+  DockerConfigFields,
+  GHCRConfigFields,
+  StaticConfigFields,
+} from './service-forms';
 
 interface EditServiceModalProps {
   service: Service;
   onClose: () => void;
   onSave: (service: Service, envVarsList: Array<{ key: string; value: string }>) => Promise<void>;
-  translations: {
-    modals: {
-      editTitle: string;
-    };
-    labels: {
-      serviceName: string;
-      repoUrl: string;
-      serviceType: string;
-      branch: string;
-      buildCommand: string;
-      composeFile: string;
-      outputDir: string;
-      startCommand: string;
-      mainService: string;
-      port: string;
-      envVars: string;
-    };
-    newService: {
-      dockerService: string;
-      staticSite: string;
-      composeStack: string;
-      addVariable: string;
-      noEnvVars: string;
-    };
-    actions: {
-      cancel: string;
-      save: string;
-    };
-  };
+  translations: Translations['dashboard'];
 }
 
 export function EditServiceModal({
@@ -156,85 +135,59 @@ export function EditServiceModal({
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    {t.labels.branch}
-                  </label>
-                  <input
-                    type="text"
-                    value={editingService.branch || ''}
-                    onChange={(e) =>
-                      setEditingService((prev) => ({ ...prev, branch: e.target.value }))
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                    placeholder="main"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {editingService.type !== 'STATIC' && (
+                {!editingService.repoUrl?.includes('ghcr.io') && (
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                      {editingService.type === 'COMPOSE'
-                        ? t.labels.composeFile
-                        : t.labels.buildCommand}
+                      {t.labels.branch}
                     </label>
                     <input
                       type="text"
-                      value={editingService.buildCommand || ''}
+                      value={editingService.branch || ''}
                       onChange={(e) =>
-                        setEditingService((prev) => ({ ...prev, buildCommand: e.target.value }))
+                        setEditingService((prev) => ({ ...prev, branch: e.target.value }))
                       }
-                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                      placeholder={
-                        editingService.type === 'COMPOSE' ? 'docker-compose.yml' : 'npm run build'
-                      }
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium font-mono"
+                      placeholder="main"
                     />
                   </div>
                 )}
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    {editingService.type === 'STATIC'
-                      ? t.labels.outputDir
-                      : editingService.type === 'COMPOSE'
-                        ? t.labels.mainService
-                        : t.labels.startCommand}
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      editingService.type === 'STATIC'
-                        ? editingService.staticOutputDir || ''
-                        : editingService.startCommand || ''
-                    }
-                    onChange={(e) =>
-                      setEditingService((prev) =>
-                        editingService.type === 'STATIC'
-                          ? { ...prev, staticOutputDir: e.target.value }
-                          : { ...prev, startCommand: e.target.value },
-                      )
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
-                    placeholder={editingService.type === 'STATIC' ? 'dist' : 'npm start'}
-                  />
-                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                  {t.labels.port}
-                </label>
-                <input
-                  type="number"
-                  value={editingService.port || 3000}
-                  onChange={(e) =>
-                    setEditingService((prev) => ({ ...prev, port: parseInt(e.target.value) }))
-                  }
-                  className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium disabled:opacity-50"
-                  disabled={editingService.type === 'STATIC'}
-                />
+              {/* Specialized Form Fields */}
+              <div className="pt-2">
+                {editingService.type === 'COMPOSE' ? (
+                  <ComposeConfigFields
+                    data={editingService}
+                    onChange={(updates: Partial<Service>) =>
+                      setEditingService((prev) => ({ ...prev, ...updates }))
+                    }
+                    translations={t}
+                  />
+                ) : editingService.type === 'STATIC' ? (
+                  <StaticConfigFields
+                    data={editingService}
+                    onChange={(updates: Partial<Service>) =>
+                      setEditingService((prev) => ({ ...prev, ...updates }))
+                    }
+                    translations={t}
+                  />
+                ) : editingService.repoUrl?.includes('ghcr.io') ? (
+                  <GHCRConfigFields
+                    data={editingService}
+                    onChange={(updates: Partial<Service>) =>
+                      setEditingService((prev) => ({ ...prev, ...updates }))
+                    }
+                    translations={t}
+                  />
+                ) : (
+                  <DockerConfigFields
+                    data={editingService}
+                    onChange={(updates: Partial<Service>) =>
+                      setEditingService((prev) => ({ ...prev, ...updates }))
+                    }
+                    translations={t}
+                  />
+                )}
               </div>
 
               <div className="space-y-4">

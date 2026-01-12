@@ -1,0 +1,288 @@
+{
+  "common": {
+    "loading": "Wird geladen...",
+    "error": "Fehler",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "next": "Weiter",
+    "confirm": "Bestätigen",
+    "success": "Erfolg",
+    "allSystemsOperational": "Alle Systeme betriebsbereit",
+    "version": "Version",
+    "freePlan": "Kostenloser Plan",
+    "earlyAccess": "Früher Zugang",
+    "personalAccount": "Persönliches Konto",
+    "apiError": "Fehler beim Verbinden mit der API"
+  },
+  "hero": {
+    "badge": "v1.0 Public Beta",
+    "titleLine1": "Schweizer",
+    "titleLine2": "Hosting-Plattform",
+    "subtitle": "Alle Dienste und Datenbanken werden in der Schweiz gehostet.",
+    "description": "Helvetia Cloud ist die moderne Platform-as-a-Service für Entwickler, die die Leistung von Kubernetes mit der Einfachheit von Heroku wollen.",
+    "ctaPrimary": "Loslegen",
+    "ctaSecondary": "Quellcode anzeigen"
+  },
+  "features": {
+    "zeroDowntime": {
+      "title": "Keine Ausfallzeit",
+      "desc": "Updates bereitstellen, ohne aktive Verbindungen zu unterbrechen."
+    },
+    "gitIntegrated": {
+      "title": "Git Integriert",
+      "desc": "Pushen Sie auf Ihren Branch und sehen Sie zu, wie Ihre Anwendung automatisch bereitgestellt wird."
+    },
+    "secure": {
+      "title": "Sicher im Design",
+      "desc": "Isolierte Build-Umgebungen und strikte Ressourcenlimits."
+    },
+    "global": {
+      "title": "Schweizer Qualität",
+      "desc": "100% in der Schweiz gehostet für maximale Privatsphäre und Zuverlässigkeit."
+    },
+    "resource": {
+      "title": "Ressourcenkontrolle",
+      "desc": "Feingranulare Kontrolle über CPU- und Speicherzuweisung."
+    },
+    "container": {
+      "title": "Container Native",
+      "desc": "Auf Docker aufgebaut für maximale Kompatibilität."
+    }
+  },
+  "ctaSection": {
+    "title": "Bereit zum Bereitstellen?",
+    "subtitle": "Schließen Sie sich tausenden von Entwicklern an.",
+    "button": "Jetzt bereitstellen"
+  },
+  "footer": {
+    "rights": "© {year} Helvetia Cloud. Open Source unter MIT Lizenz.",
+    "brandDesc": "Die moderne Platform-as-a-Service für Entwickler, die die Leistung von Kubernetes mit der Einfachheit von Heroku wollen. Komplett in der Schweiz gehostet.",
+    "product": "Produkt",
+    "pricing": "Preise",
+    "resources": "Ressourcen",
+    "documentation": "Dokumentation",
+    "blog": "Blog",
+    "changelog": "Changelog",
+    "status": "Status",
+    "legalSwiss": "Rechtliches & Swiss Made",
+    "termsOfService": "Nutzungsbedingungen",
+    "privacyPolicy": "Datenschutzerklärung",
+    "gdprCompliant": "DSGVO konform",
+    "hostedInSwiss": "In der Schweiz gehostet"
+  },
+  "cookie": {
+    "title": "DSGVO / GDPR Konformität",
+    "text": "Wir verwenden Cookies, um das beste Erlebnis auf unserer Website zu gewährleisten (DSGVO-konform).",
+    "accept": "Akzeptieren"
+  },
+  "nav": {
+    "brand": "HELVETIA",
+    "login": "Anmelden",
+    "dashboard": "Dashboard",
+    "deployments": "Deployments",
+    "newService": "Neuer Service",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "homeAria": "Helvetia Cloud Startseite",
+    "logoAlt": "Helvetia Cloud Logo",
+    "logoutFailed": "Abmeldung auf dem Server fehlgeschlagen, Sie werden aber lokal abgemeldet.",
+    "logoutNetworkError": "Netzwerkfehler beim Abmelden, aber du wirst lokal abgemeldet.",
+    "selectLanguage": "Sprache wählen",
+    "openMenu": "Navigationsmenü öffnen",
+    "closeMenu": "Navigationsmenü schließen",
+    "mobileMenu": "Mobile Navigation"
+  },
+  "login": {
+    "backToHome": "Zurück zur Startseite",
+    "swissCloudSecurity": "Schweizer Cloud-Sicherheit",
+    "securityDesc": "Die Hochleistungsplattform für moderne Entwickler.",
+    "authError": "Auth-Fehler",
+    "codeExpired": "Der Autorisierungscode ist abgelaufen.",
+    "continueWithGithub": "Mit GitHub fortfahren",
+    "termsPrivacy": "Durch Fortfahren akzeptieren Sie unsere {terms} & {privacy}",
+    "terms": "Bedingungen",
+    "privacy": "Datenschutz",
+    "builtBy": "Erstellt von Masoft GmbH 🇨🇭",
+    "authenticating": "Authentifizierung mit GitHub..."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Verwalten Sie Ihre Deployments und Dienste",
+    "loading": "Arbeitsbereich wird geladen...",
+    "stats": {
+      "total": "Dienste Gesamt",
+      "active": "Aktiv",
+      "failed": "Fehlgeschlagen"
+    },
+    "search": {
+      "placeholder": "Dienste suchen...",
+      "noResults": "Keine Dienste gefunden",
+      "tryAgain": "Versuchen Sie Ihre Suchanfrage anzupassen.",
+      "getStarted": "Starten Sie mit Ihrem ersten Service."
+    },
+    "actions": {
+      "redeploy": "Redeploy",
+      "restart": "Neustart",
+      "logs": "Logs",
+      "visit": "Öffnen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "deleteFailed": "Service konnte nicht gelöscht werden",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "restartSuccess": "Container erfolgreich neu gestartet!",
+      "restartFailed": "Container-Neustart fehlgeschlagen",
+      "updateFailed": "Dienst-Update fehlgeschlagen",
+      "deleteConfirm": "Sind Sie sicher, dass Sie diesen Dienst löschen möchten?\n\nDies stoppt die App und entfernt alle Daten.",
+      "fetchLogsFailed": "Fehler beim Abrufen der Logs",
+      "deployTriggerFailed": "Fehler beim Starten des Deployments",
+      "stopSuccess": "Service erfolgreich gestoppt",
+      "stopFailed": "Service konnte nicht gestoppt werden",
+      "createEnvSuccess": "Umgebung erfolgreich erstellt",
+      "createEnvFailed": "Umgebung konnte nicht erstellt werden"
+    },
+    "status": {
+      "notRunning": "Nicht aktiv"
+    },
+    "createNewService": "Neuen Service erstellen",
+    "labels": {
+      "cpu": "CPU",
+      "ram": "RAM",
+      "serviceName": "Service Name",
+      "repoUrl": "Repository URL",
+      "serviceType": "Service Typ",
+      "port": "Port",
+      "branch": "Branch",
+      "buildCommand": "Build-Befehl",
+      "startCommand": "Start-Befehl",
+      "composeFile": "Compose-Datei",
+      "mainService": "Haupt-Service",
+      "outputDir": "Ausgabeverzeichnis",
+      "envVars": "Umgebungsvariablen",
+      "containerName": "Container-Name"
+    },
+    "modals": {
+      "editTitle": "Service bearbeiten",
+      "logsTitle": "Protokolle",
+      "noLogs": "Keine Protokolle verfügbar.",
+      "streaming": "Streaming-Protokolle...",
+      "ended": "Protokolle beendet.",
+      "refreshFailed": "Service-Details konnten nicht aktualisiert werden",
+      "refreshError": "Fehler beim Aktualisieren der Service-Details"
+    },
+    "project": {
+      "loading": "Projekt wird geladen...",
+      "notFound": "Projekt nicht gefunden",
+      "backToProjects": "Zurück zu Projekten",
+      "linkBackToProjects": "Zurück zu Projekten",
+      "id": "Projekt ID:",
+      "globalStatus": "Globaler Status:",
+      "statusActive": "Aktiv",
+      "settings": "Projekt-Einstellungen",
+      "newEnvironment": "Neue Umgebung",
+      "environment": "Umgebung",
+      "addServiceTo": "Service zu {name} hinzufügen",
+      "noServices": "Keine Services in dieser Umgebung",
+      "deployFirstService": "Stellen Sie Ihren ersten Service bereit, um ihn hier zu sehen."
+    },
+    "newService": {
+      "title": "Neues Projekt bereitstellen",
+      "subtitle": "Importieren Sie ein Git-Repository, um mit Ihrer Bereitstellung zu beginnen.",
+      "importGithub": "GitHub Import",
+      "importManual": "Manueller Import",
+      "importLocal": "Lokaler Ordner",
+      "importCompose": "Docker Compose",
+      "importDatabase": "Datenbank",
+      "step1": "Projekt",
+      "step2": "Importieren",
+      "step3": "Konfigurieren",
+      "repoUrl": "Git Repository URL",
+      "localPath": "Lokaler Verzeichnispfad",
+      "localPathHint": "Geben Sie den absoluten Pfad zu Ihrem lokalen Git-Repository an.",
+      "branch": "Branch",
+      "projectName": "Projekt Name",
+      "projectNameHint": "Wird verwendet, um Ihr Projekt im Dashboard und in der URL zu identifizieren.",
+      "projectNameValidation": "Nur Kleinbuchstaben, Zahlen und Bindestriche",
+      "serviceType": "Service Typ",
+      "serviceName": "Service Name",
+      "serviceNameHint": "Wird verwendet, um Ihren Service im Dashboard und in der URL zu identifizieren.",
+      "databaseEngine": "Datenbank-Engine",
+      "dockerService": "Docker Service",
+      "dockerServiceDesc": "Für Node.js, Python oder benutzerdefinierte Docker-Projekte.",
+      "staticSite": "Statische Seite",
+      "staticSiteDesc": "Für Angular, React, Vue oder statisches HTML (Nginx).",
+      "composeStack": "Docker Compose Stack",
+      "composeStackDesc": "Für Multi-Container-Anwendungen (z.B. App + DB + Redis).",
+      "buildCommand": "Build-Befehl",
+      "startCommand": "Start-Befehl",
+      "outputDirectory": "Ausgabeverzeichnis",
+      "port": "Port",
+      "portStaticHint": "Statische Seiten werden über Port 80 via Nginx bereitgestellt.",
+      "deployButton": "Projekt bereitstellen",
+      "deployingButton": "Projekt wird bereitgestellt...",
+      "deploySuccess": "Deployment erfolgreich gestartet",
+      "errorGeneric": "Fehler beim Erstellen des Dienstes: ",
+      "errorConnection": "Fehler bei der Verbindung zur API. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "version": "Version",
+      "addVariable": "Variable hinzufügen",
+      "noEnvVars": "Keine Umgebungsvariablen konfiguriert",
+      "dismissError": "Fehler schließen",
+      "mainServiceName": "Hauptdienst-Name",
+      "mainServiceDesc": "Der Name des Dienstes in der docker-compose.yml, der HTTP-Traffic empfängt",
+      "composeFile": "Compose-Datei",
+      "imageTag": "Image Tag"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Konto und Integrationen verwalten",
+    "githubIntegration": "GitHub Integration",
+    "githubDesc": "Verbundenes GitHub-Konto und Repository-Zugriff verwalten.",
+    "connected": "Verbunden",
+    "disconnected": "Getrennt",
+    "accountLinked": "GitHub-Konto verknüpft",
+    "disconnect": "Trennen",
+    "reconnect": "Neu verbinden",
+    "orgAccessTitle": "Zugriff auf Organisationen verwalten",
+    "orgAccessDesc": "Wenn Sie Zugriff auf bestimmte GitHub-Organisationen gewähren oder widerrufen müssen, können Sie dies direkt in Ihren GitHub-Einstellungen tun.",
+    "manageOnGithub": "Auf GitHub verwalten",
+    "githubPermissionsTitle": "GitHub Berechtigungen",
+    "githubNotConnected": "GitHub nicht verbunden",
+    "githubNotConnectedDesc": "Verbinden Sie GitHub erneut, um Ihre Repositories zu verwalten.",
+    "dangerZone": "Gefahrenzone",
+    "irreversible": "Unwiderrufliche Aktionen für Ihr Konto.",
+    "deleteAccount": "Konto löschen",
+    "deleteAccountDesc": "Alle Daten, Dienste und Deployments dauerhaft entfernen. Dies kann nicht rückgängig gemacht werden.",
+    "disconnectConfirm": "Sind Sie sicher, dass Sie GitHub trennen möchten? Sie können nicht mehr bereitstellen, bis Sie es neu verbinden.",
+    "toast": {
+      "githubDisconnected": "GitHub erfolgreich getrennt",
+      "githubDisconnectFailed": "GitHub-Trennung fehlgeschlagen",
+      "apiError": "Fehler bei der API-Verbindung",
+      "loadSettingsFailed": "Einstellungen konnten nicht geladen werden"
+    }
+  },
+  "userMenu": {
+    "billing": "Abrechnung",
+    "pro": "Pro",
+    "security": "Sicherheit",
+    "support": "Unterstützung"
+  },
+  "githubPicker": {
+    "searchPlaceholder": "Repositories suchen...",
+    "searchAria": "Repositories suchen",
+    "selectOrgAria": "Organisation auswählen",
+    "loadingOrgs": "Organisationen werden geladen...",
+    "allRepos": "Alle Repositories",
+    "noOrgsFound": "Keine Organisationen gefunden",
+    "noReposFound": "Keine Repositories für \"{search}\" gefunden",
+    "changeRepo": "Repository ändern",
+    "branchToDeploy": "Branch zum Deployen",
+    "viewOnGithub": "Auf GitHub ansehen",
+    "sessionExpired": "Sitzung abgelaufen. Bitte erneut anmelden.",
+    "fetchReposFailed": "Fehlschlag beim Abrufen der Repositories",
+    "fetchBranchesFailed": "Fehlschlag beim Abrufen der Branches"
+  }
+}

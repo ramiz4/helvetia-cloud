@@ -1,6 +1,7 @@
 'use client';
 
 import { API_BASE_URL } from '@/lib/config';
+import { getErrorMessage } from '@/lib/errorUtils';
 import { fetchWithAuth } from '@/lib/tokenRefresh';
 import type { Service, ServiceStatus, UpdateServiceData } from '@/types/service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,7 +24,7 @@ async function fetchServices(): Promise<Service[]> {
   }
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(await getErrorMessage(response));
   }
 
   return response.json();
@@ -34,7 +35,7 @@ async function fetchService(id: string): Promise<Service> {
   const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}`);
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(await getErrorMessage(response));
   }
 
   return response.json();
@@ -51,7 +52,7 @@ async function updateService(id: string, data: UpdateServiceData): Promise<Servi
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(await getErrorMessage(response));
   }
 
   return response.json();
@@ -64,7 +65,7 @@ async function deleteService(id: string): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(await getErrorMessage(response));
   }
 }
 
@@ -75,29 +76,33 @@ async function deployService(id: string): Promise<{ id: string }> {
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(await getErrorMessage(response));
   }
 
   return response.json();
 }
 
 // Restart service
-async function restartService(id: string): Promise<void> {
+async function restartService(
+  id: string,
+): Promise<{ success: boolean; message: string; containerName?: string }> {
   const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}/restart`, {
     method: 'POST',
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to restart service');
+    throw new Error(await getErrorMessage(response, 'Failed to restart service'));
   }
+
+  return response.json();
 }
 
 // Hook: Fetch all services
-export function useServices() {
+export function useServices(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: serviceKeys.lists(),
     queryFn: fetchServices,
+    ...options,
   });
 }
 
@@ -203,8 +208,68 @@ export function useRestartService() {
         queryClient.setQueryData(serviceKeys.lists(), context.previousServices);
       }
     },
+    onSuccess: (data, variables) => {
+      if (data.containerName) {
+        queryClient.setQueryData<Service[]>(serviceKeys.lists(), (old) =>
+          old
+            ? old.map((s) =>
+                s.id === variables
+                  ? { ...s, containerName: data.containerName, status: 'RUNNING' }
+                  : s,
+              )
+            : old,
+        );
+        queryClient.setQueryData<Service>(serviceKeys.detail(variables), (old) =>
+          old ? { ...old, containerName: data.containerName, status: 'RUNNING' } : old,
+        );
+      }
+    },
     onSettled: (_, __, serviceId) => {
       // Refetch specific service after restart
+      queryClient.invalidateQueries({ queryKey: serviceKeys.detail(serviceId) });
+      queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
+    },
+  });
+}
+
+// Stop service
+async function stopService(id: string): Promise<void> {
+  const response = await fetchWithAuth(`${API_BASE_URL}/services/${id}/stop`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response, 'Failed to stop service'));
+  }
+}
+
+// Hook: Stop service
+export function useStopService() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: stopService,
+    onMutate: async (serviceId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: serviceKeys.lists() });
+
+      // Snapshot the previous value
+      const previousServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<Service[]>(serviceKeys.lists(), (old) =>
+        old ? old.map((s) => (s.id === serviceId ? { ...s, status: 'STOPPED' } : s)) : old,
+      );
+
+      return { previousServices };
+    },
+    onError: (_err, _serviceId, context) => {
+      // Rollback on error
+      if (context?.previousServices) {
+        queryClient.setQueryData(serviceKeys.lists(), context.previousServices);
+      }
+    },
+    onSettled: (_, __, serviceId) => {
       queryClient.invalidateQueries({ queryKey: serviceKeys.detail(serviceId) });
       queryClient.invalidateQueries({ queryKey: serviceKeys.lists() });
     },

@@ -1,3 +1,5 @@
+import type { Environment } from './IProjectRepository';
+
 /**
  * Service model type (matches Prisma schema)
  */
@@ -11,6 +13,7 @@ export interface Service {
   port: number;
   status: string;
   userId: string;
+  environmentId: string | null;
   envVars: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -21,6 +24,7 @@ export interface Service {
   prNumber: number | null;
   deletedAt: Date | null;
   deleteProtected: boolean;
+  environment?: Environment;
 }
 
 /**
@@ -36,6 +40,7 @@ export interface ServiceCreateInput {
   port?: number;
   status?: string;
   userId: string;
+  environmentId?: string | null;
   envVars?: unknown;
   customDomain?: string | null;
   staticOutputDir?: string | null;
@@ -56,6 +61,7 @@ export interface ServiceUpdateInput {
   startCommand?: string | null;
   port?: number;
   status?: string;
+  environmentId?: string | null;
   envVars?: unknown;
   customDomain?: string | null;
   staticOutputDir?: string | null;
@@ -86,6 +92,20 @@ export interface IServiceRepository {
   findByNameAndUserId(name: string, userId: string): Promise<Service | null>;
 
   /**
+   * Find a service by name and user ID including soft-deleted ones
+   */
+  findByNameAll(name: string, userId: string): Promise<Service | null>;
+
+  /**
+   * Find a service by name and environment ID including soft-deleted ones
+   */
+  findByNameAndEnvironment(
+    name: string,
+    environmentId: string,
+    userId: string,
+  ): Promise<Service | null>;
+
+  /**
    * Create a new service
    */
   create(data: ServiceCreateInput): Promise<Service>;
@@ -109,4 +129,9 @@ export interface IServiceRepository {
    * Find all services (for reconciliation)
    */
   findAll(options?: { take?: number; skip?: number }): Promise<Service[]>;
+
+  /**
+   * Find services by environment ID
+   */
+  findByEnvironmentId(environmentId: string): Promise<Service[]>;
 }

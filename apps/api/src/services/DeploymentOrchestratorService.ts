@@ -4,7 +4,9 @@ import type { QueueDeploymentJobDto } from '../dto';
 import { ForbiddenError, NotFoundError } from '../errors';
 import type {
   Deployment,
+  IDeploymentOrchestratorService,
   IDeploymentRepository,
+  IProjectRepository,
   IServiceRepository,
   IUserRepository,
   Service,
@@ -16,7 +18,7 @@ import { decrypt } from '../utils/crypto';
  * Handles business logic for deployment orchestration
  */
 @injectable()
-export class DeploymentOrchestratorService {
+export class DeploymentOrchestratorService implements IDeploymentOrchestratorService {
   constructor(
     @inject(Symbol.for('IServiceRepository'))
     private serviceRepository: IServiceRepository,
@@ -24,6 +26,8 @@ export class DeploymentOrchestratorService {
     private deploymentRepository: IDeploymentRepository,
     @inject(Symbol.for('IUserRepository'))
     private userRepository: IUserRepository,
+    @inject(Symbol.for('IProjectRepository'))
+    private projectRepository: IProjectRepository,
     @inject(Symbol.for('IDeploymentQueue'))
     private deploymentQueue: Queue,
   ) {}
@@ -132,9 +136,33 @@ export class DeploymentOrchestratorService {
 
     // Inject GitHub token if available
     const user = await this.userRepository.findById(userId);
-    if (user?.githubAccessToken && repoUrl && repoUrl.includes('github.com')) {
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+    let githubToken: string | undefined;
+
+    if (user?.githubAccessToken) {
       const decryptedToken = decrypt(user.githubAccessToken);
-      repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
+      githubToken = decryptedToken;
+
+      if (repoUrl && repoUrl.includes('github.com')) {
+        repoUrl = repoUrl.replace('https://', `https://${decryptedToken}@`);
+      }
+    }
+
+    // Fetch project and environment names for grouping
+    let environmentName: string | undefined;
+    let projectName: string | undefined;
+
+    if (service.environmentId) {
+      const environment = await this.projectRepository.findEnvironmentById(service.environmentId);
+      if (environment) {
+        environmentName = environment.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const project = await this.projectRepository.findById(environment.projectId);
+        if (project) {
+          projectName = project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        }
+      }
     }
 
     return {
@@ -150,6 +178,10 @@ export class DeploymentOrchestratorService {
       customDomain: service.customDomain,
       type: service.type,
       staticOutputDir: service.staticOutputDir,
+      githubToken,
+      projectName,
+      environmentName,
+      username: user.username,
     };
   }
 

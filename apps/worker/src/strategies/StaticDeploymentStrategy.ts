@@ -1,5 +1,6 @@
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { DockerfileBuilder } from '../utils/builders';
+import { ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
 import { getSecureBindMounts } from '../utils/workspace';
 
 /**
@@ -21,10 +22,23 @@ export class StaticDeploymentStrategy implements IDeploymentStrategy {
       buildCommand,
       staticOutputDir,
       envVars,
+      username,
     } = context;
 
     let buildLogs = '';
     const imageTag = `helvetia/${serviceName}:latest`;
+
+    const networkName = getNetworkName({
+      username,
+      projectName: context.projectName,
+      environmentName: context.environmentName,
+    });
+
+    // Ensure networks exist before builder starts
+    await ensureNetworkExists(docker, 'helvetia-net');
+    if (networkName !== 'helvetia-net') {
+      await ensureNetworkExists(docker, networkName, context.projectName);
+    }
 
     // 1. Create builder container
     const builderName = `builder-${deploymentId}`;
@@ -36,15 +50,19 @@ export class StaticDeploymentStrategy implements IDeploymentStrategy {
       HostConfig: {
         AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: 'helvetia-net',
+        NetworkMode: networkName,
       },
     });
 
     try {
       await builder.start();
-      console.log(`Building static site image ${imageTag}...`);
+      const startMsg = `==== Building static site image ${imageTag} ====\n\n`;
+      console.log(startMsg.trim());
+      context.onLog?.(startMsg);
+      buildLogs += startMsg;
 
       // 2. Generate Dockerfile content for static site
+      // ...
       const dockerfileContent = DockerfileBuilder.buildStaticSite({
         envVars,
         buildCommand,
@@ -119,8 +137,9 @@ NGINX_EOF
 
       await new Promise<void>((resolve, reject) => {
         stream.on('data', (chunk: Buffer) => {
-          buildLogs += chunk.toString();
-          console.log(chunk.toString());
+          const log = chunk.toString();
+          buildLogs += log;
+          context.onLog?.(log);
         });
         stream.on('end', resolve);
         stream.on('error', reject);

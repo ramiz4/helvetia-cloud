@@ -25,6 +25,9 @@ import type { IDeploymentRepository, IServiceRepository } from './interfaces';
 import { metricsService } from './services/metrics.service';
 import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
 
+const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 // Initialize DI container
 initializeContainer();
 
@@ -37,7 +40,7 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
   maxRetriesPerRequest: null,
 });
 
-const deploymentQueue = new Queue('deployments', {
+const deploymentQueue = new Queue(isTestEnv ? 'deployments-test' : 'deployments', {
   connection: redisConnection,
 });
 
@@ -105,9 +108,6 @@ registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
  * - LOG_REQUESTS: Enable request logging (default: true)
  * - LOG_RESPONSES: Enable response logging (default: true)
  */
-const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
-const isDevelopment = process.env.NODE_ENV === 'development';
-
 export const fastify = Fastify({
   logger: isTestEnv
     ? false
@@ -372,7 +372,11 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/refresh',
     '/auth/logout',
   ];
-  if (publicRoutes.includes(request.routeOptions?.url || '')) {
+  const url = request.routeOptions?.url || request.url.split('?')[0];
+  if (process.env.NODE_ENV === 'test') {
+    console.log(`Auth hook: url=${url} rawUrl=${request.url} matched=${!!request.routeOptions}`);
+  }
+  if (publicRoutes.includes(url)) {
     return;
   }
   try {
@@ -401,6 +405,10 @@ fastify.register(deploymentRoutes);
 // Register GitHub routes
 import { githubRoutes } from './routes/github.routes';
 fastify.register(githubRoutes);
+
+// Register project routes
+import { projectRoutes } from './routes/project.routes';
+fastify.register(projectRoutes);
 
 // Register webhook routes
 import { webhookRoutes } from './routes/webhook.routes';

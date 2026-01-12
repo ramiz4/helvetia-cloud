@@ -51,7 +51,13 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
       >
         <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-indigo-500/20 border border-indigo-500/30">
           {user.avatarUrl ? (
-            <Image src={user.avatarUrl} alt={user.username} fill className="object-cover" />
+            <Image
+              src={user.avatarUrl}
+              alt={user.username}
+              fill
+              sizes="32px"
+              className="object-cover"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-indigo-400">
               <User size={16} />

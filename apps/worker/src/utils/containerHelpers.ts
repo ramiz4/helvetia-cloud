@@ -4,9 +4,57 @@ import IORedis from 'ioredis';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 import { withStatusLock } from './statusLock';
 
+type NetworkConfig = {
+  Aliases: string[];
+};
+
 /**
- * Helper functions for container orchestration
+ * Ensure a Docker network exists
  */
+export async function ensureNetworkExists(
+  docker: Docker,
+  networkName: string,
+  projectName?: string,
+): Promise<void> {
+  try {
+    const networks = await docker.listNetworks({ filters: { name: [networkName] } });
+    if (networks.length === 0) {
+      console.log(`Creating network: ${networkName}`);
+      await docker
+        .createNetwork({
+          Name: networkName,
+          CheckDuplicate: true,
+          Driver: 'bridge',
+          Labels: { 'helvetia.managed': 'true', 'helvetia.projectName': projectName || 'global' },
+        })
+        .catch((err) => {
+          // Ignore "already exists" errors during parallel startup
+          if (!err.message.includes('already exists')) throw err;
+        });
+    }
+  } catch (err) {
+    console.error(`Failed to ensure network ${networkName} exists:`, err);
+  }
+}
+
+/**
+ * Get the standardized network name for a project and environment
+ */
+export function getNetworkName(params: {
+  username?: string;
+  projectName?: string;
+  environmentName?: string;
+}): string {
+  const { username, projectName, environmentName } = params;
+  if (!projectName) return 'helvetia-net';
+
+  const sanitizedUsername = username ? username.toLowerCase().replace(/[^a-z0-9]/g, '-') : 'global';
+
+  if (environmentName) {
+    return `helvetia-${sanitizedUsername}-${projectName}-${environmentName}`;
+  }
+  return `helvetia-${sanitizedUsername}-${projectName}`;
+}
 
 /**
  * Start a new container with the given configuration
@@ -21,18 +69,90 @@ export async function startContainer(params: {
   port?: number;
   envVars?: Record<string, string>;
   customDomain?: string;
+  projectName?: string;
+  environmentName?: string;
+  username?: string;
+  onLog?: (log: string) => void;
 }): Promise<{ container: Docker.Container; postfix: string }> {
-  const { docker, imageTag, serviceName, serviceId, type, port, envVars, customDomain } = params;
+  const {
+    docker,
+    imageTag,
+    serviceName,
+    serviceId,
+    type,
+    port,
+    envVars,
+    customDomain,
+    projectName,
+    environmentName,
+    username,
+    onLog,
+  } = params;
 
-  console.log(`Starting container for ${serviceName}...`);
+  const startMsg = `==== Starting Container: ${serviceName} ====\n\n`;
+  console.log(startMsg.trim());
+  onLog?.(startMsg);
 
-  // Generate a random postfix
-  const postfix = Math.random().toString(36).substring(2, 8);
-  const containerName = `${serviceName}-${postfix}`;
+  // Default network and name
+  const networkName = getNetworkName({ username, projectName, environmentName });
+  const sanitizedUsername = username ? username.toLowerCase().replace(/[^a-z0-9]/g, '-') : 'global';
+  let baseName = `${sanitizedUsername}-${serviceName}`;
 
-  const traefikRule = customDomain
-    ? `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`) || Host(\`${customDomain}\`)`
-    : `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`;
+  // Use project-based naming for baseName if available
+  if (projectName && environmentName) {
+    baseName = `${sanitizedUsername}-${projectName}-${environmentName}-${serviceName}`;
+  } else if (projectName) {
+    baseName = `${sanitizedUsername}-${projectName}-${serviceName}`;
+  }
+
+  // Traefik needs a unique identifier for routers and services across all users/environments
+  const traefikIdentifier = baseName;
+
+  // Ensure networks exist
+  await ensureNetworkExists(docker, 'helvetia-net');
+  if (networkName !== 'helvetia-net') {
+    await ensureNetworkExists(docker, networkName, projectName);
+  }
+
+  // Generate a short 4-char postfix (keeps names cleaner but unique for deployment)
+  const postfix = Math.random().toString(36).substring(2, 6);
+  const containerName = `${baseName}-${postfix}`;
+
+  const hosts = [
+    `${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`,
+    `${serviceName}.localhost`,
+  ];
+
+  if (customDomain) {
+    hosts.push(customDomain);
+  }
+
+  if (projectName) {
+    hosts.push(`${projectName}-${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+    hosts.push(`${projectName}-${serviceName}.localhost`);
+  }
+
+  if (projectName && environmentName && username) {
+    const sanitizedUsernameForHost = username.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const uHost = `${sanitizedUsernameForHost}.${projectName}.${environmentName}.${serviceName}`;
+    hosts.push(`${uHost}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+    hosts.push(`${uHost}.localhost`);
+  }
+
+  const traefikRule = hosts.map((h) => `Host(\`${h}\`)`).join(' || ');
+
+  // Prepare network configuration
+  const endpoints: Record<string, NetworkConfig> = {
+    'helvetia-net': {
+      Aliases: [serviceName],
+    },
+  };
+
+  if (networkName !== 'helvetia-net') {
+    endpoints[networkName] = {
+      Aliases: [serviceName],
+    };
+  }
 
   const container = await docker.createContainer({
     Image: imageTag,
@@ -44,26 +164,31 @@ export async function startContainer(params: {
         : undefined,
     Labels: {
       'helvetia.serviceId': serviceId,
+      'helvetia.projectName': projectName || 'global',
+      'helvetia.environmentName': environmentName || 'global',
       'helvetia.type': type || 'DOCKER',
       'traefik.enable': 'true',
-      [`traefik.http.routers.${serviceName}.rule`]: traefikRule,
-      [`traefik.http.routers.${serviceName}.entrypoints`]: 'web',
-      [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: (
+      'traefik.docker.network': 'helvetia-net',
+      [`traefik.http.routers.${traefikIdentifier}.rule`]: traefikRule,
+      [`traefik.http.routers.${traefikIdentifier}.entrypoints`]: 'web',
+      [`traefik.http.services.${traefikIdentifier}.loadbalancer.server.port`]: (
         port || (type === 'STATIC' ? 80 : 3000)
       ).toString(),
     },
+    NetworkingConfig: {
+      EndpointsConfig: endpoints,
+    },
     HostConfig: {
-      NetworkMode: 'helvetia-net',
       RestartPolicy: { Name: 'always' },
       Memory: CONTAINER_MEMORY_LIMIT_BYTES,
       NanoCpus: CONTAINER_CPU_NANOCPUS,
       Binds:
         type === 'POSTGRES'
-          ? [`helvetia-data-${serviceName}:/var/lib/postgresql/data`]
+          ? [`${baseName}-data:/var/lib/postgresql/data`]
           : type === 'REDIS'
-            ? [`helvetia-data-${serviceName}:/data`]
+            ? [`${baseName}-data:/data`]
             : type === 'MYSQL'
-              ? [`helvetia-data-${serviceName}:/var/lib/mysql`]
+              ? [`${baseName}-data:/var/lib/mysql`]
               : [],
       LogConfig: {
         Type: 'json-file',
@@ -73,7 +198,8 @@ export async function startContainer(params: {
   });
 
   await container.start();
-  console.log(`New container ${containerName} started.`);
+  console.log(`New container ${containerName} started on network ${networkName}.`);
+  onLog?.(`🚀 Started container: ${containerName} on network: ${networkName}\n`);
 
   return { container, postfix };
 }

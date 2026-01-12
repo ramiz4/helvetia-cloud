@@ -6,6 +6,13 @@ export {
   IDeploymentRepository,
 } from './IDeploymentRepository';
 export {
+  Environment,
+  EnvironmentCreateInput,
+  IProjectRepository,
+  Project,
+  ProjectCreateInput,
+} from './IProjectRepository';
+export {
   IRefreshTokenRepository,
   RefreshToken,
   RefreshTokenCreateInput,
@@ -39,7 +46,13 @@ export {
   GetRepositoriesParams,
   GitHubBranch,
   GitHubOrganization,
+  GitHubPackage,
   GitHubRepository,
   IGitHubService,
 } from './IGitHubService';
 export { ILogger, LogContext, LogLevel } from './ILogger';
+
+// Service interfaces
+export { IDeploymentOrchestratorService } from './IDeploymentOrchestratorService';
+export { IProjectManagementService } from './IProjectManagementService';
+export { IServiceManagementService } from './IServiceManagementService';

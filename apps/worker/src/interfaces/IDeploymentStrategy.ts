@@ -28,6 +28,11 @@ export interface DeploymentContext {
   customDomain?: string;
   staticOutputDir?: string;
   type: string;
+  githubToken?: string;
+  projectName?: string;
+  environmentName?: string;
+  username?: string;
+  onLog?: (log: string) => void;
 }
 
 /**

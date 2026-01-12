@@ -74,6 +74,7 @@ vi.mock('database', () => {
         deleteMany: vi.fn(),
       },
     },
+    PrismaClient: vi.fn(),
   };
 });
 
@@ -101,6 +102,7 @@ describe('API Service Normalization', () => {
       headers: { Authorization: `Bearer ${token}` },
       payload: {
         name: 'test-service',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'compose', // lowercase
       },
     });
@@ -149,6 +151,7 @@ describe('API Service Normalization', () => {
       headers: { Authorization: `Bearer ${token}` },
       payload: {
         name: 'test-service',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'invalid_type',
       },
     });

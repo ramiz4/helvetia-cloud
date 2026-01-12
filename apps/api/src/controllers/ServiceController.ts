@@ -1,14 +1,21 @@
-import '../types/fastify';
-
+import { prisma } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
+import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/constants';
+import { ForbiddenError, NotFoundError } from '../errors';
 import { getServiceMetrics } from '../handlers/metrics.handler';
-import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
+import type {
+  IDeploymentRepository,
+  IServiceManagementService,
+  IServiceRepository,
+} from '../interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from '../schemas/service.schema';
+import '../types/fastify';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { determineServiceStatus } from '../utils/helpers/status.helper';
+import { validateToken } from '../utils/tokenValidation';
 
 /**
  * ServiceController
@@ -22,6 +29,8 @@ export class ServiceController {
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
     private deploymentRepository: IDeploymentRepository,
+    @inject(Symbol.for('ServiceManagementService'))
+    private serviceManagement: IServiceManagementService,
   ) {}
 
   /**
@@ -53,10 +62,21 @@ export class ServiceController {
     const docker = new Docker();
     const containers = await docker.listContainers({ all: true });
 
-    return servicesWithDeployments.map((service) => ({
-      ...service,
-      status: determineServiceStatus(service, containers),
-    }));
+    return servicesWithDeployments.map((service) => {
+      const serviceContainers = containers.filter(
+        (c) => c.Labels['helvetia.serviceId'] === service.id,
+      );
+      const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+
+      return {
+        ...service,
+        projectName: service.environment?.project?.name,
+        environmentName: service.environment?.name,
+        username: user.username,
+        status: determineServiceStatus(service, containers),
+        containerName,
+      };
+    });
   }
 
   /**
@@ -82,10 +102,19 @@ export class ServiceController {
     const docker = new Docker();
     const containers = await docker.listContainers({ all: true });
 
+    const serviceContainers = containers.filter(
+      (c) => c.Labels['helvetia.serviceId'] === service.id,
+    );
+    const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+
     return {
       ...service,
       deployments,
+      projectName: service.environment?.project?.name,
+      environmentName: service.environment?.name,
+      username: user.username,
       status: determineServiceStatus({ ...service, deployments }, containers),
+      containerName,
     };
   }
 
@@ -122,7 +151,20 @@ export class ServiceController {
       type,
       staticOutputDir,
       envVars,
+      // Helper fields for COMPOSE
+      composeFile,
+      mainService,
+      environmentId,
     } = validatedData;
+
+    let finalBuildCommand = buildCommand;
+    let finalStartCommand = startCommand;
+
+    // For COMPOSE type, map helper fields to command fields if provided
+    if (type?.toUpperCase() === 'COMPOSE') {
+      if (composeFile) finalBuildCommand = composeFile;
+      if (mainService) finalStartCommand = mainService;
+    }
 
     const finalType = type || 'DOCKER';
     const user = request.user;
@@ -131,87 +173,27 @@ export class ServiceController {
     }
     const userId = user.id;
 
-    // Check if another user owns this service name - use raw Prisma for complex query
-    const { prisma } = await import('database');
-    const existingByName = await prisma.service.findFirst({
-      where: { name, userId: { not: userId }, deletedAt: null },
-    });
-    if (existingByName) {
-      return reply.status(403).send({ error: 'Service name taken by another user' });
-    }
-
-    let finalPort = port || 3000;
-    let finalEnvVars = envVars || {};
-
-    if (finalType === 'STATIC') finalPort = 80;
-    if (finalType === 'POSTGRES') {
-      finalPort = 5444;
-      // Generate default credentials if not provided
-      if (!finalEnvVars.POSTGRES_PASSWORD) {
-        const crypto = await import('crypto');
-        finalEnvVars = {
-          ...finalEnvVars,
-          POSTGRES_USER: 'postgres',
-          POSTGRES_PASSWORD: crypto.default.randomBytes(16).toString('hex'),
-          POSTGRES_DB: 'app',
-        };
-      }
-    }
-    if (finalType === 'REDIS') {
-      finalPort = 6379;
-      // Generate default Redis password if not provided
-      if (!finalEnvVars.REDIS_PASSWORD) {
-        const crypto = await import('crypto');
-        finalEnvVars = {
-          ...finalEnvVars,
-          REDIS_PASSWORD: crypto.default.randomBytes(16).toString('hex'),
-        };
-      }
-    }
-    if (finalType === 'MYSQL') {
-      finalPort = 3306;
-      if (!finalEnvVars.MYSQL_ROOT_PASSWORD) {
-        const crypto = await import('crypto');
-        finalEnvVars = {
-          ...finalEnvVars,
-          MYSQL_ROOT_PASSWORD: crypto.default.randomBytes(16).toString('hex'),
-          MYSQL_DATABASE: 'app',
-        };
-      }
-    }
-
-    // Check if service exists
-    const existing = await this.serviceRepository.findByNameAndUserId(name, userId);
-
-    if (existing) {
-      // Update existing service
-      return this.serviceRepository.update(existing.id, {
-        repoUrl,
-        branch: branch || 'main',
-        buildCommand,
-        startCommand,
-        port: finalPort,
-        customDomain,
-        type: finalType,
-        staticOutputDir: staticOutputDir || 'dist',
-        envVars: finalEnvVars,
-        deletedAt: null, // Resurrect service if it was soft-deleted
-      });
-    } else {
-      // Create new service
-      return this.serviceRepository.create({
+    // Delegate to ServiceManagementService
+    try {
+      return await this.serviceManagement.createOrUpdateService({
         name,
-        repoUrl: repoUrl || null,
-        branch: branch || 'main',
-        buildCommand,
-        startCommand,
-        port: finalPort,
         userId,
-        customDomain,
+        environmentId,
+        repoUrl: repoUrl || undefined,
+        branch: branch || undefined,
+        buildCommand: finalBuildCommand,
+        startCommand: finalStartCommand,
+        port,
+        customDomain: customDomain || undefined,
         type: finalType,
-        staticOutputDir: staticOutputDir || 'dist',
-        envVars: finalEnvVars,
+        staticOutputDir: staticOutputDir || undefined,
+        envVars,
       });
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        return reply.status(403).send({ error: error.message });
+      }
+      throw error;
     }
   }
 
@@ -250,6 +232,7 @@ export class ServiceController {
       customDomain,
       type,
       staticOutputDir,
+      environmentId,
     } = validatedData;
 
     const user = request.user;
@@ -264,7 +247,7 @@ export class ServiceController {
     }
 
     // Update the service
-    const updatedService = await this.serviceRepository.update(id, {
+    await this.serviceRepository.update(id, {
       name,
       repoUrl,
       branch,
@@ -275,10 +258,34 @@ export class ServiceController {
       customDomain,
       type: type,
       staticOutputDir,
+      environmentId,
     });
 
+    // Fetch the updated service with relations
+    const fullService = await this.serviceRepository.findById(id);
+    if (!fullService) {
+      throw new Error('Service not found after update');
+    }
+
     const deployments = await this.deploymentRepository.findByServiceId(id, { take: 1 });
-    return { ...updatedService, deployments };
+
+    // Enrich with actual Docker container status
+    const Docker = (await import('dockerode')).default;
+    const docker = new Docker();
+    const containers = await docker.listContainers({ all: true });
+
+    const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+    const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+
+    return {
+      ...fullService,
+      deployments,
+      projectName: fullService.environment?.project?.name,
+      environmentName: fullService.environment?.name,
+      username: user.username,
+      status: determineServiceStatus({ ...fullService, deployments }, containers),
+      containerName,
+    };
   }
 
   /**
@@ -292,22 +299,22 @@ export class ServiceController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    const service = await this.serviceRepository.findById(id);
-    if (!service || service.userId !== user.id || service.deletedAt) {
-      return reply.status(404).send({ error: 'Service not found or unauthorized' });
+    // Delegate to ServiceManagementService
+    try {
+      await this.serviceManagement.softDeleteService(id, user.id);
+      return {
+        success: true,
+        message: 'Service soft deleted. Can be recovered within 30 days.',
+      };
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({ error: error.message });
+      }
+      if (error instanceof ForbiddenError) {
+        return reply.status(403).send({ error: error.message });
+      }
+      throw error;
     }
-
-    // Check if service is protected from deletion
-    if (service.deleteProtected) {
-      return reply
-        .status(403)
-        .send({ error: 'Service is protected from deletion. Remove protection first.' });
-    }
-
-    // Perform soft deletion
-    await this.serviceRepository.update(id, { deletedAt: new Date() });
-
-    return { success: true, message: 'Service soft deleted. Can be recovered within 30 days.' };
   }
 
   /**
@@ -428,183 +435,184 @@ export class ServiceController {
     if (!user) {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
+    try {
+      // Set SSE headers with CORS support
+      const origin = getSafeOrigin(request.headers.origin);
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Credentials': 'true',
+      });
 
-    // Set SSE headers with CORS support
-    reply.raw.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no', // Disable nginx buffering
-      'Access-Control-Allow-Origin': getSafeOrigin(request.headers.origin),
-      'Access-Control-Allow-Credentials': 'true',
-    });
+      console.log(`SSE client connected for real-time metrics: ${user.id}`);
 
-    console.log(`SSE client connected for real-time metrics: ${user.id}`);
+      // Track connection state for better observability
+      const connectionState = {
+        isValid: true,
+        startTime: Date.now(),
+        metricsCount: 0,
+        errorCount: 0,
+      };
 
-    // Import helper function for token validation
-    const { validateToken } = await import('../utils/tokenValidation.js');
-    const { prisma } = await import('database');
-    const { METRICS_UPDATE_INTERVAL_MS, CONNECTION_TIMEOUT_MS } =
-      await import('../config/constants.js');
+      // Store interval reference for cleanup
+      let metricsInterval: NodeJS.Timeout | null = null;
+      let timeoutHandle: NodeJS.Timeout | null = null;
 
-    // Track connection state for better observability
-    const connectionState = {
-      isValid: true,
-      startTime: Date.now(),
-      metricsCount: 0,
-      errorCount: 0,
-    };
+      // Cleanup function to ensure all resources are freed
+      const cleanup = () => {
+        if (!connectionState.isValid) return; // Already cleaned up
 
-    // Store interval reference for cleanup
-    let metricsInterval: NodeJS.Timeout | null = null;
-    let timeoutHandle: NodeJS.Timeout | null = null;
+        connectionState.isValid = false;
 
-    // Cleanup function to ensure all resources are freed
-    const cleanup = () => {
-      if (!connectionState.isValid) return; // Already cleaned up
-
-      connectionState.isValid = false;
-
-      if (metricsInterval) {
-        clearInterval(metricsInterval);
-        metricsInterval = null;
-      }
-
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-        timeoutHandle = null;
-      }
-
-      console.log(
-        `SSE metrics connection cleaned up for user ${user.id}. ` +
-          `Duration: ${Date.now() - connectionState.startTime}ms, ` +
-          `Metrics sent: ${connectionState.metricsCount}, ` +
-          `Errors: ${connectionState.errorCount}`,
-      );
-    };
-
-    const sendMetrics = async () => {
-      // Check connection validity before proceeding
-      if (!connectionState.isValid) {
-        cleanup();
-        return;
-      }
-
-      try {
-        // Validate token before sending metrics
-        const isValid = await validateToken(request);
-        if (!isValid) {
-          console.log(`Token expired for user ${user.id}, closing metrics stream`);
-          // Send error event to client
-          try {
-            reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
-            );
-            reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing token expiration message:', writeErr);
-          }
-          cleanup();
-          return;
+        if (metricsInterval) {
+          clearInterval(metricsInterval);
+          metricsInterval = null;
         }
 
-        const Docker = (await import('dockerode')).default;
-        const docker = new Docker();
-        const containers = await docker.listContainers({ all: true });
+        if (timeoutHandle) {
+          clearTimeout(timeoutHandle);
+          timeoutHandle = null;
+        }
 
-        const services = await prisma.service.findMany({
-          where: { userId: user.id, deletedAt: null },
-          select: { id: true, name: true, type: true, status: true },
-        });
+        console.log(
+          `SSE metrics connection cleaned up for user ${user.id}. ` +
+            `Duration: ${Date.now() - connectionState.startTime}ms, ` +
+            `Metrics sent: ${connectionState.metricsCount}, ` +
+            `Errors: ${connectionState.errorCount}`,
+        );
+      };
 
-        const metricsPromises = services.map(async (s) => ({
-          id: s.id,
-          metrics: await getServiceMetrics(s.id, docker, containers, s),
-        }));
-
-        const results = await Promise.all(metricsPromises);
-
-        // Check if still valid before writing
+      const sendMetrics = async () => {
+        // Check connection validity before proceeding
         if (!connectionState.isValid) {
           cleanup();
           return;
         }
 
-        // Send it as an SSE event
-        reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
-        connectionState.metricsCount++;
-      } catch (err) {
-        connectionState.errorCount++;
-        console.error(`Error sending metrics via SSE (user ${user.id}):`, err);
+        try {
+          // Validate token before sending metrics
+          const isValid = await validateToken(request);
+          if (!isValid) {
+            console.log(`Token expired for user ${user.id}, closing metrics stream`);
+            // Send error event to client
+            try {
+              reply.raw.write(
+                `event: error\ndata: ${JSON.stringify({ error: 'Token expired', code: 'TOKEN_EXPIRED' })}\n\n`,
+              );
+              reply.raw.end();
+            } catch (writeErr) {
+              console.error('Error writing token expiration message:', writeErr);
+            }
+            cleanup();
+            return;
+          }
 
-        // If too many consecutive errors, close the connection
-        if (connectionState.errorCount >= 3) {
-          console.error(`Too many errors for user ${user.id}, closing connection`);
+          const Docker = (await import('dockerode')).default;
+          const docker = new Docker();
+          const containers = await docker.listContainers({ all: true });
+
+          const services = await prisma.service.findMany({
+            where: { userId: user.id, deletedAt: null },
+            select: { id: true, name: true, type: true, status: true },
+          });
+
+          const metricsPromises = services.map(async (s) => ({
+            id: s.id,
+            metrics: await getServiceMetrics(s.id, docker, containers, s),
+          }));
+
+          const results = await Promise.all(metricsPromises);
+
+          // Check if still valid before writing
+          if (!connectionState.isValid) {
+            cleanup();
+            return;
+          }
+
+          // Send it as an SSE event
+          reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
+          connectionState.metricsCount++;
+        } catch (err) {
+          connectionState.errorCount++;
+          console.error(`Error sending metrics via SSE (user ${user.id}):`, err);
+
+          // If too many consecutive errors, close the connection
+          if (connectionState.errorCount >= 3) {
+            console.error(`Too many errors for user ${user.id}, closing connection`);
+            try {
+              reply.raw.write(
+                `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
+              );
+              reply.raw.end();
+            } catch (writeErr) {
+              console.error('Error writing error message:', writeErr);
+            }
+            cleanup();
+          }
+        }
+      };
+
+      // Send immediate connection acknowledgment (makes it feel instant)
+      reply.raw.write(': connected\n\n');
+
+      // Fetch and send initial metrics asynchronously (non-blocking)
+      await sendMetrics();
+
+      // Set up periodic metrics updates
+      metricsInterval = setInterval(async () => {
+        if (!connectionState.isValid) {
+          cleanup();
+          return;
+        }
+        await sendMetrics();
+      }, METRICS_UPDATE_INTERVAL_MS);
+
+      const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
+
+      // Implement connection timeout
+      timeoutHandle = setTimeout(
+        () => {
+          console.log(`SSE metrics connection timeout for user ${user.id}`);
           try {
             reply.raw.write(
-              `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
+              `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
             );
             reply.raw.end();
-          } catch (writeErr) {
-            console.error('Error writing error message:', writeErr);
+          } catch (err) {
+            console.error('Error writing timeout message:', err);
           }
           cleanup();
-        }
-      }
-    };
+        },
+        isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
+      );
 
-    // Send immediate connection acknowledgment (makes it feel instant)
-    reply.raw.write(': connected\n\n');
-
-    // Fetch and send initial metrics asynchronously (non-blocking)
-    await sendMetrics();
-
-    // Set up periodic metrics updates
-    metricsInterval = setInterval(async () => {
-      if (!connectionState.isValid) {
+      // Clean up on client disconnect
+      request.raw.on('close', () => {
+        console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
         cleanup();
-        return;
-      }
-      await sendMetrics();
-    }, METRICS_UPDATE_INTERVAL_MS);
+      });
 
-    const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
-
-    // Implement connection timeout
-    timeoutHandle = setTimeout(
-      () => {
-        console.log(`SSE metrics connection timeout for user ${user.id}`);
-        try {
-          reply.raw.write(
-            `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
-          );
-          reply.raw.end();
-        } catch (err) {
-          console.error('Error writing timeout message:', err);
-        }
+      // Clean up on error
+      request.raw.on('error', (err) => {
+        console.error(`SSE metrics connection error for user ${user.id}:`, err);
         cleanup();
-      },
-      isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
-    );
+      });
 
-    // Clean up on client disconnect
-    request.raw.on('close', () => {
-      console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
-      cleanup();
-    });
+      reply.raw.on('error', (err) => {
+        console.error(`SSE metrics reply error for user ${user.id}:`, err);
+        cleanup();
+      });
 
-    // Clean up on error
-    request.raw.on('error', (err) => {
-      console.error(`SSE metrics connection error for user ${user.id}:`, err);
-      cleanup();
-    });
-
-    reply.raw.on('error', (err) => {
-      console.error(`SSE metrics reply error for user ${user.id}:`, err);
-      cleanup();
-    });
-
-    // Keep the connection open
-    return reply;
+      return reply;
+    } catch (err) {
+      console.error(`Error initializing SSE metrics stream for user ${user.id}:`, err);
+      if (!reply.raw.headersSent) {
+        return reply.status(500).send({ error: 'Failed to initialize metrics stream' });
+      }
+      return reply;
+    }
   }
 }

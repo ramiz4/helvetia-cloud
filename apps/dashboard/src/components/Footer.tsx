@@ -78,14 +78,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/new"
-                  className="text-slate-400 hover:text-indigo-400 transition-colors"
-                >
-                  {t.nav.newService}
-                </Link>
-              </li>
-              <li>
                 <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
                   {t.footer.pricing}
                 </a>

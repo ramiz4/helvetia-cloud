@@ -10,7 +10,16 @@ export class PrismaServiceRepository implements IServiceRepository {
   constructor(@inject('PrismaClient') private prisma: PrismaClient) {}
 
   async findById(id: string): Promise<Service | null> {
-    return this.prisma.service.findUnique({ where: { id } });
+    return this.prisma.service.findUnique({
+      where: { id },
+      include: {
+        environment: {
+          include: {
+            project: true,
+          },
+        },
+      },
+    });
   }
 
   async findByUserId(
@@ -21,12 +30,36 @@ export class PrismaServiceRepository implements IServiceRepository {
       where: { userId, deletedAt: null },
       take: options?.take,
       skip: options?.skip,
+      include: {
+        environment: {
+          include: {
+            project: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
   async findByNameAndUserId(name: string, userId: string): Promise<Service | null> {
     return this.prisma.service.findFirst({
       where: { name, userId, deletedAt: null },
+    });
+  }
+
+  async findByNameAll(name: string, userId: string): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: { name, userId },
+    });
+  }
+
+  async findByNameAndEnvironment(
+    name: string,
+    environmentId: string,
+    userId: string,
+  ): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: { name, environmentId, userId },
     });
   }
 
@@ -61,6 +94,14 @@ export class PrismaServiceRepository implements IServiceRepository {
       where: { deletedAt: null },
       take: options?.take,
       skip: options?.skip,
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async findByEnvironmentId(environmentId: string): Promise<Service[]> {
+    return this.prisma.service.findMany({
+      where: { environmentId, deletedAt: null },
+      orderBy: { createdAt: 'asc' },
     });
   }
 }

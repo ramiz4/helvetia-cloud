@@ -7,6 +7,7 @@
 export const TOKENS = {
   // Repositories
   ServiceRepository: Symbol.for('IServiceRepository'),
+  ProjectRepository: Symbol.for('IProjectRepository'),
   DeploymentRepository: Symbol.for('IDeploymentRepository'),
   UserRepository: Symbol.for('IUserRepository'),
   RefreshTokenRepository: Symbol.for('IRefreshTokenRepository'),
@@ -19,12 +20,14 @@ export const TOKENS = {
 
   // Services
   ServiceManagementService: Symbol.for('ServiceManagementService'),
+  ProjectManagementService: Symbol.for('ProjectManagementService'),
   DeploymentOrchestratorService: Symbol.for('DeploymentOrchestratorService'),
   AuthenticationService: Symbol.for('AuthenticationService'),
   GitHubService: Symbol.for('IGitHubService'),
 
   // Controllers
   ServiceController: Symbol.for('ServiceController'),
+  ProjectController: Symbol.for('ProjectController'),
   DeploymentController: Symbol.for('DeploymentController'),
   GitHubController: Symbol.for('GitHubController'),
   WebhookController: Symbol.for('WebhookController'),

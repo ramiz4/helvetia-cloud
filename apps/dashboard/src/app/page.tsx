@@ -1,57 +1,41 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Zap } from 'lucide-react';
+import { NewProjectModal } from '@/components/NewProjectModal';
+import { ProjectCard } from '@/components/ProjectCard';
+import { FolderPlus, Plus, Rocket } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { EditServiceModal } from '../components/EditServiceModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import LandingPage from '../components/LandingPage';
-import { LogsModal } from '../components/LogsModal';
-import { SearchBar } from '../components/SearchBar';
-import { ServiceCard } from '../components/ServiceCard/ServiceCard';
-import { StatsCards } from '../components/StatsCards';
-import {
-  createUpdateServiceMetrics,
-  useDeleteService,
-  useDeployService,
-  useRestartService,
-  useServices,
-  useUpdateService,
-} from '../hooks/useServices';
-import { API_BASE_URL } from '../lib/config';
+import { useCreateProject, useDeleteProject, useProjects } from '../hooks/useProjects';
 import { useLanguage } from '../lib/LanguageContext';
-import { checkAndRefreshToken, fetchWithAuth } from '../lib/tokenRefresh';
-import type { Service } from '../types/service';
+import { checkAndRefreshToken } from '../lib/tokenRefresh';
 
 export default function Home() {
   const { t } = useLanguage();
-  const queryClient = useQueryClient();
-  // Initialize authentication state - will be set after mount to avoid hydration mismatch
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [selectedLogs, setSelectedLogs] = useState<string | null>(null);
-  const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
-  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // React Query hooks
-  const { data: services = [], isLoading, isError, error } = useServices();
-  const updateServiceMutation = useUpdateService();
-  const deleteServiceMutation = useDeleteService();
-  const deployServiceMutation = useDeployService();
-  const restartServiceMutation = useRestartService();
-  const updateMetrics = createUpdateServiceMetrics(queryClient);
+  // Project hooks
+  const {
+    data: projects = [],
+    isLoading,
+    isError,
+    error,
+  } = useProjects({ enabled: !!isAuthenticated });
+
+  const createProjectMutation = useCreateProject();
+  const deleteProjectMutation = useDeleteProject();
 
   // Check authentication and refresh token on page load
   useEffect(() => {
     const initAuth = async () => {
       const user = localStorage.getItem('user');
       if (user) {
-        // Proactively refresh token on page load
         const refreshed = await checkAndRefreshToken();
         setIsAuthenticated(refreshed);
         if (!refreshed) {
-          // If refresh failed, clear user data
           localStorage.removeItem('user');
         }
       } else {
@@ -62,173 +46,29 @@ export default function Home() {
     initAuth();
   }, []);
 
-  useEffect(() => {
-    if (!activeDeploymentId) return;
-
-    const eventSource = new EventSource(
-      `${API_BASE_URL}/deployments/${activeDeploymentId}/logs/stream`,
-      { withCredentials: true },
-    );
-
-    eventSource.onopen = () => console.log('SSE logs stream connected');
-
-    eventSource.addEventListener('error', (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.code === 'TOKEN_EXPIRED') {
-          console.log('Token expired, logging out user');
-          toast.error('Session expired. Please log in again.');
-          localStorage.removeItem('user');
-          setIsAuthenticated(false);
-          eventSource.close();
-        }
-      } catch {
-        // Not a JSON error event, ignore
-      }
-    });
-
-    eventSource.onmessage = (event) => {
-      setSelectedLogs(
-        (prev) => (prev === t.dashboard.modals.noLogs ? '' : prev || '') + event.data,
-      );
-    };
-
-    eventSource.onerror = () => {
-      if (eventSource.readyState === EventSource.CLOSED) {
-        console.log('SSE logs stream ended - deployment finished');
-      } else {
-        console.log('SSE logs stream reconnecting...');
-      }
-    };
-
-    return () => {
-      console.log('Closing SSE logs stream');
-      eventSource.close();
-    };
-  }, [activeDeploymentId, t.dashboard.modals.noLogs]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const eventSource = new EventSource(`${API_BASE_URL}/services/metrics/stream`, {
-        withCredentials: true,
-      });
-
-      eventSource.onopen = () => console.log('SSE metrics stream connected');
-
-      eventSource.addEventListener('error', (event: MessageEvent) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.code === 'TOKEN_EXPIRED') {
-            console.log('Token expired, logging out user');
-            toast.error('Session expired. Please log in again.');
-            localStorage.removeItem('user');
-            setIsAuthenticated(false);
-            eventSource.close();
-          }
-        } catch {
-          // Not a JSON error event, ignore
-        }
-      });
-
-      eventSource.onmessage = (event) => {
-        try {
-          const updates = JSON.parse(event.data);
-          if (Array.isArray(updates)) {
-            updateMetrics(updates);
-          }
-        } catch (err) {
-          console.error('Error parsing metrics SSE message:', err);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        if (eventSource.readyState === EventSource.CLOSED) {
-          console.error('SSE metrics stream closed permanently:', error);
-        } else {
-          console.log('SSE metrics stream reconnecting...');
-        }
-      };
-
-      return () => {
-        console.log('Closing SSE metrics stream');
-        eventSource.close();
-      };
-    }
-  }, [isAuthenticated, updateMetrics]);
-
-  const handleUpdateService = async (
-    service: Service,
-    envVarsList: Array<{ key: string; value: string }>,
-  ) => {
+  const handleCreateProject = async (name: string) => {
     try {
-      const envVarsObj: Record<string, string> = {};
-      envVarsList.forEach((item) => {
-        if (item.key.trim()) {
-          envVarsObj[item.key.trim()] = item.value;
-        }
-      });
-
-      await updateServiceMutation.mutateAsync({
-        id: service.id,
-        data: {
-          name: service.name,
-          repoUrl: service.repoUrl,
-          branch: service.branch,
-          buildCommand: service.buildCommand,
-          startCommand: service.startCommand,
-          port: service.type === 'STATIC' ? 80 : service.port,
-          type: service.type,
-          staticOutputDir: service.staticOutputDir,
-          envVars: envVarsObj,
-          customDomain: service.customDomain,
-        },
-      });
-
-      toast.success(t.common.success);
-      setEditingService(null);
+      await createProjectMutation.mutateAsync(name);
+      toast.success('Project created successfully');
+      setShowNewProjectModal(false);
     } catch {
-      toast.error(t.dashboard.actions.updateFailed);
+      toast.error('Failed to create project');
     }
   };
 
-  const handleDeploy = async (serviceId: string) => {
+  const handleDeleteProject = async (projectId: string) => {
+    if (
+      !confirm(
+        'Are you sure you want to delete this project? All associated services will be affected.',
+      )
+    )
+      return;
+
     try {
-      const deployment = await deployServiceMutation.mutateAsync(serviceId);
-      fetchLogs(deployment.id);
+      await deleteProjectMutation.mutateAsync(projectId);
+      toast.success('Project deleted successfully');
     } catch {
-      toast.error(t.dashboard.actions.deployTriggerFailed);
-    }
-  };
-
-  const handleDelete = async (serviceId: string) => {
-    if (!confirm(t.dashboard.actions.deleteConfirm)) return;
-
-    try {
-      await deleteServiceMutation.mutateAsync(serviceId);
-      toast.success(t.common.success);
-    } catch {
-      toast.error(t.dashboard.actions.deleteFailed);
-    }
-  };
-
-  const handleRestart = async (serviceId: string) => {
-    try {
-      await restartServiceMutation.mutateAsync(serviceId);
-      toast.success(t.dashboard.actions.restartSuccess);
-    } catch (err) {
-      const error = err instanceof Error ? err.message : t.dashboard.actions.restartFailed;
-      toast.error(error);
-    }
-  };
-
-  const fetchLogs = async (deploymentId: string) => {
-    setActiveDeploymentId(deploymentId);
-    try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/deployments/${deploymentId}/logs`);
-      const data = await res.json();
-      setSelectedLogs(data.logs || t.dashboard.modals.noLogs);
-    } catch {
-      toast.error(t.dashboard.actions.fetchLogsFailed);
+      toast.error('Failed to delete project');
     }
   };
 
@@ -253,114 +93,99 @@ export default function Home() {
     return <LandingPage />;
   }
 
-  const activeServices = services.filter(
-    (s) => s.status === 'RUNNING' || s.status === 'DEPLOYING',
-  ).length;
-  const failingServices = services.filter((s) => s.status === 'FAILED').length;
-
-  const filteredServices = services.filter(
-    (s) =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.repoUrl.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <ErrorBoundary>
-      <div className="py-8 animate-fade-in">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-white mb-2">
-              {t.dashboard.title}
+      <div className="py-8 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-16">
+          <div className="space-y-2">
+            <h1 className="text-5xl font-extrabold tracking-tight mb-2 bg-linear-to-r from-white to-white/60 bg-clip-text text-transparent">
+              Projects
             </h1>
-            <p className="text-slate-400 text-lg">{t.dashboard.subtitle}</p>
+            <p className="text-slate-400 text-lg font-medium">
+              Manage your cloud infrastructure environments and services.
+            </p>
           </div>
           <div className="flex gap-4">
+            <button
+              onClick={() => setShowNewProjectModal(true)}
+              className="inline-flex items-center justify-center px-8 py-4 rounded-2xl font-bold bg-white text-indigo-950 hover:bg-slate-200 transition-all shadow-xl active:scale-95 gap-3"
+            >
+              <FolderPlus size={22} />
+              New Project
+            </button>
             <a
               href="/new"
-              className="inline-flex items-center justify-center px-6 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 gap-2"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-2xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-xl shadow-indigo-500/20 active:scale-95 gap-3"
             >
-              <Plus size={20} />
-              {t.dashboard.createNewService}
+              <Rocket size={22} />
+              Deploy Service
             </a>
           </div>
         </div>
 
-        <StatsCards
-          totalServices={services.length}
-          activeServices={activeServices}
-          failedServices={failingServices}
-          translations={t.dashboard}
-        />
-
-        <SearchBar
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder={t.dashboard.search.placeholder}
-        />
+        <div className="relative mb-12">
+          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+            <Plus size={20} className="text-slate-500" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search projects..."
+            className="w-full h-16 pl-16 pr-8 bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-semibold transition-all shadow-2xl placeholder:text-slate-600 border-none"
+          />
+        </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-32 gap-4">
-            <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
-            <p className="text-slate-500 font-medium animate-pulse text-lg">
+          <div className="flex flex-col items-center justify-center py-32 gap-6">
+            <div className="w-14 h-14 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-sm animate-pulse">
               {t.dashboard.loading}
             </p>
           </div>
-        ) : filteredServices.length === 0 ? (
-          <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] text-center p-20 flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-b from-indigo-500/5 to-transparent" />
-            <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center relative z-10 ring-8 ring-white/5">
-              <Zap size={40} className="text-slate-500" />
+        ) : filteredProjects.length === 0 ? (
+          <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[48px] text-center p-24 flex flex-col items-center gap-10 shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-linear-to-b from-indigo-500/10 to-transparent opacity-50 transition-opacity group-hover:opacity-100" />
+            <div className="w-24 h-24 bg-slate-800/80 rounded-[32px] flex items-center justify-center relative z-10 ring-1 ring-white/10 group-hover:scale-110 transition-transform duration-500 shadow-3xl">
+              <FolderPlus
+                size={48}
+                className="text-slate-600 group-hover:text-indigo-400 transition-colors"
+              />
             </div>
-            <div className="relative z-10 max-w-md">
-              <h3 className="text-3xl font-bold text-white mb-4">{t.dashboard.search.noResults}</h3>
-              <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-                {searchQuery ? t.dashboard.search.tryAgain : t.dashboard.search.getStarted}
+            <div className="relative z-10 max-w-lg">
+              <h3 className="text-4xl font-black text-white mb-6">No projects found</h3>
+              <p className="text-slate-400 text-xl mb-12 leading-relaxed font-medium">
+                {searchQuery
+                  ? 'No projects match your search query.'
+                  : 'Projects help you organize your services, databases, and environments into logical groups.'}
               </p>
               {!searchQuery && (
-                <a
-                  href="/new"
-                  className="inline-flex items-center justify-center px-10 py-5 rounded-2xl font-bold text-lg bg-indigo-500 text-white hover:bg-indigo-400 transition-all hover:-translate-y-1 shadow-xl shadow-indigo-500/30"
+                <button
+                  onClick={() => setShowNewProjectModal(true)}
+                  className="inline-flex items-center justify-center px-12 py-6 rounded-[24px] font-black text-xl bg-indigo-500 text-white hover:bg-indigo-400 transition-all hover:-translate-y-2 shadow-2xl shadow-indigo-500/40 active:scale-95 gap-4"
                 >
-                  {t.dashboard.createNewService}
-                </a>
+                  <Plus size={28} />
+                  Start First Project
+                </button>
               )}
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredServices.map((service) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                onEdit={setEditingService}
-                onDelete={handleDelete}
-                onDeploy={handleDeploy}
-                onRestart={handleRestart}
-                onViewLogs={fetchLogs}
-                translations={t.dashboard}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {filteredProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} onDelete={handleDeleteProject} />
             ))}
           </div>
         )}
 
-        {selectedLogs !== null && (
-          <LogsModal
-            logs={selectedLogs}
-            isStreaming={!!activeDeploymentId}
-            onClose={() => {
-              setSelectedLogs(null);
-              setActiveDeploymentId(null);
-            }}
-            translations={t.dashboard}
-          />
-        )}
-
-        {editingService !== null && (
-          <EditServiceModal
-            service={editingService}
-            onClose={() => setEditingService(null)}
-            onSave={handleUpdateService}
-            translations={t.dashboard}
+        {showNewProjectModal && (
+          <NewProjectModal
+            onClose={() => setShowNewProjectModal(false)}
+            onSave={handleCreateProject}
           />
         )}
       </div>

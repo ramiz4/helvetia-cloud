@@ -1,6 +1,19 @@
 export type ServiceStatus = 'RUNNING' | 'DEPLOYING' | 'FAILED' | 'NOT_RUNNING' | 'STOPPED';
 export type ServiceType = 'DOCKER' | 'STATIC' | 'COMPOSE';
 
+export interface ServiceMetric {
+  cpu: number;
+  memory: number;
+  memoryLimit: number;
+  status?: string;
+}
+
+export interface ServiceDeployment {
+  id: string;
+  status: string;
+  createdAt: string;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -11,13 +24,19 @@ export interface Service {
   port: number;
   status: ServiceStatus;
   type: ServiceType;
+  environmentId?: string;
+  projectName?: string; // Populated from Environment -> Project
+  environmentName?: string;
+  username?: string;
   staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;
   isPreview?: boolean;
   prNumber?: number;
-  metrics?: { cpu: number; memory: number; memoryLimit: number; status?: string };
-  deployments: { id: string; status: string; createdAt: string }[];
+  metrics?: ServiceMetric;
+  deployments: ServiceDeployment[];
+  containerName?: string;
+  createdAt: string;
 }
 
 export interface UpdateServiceData {

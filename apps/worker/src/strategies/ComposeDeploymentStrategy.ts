@@ -1,5 +1,6 @@
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { ComposeFileBuilder } from '../utils/builders';
+import { ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
 import { getSecureBindMounts } from '../utils/workspace';
 
 /**
@@ -24,9 +25,23 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
       port,
       envVars,
       customDomain,
+      username,
     } = context;
 
     let buildLogs = '';
+
+    // Determine network name
+    const networkName = getNetworkName({
+      username,
+      projectName: context.projectName,
+      environmentName: context.environmentName,
+    });
+
+    // Ensure networks exist before builder starts
+    await ensureNetworkExists(docker, 'helvetia-net');
+    if (networkName !== 'helvetia-net') {
+      await ensureNetworkExists(docker, networkName, context.projectName);
+    }
 
     // 1. Create builder container
     const builderName = `builder-${deploymentId}`;
@@ -38,18 +53,42 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
       HostConfig: {
         AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: 'helvetia-net',
+        NetworkMode: networkName,
       },
     });
 
     try {
       await builder.start();
-      console.log(`Starting Docker Compose deployment for ${serviceName}...`);
+      const startMsg = `==== Starting Docker Compose deployment for ${serviceName} ====\n\n`;
+      console.log(startMsg.trim());
+      context.onLog?.(startMsg);
+      buildLogs += startMsg;
 
       // 2. Generate Traefik rule
-      const traefikRule = customDomain
-        ? `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`) || Host(\`${customDomain}\`)`
-        : `Host(\`${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${serviceName}.localhost\`)`;
+      const hosts = [
+        `${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`,
+        `${serviceName}.localhost`,
+      ];
+
+      if (customDomain) {
+        hosts.push(customDomain);
+      }
+
+      if (context.projectName) {
+        hosts.push(
+          `${context.projectName}-${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`,
+        );
+        hosts.push(`${context.projectName}-${serviceName}.localhost`);
+      }
+
+      if (context.projectName && context.environmentName && context.username) {
+        const sanitizedUsername = context.username.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const uHost = `${sanitizedUsername}.${context.projectName}.${context.environmentName}.${serviceName}`;
+        hosts.push(`${uHost}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+        hosts.push(`${uHost}.localhost`);
+      }
+
+      const traefikRule = hosts.map((h) => `Host(\`${h}\`)`).join(' || ');
 
       // 3. Generate compose override file
       const mainService = startCommand || 'app'; // User-provided service name
@@ -60,6 +99,9 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
         traefikRule,
         port,
         envVars,
+        projectName: context.projectName,
+        environmentName: context.environmentName,
+        username: context.username,
       });
 
       // 4. Prepare build script
@@ -82,9 +124,38 @@ EOF
         cd "$WORKDIR"
         echo "Deploying with Docker Compose in $WORKDIR..."
 
-        # Use project name = serviceName to namespace it.
+        # Detect Compose file
+        COMPOSE_FILE="docker-compose.yml"
+        if [ -n "${buildCommand || ''}" ]; then
+          COMPOSE_FILE="${buildCommand}"
+        else
+          if [ -f "compose.yaml" ]; then
+            COMPOSE_FILE="compose.yaml"
+          elif [ -f "compose.yml" ]; then
+            COMPOSE_FILE="compose.yml"
+          elif [ -f "docker-compose.yaml" ]; then
+            COMPOSE_FILE="docker-compose.yaml"
+          fi
+        fi
+
+        if [ ! -f "$COMPOSE_FILE" ]; then
+          echo "Error: Compose file '$COMPOSE_FILE' not found!"
+          ls -R
+          exit 1
+        fi
+
+        echo "Using Compose file: $COMPOSE_FILE"
+
+        echo "=== DEBUG: File Structure ==="
+        ls -F
+
+        echo "=== DEBUG: Compose Configuration ==="
+        docker compose -f "$COMPOSE_FILE" -f /tmp/docker-compose.override.yml config || echo "Starting anyway..."
+
+        # Use project name = project-env-service to namespace it.
         # Point to the override file in /tmp
-        docker compose -f "${buildCommand || 'docker-compose.yml'}" -f /tmp/docker-compose.override.yml -p ${serviceName} up -d --build --remove-orphans
+        PROJECT_NAME="${context.projectName ? `${context.projectName}-${context.environmentName || 'global'}-` : ''}${serviceName}"
+        docker compose -f "$COMPOSE_FILE" -f /tmp/docker-compose.override.yml -p "$PROJECT_NAME" up -d --build --remove-orphans
       `;
 
       // 5. Execute deployment
@@ -99,8 +170,9 @@ EOF
 
       await new Promise<void>((resolve, reject) => {
         stream.on('data', (chunk: Buffer) => {
-          buildLogs += chunk.toString();
-          console.log(chunk.toString());
+          const log = chunk.toString();
+          buildLogs += log;
+          context.onLog?.(log);
         });
         stream.on('end', resolve);
         stream.on('error', reject);
@@ -108,7 +180,9 @@ EOF
 
       const execResult = await exec.inspect();
       if (execResult.ExitCode !== 0) {
-        throw new Error(`Compose deployment failed with exit code ${execResult.ExitCode}`);
+        throw new Error(
+          `Compose deployment failed with exit code ${execResult.ExitCode}\nBuild Logs:\n${buildLogs}`,
+        );
       }
 
       // For compose, we don't have a single image tag

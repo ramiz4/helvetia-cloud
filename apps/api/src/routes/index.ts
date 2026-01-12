@@ -6,5 +6,6 @@
 export * from './auth.routes';
 export * from './deployment.routes';
 export * from './health.routes';
+export * from './project.routes';
 export * from './service.routes';
 export * from './webhook.routes';

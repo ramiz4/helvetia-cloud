@@ -67,17 +67,24 @@ vi.mock('database', () => ({
       deleteMany: vi.fn(),
     },
   },
+  PrismaClient: vi.fn(),
 }));
 
-const mockListContainers = vi.fn();
+const { mockListContainers, mockGetContainer } = vi.hoisted(() => ({
+  mockListContainers: vi.fn(),
+  mockGetContainer: vi.fn().mockReturnValue({
+    inspect: vi.fn().mockResolvedValue({
+      State: { Running: true, Health: { Status: 'healthy' } },
+    }),
+  }),
+}));
+
 vi.mock('dockerode', () => {
   return {
-    default: vi.fn(function () {
-      return {
-        listContainers: mockListContainers,
-        getContainer: vi.fn(),
-      };
-    }),
+    default: class MockDocker {
+      listContainers = mockListContainers;
+      getContainer = mockGetContainer;
+    },
   };
 });
 

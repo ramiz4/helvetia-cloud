@@ -68,7 +68,7 @@ const envSchema = z.object({
   AUTH_RATE_LIMIT_WINDOW: z.string().default('1 minute'),
   WS_RATE_LIMIT_MAX: z
     .string()
-    .default('10')
+    .default('100')
     .pipe(
       z
         .string()

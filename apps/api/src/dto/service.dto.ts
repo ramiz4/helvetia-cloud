@@ -17,6 +17,7 @@ export interface CreateServiceDto {
   type?: string;
   staticOutputDir?: string | null;
   userId: string;
+  environmentId?: string | null;
 }
 
 /**
@@ -36,6 +37,7 @@ export interface UpdateServiceDto {
   deletedAt?: Date | null;
   deleteProtected?: boolean;
   status?: string;
+  environmentId?: string | null;
 }
 
 /**
@@ -51,6 +53,7 @@ export interface ServiceWithMetricsDto {
   port: number;
   status: string;
   userId: string;
+  environmentId: string | null;
   envVars: unknown;
   createdAt: Date;
   updatedAt: Date;

@@ -59,5 +59,5 @@ export const LOG_REDACT_PATHS = [
   'req.body.secret',
   'req.body.githubAccessToken',
 ];
-export const LOG_REQUESTS = process.env.LOG_REQUESTS !== 'false'; // Default to true
-export const LOG_RESPONSES = process.env.LOG_RESPONSES !== 'false'; // Default to true
+export const LOG_REQUESTS = process.env.LOG_REQUESTS === 'true'; // Default to false
+export const LOG_RESPONSES = process.env.LOG_RESPONSES === 'true'; // Default to false

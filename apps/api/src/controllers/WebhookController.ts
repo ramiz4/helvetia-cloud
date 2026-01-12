@@ -333,7 +333,12 @@ export class WebhookController {
 
         // Upsert the preview service
         const service = await prisma.service.upsert({
-          where: { name: previewName },
+          where: {
+            environmentId_name: {
+              name: previewName,
+              environmentId: baseService.environmentId || '',
+            },
+          },
           update: {
             branch: headBranch,
             status: 'IDLE',
@@ -349,6 +354,7 @@ export class WebhookController {
             staticOutputDir: baseService.staticOutputDir,
             envVars: baseService.envVars || {},
             userId: baseService.userId,
+            environmentId: baseService.environmentId,
             isPreview: true,
             prNumber: prNumber,
           },

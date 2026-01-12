@@ -1,14 +1,13 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
-import type { IDeploymentRepository, IServiceRepository, IUserRepository } from '../interfaces';
+import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
 import { ServiceManagementService } from './ServiceManagementService';
 
 describe('ServiceManagementService', () => {
   let service: ServiceManagementService;
   let mockServiceRepo: IServiceRepository;
   let mockDeploymentRepo: IDeploymentRepository;
-  let mockUserRepo: IUserRepository;
 
   const mockService = {
     id: 'service-1',
@@ -20,6 +19,7 @@ describe('ServiceManagementService', () => {
     port: 3000,
     status: 'IDLE',
     userId: 'user-1',
+    environmentId: '123e4567-e89b-12d3-a456-426614174000',
     envVars: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -37,6 +37,9 @@ describe('ServiceManagementService', () => {
       findById: vi.fn(),
       findByUserId: vi.fn(),
       findByNameAndUserId: vi.fn(),
+      findByNameAll: vi.fn(),
+      findByNameAndEnvironment: vi.fn(),
+      findByEnvironmentId: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -54,16 +57,26 @@ describe('ServiceManagementService', () => {
       countByServiceId: vi.fn(),
     };
 
-    mockUserRepo = {
-      findById: vi.fn(),
-      findByGithubId: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      upsert: vi.fn(),
+    const mockContainerOrchestrator = {
+      listContainers: vi.fn().mockResolvedValue([]),
+      getContainer: vi.fn(),
+      createContainer: vi.fn(),
+      startContainer: vi.fn(),
+      stopContainer: vi.fn(),
+      removeContainer: vi.fn(),
+      buildImage: vi.fn(),
+      pullImage: vi.fn(),
+      inspectContainer: vi.fn(),
+      getContainerLogs: vi.fn(),
+      getContainerStats: vi.fn(),
+      getDockerInstance: vi.fn(),
     };
 
-    service = new ServiceManagementService(mockServiceRepo, mockDeploymentRepo, mockUserRepo);
+    service = new ServiceManagementService(
+      mockServiceRepo,
+      mockDeploymentRepo,
+      mockContainerOrchestrator,
+    );
   });
 
   describe('getUserServices', () => {
@@ -111,11 +124,13 @@ describe('ServiceManagementService', () => {
   describe('createOrUpdateService', () => {
     it('should create a new service', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       const result = await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'DOCKER',
       });
 
@@ -130,14 +145,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should update existing service', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId)
-        .mockResolvedValueOnce(null) // First call for checking other users
-        .mockResolvedValueOnce(mockService); // Second call for checking current user
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(mockService);
       vi.mocked(mockServiceRepo.update).mockResolvedValue(mockService);
 
       const result = await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'DOCKER',
       });
 
@@ -145,9 +159,10 @@ describe('ServiceManagementService', () => {
       expect(mockServiceRepo.update).toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenError if name is taken by another user', async () => {
-      const otherUserService = { ...mockService, userId: 'user-2' };
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(otherUserService);
+    it('should throw ConflictError if environmentId is missing', async () => {
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockRejectedValue(
+        new Error('Should not be called when environmentId is missing'),
+      );
 
       await expect(
         service.createOrUpdateService({
@@ -155,16 +170,17 @@ describe('ServiceManagementService', () => {
           userId: 'user-1',
           type: 'DOCKER',
         }),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(ConflictError);
     });
 
     it('should set default port for STATIC type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'STATIC',
       });
 
@@ -176,12 +192,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should set default credentials for POSTGRES type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'POSTGRES',
       });
 
@@ -198,12 +215,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should set default credentials for REDIS type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'REDIS',
       });
 
@@ -218,12 +236,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should set default credentials for MYSQL type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: '123e4567-e89b-12d3-a456-426614174000',
         type: 'MYSQL',
       });
 
@@ -353,6 +372,7 @@ describe('ServiceManagementService', () => {
   describe('isServiceNameAvailable', () => {
     it('should return true if name is available', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
 
       const result = await service.isServiceNameAvailable('test-service', 'user-1');
 
@@ -362,6 +382,7 @@ describe('ServiceManagementService', () => {
     it('should return true if existing service is soft deleted', async () => {
       const deletedService = { ...mockService, deletedAt: new Date() };
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(deletedService);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(deletedService);
 
       const result = await service.isServiceNameAvailable('test-service', 'user-1');
 
@@ -370,6 +391,7 @@ describe('ServiceManagementService', () => {
 
     it('should return false if name is taken', async () => {
       vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(mockService);
+      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(mockService);
 
       const result = await service.isServiceNameAvailable('test-service', 'user-1');
 

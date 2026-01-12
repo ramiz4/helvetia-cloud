@@ -28,6 +28,7 @@ describe('PrismaServiceRepository', () => {
     prNumber: null,
     deletedAt: null,
     deleteProtected: false,
+    environmentId: '123e4567-e89b-12d3-a456-426614174000',
   };
 
   beforeEach(() => {
@@ -55,6 +56,7 @@ describe('PrismaServiceRepository', () => {
       expect(result).toEqual(mockService);
       expect(mockPrisma.service.findUnique).toHaveBeenCalledWith({
         where: { id: 'service-1' },
+        include: { environment: { include: { project: true } } },
       });
     });
 
@@ -76,8 +78,10 @@ describe('PrismaServiceRepository', () => {
       expect(result).toEqual([mockService]);
       expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1', deletedAt: null },
+        include: { environment: { include: { project: true } } },
         take: undefined,
         skip: undefined,
+        orderBy: { createdAt: 'asc' },
       });
     });
 
@@ -88,8 +92,10 @@ describe('PrismaServiceRepository', () => {
 
       expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-1', deletedAt: null },
+        include: { environment: { include: { project: true } } },
         take: 10,
         skip: 5,
+        orderBy: { createdAt: 'asc' },
       });
     });
   });
@@ -187,6 +193,7 @@ describe('PrismaServiceRepository', () => {
         where: { deletedAt: null },
         take: undefined,
         skip: undefined,
+        orderBy: { createdAt: 'asc' },
       });
     });
 
@@ -199,6 +206,7 @@ describe('PrismaServiceRepository', () => {
         where: { deletedAt: null },
         take: 20,
         skip: 10,
+        orderBy: { createdAt: 'asc' },
       });
     });
   });

@@ -46,6 +46,7 @@ export const worker = new Worker(
       customDomain,
       type,
       staticOutputDir,
+      username,
     } = job.data;
 
     let newContainer: Docker.Container | null = null;
@@ -127,6 +128,20 @@ export const worker = new Worker(
         customDomain,
         staticOutputDir,
         type,
+        githubToken: job.data.githubToken,
+        projectName: job.data.projectName,
+        environmentName: job.data.environmentName,
+        username,
+        onLog: (log) => {
+          const sanitized = log
+            .replace(/\0/g, '')
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+          const scrubbed = scrubLogs(sanitized);
+          publishLogs(redisConnection, deploymentId, scrubbed).catch((err) =>
+            console.error('Failed to publish real-time logs:', err),
+          );
+        },
       };
 
       // Execute deployment using the appropriate strategy
@@ -135,11 +150,10 @@ export const worker = new Worker(
       buildLogs = result.buildLogs;
 
       // Sanitize logs for PostgreSQL (remove null bytes and invalid UTF8)
-      /* eslint-disable no-control-regex */
       const sanitizedLogs = buildLogs
         .replace(/\0/g, '')
+        // eslint-disable-next-line no-control-regex
         .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
-      /* eslint-enable no-control-regex */
 
       // Scrub sensitive data from logs
       const scrubbedLogs = scrubLogs(sanitizedLogs);
@@ -176,9 +190,16 @@ export const worker = new Worker(
         port,
         envVars,
         customDomain,
+        projectName: context.projectName,
+        environmentName: context.environmentName,
+        username: context.username,
+        onLog: context.onLog,
       });
       newContainer = containerResult.container;
       containerPostfix = containerResult.postfix;
+
+      context.onLog?.(`✅ Container ${containerResult.postfix} started successfully.\n\n`);
+      context.onLog?.(`==== Cleaning up old containers ====\n`);
 
       // Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
       await cleanupOldContainers({
@@ -187,6 +208,9 @@ export const worker = new Worker(
         serviceName,
         currentPostfix: containerPostfix,
       });
+
+      context.onLog?.(`✅ Cleanup complete.\n\n`);
+      context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
 
       // Update deployment and service status
       await updateDeploymentStatus({

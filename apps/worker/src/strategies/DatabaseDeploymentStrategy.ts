@@ -34,24 +34,42 @@ export class DatabaseDeploymentStrategy implements IDeploymentStrategy {
       throw new Error(`Unknown database type: ${type}`);
     }
 
-    console.log(`Managed service ${type} detected. Using image ${imageTag}. Pulling image...`);
+    const startMsg = `==== Managed database service ${type} detected. Using image ${imageTag} ====\n`;
+    console.log(startMsg.trim());
+    context.onLog?.(startMsg);
+
+    let buildLogs = startMsg;
 
     // Pull the database image
     try {
       const stream = await docker.pull(imageTag);
       await new Promise((resolve, reject) => {
-        docker.modem.followProgress(stream, (err: Error | null, res: DockerPullProgressEvent[]) => {
-          if (err) reject(err);
-          else resolve(res);
-        });
+        docker.modem.followProgress(
+          stream,
+          (err: Error | null, res: unknown) => {
+            if (err) reject(err);
+            else resolve(res);
+          },
+          (event: DockerPullProgressEvent) => {
+            const status = event.status || '';
+            const progress = event.progress || '';
+            const id = event.id ? `[${event.id}] ` : '';
+            const logLine = `${id}${status} ${progress}\n`;
+            buildLogs += logLine;
+            context.onLog?.(logLine);
+          },
+        );
       });
-      console.log(`Successfully pulled ${imageTag}`);
+      const successMsg = `Successfully pulled ${imageTag}\n`;
+      console.log(successMsg.trim());
+      context.onLog?.(successMsg);
+      buildLogs += successMsg;
     } catch (pullError) {
-      console.error(`Failed to pull image ${imageTag}:`, pullError);
+      const errorMsg = `Failed to pull image ${imageTag}: ${pullError}\n`;
+      console.error(errorMsg.trim());
+      context.onLog?.(errorMsg);
       throw new Error(`Failed to pull database image: ${pullError}`);
     }
-
-    const buildLogs = `Managed service deployment. Pulled official image ${imageTag}.`;
 
     return {
       imageTag,

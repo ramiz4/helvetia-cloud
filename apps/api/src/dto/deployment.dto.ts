@@ -54,4 +54,8 @@ export interface QueueDeploymentJobDto {
   customDomain: string | null;
   type: string;
   staticOutputDir: string | null;
+  githubToken?: string;
+  projectName?: string;
+  environmentName?: string;
+  username: string;
 }

@@ -1,7 +1,20 @@
 'use client';
 
 import type { Service } from '@/types/service';
-import { Cpu, Edit2, ExternalLink, FileText, Play, RotateCw, Trash2, Zap } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Cpu,
+  Edit2,
+  FileText,
+  Globe,
+  Play,
+  RotateCw,
+  Square,
+  Trash2,
+  Zap,
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface ServiceCardProps {
   service: Service;
@@ -9,6 +22,7 @@ interface ServiceCardProps {
   onDelete: (serviceId: string) => void;
   onDeploy: (serviceId: string) => void;
   onRestart: (serviceId: string) => void;
+  onStop: (serviceId: string) => void;
   onViewLogs: (deploymentId: string) => void;
   translations: {
     status: {
@@ -30,6 +44,7 @@ interface ServiceCardProps {
     labels: {
       cpu: string;
       ram: string;
+      containerName: string;
     };
   };
 }
@@ -40,68 +55,125 @@ export function ServiceCard({
   onDelete,
   onDeploy,
   onRestart,
+  onStop,
   onViewLogs,
   translations: t,
 }: ServiceCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (service.containerName) {
+      navigator.clipboard.writeText(service.containerName);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const serviceUrl =
+    service.projectName && service.environmentName
+      ? `http://${service.username}.${service.projectName}.${service.environmentName}.${service.name}.localhost`
+      : `http://${service.name}.localhost`;
+
   return (
-    <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-white/10 hover:border-indigo-500/30 transition-all duration-500 group shadow-2xl flex flex-col">
-      <div className="flex justify-between items-start mb-8">
-        <div className="space-y-3">
-          <h3 className="text-2xl font-bold text-white tracking-tight leading-none">
-            {service.name}
-          </h3>
-          <div className="flex flex-wrap gap-2 items-center">
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-sm ${
-                service.status === 'RUNNING'
-                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20'
-                  : service.status === 'DEPLOYING'
-                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/20 animate-pulse'
-                    : service.status === 'FAILED'
-                      ? 'bg-rose-500/15 text-rose-400 border-rose-500/20'
-                      : 'bg-slate-500/15 text-slate-400 border-slate-500/20'
-              }`}
-            >
-              {service.status === 'NOT_RUNNING' ? t.status.notRunning : service.status}
-            </span>
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
-                service.type === 'STATIC'
-                  ? 'bg-sky-500/15 text-sky-400 border-sky-500/20'
-                  : 'bg-purple-500/15 text-purple-400 border-purple-500/20'
-              }`}
-            >
-              {service.type === 'STATIC'
-                ? t.newService.staticSite
-                : service.type === 'COMPOSE'
-                  ? t.newService.composeStack
-                  : t.newService.dockerService}
-            </span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => onEdit(service)}
-            className="p-2.5 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-            aria-label={`${t.actions.edit} ${service.name}`}
-            title={t.actions.edit}
-          >
-            <Edit2 size={18} />
-          </button>
-          <button
-            onClick={() => onDelete(service.id)}
-            className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all"
-            aria-label={`${t.actions.delete} ${service.name}`}
-            title={t.actions.delete}
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
+    <div className="group relative p-8 rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 hover:border-indigo-500/30 transition-all duration-700 shadow-2xl hover:shadow-indigo-500/10 flex flex-col h-full overflow-hidden">
+      <div className="absolute top-0 right-0 p-8 flex gap-2 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+        <button
+          onClick={() => onEdit(service)}
+          className="p-3 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/10 active:scale-90"
+          title={t.actions.edit}
+        >
+          <Edit2 size={18} />
+        </button>
+        <button
+          onClick={() => onDelete(service.id)}
+          className="p-3 rounded-2xl bg-white/5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all border border-white/10 active:scale-90"
+          title={t.actions.delete}
+        >
+          <Trash2 size={18} />
+        </button>
       </div>
 
-      <div className="flex items-center gap-3 text-sm text-slate-500 mb-8 pb-4 border-b border-white/5">
-        <div className="w-2 h-2 rounded-full bg-slate-600 shadow-[0_0_8px_rgba(71,85,105,0.5)]" />
-        <span className="truncate font-medium">{service.repoUrl}</span>
+      <div className="mb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <div
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all duration-700 ${
+              service.status === 'RUNNING'
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+                : 'bg-slate-500/10 border-white/10 text-slate-400'
+            }`}
+          >
+            {service.status === 'RUNNING' ? (
+              <RotateCw size={24} className="animate-spin-slow" />
+            ) : (
+              <Square size={24} />
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${
+                  service.status === 'RUNNING'
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                    : 'bg-white/5 border-white/10 text-slate-500'
+                }`}
+              >
+                {service.status || t.status.notRunning}
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                {service.type === 'STATIC'
+                  ? t.newService.staticSite
+                  : service.type === 'DOCKER'
+                    ? t.newService.dockerService
+                    : t.newService.composeStack}
+              </span>
+            </div>
+            <h3 className="text-3xl font-black text-white tracking-tighter mt-2 leading-none">
+              {service.name}
+            </h3>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-sm text-slate-500">
+            <div className="w-2 h-2 rounded-full bg-slate-600 shadow-[0_0_8px_rgba(71,85,105,0.5)]" />
+            <span className="truncate font-medium">{service.repoUrl}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-indigo-400/80 hover:text-indigo-400 transition-colors">
+            <Globe size={12} />
+            <a
+              href={serviceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="truncate font-medium hover:underline"
+            >
+              {serviceUrl.replace('http://', '')}
+            </a>
+          </div>
+          {service.containerName && (
+            <div className="flex items-center gap-2 mt-1">
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-2 text-[10px] text-slate-500 hover:text-indigo-300 transition-all bg-white/5 hover:bg-indigo-500/10 px-2 py-1 rounded-md w-fit font-mono border border-white/5 hover:border-indigo-500/20 group/copy relative"
+                title="Click to copy container name"
+              >
+                <span className="font-bold uppercase tracking-wider text-[9px] text-slate-600 group-hover/copy:text-indigo-400/70 transition-colors">
+                  {t.labels.containerName}:
+                </span>
+                <span className="text-indigo-400/70 select-all font-medium">
+                  {service.containerName}
+                </span>
+                <div className="ml-1 text-slate-600 group-hover/copy:text-indigo-400 transition-colors">
+                  {copied ? <Check size={10} /> : <Copy size={10} />}
+                </div>
+                {copied && (
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[9px] font-black px-2 py-1 rounded uppercase tracking-widest animate-in fade-in zoom-in slide-in-from-bottom-2 duration-300 shadow-xl">
+                    Copied!
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-10">
@@ -156,16 +228,14 @@ export function ServiceCard({
           >
             <FileText size={18} />
           </button>
-          <a
-            href={`http://${service.name}.localhost`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center py-3.5 rounded-2xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm active:scale-95"
-            aria-label={`${t.actions.visit} ${service.name} (opens in new tab)`}
-            title={t.actions.visit}
+          <button
+            onClick={() => onStop(service.id)}
+            className="flex items-center justify-center py-3.5 rounded-2xl bg-rose-500/10 text-rose-400 hover:text-white hover:bg-rose-500 transition-all border border-rose-500/10 shadow-sm active:scale-95 group/btn"
+            aria-label="Stop service"
+            title="Stop service"
           >
-            <ExternalLink size={18} />
-          </a>
+            <Square size={18} fill="currentColor" />
+          </button>
         </div>
       </div>
     </div>

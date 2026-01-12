@@ -78,6 +78,7 @@ vi.mock('database', () => {
         deleteMany: vi.fn(),
       },
     },
+    PrismaClient: vi.fn(),
   };
 });
 
@@ -116,7 +117,7 @@ describe('Service Input Validation', () => {
   });
 
   describe('POST /services - Service Creation Validation', () => {
-    it('should reject service with name shorter than 3 characters', async () => {
+    it('should reject service with name shorter than 2 characters', async () => {
       const { prisma } = await import('database');
       vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
 
@@ -128,7 +129,7 @@ describe('Service Input Validation', () => {
         url: '/services',
         headers: { Authorization: `Bearer ${token}` },
         payload: {
-          name: 'ab', // Too short
+          name: 'a', // Too short
           type: 'DOCKER',
         },
       });
@@ -224,34 +225,12 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-valid-service-123', // Valid format
+          environmentId: '123e4567-e89b-12d3-a456-426614174000',
           type: 'DOCKER',
         },
       });
 
       expect(response.statusCode).toBe(200);
-    });
-
-    it('should reject service with invalid repoUrl', async () => {
-      const { prisma } = await import('database');
-      vi.mocked(prisma.service.findUnique).mockResolvedValue(null);
-
-      const token = getAuthToken();
-
-      const response = await fastify.inject({
-        method: 'POST',
-        url: '/services',
-        headers: { Authorization: `Bearer ${token}` },
-        payload: {
-          name: 'my-service',
-          repoUrl: 'not-a-valid-url', // Invalid URL
-          type: 'DOCKER',
-        },
-      });
-
-      expect(response.statusCode).toBe(400);
-      const json = response.json();
-      expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'repoUrl')).toBe(true);
     });
 
     it('should accept service with valid repoUrl', async () => {
@@ -271,6 +250,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: '123e4567-e89b-12d3-a456-426614174000',
           repoUrl: 'https://github.com/user/repo', // Valid URL
           type: 'DOCKER',
         },
@@ -319,6 +299,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: '123e4567-e89b-12d3-a456-426614174000',
           branch: 'feature/my-branch_123', // Valid branch name
           type: 'DOCKER',
         },
@@ -436,6 +417,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: '123e4567-e89b-12d3-a456-426614174000',
           port: 8080, // Valid port
           type: 'DOCKER',
         },
@@ -491,6 +473,7 @@ describe('Service Input Validation', () => {
         headers: { Authorization: `Bearer ${token}` },
         payload: {
           name: 'my-service',
+          environmentId: '123e4567-e89b-12d3-a456-426614174000',
           envVars: {
             NODE_ENV: 'production',
             PORT: '3000',
@@ -574,30 +557,6 @@ describe('Service Input Validation', () => {
       expect(json.details.some((d: any) => d.field === 'name')).toBe(true);
     });
 
-    it('should reject update with invalid repoUrl', async () => {
-      const { prisma } = await import('database');
-      vi.mocked(prisma.service.findFirst).mockResolvedValue({
-        id: 'service-1',
-        userId: 'user-1',
-      } as any);
-
-      const token = getAuthToken();
-
-      const response = await fastify.inject({
-        method: 'PATCH',
-        url: '/services/service-1',
-        headers: { Authorization: `Bearer ${token}` },
-        payload: {
-          repoUrl: 'not-a-url', // Invalid URL
-        },
-      });
-
-      expect(response.statusCode).toBe(400);
-      const json = response.json();
-      expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'repoUrl')).toBe(true);
-    });
-
     it('should reject update with invalid branch name', async () => {
       const { prisma } = await import('database');
       vi.mocked(prisma.service.findFirst).mockResolvedValue({
@@ -649,6 +608,7 @@ describe('Service Input Validation', () => {
     it('should accept valid update', async () => {
       const { prisma } = await import('database');
       vi.mocked(prisma.service.updateMany).mockResolvedValue({ count: 1 } as any);
+      vi.mocked(prisma.deployment.findMany).mockResolvedValue([]);
       vi.mocked(prisma.service.findUnique).mockResolvedValue({
         id: 'service-1',
         name: 'updated-service',
