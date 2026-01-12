@@ -399,9 +399,8 @@
     "title": "[MEDIUM] Standardize Zod Error Handling with z.treeifyError()",
     "labels": ["P2", "refactoring", "api", "dx"],
     "body": "Currently, controllers manually map ZodError issues into a flat array. We should migrate all controllers to use `z.treeifyError()` (formerly `error.flatten()`) for consistent, structured error responses that match the request body shape.\n\n**Benefits:**\n- zero boilerplate in error handlers\n- structured nested errors for complex forms\n- easier for frontend to map errors to specific fields\n\n**Tasks:**\n- [ ] Update `ServiceController.ts` to use `z.treeifyError()`\n- [ ] Update `FeatureFlagController.ts` to use `z.treeifyError()`\n- [ ] Audit and update any other controllers using Zod validation\n- [ ] Update Dashboard error handling to support the tree-like structure",
-    "synced": true,
-    "number": 150,
+    "number": 167,
     "state": "OPEN",
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/150"
+    "synced": true
   }
 ]
