@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from 'database';
 import { inject, injectable } from 'tsyringe';
 import {
   IUserRepository,
@@ -40,7 +40,7 @@ export class PrismaUserRepository implements IUserRepository {
     update: UserUpdateInput,
   ): Promise<User> {
     return this.prisma.user.upsert({
-      where,
+      where: where as unknown as Prisma.UserWhereUniqueInput,
       create,
       update,
     });

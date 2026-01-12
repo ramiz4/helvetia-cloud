@@ -24,7 +24,7 @@ export interface Service {
   prNumber: number | null;
   deletedAt: Date | null;
   deleteProtected: boolean;
-  environment?: Environment;
+  environment?: Environment | null;
 }
 
 /**

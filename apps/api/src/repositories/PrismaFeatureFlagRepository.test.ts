@@ -1,3 +1,4 @@
+import { Prisma } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PrismaFeatureFlagRepository } from './PrismaFeatureFlagRepository';
@@ -105,7 +106,7 @@ describe('PrismaFeatureFlagRepository', () => {
           name: createData.name,
           description: createData.description,
           enabled: createData.enabled,
-          segments: null,
+          segments: Prisma.JsonNull,
         },
       });
     });

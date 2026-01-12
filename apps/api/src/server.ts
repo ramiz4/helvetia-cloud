@@ -376,6 +376,7 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/github',
     '/auth/refresh',
     '/auth/logout',
+    '/feature-flags/check',
   ];
 
   // Get the URL without query parameters

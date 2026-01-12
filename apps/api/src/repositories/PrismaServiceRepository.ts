@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from 'database';
 import { inject, injectable } from 'tsyringe';
 import { IServiceRepository, Service, ServiceCreateInput, ServiceUpdateInput } from '../interfaces';
 
@@ -64,14 +64,23 @@ export class PrismaServiceRepository implements IServiceRepository {
   }
 
   async create(data: ServiceCreateInput): Promise<Service> {
-    return this.prisma.service.create({ data });
+    return this.prisma.service.create({
+      data: {
+        ...data,
+        envVars:
+          data.envVars !== undefined ? (data.envVars as Prisma.InputJsonValue) : Prisma.JsonNull,
+      },
+    }) as unknown as Promise<Service>;
   }
 
   async update(id: string, data: ServiceUpdateInput): Promise<Service> {
     return this.prisma.service.update({
       where: { id },
-      data,
-    });
+      data: {
+        ...data,
+        envVars: data.envVars !== undefined ? (data.envVars as Prisma.InputJsonValue) : undefined,
+      },
+    }) as unknown as Promise<Service>;
   }
 
   async delete(id: string): Promise<void> {

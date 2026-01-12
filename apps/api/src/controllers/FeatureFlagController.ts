@@ -73,6 +73,7 @@ export class FeatureFlagController {
         });
       }
 
+      console.error('Error creating feature flag:', error);
       request.log.error(error, 'Failed to create feature flag');
       if (error instanceof Error && error.message.includes('already exists')) {
         return reply.code(409).send({ success: false, error: error.message });

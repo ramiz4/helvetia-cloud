@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Service, ServiceCreateInput, ServiceUpdateInput } from '../interfaces';
@@ -49,7 +49,7 @@ describe('PrismaServiceRepository', () => {
 
   describe('findById', () => {
     it('should find service by id', async () => {
-      vi.mocked(mockPrisma.service.findUnique).mockResolvedValue(mockService);
+      vi.mocked(mockPrisma.service.findUnique).mockResolvedValue(mockService as any);
 
       const result = await repository.findById('service-1');
 
@@ -71,7 +71,7 @@ describe('PrismaServiceRepository', () => {
 
   describe('findByUserId', () => {
     it('should find services by user id', async () => {
-      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService]);
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
 
       const result = await repository.findByUserId('user-1');
 
@@ -86,7 +86,7 @@ describe('PrismaServiceRepository', () => {
     });
 
     it('should support pagination options', async () => {
-      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService]);
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
 
       await repository.findByUserId('user-1', { take: 10, skip: 5 });
 
@@ -102,7 +102,7 @@ describe('PrismaServiceRepository', () => {
 
   describe('findByNameAndUserId', () => {
     it('should find service by name and user id', async () => {
-      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(mockService);
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(mockService as any);
 
       const result = await repository.findByNameAndUserId('test-service', 'user-1');
 
@@ -122,13 +122,16 @@ describe('PrismaServiceRepository', () => {
         port: 3000,
       };
 
-      vi.mocked(mockPrisma.service.create).mockResolvedValue(mockService);
+      vi.mocked(mockPrisma.service.create).mockResolvedValue(mockService as any);
 
       const result = await repository.create(createInput);
 
       expect(result).toEqual(mockService);
       expect(mockPrisma.service.create).toHaveBeenCalledWith({
-        data: createInput,
+        data: {
+          ...createInput,
+          envVars: Prisma.JsonNull,
+        },
       });
     });
   });
@@ -143,7 +146,7 @@ describe('PrismaServiceRepository', () => {
       vi.mocked(mockPrisma.service.update).mockResolvedValue({
         ...mockService,
         ...updateData,
-      });
+      } as any);
 
       const result = await repository.update('service-1', updateData);
 
@@ -157,7 +160,7 @@ describe('PrismaServiceRepository', () => {
 
   describe('delete', () => {
     it('should delete a service', async () => {
-      vi.mocked(mockPrisma.service.delete).mockResolvedValue(mockService);
+      vi.mocked(mockPrisma.service.delete).mockResolvedValue(mockService as any);
 
       await repository.delete('service-1');
 
@@ -169,7 +172,7 @@ describe('PrismaServiceRepository', () => {
 
   describe('findByStatus', () => {
     it('should find services by status', async () => {
-      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService]);
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
 
       const result = await repository.findByStatus('RUNNING');
 
@@ -184,7 +187,7 @@ describe('PrismaServiceRepository', () => {
 
   describe('findAll', () => {
     it('should find all services', async () => {
-      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService]);
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
 
       const result = await repository.findAll();
 
@@ -198,7 +201,7 @@ describe('PrismaServiceRepository', () => {
     });
 
     it('should support pagination', async () => {
-      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService]);
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
 
       await repository.findAll({ take: 20, skip: 10 });
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { API_BASE_URL } from '@/lib/config';
+import { useFeatureFlag } from '@/lib/featureFlags';
 import { useLanguage } from '@/lib/LanguageContext';
 import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, X } from 'lucide-react';
 import Image from 'next/image';
@@ -12,11 +13,14 @@ import UserMenu from './UserMenu';
 
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<{ username: string; avatarUrl?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; username: string; avatarUrl?: string } | null>(
+    null,
+  );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
+  const { enabled: showDeployments } = useFeatureFlag('show-deployments');
 
   // Check login status on mount and when interactions occur
   useEffect(() => {
@@ -146,17 +150,19 @@ export default function Navigation() {
                   <LayoutDashboard size={18} />
                   <span>{t.nav.dashboard}</span>
                 </Link>
-                <a
-                  href="/deployments"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
-                    pathname === '/deployments'
-                      ? 'bg-indigo-500/10 text-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  <BookOpen size={18} />
-                  <span>{t.nav.deployments}</span>
-                </a>
+                {showDeployments && (
+                  <a
+                    href="/deployments"
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                      pathname === '/deployments'
+                        ? 'bg-indigo-500/10 text-indigo-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <BookOpen size={18} />
+                    <span>{t.nav.deployments}</span>
+                  </a>
+                )}
               </div>
 
               <div className="flex items-center gap-4">
@@ -226,17 +232,19 @@ export default function Navigation() {
                     <LayoutDashboard size={20} />
                     <span>{t.nav.dashboard}</span>
                   </Link>
-                  <a
-                    href="/deployments"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
-                      pathname === '/deployments'
-                        ? 'bg-indigo-500/10 text-indigo-400'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <BookOpen size={20} />
-                    <span>{t.nav.deployments}</span>
-                  </a>
+                  {showDeployments && (
+                    <a
+                      href="/deployments"
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                        pathname === '/deployments'
+                          ? 'bg-indigo-500/10 text-indigo-400'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <BookOpen size={20} />
+                      <span>{t.nav.deployments}</span>
+                    </a>
+                  )}
                   <a
                     href="/settings"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${

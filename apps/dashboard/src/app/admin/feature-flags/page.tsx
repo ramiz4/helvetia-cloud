@@ -273,10 +273,11 @@ export default function FeatureFlagsAdminPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleToggle(flag)}
-                    className={`p-2 rounded-lg transition-all ${flag.enabled
+                    className={`p-2 rounded-lg transition-all ${
+                      flag.enabled
                         ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white'
                         : 'bg-slate-500/10 text-slate-400 hover:bg-slate-500 hover:text-white'
-                      }`}
+                    }`}
                     title={flag.enabled ? 'Disable flag' : 'Enable flag'}
                   >
                     <Power size={18} />
