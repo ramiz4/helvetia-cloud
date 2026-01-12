@@ -123,7 +123,7 @@ export default function ConfigurationStep({
                 />
                 <p className="text-[10px] text-slate-500 font-medium tracking-tight mt-2">
                   {t.dashboard.newService.projectNameHint}
-                  {projectName && !/^[a-z0-9-]+$/.test(projectName || '') && (
+                  {projectName && !/^[a-z0-9-]+$/.test(projectName) && (
                     <span className="text-rose-400 ml-2">
                       ({t.dashboard.newService.projectNameValidation})
                     </span>

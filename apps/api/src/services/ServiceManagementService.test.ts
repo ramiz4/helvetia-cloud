@@ -85,8 +85,7 @@ describe('ServiceManagementService', () => {
     service = new ServiceManagementService(
       mockServiceRepo,
       mockDeploymentRepo,
-      mockUserRepo,
-      mockContainerOrchestrator as any,
+      mockContainerOrchestrator,
     );
   });
 

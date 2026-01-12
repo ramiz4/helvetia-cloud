@@ -1,7 +1,20 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import ProjectPage from './page';
+
+// Hoist mocks
+const mocks = vi.hoisted(() => ({
+  push: vi.fn(),
+  mutateCreateEnv: vi.fn(),
+  mutateUpdateService: vi.fn(),
+  mutateDeleteService: vi.fn(),
+  mutateDeployService: vi.fn(),
+  mutateRestartService: vi.fn(),
+  mutateStopService: vi.fn(),
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}));
 
 // Mock dependencies
 vi.mock('next/navigation', async () => {
@@ -9,7 +22,7 @@ vi.mock('next/navigation', async () => {
   return {
     ...actual,
     useRouter: () => ({
-      push: vi.fn(),
+      push: mocks.push,
     }),
     useParams: () => ({
       id: 'proj-1',
@@ -22,41 +35,79 @@ vi.mock('@/lib/tokenRefresh', () => ({
   checkAndRefreshToken: vi.fn().mockResolvedValue(true),
 }));
 
-// Mock hooks
-const mutateAsyncMock = vi.fn();
+const mockServices = [
+  {
+    id: 's1',
+    name: 'Service 1',
+    status: 'RUNNING',
+    environmentId: 'env-1',
+    createdAt: '2023-01-01',
+    deployments: [],
+  },
+  {
+    id: 's2',
+    name: 'Service 2',
+    status: 'FAILED',
+    environmentId: 'env-1',
+    createdAt: '2023-01-02',
+    deployments: [],
+  }
+];
+
 vi.mock('@/hooks/useProjects', () => ({
   useProject: () => ({
     data: { id: 'proj-1', name: 'My Project', environments: [{ id: 'env-1', name: 'Production' }] },
     isLoading: false,
   }),
   useCreateEnvironment: () => ({
-    mutateAsync: mutateAsyncMock,
+    mutateAsync: mocks.mutateCreateEnv,
   }),
 }));
 
 vi.mock('@/hooks/useServices', () => ({
   useServices: () => ({
-    data: [],
+    data: mockServices,
     isLoading: false,
   }),
-  useDeployService: () => ({ mutateAsync: vi.fn() }),
-  useDeleteService: () => ({ mutateAsync: vi.fn() }),
-  useRestartService: () => ({ mutateAsync: vi.fn() }),
-  useStopService: () => ({ mutateAsync: vi.fn() }),
-  useUpdateService: () => ({ mutateAsync: vi.fn() }),
+  useDeployService: () => ({ mutateAsync: mocks.mutateDeployService }),
+  useDeleteService: () => ({ mutateAsync: mocks.mutateDeleteService }),
+  useRestartService: () => ({ mutateAsync: mocks.mutateRestartService }),
+  useStopService: () => ({ mutateAsync: mocks.mutateStopService }),
+  useUpdateService: () => ({ mutateAsync: mocks.mutateUpdateService }),
   createUpdateServiceMetrics: () => vi.fn(),
 }));
 
 vi.mock('@/components/ServiceCard/ServiceCard', () => ({
-  ServiceCard: () => <div>Service Card</div>,
+  ServiceCard: ({ service, onEdit, onDelete, onDeploy, onRestart, onStop, onViewLogs }: any) => (
+    <div data-testid={`service-${service.id}`}>
+      {service.name}
+      <button onClick={() => onEdit(service)}>Edit</button>
+      <button onClick={() => onDelete(service.id)}>Delete</button>
+      <button onClick={() => onDeploy(service.id)}>Deploy</button>
+      <button onClick={() => onRestart(service.id)}>Restart</button>
+      <button onClick={() => onStop(service.id)}>Stop</button>
+      <button onClick={() => onViewLogs(service.id + '-dep')}>Logs</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/EditServiceModal', () => ({
-  EditServiceModal: () => <div>Edit Service Modal</div>,
+  EditServiceModal: ({ onSave, onClose, service }: any) => (
+    <div data-testid="edit-modal">
+      Edit Modal
+      <button onClick={() => onSave(service, [{ key: 'NEW_VAR', value: '123' }])}>Save</button>
+      <button onClick={onClose}>Close</button>
+    </div>
+  ),
 }));
 
 vi.mock('@/components/LogsModal', () => ({
-  LogsModal: () => <div>Logs Modal</div>,
+  LogsModal: ({ onClose, logs }: any) => (
+    <div data-testid="logs-modal">
+      Logs: {logs}
+      <button onClick={onClose}>Close</button>
+    </div>
+  ),
 }));
 
 import en from '../../../locales/en.json';
@@ -69,17 +120,10 @@ vi.mock('@/lib/LanguageContext', () => ({
 
 vi.mock('react-hot-toast', () => ({
   default: {
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mocks.toastSuccess,
+    error: mocks.toastError,
   },
 }));
-
-// Mock NewEnvironmentModal to check if it's passed the correct props/handler
-// But better to integration test it by not mocking it?
-// The problem is UI library dependencies (lucide, etc) which should be fine.
-// Let's rely on the real NewEnvironmentModal implementation if possible, or mock it if we want to isolate.
-// Since we wrote NewEnvironmentModal.tsx perfectly, let's use the real one?
-// But it uses `lucide-react` which might be slow or problematic in some environments? No, it's fine.
 
 // Mock EventSource
 global.EventSource = class MockEventSource {
@@ -92,46 +136,167 @@ describe('ProjectPage', () => {
   beforeEach(() => {
     localStorage.setItem('user', 'true');
     vi.clearAllMocks();
+    global.confirm = vi.fn(() => true);
   });
 
-  test('should open New Environment modal and submit creation', async () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } }, // prevent retries on failure
-    });
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      {children}
+    </QueryClientProvider>
+  );
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <ProjectPage />
-      </QueryClientProvider>,
-    );
+  test('renders project details and services', async () => {
+    render(<ProjectPage />, { wrapper });
 
-    // Check project data is loaded
     await waitFor(() => {
       expect(screen.getByText('My Project')).toBeInTheDocument();
       expect(screen.getByText('Production')).toBeInTheDocument();
+      expect(screen.getByText('Service 1')).toBeInTheDocument();
+      expect(screen.getByText('Service 2')).toBeInTheDocument();
     });
+  });
 
-    // Click "New Environment"
-    const newEnvBtn = screen.getByText('New Environment');
-    fireEvent.click(newEnvBtn);
+  test('redirects to login if no user', async () => {
+    localStorage.removeItem('user');
+    render(<ProjectPage />, { wrapper });
 
-    // Modal should be open
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  test('handles environment creation', async () => {
+    render(<ProjectPage />, { wrapper });
+
+    await waitFor(() => expect(screen.getByText('New Environment')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('New Environment'));
     expect(screen.getByRole('heading', { name: 'Create Environment' })).toBeInTheDocument();
 
-    // Fill the input
     const input = screen.getByPlaceholderText('staging, production, testing');
     fireEvent.change(input, { target: { value: 'Staging' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Environment' }));
 
-    // Submit
-    const createBtn = screen.getByRole('button', { name: 'Create Environment' });
-    fireEvent.click(createBtn);
-
-    // Verify mutation called
     await waitFor(() => {
-      expect(mutateAsyncMock).toHaveBeenCalledWith({
-        projectId: 'proj-1',
-        name: 'Staging',
-      });
+      expect(mocks.mutateCreateEnv).toHaveBeenCalledWith({ projectId: 'proj-1', name: 'Staging' });
+      expect(mocks.toastSuccess).toHaveBeenCalled();
     });
+  });
+
+  test('handles service delete', async () => {
+    render(<ProjectPage />, { wrapper });
+
+    await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Delete', { selector: '[data-testid="service-s1"] button' }));
+
+    await waitFor(() => {
+      expect(mocks.mutateDeleteService).toHaveBeenCalledWith('s1');
+      expect(mocks.toastSuccess).toHaveBeenCalled();
+    });
+  });
+
+  test('handles service restart', async () => {
+    render(<ProjectPage />, { wrapper });
+
+    await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Restart', { selector: '[data-testid="service-s1"] button' }));
+
+    await waitFor(() => {
+      expect(mocks.mutateRestartService).toHaveBeenCalledWith('s1');
+      expect(mocks.toastSuccess).toHaveBeenCalled();
+    });
+  });
+
+  test('handles service stop', async () => {
+    render(<ProjectPage />, { wrapper });
+
+    await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Stop', { selector: '[data-testid="service-s1"] button' }));
+
+    await waitFor(() => {
+      expect(mocks.mutateStopService).toHaveBeenCalledWith('s1');
+      expect(mocks.toastSuccess).toHaveBeenCalled();
+    });
+  });
+
+  test('handles service deploy', async () => {
+    mocks.mutateDeployService.mockResolvedValue({ id: 'dep-1' });
+    // Mock the logs fetch which happens after deploy
+    const { fetchWithAuth } = await import('@/lib/tokenRefresh');
+    (fetchWithAuth as any).mockResolvedValue({
+      json: async () => ({ logs: 'Build started...' })
+    });
+
+    render(<ProjectPage />, { wrapper });
+
+    await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Deploy', { selector: '[data-testid="service-s1"] button' }));
+
+    await waitFor(() => {
+      expect(mocks.mutateDeployService).toHaveBeenCalledWith('s1');
+      // Check if logs are shown
+      expect(screen.getByTestId('logs-modal')).toBeInTheDocument();
+      expect(screen.getByText('Logs: Build started...')).toBeInTheDocument();
+    });
+  });
+
+  test('handles service update', async () => {
+    render(<ProjectPage />, { wrapper });
+
+    await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Edit', { selector: '[data-testid="service-s1"] button' }));
+    expect(screen.getByTestId('edit-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(mocks.mutateUpdateService).toHaveBeenCalledWith({
+        id: 's1',
+        data: expect.objectContaining({
+          envVars: { NEW_VAR: '123' }
+        }),
+      });
+      expect(mocks.toastSuccess).toHaveBeenCalled();
+    });
+  });
+
+  test('handles view logs', async () => {
+    const { fetchWithAuth } = await import('@/lib/tokenRefresh');
+    (fetchWithAuth as any).mockResolvedValue({
+      json: async () => ({ logs: 'Existing logs...' })
+    });
+
+    render(<ProjectPage />, { wrapper });
+
+    await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Logs', { selector: '[data-testid="service-s1"] button' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('logs-modal')).toBeInTheDocument();
+      expect(screen.getByText('Logs: Existing logs...')).toBeInTheDocument();
+    });
+  });
+
+  test('closes logs modal', async () => {
+    // First open logs
+    const { fetchWithAuth } = await import('@/lib/tokenRefresh');
+    (fetchWithAuth as any).mockResolvedValue({
+      json: async () => ({ logs: 'Log content' })
+    });
+
+    render(<ProjectPage />, { wrapper });
+    await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Logs', { selector: '[data-testid="service-s1"] button' }));
+
+    await waitFor(() => expect(screen.getByTestId('logs-modal')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Close'));
+    expect(screen.queryByTestId('logs-modal')).not.toBeInTheDocument();
   });
 });
