@@ -363,6 +363,7 @@ fastify.setErrorHandler(errorHandler);
 
 // Auth hook
 fastify.addHook('onRequest', async (request, _reply) => {
+  // Public routes that don't require authentication (without version prefix)
   const publicRoutes = [
     '/health',
     '/metrics',
@@ -372,13 +373,24 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/refresh',
     '/auth/logout',
   ];
-  const url = request.routeOptions?.url || request.url.split('?')[0];
-  if (process.env.NODE_ENV === 'test') {
-    console.log(`Auth hook: url=${url} rawUrl=${request.url} matched=${!!request.routeOptions}`);
-  }
-  if (publicRoutes.includes(url)) {
+
+  // Get the URL without query parameters
+  const fullUrl = request.url.split('?')[0];
+
+  // Check if it's a public route (unversioned)
+  if (publicRoutes.includes(fullUrl)) {
     return;
   }
+
+  // Check if it's a versioned public route (e.g., /api/v1/auth/refresh)
+  // We need to check if the URL starts with /api/v1 and then matches a public route
+  if (fullUrl.startsWith('/api/v1/')) {
+    const pathWithoutVersion = fullUrl.substring(7); // Remove '/api/v1' prefix
+    if (publicRoutes.includes(pathWithoutVersion)) {
+      return;
+    }
+  }
+
   try {
     await request.jwtVerify();
   } catch {
@@ -390,33 +402,13 @@ fastify.get('/health', async () => {
   return { status: 'ok' };
 });
 
-// Register metrics routes
+// Register metrics routes (unversioned - monitoring endpoints)
 import { metricsRoutes } from './routes/metrics.routes';
 fastify.register(metricsRoutes);
 
-// Register service routes
-import { serviceRoutes } from './routes/service.routes';
-fastify.register(serviceRoutes);
-
-// Register deployment routes
-import { deploymentRoutes } from './routes/deployment.routes';
-fastify.register(deploymentRoutes);
-
-// Register GitHub routes
-import { githubRoutes } from './routes/github.routes';
-fastify.register(githubRoutes);
-
-// Register project routes
-import { projectRoutes } from './routes/project.routes';
-fastify.register(projectRoutes);
-
-// Register webhook routes
-import { webhookRoutes } from './routes/webhook.routes';
-fastify.register(webhookRoutes);
-
-// Register auth routes
-import { authRoutes } from './routes/auth.routes';
-fastify.register(authRoutes);
+// Register API v1 routes under /api/v1 prefix
+import { v1Routes } from './routes/v1';
+fastify.register(v1Routes, { prefix: '/api/v1' });
 
 // Export a factory function for testing
 export async function buildServer() {

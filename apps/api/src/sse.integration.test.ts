@@ -55,7 +55,7 @@ describeIf('SSE Streaming Integration Tests', () => {
     it('should establish SSE connection with correct headers', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -70,7 +70,7 @@ describeIf('SSE Streaming Integration Tests', () => {
     it('should send initial connection acknowledgment', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -108,7 +108,7 @@ describeIf('SSE Streaming Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -139,7 +139,7 @@ describeIf('SSE Streaming Integration Tests', () => {
     it('should require authentication', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
       });
 
       expect(response.statusCode).toBe(401);
@@ -148,7 +148,7 @@ describeIf('SSE Streaming Integration Tests', () => {
     it('should reject invalid token', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: 'Bearer invalid-token',
         },
@@ -169,7 +169,7 @@ describeIf('SSE Streaming Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${expiredToken}`,
         },
@@ -187,7 +187,7 @@ describeIf('SSE Streaming Integration Tests', () => {
     it('should include CORS headers when origin is provided', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
           origin: 'http://localhost:3000',
@@ -244,7 +244,7 @@ describeIf('SSE Streaming Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -289,7 +289,7 @@ describeIf('SSE Streaming Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -315,7 +315,7 @@ describeIf('SSE Streaming Integration Tests', () => {
       // Don't create any services
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -341,7 +341,7 @@ describeIf('SSE Streaming Integration Tests', () => {
       // This test verifies that the server doesn't crash when a client disconnects
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -358,7 +358,7 @@ describeIf('SSE Streaming Integration Tests', () => {
       const requests = Array.from({ length: 5 }, () =>
         app.inject({
           method: 'GET',
-          url: '/services/metrics/stream',
+          url: '/api/v1/services/metrics/stream',
           headers: {
             authorization: `Bearer ${authToken}`,
           },
@@ -381,7 +381,7 @@ describeIf('SSE Streaming Integration Tests', () => {
       // Just verify the endpoint is stable
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -394,7 +394,7 @@ describeIf('SSE Streaming Integration Tests', () => {
       // Even if database queries fail, SSE should not crash
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -420,7 +420,7 @@ describeIf('SSE Streaming Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },
@@ -455,7 +455,7 @@ describeIf('SSE Streaming Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           authorization: `Bearer ${authToken}`,
         },

@@ -168,7 +168,7 @@ describe('Rate Limiting', () => {
 
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services', // Rate limited endpoint
+      url: '/api/v1/services', // Rate limited endpoint
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -191,7 +191,7 @@ describe('Rate Limiting', () => {
 
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -231,7 +231,7 @@ describe('Rate Limiting', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/auth/github',
+      url: '/api/v1/auth/github',
       payload: { code: 'test-code' },
     });
 
@@ -298,7 +298,7 @@ describe('Rate Limiting', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services/service-1/deploy',
+      url: '/api/v1/services/service-1/deploy',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -327,7 +327,7 @@ describe('Rate Limiting', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/webhooks/github',
+      url: '/api/v1/webhooks/github',
       payload: payloadBuffer,
       headers: {
         'Content-Type': 'application/json',

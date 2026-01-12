@@ -157,7 +157,7 @@ describe('GitHub Integration', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/auth/github',
+        url: '/api/v1/auth/github',
         payload: { code: mockCode },
       });
 
@@ -196,7 +196,7 @@ describe('GitHub Integration', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/github/repos',
+        url: '/api/v1/github/repos',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -232,7 +232,7 @@ describe('GitHub Integration', () => {
 
       await fastify.inject({
         method: 'GET',
-        url: '/github/repos?sort=invalid&per_page=999&page=-5',
+        url: '/api/v1/github/repos?sort=invalid&per_page=999&page=-5',
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -267,7 +267,7 @@ describe('GitHub Integration', () => {
       const token = fastify.jwt.sign(mockUser);
       const response = await fastify.inject({
         method: 'GET',
-        url: '/github/repos',
+        url: '/api/v1/github/repos',
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -288,7 +288,7 @@ describe('GitHub Integration', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/github/repos',
+        url: '/api/v1/github/repos',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -319,7 +319,7 @@ describe('GitHub Integration', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/github/repos/owner/repo/branches',
+        url: '/api/v1/github/repos/owner/repo/branches',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -343,7 +343,7 @@ describe('GitHub Integration', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: '/github/repos/owner;rm -rf/repo/branches',
+        url: '/api/v1/github/repos/owner;rm -rf/repo/branches',
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -369,7 +369,7 @@ describe('GitHub Integration', () => {
       const token = fastify.jwt.sign(mockUser);
       const response = await fastify.inject({
         method: 'GET',
-        url: '/github/repos/owner/repo/branches',
+        url: '/api/v1/github/repos/owner/repo/branches',
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -430,7 +430,7 @@ describe('GitHub Integration', () => {
       const rawBody = Buffer.from(JSON.stringify(payload));
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'Content-Type': 'application/json',
           'x-hub-signature-256': generateSignature(rawBody, 'test-webhook-secret'),
@@ -476,7 +476,7 @@ describe('GitHub Integration', () => {
       const rawBody = Buffer.from(JSON.stringify(payload));
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'Content-Type': 'application/json',
           'x-hub-signature-256': generateSignature(rawBody, 'test-webhook-secret'),

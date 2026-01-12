@@ -70,7 +70,7 @@ export class AuthController {
     const refreshToken = request.cookies.refreshToken;
 
     if (!refreshToken) {
-      return reply.status(401).send({ error: 'Refresh token not provided' });
+      return reply.status(400).send({ error: 'Refresh token not provided' });
     }
 
     try {

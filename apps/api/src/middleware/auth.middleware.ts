@@ -13,13 +13,33 @@ export const PUBLIC_ROUTES = [
 ];
 
 /**
+ * Check if a route is public (doesn't require authentication)
+ * Handles both versioned (/api/v1/...) and unversioned routes
+ */
+function isPublicRoute(url: string): boolean {
+  // Check if the route itself is public
+  if (PUBLIC_ROUTES.includes(url)) {
+    return true;
+  }
+
+  // Check if it's a versioned public route (e.g., /api/v1/auth/refresh)
+  for (const publicRoute of PUBLIC_ROUTES) {
+    if (url === `/api/v1${publicRoute}` || url.startsWith(`/api/v1${publicRoute}/`)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Authentication middleware
  * Verifies JWT token for protected routes
  */
 export const authenticate = async (request: FastifyRequest, _reply: FastifyReply) => {
-  const isPublicRoute = PUBLIC_ROUTES.includes(request.routeOptions?.url || '');
+  const routeUrl = request.routeOptions?.url || '';
 
-  if (isPublicRoute) {
+  if (isPublicRoute(routeUrl)) {
     return;
   }
 

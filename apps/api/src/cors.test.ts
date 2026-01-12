@@ -286,7 +286,7 @@ describe('CORS Security', () => {
       // CORS should block this request at the framework level
       const response = await fastify.inject({
         method: 'GET',
-        url: '/services/metrics/stream',
+        url: '/api/v1/services/metrics/stream',
         headers: {
           Authorization: `Bearer ${token}`,
           origin: maliciousOrigin,

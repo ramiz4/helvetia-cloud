@@ -61,7 +61,8 @@ const validatedEnv = validateEnv();
 export const env = validatedEnv;
 
 // Export individual config values for backward compatibility
-export const API_BASE_URL = env.NEXT_PUBLIC_API_URL;
+// API_BASE_URL includes the /api/v1 prefix for versioned endpoints
+export const API_BASE_URL = `${env.NEXT_PUBLIC_API_URL}/api/v1`;
 export const WS_BASE_URL = env.NEXT_PUBLIC_WS_URL;
 export const APP_BASE_URL = env.NEXT_PUBLIC_APP_URL;
 export const GITHUB_CLIENT_ID = env.NEXT_PUBLIC_GITHUB_CLIENT_ID;

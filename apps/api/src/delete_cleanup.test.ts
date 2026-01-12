@@ -128,7 +128,7 @@ describe('Service Deletion Cleanup', () => {
 
     const response = await fastify.inject({
       method: 'DELETE',
-      url: `/services/${serviceId}`,
+      url: `/api/v1/services/${serviceId}`,
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -171,7 +171,7 @@ describe('Service Deletion Cleanup', () => {
 
     const response = await fastify.inject({
       method: 'DELETE',
-      url: `/services/${serviceId}`,
+      url: `/api/v1/services/${serviceId}`,
       headers: { Authorization: `Bearer ${token}` },
     });
 

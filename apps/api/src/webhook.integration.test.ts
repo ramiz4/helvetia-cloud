@@ -89,11 +89,11 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         payload,
       });
 
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(400);
       expect(JSON.parse(response.body)).toHaveProperty('error', 'Missing signature');
     });
 
@@ -103,7 +103,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': 'sha256=invalidsignature',
           'content-type': 'application/json',
@@ -126,7 +126,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -167,7 +167,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -213,7 +213,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -243,7 +243,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -283,7 +283,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -336,7 +336,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -414,7 +414,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -494,7 +494,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -544,7 +544,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -579,7 +579,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -600,7 +600,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': signature,
           'content-type': 'application/json',
@@ -621,7 +621,7 @@ describeIf('Webhook Processing Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'x-hub-signature-256': 'sha256=test',
           'content-type': 'application/json',

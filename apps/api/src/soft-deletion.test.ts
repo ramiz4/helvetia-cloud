@@ -116,7 +116,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'DELETE',
-        url: `/services/${serviceId}`,
+        url: `/api/v1/services/${serviceId}`,
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -151,7 +151,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'DELETE',
-        url: `/services/${serviceId}`,
+        url: `/api/v1/services/${serviceId}`,
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -174,7 +174,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'DELETE',
-        url: `/services/${serviceId}`,
+        url: `/api/v1/services/${serviceId}`,
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -207,7 +207,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: `/services/${serviceId}/recover`,
+        url: `/api/v1/services/${serviceId}/recover`,
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -234,7 +234,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: `/services/${serviceId}/recover`,
+        url: `/api/v1/services/${serviceId}/recover`,
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -266,7 +266,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: `/services/${serviceId}/protection`,
+        url: `/api/v1/services/${serviceId}/protection`,
         headers: { Authorization: `Bearer ${token}` },
         payload: { deleteProtected: true },
       });
@@ -304,7 +304,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: `/services/${serviceId}/protection`,
+        url: `/api/v1/services/${serviceId}/protection`,
         headers: { Authorization: `Bearer ${token}` },
         payload: { deleteProtected: false },
       });
@@ -321,7 +321,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'PATCH',
-        url: `/services/${serviceId}/protection`,
+        url: `/api/v1/services/${serviceId}/protection`,
         headers: { Authorization: `Bearer ${token}` },
         payload: { deleteProtected: 'invalid' },
       });
@@ -340,7 +340,7 @@ describe('Soft Deletion Flow', () => {
 
       await fastify.inject({
         method: 'GET',
-        url: '/services',
+        url: '/api/v1/services',
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -376,7 +376,7 @@ describe('Soft Deletion Flow', () => {
 
       const response = await fastify.inject({
         method: 'GET',
-        url: `/services/${serviceId}`,
+        url: `/api/v1/services/${serviceId}`,
         headers: { Authorization: `Bearer ${token}` },
       });
 

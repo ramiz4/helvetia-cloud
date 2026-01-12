@@ -98,7 +98,7 @@ describe('API Service Normalization', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: { Authorization: `Bearer ${token}` },
       payload: {
         name: 'test-service',
@@ -132,7 +132,7 @@ describe('API Service Normalization', () => {
 
     const response = await fastify.inject({
       method: 'PATCH',
-      url: '/services/s1',
+      url: '/api/v1/services/s1',
       headers: { Authorization: `Bearer ${token}` },
       payload: {
         type: 'static', // lowercase
@@ -147,7 +147,7 @@ describe('API Service Normalization', () => {
   it('should reject invalid service types even if they are lowercase', async () => {
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: { Authorization: `Bearer ${token}` },
       payload: {
         name: 'test-service',

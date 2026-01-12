@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { validateEnv } from './env';
+import { API_BASE_URL, validateEnv } from './env';
 
 describe('Environment Validation - Dashboard', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -23,6 +23,12 @@ describe('Environment Validation - Dashboard', () => {
       expect(env.NEXT_PUBLIC_APP_URL).toBe('http://localhost:3000');
       // NODE_ENV is 'test' when running tests
       expect(env.NODE_ENV).toBe('test');
+    });
+
+    it('should append /api/v1 to API_BASE_URL', () => {
+      // API_BASE_URL should include the version prefix
+      expect(API_BASE_URL).toContain('/api/v1');
+      expect(API_BASE_URL).toBe('http://localhost:3001/api/v1');
     });
   });
 

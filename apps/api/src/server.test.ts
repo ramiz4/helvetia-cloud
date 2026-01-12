@@ -129,7 +129,7 @@ describe('API Server', () => {
   it('should require authentication for protected routes', async () => {
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services',
+      url: '/api/v1/services',
     });
 
     expect(response.statusCode).toBe(401);
@@ -152,7 +152,7 @@ describe('API Server', () => {
 
     const response = await fastify.inject({
       method: 'GET',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -181,7 +181,7 @@ describe('API Server', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -216,7 +216,7 @@ describe('API Server', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -262,7 +262,7 @@ describe('API Server', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -306,7 +306,7 @@ describe('API Server', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -352,7 +352,7 @@ describe('API Server', () => {
     const customPassword = 'my-custom-password';
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -395,7 +395,7 @@ describe('API Server', () => {
 
     const response = await fastify.inject({
       method: 'POST',
-      url: '/services',
+      url: '/api/v1/services',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -417,7 +417,7 @@ describe('API Server', () => {
   it('should logout user and clear cookie', async () => {
     const response = await fastify.inject({
       method: 'POST',
-      url: '/auth/logout',
+      url: '/api/v1/auth/logout',
     });
 
     expect(response.statusCode).toBe(200);
@@ -442,7 +442,7 @@ describe('API Server', () => {
     // Even without a token, logout should succeed (idempotent/safe)
     const response = await fastify.inject({
       method: 'POST',
-      url: '/auth/logout',
+      url: '/api/v1/auth/logout',
     });
 
     expect(response.statusCode).toBe(200);
@@ -480,11 +480,11 @@ describe('API Server', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         payload,
       });
 
-      expect(response.statusCode).toBe(401);
+      expect(response.statusCode).toBe(400);
       expect(response.json()).toEqual({ error: 'Missing signature' });
     });
 
@@ -498,7 +498,7 @@ describe('API Server', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'Content-Type': 'application/json',
           'x-hub-signature-256': 'sha256=invalidsignature',
@@ -523,7 +523,7 @@ describe('API Server', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'Content-Type': 'application/json',
           'x-hub-signature-256': signature,
@@ -561,7 +561,7 @@ describe('API Server', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'Content-Type': 'application/json',
           'x-hub-signature-256': signature,
@@ -585,7 +585,7 @@ describe('API Server', () => {
 
       const response = await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'Content-Type': 'application/json',
           'x-hub-signature-256': signature,
@@ -606,7 +606,7 @@ describe('API Server', () => {
 
       await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         payload,
       });
 
@@ -629,7 +629,7 @@ describe('API Server', () => {
 
       await fastify.inject({
         method: 'POST',
-        url: '/webhooks/github',
+        url: '/api/v1/webhooks/github',
         headers: {
           'Content-Type': 'application/json',
           'x-hub-signature-256': 'sha256=invalidsignature',
