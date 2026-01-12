@@ -162,20 +162,22 @@ export function EditServiceModal({
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    {t.labels.branch}
-                  </label>
-                  <input
-                    type="text"
-                    value={editingService.branch || ''}
-                    onChange={(e) =>
-                      setEditingService((prev) => ({ ...prev, branch: e.target.value }))
-                    }
-                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium font-mono"
-                    placeholder="main"
-                  />
-                </div>
+                {!editingService.repoUrl?.includes('ghcr.io') && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                      {t.labels.branch}
+                    </label>
+                    <input
+                      type="text"
+                      value={editingService.branch || ''}
+                      onChange={(e) =>
+                        setEditingService((prev) => ({ ...prev, branch: e.target.value }))
+                      }
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium font-mono"
+                      placeholder="main"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Specialized Form Fields */}

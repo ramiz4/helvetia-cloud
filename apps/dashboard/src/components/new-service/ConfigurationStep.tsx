@@ -127,7 +127,7 @@ export default function ConfigurationStep({
               <div className="grid grid-cols-2 gap-4">
                 {isGithubImage ? (
                   <>
-                    <div>
+                    <div className="col-span-2">
                       <label className="block text-sm font-medium text-slate-400 mb-2">
                         Image URL
                       </label>
@@ -136,19 +136,6 @@ export default function ConfigurationStep({
                         readOnly
                         value={repoUrl}
                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 font-mono text-xs cursor-not-allowed"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-2">
-                        Image Tag
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={branch} // reusing branch as tag
-                        onChange={(e) => updateData({ branch: e.target.value })}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-mono text-sm"
-                        placeholder="latest"
                       />
                     </div>
                   </>
