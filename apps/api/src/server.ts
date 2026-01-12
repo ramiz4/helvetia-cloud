@@ -363,22 +363,38 @@ fastify.setErrorHandler(errorHandler);
 
 // Auth hook
 fastify.addHook('onRequest', async (request, _reply) => {
+  // Public routes that don't require authentication (without version prefix)
   const publicRoutes = [
     '/health',
     '/metrics',
     '/metrics/json',
-    '/api/v1/webhooks/github',
-    '/api/v1/auth/github',
-    '/api/v1/auth/refresh',
-    '/api/v1/auth/logout',
+    '/webhooks/github',
+    '/auth/github',
+    '/auth/refresh',
+    '/auth/logout',
   ];
-  const url = request.routeOptions?.url || request.url.split('?')[0];
-  if (process.env.NODE_ENV === 'test') {
-    console.log(`Auth hook: url=${url} rawUrl=${request.url} matched=${!!request.routeOptions}`);
-  }
-  if (publicRoutes.includes(url)) {
+
+  // Get both the route pattern and the full URL
+  const routeUrl = request.routeOptions?.url || '';
+  const fullUrl = request.url.split('?')[0];
+
+  // Check if the route pattern itself is public (for routes registered with prefix, this won't have the prefix)
+  if (publicRoutes.includes(routeUrl)) {
     return;
   }
+
+  // Check if the full URL is public (handles unversioned routes)
+  if (publicRoutes.includes(fullUrl)) {
+    return;
+  }
+
+  // Check if the full URL matches a versioned public route
+  for (const publicRoute of publicRoutes) {
+    if (fullUrl === `/api/v1${publicRoute}` || fullUrl.startsWith(`/api/v1${publicRoute}/`)) {
+      return;
+    }
+  }
+
   try {
     await request.jwtVerify();
   } catch {
