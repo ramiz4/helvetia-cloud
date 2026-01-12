@@ -59,28 +59,11 @@ vi.mock('@/components/LogsModal', () => ({
   LogsModal: () => <div>Logs Modal</div>,
 }));
 
+import en from '../../../locales/en.json';
+
 vi.mock('@/lib/LanguageContext', () => ({
   useLanguage: () => ({
-    t: {
-      common: {
-        success: 'Success',
-        error: 'Error',
-        back: 'Back',
-      },
-      dashboard: {
-        actions: {
-          deployTriggerFailed: 'Failed',
-          deleteConfirm: 'Confirm',
-          deleteFailed: 'Failed',
-          restartSuccess: 'Success',
-          restartFailed: 'Failed',
-          updateFailed: 'Failed',
-        },
-        modals: {
-          noLogs: 'No logs',
-        },
-      },
-    },
+    t: en,
   }),
 }));
 

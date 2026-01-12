@@ -31,6 +31,7 @@ export interface DeploymentContext {
   githubToken?: string;
   projectName?: string;
   environmentName?: string;
+  username?: string;
   onLog?: (log: string) => void;
 }
 

@@ -11,7 +11,7 @@ export const ComposeConfigFields: React.FC<BaseConfigFieldsProps> = ({
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.newService.composeFile}
+          {t.newService.composeFile}
         </label>
         <input
           type="text"
@@ -28,7 +28,7 @@ export const ComposeConfigFields: React.FC<BaseConfigFieldsProps> = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.newService.mainServiceName}
+          {t.newService.mainServiceName}
         </label>
         <input
           type="text"
@@ -38,14 +38,12 @@ export const ComposeConfigFields: React.FC<BaseConfigFieldsProps> = ({
           placeholder="app"
           disabled={disabled}
         />
-        <p className="text-[10px] text-slate-500 ml-1 italic">
-          {t.dashboard.newService.mainServiceDesc}
-        </p>
+        <p className="text-[10px] text-slate-500 ml-1 italic">{t.newService.mainServiceDesc}</p>
       </div>
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.port}
+          {t.labels.port}
         </label>
         <input
           type="number"

@@ -81,6 +81,7 @@ describe('PrismaServiceRepository', () => {
         include: { environment: { include: { project: true } } },
         take: undefined,
         skip: undefined,
+        orderBy: { createdAt: 'asc' },
       });
     });
 
@@ -94,6 +95,7 @@ describe('PrismaServiceRepository', () => {
         include: { environment: { include: { project: true } } },
         take: 10,
         skip: 5,
+        orderBy: { createdAt: 'asc' },
       });
     });
   });
@@ -191,6 +193,7 @@ describe('PrismaServiceRepository', () => {
         where: { deletedAt: null },
         take: undefined,
         skip: undefined,
+        orderBy: { createdAt: 'asc' },
       });
     });
 
@@ -203,6 +206,7 @@ describe('PrismaServiceRepository', () => {
         where: { deletedAt: null },
         take: 20,
         skip: 10,
+        orderBy: { createdAt: 'asc' },
       });
     });
   });

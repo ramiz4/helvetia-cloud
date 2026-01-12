@@ -4,6 +4,7 @@ import type { QueueDeploymentJobDto } from '../dto';
 import { ForbiddenError, NotFoundError } from '../errors';
 import type {
   Deployment,
+  IDeploymentOrchestratorService,
   IDeploymentRepository,
   IProjectRepository,
   IServiceRepository,
@@ -17,7 +18,7 @@ import { decrypt } from '../utils/crypto';
  * Handles business logic for deployment orchestration
  */
 @injectable()
-export class DeploymentOrchestratorService {
+export class DeploymentOrchestratorService implements IDeploymentOrchestratorService {
   constructor(
     @inject(Symbol.for('IServiceRepository'))
     private serviceRepository: IServiceRepository,
@@ -135,6 +136,9 @@ export class DeploymentOrchestratorService {
 
     // Inject GitHub token if available
     const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
     let githubToken: string | undefined;
 
     if (user?.githubAccessToken) {
@@ -177,6 +181,7 @@ export class DeploymentOrchestratorService {
       githubToken,
       projectName,
       environmentName,
+      username: user.username,
     };
   }
 

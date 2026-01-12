@@ -12,7 +12,7 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Get rate limit config
   const redis = fastify.redis;
-  const { wsRateLimitConfig } = createRateLimitConfigs(redis);
+  const { wsRateLimitConfig, deploymentRateLimitConfig } = createRateLimitConfigs(redis);
 
   /**
    * POST /services/:id/deploy
@@ -21,7 +21,7 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/services/:id/deploy',
     {
-      config: { rateLimit: wsRateLimitConfig },
+      config: { rateLimit: deploymentRateLimitConfig },
     },
     async (request, reply) => {
       return controller.deployService(request, reply);
@@ -32,9 +32,15 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
    * POST /services/:id/restart
    * Restart a service container without rebuilding
    */
-  fastify.post('/services/:id/restart', async (request, reply) => {
-    return controller.restartService(request, reply);
-  });
+  fastify.post(
+    '/services/:id/restart',
+    {
+      config: { rateLimit: deploymentRateLimitConfig },
+    },
+    async (request, reply) => {
+      return controller.restartService(request, reply);
+    },
+  );
 
   /**
    * POST /services/:id/stop

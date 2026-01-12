@@ -16,6 +16,7 @@ export interface Environment {
   createdAt: Date;
   updatedAt: Date;
   services?: Service[];
+  project?: Project;
 }
 
 export interface ProjectCreateInput {

@@ -1,6 +1,6 @@
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { ComposeFileBuilder } from '../utils/builders';
-import { ensureNetworkExists } from '../utils/containerHelpers';
+import { ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
 import { getSecureBindMounts } from '../utils/workspace';
 
 /**
@@ -25,17 +25,17 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
       port,
       envVars,
       customDomain,
+      username,
     } = context;
 
     let buildLogs = '';
 
     // Determine network name
-    let networkName = 'helvetia-net';
-    if (context.projectName && context.environmentName) {
-      networkName = `helvetia-${context.projectName}-${context.environmentName}`;
-    } else if (context.projectName) {
-      networkName = `helvetia-${context.projectName}`;
-    }
+    const networkName = getNetworkName({
+      username,
+      projectName: context.projectName,
+      environmentName: context.environmentName,
+    });
 
     // Ensure networks exist before builder starts
     await ensureNetworkExists(docker, 'helvetia-net');
@@ -59,7 +59,7 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
 
     try {
       await builder.start();
-      const startMsg = `==== Starting Docker Compose deployment for ${serviceName} ====\n`;
+      const startMsg = `==== Starting Docker Compose deployment for ${serviceName} ====\n\n`;
       console.log(startMsg.trim());
       context.onLog?.(startMsg);
       buildLogs += startMsg;
@@ -81,6 +81,13 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
         hosts.push(`${context.projectName}-${serviceName}.localhost`);
       }
 
+      if (context.projectName && context.environmentName && context.username) {
+        const sanitizedUsername = context.username.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const uHost = `${sanitizedUsername}.${context.projectName}.${context.environmentName}.${serviceName}`;
+        hosts.push(`${uHost}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+        hosts.push(`${uHost}.localhost`);
+      }
+
       const traefikRule = hosts.map((h) => `Host(\`${h}\`)`).join(' || ');
 
       // 3. Generate compose override file
@@ -94,6 +101,7 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
         envVars,
         projectName: context.projectName,
         environmentName: context.environmentName,
+        username: context.username,
       });
 
       // 4. Prepare build script

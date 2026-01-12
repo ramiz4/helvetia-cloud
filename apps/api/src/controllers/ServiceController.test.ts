@@ -61,7 +61,6 @@ describe('ServiceController', () => {
   let mockRequest: any;
   let mockReply: any;
   let mockServiceManagement: any;
-  let mockContainerOrchestrator: any;
 
   const mockService = {
     id: 'service-1',
@@ -128,21 +127,6 @@ describe('ServiceController', () => {
       isServiceNameAvailable: vi.fn(),
     };
 
-    mockContainerOrchestrator = {
-      listContainers: vi.fn().mockResolvedValue([]),
-      getContainer: vi.fn(),
-      createContainer: vi.fn(),
-      startContainer: vi.fn(),
-      stopContainer: vi.fn(),
-      removeContainer: vi.fn(),
-      buildImage: vi.fn(),
-      pullImage: vi.fn(),
-      inspectContainer: vi.fn(),
-      getContainerLogs: vi.fn(),
-      getContainerStats: vi.fn(),
-      getDockerInstance: vi.fn(),
-    };
-
     mockRequest = {
       params: {},
       body: {},
@@ -167,7 +151,6 @@ describe('ServiceController', () => {
     controller = new ServiceController(
       mockServiceRepo,
       mockDeploymentRepo,
-      mockContainerOrchestrator as any,
       mockServiceManagement as any,
     );
   });

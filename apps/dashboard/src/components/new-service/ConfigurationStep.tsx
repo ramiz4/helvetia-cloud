@@ -226,9 +226,7 @@ export default function ConfigurationStep({
                       port: port,
                     }}
                     onChange={(updates: Partial<ServiceFormData>) => updateData(updates)}
-                    translations={{
-                      dashboard: { labels: t.dashboard.labels, newService: t.dashboard.newService },
-                    }}
+                    translations={t.dashboard}
                     disabled={loading}
                   />
                 ) : serviceType === 'compose' ? (
@@ -260,9 +258,7 @@ export default function ConfigurationStep({
                       if (updates.port !== undefined) mapping.port = updates.port;
                       updateData(mapping);
                     }}
-                    translations={{
-                      dashboard: { labels: t.dashboard.labels, newService: t.dashboard.newService },
-                    }}
+                    translations={t.dashboard}
                     disabled={loading}
                   />
                 ) : serviceType === 'static' ? (
@@ -294,9 +290,7 @@ export default function ConfigurationStep({
                         mapping.outputDirectory = u.staticOutputDir;
                       updateData(mapping);
                     }}
-                    translations={{
-                      dashboard: { labels: t.dashboard.labels, newService: t.dashboard.newService },
-                    }}
+                    translations={t.dashboard}
                     disabled={loading}
                   />
                 ) : (
@@ -307,9 +301,7 @@ export default function ConfigurationStep({
                       port: port,
                     }}
                     onChange={(updates: Partial<ServiceFormData>) => updateData(updates)}
-                    translations={{
-                      dashboard: { labels: t.dashboard.labels, newService: t.dashboard.newService },
-                    }}
+                    translations={t.dashboard}
                     disabled={loading}
                   />
                 )}

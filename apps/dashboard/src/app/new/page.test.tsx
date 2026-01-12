@@ -37,49 +37,12 @@ vi.mock('@/components/GitHubRepoPicker', () => ({
   default: () => <div data-testid="github-repo-picker">GitHub Repo Picker</div>,
 }));
 
-// Mock translations to return English strings for keys we check
+import en from '../../locales/en.json';
+
+// Mock translations
 vi.mock('../../lib/LanguageContext', () => ({
   useLanguage: () => ({
-    t: {
-      common: {
-        back: 'Back',
-        next: 'Next',
-        error: 'Error',
-        success: 'Success',
-      },
-      dashboard: {
-        newService: {
-          title: 'Deploy a new Project',
-          subtitle: 'Subtitle',
-          importGithub: 'GitHub Import',
-          importManual: 'Manual Git Import',
-          importLocal: 'Local Folder',
-          importCompose: 'Docker Compose',
-          importDatabase: 'Database',
-          step1: 'Step 1',
-          step2: 'Step 2',
-          repoUrl: 'Git Repository URL',
-          projectName: 'Service Name',
-          serviceType: 'Service Type',
-          dockerService: 'Docker Service',
-          staticSite: 'Static Site',
-          buildCommand: 'Build Command',
-          startCommand: 'Start Command',
-          outputDirectory: 'Output Directory',
-          port: 'Port',
-          deployButton: 'Deploy Project',
-          deployingButton: 'Deploying...',
-          addVariable: 'Add Variable',
-          noEnvVars: 'No env vars',
-        },
-        labels: {
-          envVars: 'Environment Variables',
-        },
-      },
-      footer: {
-        hostedInSwiss: 'Hosted in Switzerland',
-      },
-    },
+    t: en,
   }),
 }));
 

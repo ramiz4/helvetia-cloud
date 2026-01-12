@@ -57,4 +57,5 @@ export interface QueueDeploymentJobDto {
   githubToken?: string;
   projectName?: string;
   environmentName?: string;
+  username: string;
 }

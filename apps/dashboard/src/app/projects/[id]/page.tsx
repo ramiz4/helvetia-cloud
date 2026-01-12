@@ -20,17 +20,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { checkAndRefreshToken, fetchWithAuth } from '@/lib/tokenRefresh';
 import type { Service } from '@/types/service';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Activity,
-  ArrowLeft,
-  Box,
-  Globe,
-  Layout,
-  Loader2,
-  Plus,
-  Settings,
-  Shield,
-} from 'lucide-react';
+import { Activity, ArrowLeft, Box, Layout, Loader2, Plus, Settings, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -161,19 +151,19 @@ export default function ProjectPage() {
   const handleStop = async (serviceId: string) => {
     try {
       await stopServiceMutation.mutateAsync(serviceId);
-      toast.success('Service stopped successfully');
+      toast.success(t.dashboard.actions.stopSuccess);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to stop service');
+      toast.error(err instanceof Error ? err.message : t.dashboard.actions.stopFailed);
     }
   };
 
   const handleCreateEnvironment = async (name: string) => {
     try {
       await createEnvironmentMutation.mutateAsync({ projectId: id, name });
-      toast.success('Environment created successfully');
+      toast.success(t.dashboard.actions.createEnvSuccess);
       setShowNewEnvironmentModal(false);
     } catch {
-      toast.error('Failed to create environment');
+      toast.error(t.dashboard.actions.createEnvFailed);
     }
   };
 
@@ -182,13 +172,13 @@ export default function ProjectPage() {
       <div className="flex flex-col items-center justify-center py-64 gap-6">
         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
         <p className="text-slate-500 font-bold tracking-widest uppercase text-xs">
-          Loading Project...
+          {t.dashboard.project.loading}
         </p>
       </div>
     );
   }
 
-  if (!project) return <div>Project not found</div>;
+  if (!project) return <div>{t.dashboard.project.notFound}</div>;
 
   // Filter services that belong to this project
   // Since we haven't fully migrated all services to always have an environmentId,
@@ -214,7 +204,7 @@ export default function ProjectPage() {
             className="inline-flex items-center gap-2 text-slate-500 hover:text-white transition-colors font-bold text-sm uppercase tracking-widest mb-8 group"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            Back to Projects
+            {t.dashboard.project.backToProjects}
           </Link>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -229,11 +219,11 @@ export default function ProjectPage() {
                   </h1>
                   <div className="flex items-center gap-3 mt-4">
                     <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      Project ID: {id.slice(0, 8)}...
+                      {t.dashboard.project.id} {id.slice(0, 8)}...
                     </span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                     <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-                      Global Status: Active
+                      {t.dashboard.project.globalStatus} {t.dashboard.project.statusActive}
                     </span>
                   </div>
                 </div>
@@ -243,14 +233,14 @@ export default function ProjectPage() {
             <div className="flex gap-4">
               <button className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all border border-white/10 flex items-center gap-3 active:scale-95 shadow-xl">
                 <Settings size={20} />
-                Project Settings
+                {t.dashboard.project.settings}
               </button>
               <button
                 onClick={() => setShowNewEnvironmentModal(true)}
                 className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all border border-white/10 flex items-center gap-3 active:scale-95 shadow-xl"
               >
                 <Plus size={20} />
-                New Environment
+                {t.dashboard.project.newEnvironment}
               </button>
             </div>
           </div>
@@ -262,7 +252,7 @@ export default function ProjectPage() {
               <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6 text-slate-500 font-black uppercase tracking-widest text-[10px]">
                   <Box size={14} className="text-indigo-400" />
-                  Total Services
+                  {t.dashboard.stats.total}
                 </div>
                 <div className="text-5xl font-black text-white tracking-tighter leading-none">
                   {stats.total}
@@ -271,7 +261,7 @@ export default function ProjectPage() {
               <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6 text-slate-500 font-black uppercase tracking-widest text-[10px]">
                   <Activity size={14} className="text-emerald-400" />
-                  Active
+                  {t.dashboard.stats.active}
                 </div>
                 <div className="text-5xl font-black text-white tracking-tighter leading-none">
                   {stats.active}
@@ -280,7 +270,7 @@ export default function ProjectPage() {
               <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6 text-slate-500 font-black uppercase tracking-widest text-[10px]">
                   <Shield size={14} className="text-rose-400" />
-                  Failed
+                  {t.dashboard.stats.failed}
                 </div>
                 <div className="text-5xl font-black text-white tracking-tighter leading-none">
                   {stats.failed}
@@ -288,7 +278,7 @@ export default function ProjectPage() {
               </div>
             </div>
           </div>
-          <div className="p-8 rounded-[32px] bg-linear-to-br from-indigo-500 to-purple-600 shadow-2xl flex flex-col justify-between group overflow-hidden relative">
+          {/* <div className="p-8 rounded-[32px] bg-linear-to-br from-indigo-500 to-purple-600 shadow-2xl flex flex-col justify-between group overflow-hidden relative">
             <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
             <div className="relative z-10">
               <Globe className="text-white/80 mb-6" size={32} />
@@ -302,11 +292,13 @@ export default function ProjectPage() {
                 <div className="h-full w-full bg-white animate-pulse" />
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {project.environments?.map((env) => {
-          const envServices = services.filter((s) => s.environmentId === env.id);
+          const envServices = services
+            .filter((s) => s.environmentId === env.id)
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
           return (
             <div key={env.id} className="mb-20 animate-in slide-in-from-bottom-8 duration-500">
@@ -316,7 +308,7 @@ export default function ProjectPage() {
                     {env.name}
                   </h2>
                   <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">
-                    Environment
+                    {t.dashboard.project.environment}
                   </span>
                 </div>
                 <Link
@@ -324,7 +316,7 @@ export default function ProjectPage() {
                   className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-black text-xs uppercase tracking-widest transition-colors group"
                 >
                   <Plus size={16} />
-                  Add Service to {env.name}
+                  {t.dashboard.project.addServiceTo.replace('{name}', env.name)}
                 </Link>
               </div>
 
@@ -335,10 +327,10 @@ export default function ProjectPage() {
                   </div>
                   <div>
                     <h4 className="text-xl font-bold text-white mb-2">
-                      No services in this environment
+                      {t.dashboard.project.noServices}
                     </h4>
                     <p className="text-slate-500 max-w-sm font-medium">
-                      Deploy your first service to start seeing it here.
+                      {t.dashboard.project.deployFirstService}
                     </p>
                   </div>
                 </div>

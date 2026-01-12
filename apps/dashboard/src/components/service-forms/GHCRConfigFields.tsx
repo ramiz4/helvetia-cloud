@@ -7,13 +7,12 @@ export const GHCRConfigFields: React.FC<BaseConfigFieldsProps> = ({
   translations: translationsProp,
   disabled,
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const t = translationsProp as any;
+  const t = translationsProp;
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.newService.imageTag}
+          {t.newService.imageTag}
         </label>
         <input
           type="text"
@@ -28,7 +27,7 @@ export const GHCRConfigFields: React.FC<BaseConfigFieldsProps> = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.newService.startCommand}
+          {t.newService.startCommand}
         </label>
         <input
           type="text"
@@ -45,7 +44,7 @@ export const GHCRConfigFields: React.FC<BaseConfigFieldsProps> = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.port}
+          {t.labels.port}
         </label>
         <input
           type="number"

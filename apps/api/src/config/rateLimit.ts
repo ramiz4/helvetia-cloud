@@ -45,5 +45,19 @@ export function createRateLimitConfigs(redisConnection: IORedis) {
     },
   };
 
-  return { authRateLimitConfig, wsRateLimitConfig };
+  // More relaxed rate limiting for deployment triggers
+  const deploymentRateLimitConfig = {
+    max: isTestEnv ? 10000 : parseInt(process.env.DEPLOY_RATE_LIMIT_MAX || '20', 10),
+    timeWindow: process.env.DEPLOY_RATE_LIMIT_WINDOW || '1 minute',
+    redis: redisConnection,
+    nameSpace: 'helvetia-deploy-rate-limit:',
+    skipOnError: true,
+    addHeaders: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true,
+    },
+  };
+
+  return { authRateLimitConfig, wsRateLimitConfig, deploymentRateLimitConfig };
 }

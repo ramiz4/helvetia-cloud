@@ -11,7 +11,7 @@ export const DockerConfigFields: React.FC<BaseConfigFieldsProps> = ({
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.buildCommand}
+          {t.labels.buildCommand}
         </label>
         <input
           type="text"
@@ -28,7 +28,7 @@ export const DockerConfigFields: React.FC<BaseConfigFieldsProps> = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.startCommand}
+          {t.labels.startCommand}
         </label>
         <input
           type="text"
@@ -43,7 +43,7 @@ export const DockerConfigFields: React.FC<BaseConfigFieldsProps> = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.port}
+          {t.labels.port}
         </label>
         <input
           type="number"

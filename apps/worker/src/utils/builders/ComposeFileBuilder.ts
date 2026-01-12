@@ -1,4 +1,5 @@
 import yaml from 'js-yaml';
+import { getNetworkName } from '../containerHelpers';
 
 /**
  * Builder for generating Docker Compose override files
@@ -19,6 +20,7 @@ export class ComposeFileBuilder {
     envVars?: Record<string, string>;
     projectName?: string;
     environmentName?: string;
+    username?: string;
   }): string {
     const {
       serviceName,
@@ -29,13 +31,19 @@ export class ComposeFileBuilder {
       envVars,
       projectName,
       environmentName,
+      username,
     } = params;
 
-    let networkName = 'helvetia-net';
+    const networkName = getNetworkName({ username, projectName, environmentName });
+    const sanitizedUsername = username
+      ? username.toLowerCase().replace(/[^a-z0-9]/g, '-')
+      : 'global';
+    let traefikIdentifier = `${sanitizedUsername}-${serviceName}`;
+
     if (projectName && environmentName) {
-      networkName = `helvetia-${projectName}-${environmentName}`;
+      traefikIdentifier = `${sanitizedUsername}-${projectName}-${environmentName}-${serviceName}`;
     } else if (projectName) {
-      networkName = `helvetia-${projectName}`;
+      traefikIdentifier = `${sanitizedUsername}-${projectName}-${serviceName}`;
     }
 
     const overrideConfig = {
@@ -45,9 +53,9 @@ export class ComposeFileBuilder {
             `helvetia.serviceId=${serviceId}`,
             'traefik.enable=true',
             'traefik.docker.network=helvetia-net',
-            `traefik.http.routers.${serviceName}.rule=${traefikRule}`,
-            `traefik.http.routers.${serviceName}.entrypoints=web`,
-            `traefik.http.services.${serviceName}.loadbalancer.server.port=${port || 8080}`,
+            `traefik.http.routers.${traefikIdentifier}.rule=${traefikRule}`,
+            `traefik.http.routers.${traefikIdentifier}.entrypoints=web`,
+            `traefik.http.services.${traefikIdentifier}.loadbalancer.server.port=${port || 8080}`,
           ],
           networks: ['helvetia-net', 'project-net'],
           ...(envVars && Object.keys(envVars).length > 0 ? { environment: envVars } : {}),

@@ -1,5 +1,6 @@
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { DockerfileBuilder } from '../utils/builders';
+import { ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
 import { getSecureBindMounts } from '../utils/workspace';
 
 /**
@@ -21,10 +22,23 @@ export class StaticDeploymentStrategy implements IDeploymentStrategy {
       buildCommand,
       staticOutputDir,
       envVars,
+      username,
     } = context;
 
     let buildLogs = '';
     const imageTag = `helvetia/${serviceName}:latest`;
+
+    const networkName = getNetworkName({
+      username,
+      projectName: context.projectName,
+      environmentName: context.environmentName,
+    });
+
+    // Ensure networks exist before builder starts
+    await ensureNetworkExists(docker, 'helvetia-net');
+    if (networkName !== 'helvetia-net') {
+      await ensureNetworkExists(docker, networkName, context.projectName);
+    }
 
     // 1. Create builder container
     const builderName = `builder-${deploymentId}`;
@@ -36,15 +50,13 @@ export class StaticDeploymentStrategy implements IDeploymentStrategy {
       HostConfig: {
         AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: context.projectName
-          ? `helvetia-${context.projectName}${context.environmentName ? `-${context.environmentName}` : ''}`
-          : 'helvetia-net',
+        NetworkMode: networkName,
       },
     });
 
     try {
       await builder.start();
-      const startMsg = `==== Building static site image ${imageTag} ====\n`;
+      const startMsg = `==== Building static site image ${imageTag} ====\n\n`;
       console.log(startMsg.trim());
       context.onLog?.(startMsg);
       buildLogs += startMsg;

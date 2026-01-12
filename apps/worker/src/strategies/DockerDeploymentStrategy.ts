@@ -1,5 +1,6 @@
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { DockerfileBuilder } from '../utils/builders';
+import { ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
 import { getSecureBindMounts } from '../utils/workspace';
 
 /**
@@ -22,6 +23,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
       startCommand,
       port,
       envVars,
+      username,
     } = context;
 
     let buildLogs = '';
@@ -40,7 +42,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
       const fullImage = `${cleanRepoUrl}:${tag}`;
       const { githubToken } = context;
 
-      context.onLog?.(`==== Pulling Pre-built Image: ${fullImage} ====\n`);
+      context.onLog?.(`==== Pulling Pre-built Image: ${fullImage} ====\n\n`);
 
       try {
         const pullOptions: Record<string, unknown> = {};
@@ -50,7 +52,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
             password: githubToken,
             serveraddress: 'ghcr.io',
           };
-          context.onLog?.(`🔑 Using GitHub authentication for GHCR...\n`);
+          context.onLog?.(`🔑 Using GitHub authentication for GHCR...\n\n`);
         }
 
         const stream = await docker.pull(fullImage, pullOptions);
@@ -72,7 +74,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
           );
         });
 
-        context.onLog?.(`\n✅ Successfully pulled image: ${fullImage}\n`);
+        context.onLog?.(`✅ Successfully pulled image: ${fullImage}\n\n`);
 
         return {
           imageTag: fullImage,
@@ -88,6 +90,18 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
 
     const imageTag = `helvetia/${serviceName}:latest`;
 
+    const networkName = getNetworkName({
+      username,
+      projectName: context.projectName,
+      environmentName: context.environmentName,
+    });
+
+    // Ensure networks exist before builder starts
+    await ensureNetworkExists(docker, 'helvetia-net');
+    if (networkName !== 'helvetia-net') {
+      await ensureNetworkExists(docker, networkName, context.projectName);
+    }
+
     // 1. Create builder container
     const builderName = `builder-${deploymentId}`;
     const builder = await docker.createContainer({
@@ -98,9 +112,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
       HostConfig: {
         AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: context.projectName
-          ? `helvetia-${context.projectName}${context.environmentName ? `-${context.environmentName}` : ''}`
-          : 'helvetia-net',
+        NetworkMode: networkName,
       },
     });
 

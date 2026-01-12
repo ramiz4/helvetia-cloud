@@ -37,6 +37,7 @@ export class PrismaServiceRepository implements IServiceRepository {
           },
         },
       },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
@@ -93,12 +94,14 @@ export class PrismaServiceRepository implements IServiceRepository {
       where: { deletedAt: null },
       take: options?.take,
       skip: options?.skip,
+      orderBy: { createdAt: 'asc' },
     });
   }
 
   async findByEnvironmentId(environmentId: string): Promise<Service[]> {
     return this.prisma.service.findMany({
       where: { environmentId, deletedAt: null },
+      orderBy: { createdAt: 'asc' },
     });
   }
 }

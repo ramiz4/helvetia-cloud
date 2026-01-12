@@ -1,6 +1,7 @@
 'use client';
 
 import FocusTrap from '@/components/FocusTrap';
+import { Translations } from '@/lib/translations';
 import type { Service, ServiceType } from '@/types/service';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -15,35 +16,7 @@ interface EditServiceModalProps {
   service: Service;
   onClose: () => void;
   onSave: (service: Service, envVarsList: Array<{ key: string; value: string }>) => Promise<void>;
-  translations: {
-    modals: {
-      editTitle: string;
-    };
-    labels: {
-      serviceName: string;
-      repoUrl: string;
-      serviceType: string;
-      branch: string;
-      buildCommand: string;
-      composeFile: string;
-      outputDir: string;
-      startCommand: string;
-      mainService: string;
-      port: string;
-      envVars: string;
-    };
-    newService: {
-      dockerService: string;
-      staticSite: string;
-      composeStack: string;
-      addVariable: string;
-      noEnvVars: string;
-    };
-    actions: {
-      cancel: string;
-      save: string;
-    };
-  };
+  translations: Translations['dashboard'];
 }
 
 export function EditServiceModal({
@@ -188,7 +161,7 @@ export function EditServiceModal({
                     onChange={(updates: Partial<Service>) =>
                       setEditingService((prev) => ({ ...prev, ...updates }))
                     }
-                    translations={{ dashboard: { labels: t.labels, newService: t.newService } }}
+                    translations={t}
                   />
                 ) : editingService.type === 'STATIC' ? (
                   <StaticConfigFields
@@ -196,7 +169,7 @@ export function EditServiceModal({
                     onChange={(updates: Partial<Service>) =>
                       setEditingService((prev) => ({ ...prev, ...updates }))
                     }
-                    translations={{ dashboard: { labels: t.labels, newService: t.newService } }}
+                    translations={t}
                   />
                 ) : editingService.repoUrl?.includes('ghcr.io') ? (
                   <GHCRConfigFields
@@ -204,7 +177,7 @@ export function EditServiceModal({
                     onChange={(updates: Partial<Service>) =>
                       setEditingService((prev) => ({ ...prev, ...updates }))
                     }
-                    translations={{ dashboard: { labels: t.labels, newService: t.newService } }}
+                    translations={t}
                   />
                 ) : (
                   <DockerConfigFields
@@ -212,7 +185,7 @@ export function EditServiceModal({
                     onChange={(updates: Partial<Service>) =>
                       setEditingService((prev) => ({ ...prev, ...updates }))
                     }
-                    translations={{ dashboard: { labels: t.labels, newService: t.newService } }}
+                    translations={t}
                   />
                 )}
               </div>

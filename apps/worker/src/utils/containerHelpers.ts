@@ -34,6 +34,25 @@ export async function ensureNetworkExists(
 }
 
 /**
+ * Get the standardized network name for a project and environment
+ */
+export function getNetworkName(params: {
+  username?: string;
+  projectName?: string;
+  environmentName?: string;
+}): string {
+  const { username, projectName, environmentName } = params;
+  if (!projectName) return 'helvetia-net';
+
+  const sanitizedUsername = username ? username.toLowerCase().replace(/[^a-z0-9]/g, '-') : 'global';
+
+  if (environmentName) {
+    return `helvetia-${sanitizedUsername}-${projectName}-${environmentName}`;
+  }
+  return `helvetia-${sanitizedUsername}-${projectName}`;
+}
+
+/**
  * Start a new container with the given configuration
  * Returns both the container and the postfix used in naming
  */
@@ -48,6 +67,7 @@ export async function startContainer(params: {
   customDomain?: string;
   projectName?: string;
   environmentName?: string;
+  username?: string;
   onLog?: (log: string) => void;
 }): Promise<{ container: Docker.Container; postfix: string }> {
   const {
@@ -61,25 +81,28 @@ export async function startContainer(params: {
     customDomain,
     projectName,
     environmentName,
+    username,
     onLog,
   } = params;
 
-  const startMsg = `\n==== Starting Container: ${serviceName} ====\n`;
+  const startMsg = `==== Starting Container: ${serviceName} ====\n\n`;
   console.log(startMsg.trim());
   onLog?.(startMsg);
 
   // Default network and name
-  let networkName = 'helvetia-net';
-  let baseName = serviceName;
+  const networkName = getNetworkName({ username, projectName, environmentName });
+  const sanitizedUsername = username ? username.toLowerCase().replace(/[^a-z0-9]/g, '-') : 'global';
+  let baseName = `${sanitizedUsername}-${serviceName}`;
 
-  // Use project-based naming if available
+  // Use project-based naming for baseName if available
   if (projectName && environmentName) {
-    networkName = `helvetia-${projectName}-${environmentName}`;
-    baseName = `${projectName}-${environmentName}-${serviceName}`;
+    baseName = `${sanitizedUsername}-${projectName}-${environmentName}-${serviceName}`;
   } else if (projectName) {
-    networkName = `helvetia-${projectName}`;
-    baseName = `${projectName}-${serviceName}`;
+    baseName = `${sanitizedUsername}-${projectName}-${serviceName}`;
   }
+
+  // Traefik needs a unique identifier for routers and services across all users/environments
+  const traefikIdentifier = baseName;
 
   // Ensure networks exist
   await ensureNetworkExists(docker, 'helvetia-net');
@@ -103,6 +126,13 @@ export async function startContainer(params: {
   if (projectName) {
     hosts.push(`${projectName}-${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
     hosts.push(`${projectName}-${serviceName}.localhost`);
+  }
+
+  if (projectName && environmentName && username) {
+    const sanitizedUsernameForHost = username.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const uHost = `${sanitizedUsernameForHost}.${projectName}.${environmentName}.${serviceName}`;
+    hosts.push(`${uHost}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+    hosts.push(`${uHost}.localhost`);
   }
 
   const traefikRule = hosts.map((h) => `Host(\`${h}\`)`).join(' || ');
@@ -134,9 +164,9 @@ export async function startContainer(params: {
       'helvetia.type': type || 'DOCKER',
       'traefik.enable': 'true',
       'traefik.docker.network': 'helvetia-net',
-      [`traefik.http.routers.${serviceName}.rule`]: traefikRule,
-      [`traefik.http.routers.${serviceName}.entrypoints`]: 'web',
-      [`traefik.http.services.${serviceName}.loadbalancer.server.port`]: (
+      [`traefik.http.routers.${traefikIdentifier}.rule`]: traefikRule,
+      [`traefik.http.routers.${traefikIdentifier}.entrypoints`]: 'web',
+      [`traefik.http.services.${traefikIdentifier}.loadbalancer.server.port`]: (
         port || (type === 'STATIC' ? 80 : 3000)
       ).toString(),
     },

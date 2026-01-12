@@ -286,7 +286,15 @@ describe('Rate Limiting', () => {
     vi.mocked(prisma.service.findUnique).mockResolvedValue(mockService as never);
     vi.mocked(prisma.deployment.create).mockResolvedValue(mockDeployment as never);
     vi.mocked(prisma.service.update).mockResolvedValue(mockService as never);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: 'user-1',
+      username: 'testuser',
+      githubAccessToken: null,
+      githubId: '123',
+      avatarUrl: 'avatar',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as never);
 
     const response = await fastify.inject({
       method: 'POST',

@@ -1,0 +1,288 @@
+{
+  "common": {
+    "loading": "Am lade...",
+    "error": "Fähler",
+    "save": "Spichere",
+    "cancel": "Abbräche",
+    "delete": "Lösche",
+    "edit": "Bearbeite",
+    "back": "Zrugg",
+    "next": "Wiiter",
+    "confirm": "Bestätige",
+    "success": "Erfolg",
+    "allSystemsOperational": "Alli Syschtem laufed",
+    "version": "Version",
+    "freePlan": "Gratis-Aabo",
+    "earlyAccess": "Early Access",
+    "personalAccount": "Persönlichs Konto",
+    "apiError": "Fähler bim Verbinde mit de API"
+  },
+  "hero": {
+    "badge": "v1.0 Beta",
+    "titleLine1": "Schwiizer",
+    "titleLine2": "Hosting-Plattform",
+    "subtitle": "Alli Dienscht und Datebanke sind i de Schwiiz ghostet.",
+    "description": "Helvetia Cloud isch die moderni Platform-as-a-Service für Entwickler, wo d'Leichtig vo Kubernetes with de Eifachheit vo Heroku wänd.",
+    "ctaPrimary": "Aafange",
+    "ctaSecondary": "Code aaluege"
+  },
+  "features": {
+    "zeroDowntime": {
+      "title": "Kei Unterbruch",
+      "desc": "Updates iispile ohni Verbindige z'verlüüre."
+    },
+    "gitIntegrated": {
+      "title": "Git Integriert",
+      "desc": "Eifach pushe und s'Deployment passiert automatisch."
+    },
+    "secure": {
+      "title": "Sicher und Suber",
+      "desc": "Isolierti Umgäbige und strikti Ressource-Limite."
+    },
+    "global": {
+      "title": "Schwiizer Qualität",
+      "desc": "100% i de Schwiiz ghostet für maximali Privatsphäre."
+    },
+    "resource": {
+      "title": "Ressource Kontrolle",
+      "desc": "Gnaui Kontrolle über CPU und Spicher."
+    },
+    "container": {
+      "title": "Container Native",
+      "desc": "Basiert uf Docker für beschti Kompatibilität."
+    }
+  },
+  "ctaSection": {
+    "title": "Parat zum Loslege?",
+    "subtitle": "Mach mit bi tusige vo Entwickler.",
+    "button": "Jetzt deploye"
+  },
+  "footer": {
+    "rights": "© {year} Helvetia Cloud. Open Source under MIT Lizenz.",
+    "brandDesc": "Die moderni Plattform für Entwickler, wo d'Power vo Kubernetes mit de Eifachheit vo Heroku wänd. 100% i de Schwiiz.",
+    "product": "Produkt",
+    "pricing": "Priise",
+    "resources": "Ressource",
+    "documentation": "Dokumentation",
+    "blog": "Blog",
+    "changelog": "Changelog",
+    "status": "Status",
+    "legalSwiss": "Rächtlichs & Swiss Made",
+    "termsOfService": "Bedingige",
+    "privacyPolicy": "Datenschutz",
+    "gdprCompliant": "DSGVO konform",
+    "hostedInSwiss": "I de Schwiiz ghostet"
+  },
+  "cookie": {
+    "title": "DSGVO / GDPR Konformität",
+    "text": "Mir bruuche Cookies für s'bescht Erlebnis (DSGVO konform).",
+    "accept": "Akzeptiere"
+  },
+  "nav": {
+    "brand": "HELVETIA",
+    "login": "Aamälde",
+    "dashboard": "Dashboard",
+    "deployments": "Deployments",
+    "newService": "Neue Service",
+    "settings": "Iistellige",
+    "logout": "Abmälde",
+    "homeAria": "Helvetia Cloud Startsiite",
+    "logoAlt": "Helvetia Cloud Logo",
+    "logoutFailed": "Abmäldig uf em Server hät nöd klappet, du wirsch aber lokal abmäldet.",
+    "logoutNetworkError": "Netzwärchfähler bim Abmälde, aber du wirsch lokal abgemäldet.",
+    "selectLanguage": "Schprooch wähle",
+    "openMenu": "Navigationsmenü öffne",
+    "closeMenu": "Navigationsmenü schliesse",
+    "mobileMenu": "Mobili Navigation"
+  },
+  "login": {
+    "backToHome": "Zrugg uf d’Startsiite",
+    "swissCloudSecurity": "Schwiizer Cloud-Sicherheit",
+    "securityDesc": "D’Hochleischtigs-Plattform für moderni Entwickler.",
+    "authError": "Login-Fähler",
+    "codeExpired": "De Code isch abgloffe.",
+    "continueWithGithub": "Mit GitHub wiitermache",
+    "termsPrivacy": "Wenn du wiitermachsch, bisch mit euse {terms} und {privacy} iiverstande",
+    "terms": "Bedingige",
+    "privacy": "Datenschutz",
+    "builtBy": "Baut vo Masoft GmbH 🇨🇭",
+    "authenticating": "Am aamelde bi GitHub..."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Verwalt dini Deployments und Dienscht",
+    "loading": "Dä Workspace wird glade...",
+    "stats": {
+      "total": "Dienscht Gesamt",
+      "active": "Aktiv",
+      "failed": "Fählerhaft"
+    },
+    "search": {
+      "placeholder": "Dienscht sueche...",
+      "noResults": "Kei Dienscht gfunde",
+      "tryAgain": "Probier dini Suech apasse.",
+      "getStarted": "Fang aa mit dim erschte Service."
+    },
+    "actions": {
+      "redeploy": "Redeploy",
+      "restart": "Neustarte",
+      "logs": "Logs",
+      "visit": "Bsueche",
+      "edit": "Bearbeite",
+      "delete": "Lösche",
+      "deleteFailed": "Service hät nöd chöne glöscht werde",
+      "cancel": "Abbräche",
+      "save": "Spichere",
+      "restartSuccess": "Container isch neu gschtartet!",
+      "restartFailed": "Neustart hät nöd klappet",
+      "updateFailed": "Dienst-Update fählgschlage",
+      "deleteConfirm": "Bisch sicher, dass de Dienst lösche wotsch?\n\nDe stoppt d’App und alli Date sind weg.",
+      "fetchLogsFailed": "Logs chönd nöd glade werde",
+      "deployTriggerFailed": "Deployment konnte nicht gestartet werden",
+      "stopSuccess": "Service hät gschtoppt",
+      "stopFailed": "Service hät nöd chöne gschtoppt werde",
+      "createEnvSuccess": "Umgäbig isch erstellt worde",
+      "createEnvFailed": "Umgäbig hät nöd chöne erstellt werde"
+    },
+    "status": {
+      "notRunning": "Lauft nöd"
+    },
+    "createNewService": "Neuä Service erstelle",
+    "labels": {
+      "cpu": "CPU",
+      "ram": "RAM",
+      "serviceName": "Service Name",
+      "repoUrl": "Repository URL",
+      "serviceType": "Service Typ",
+      "port": "Port",
+      "branch": "Branch",
+      "buildCommand": "Build Befehl",
+      "startCommand": "Start Befehl",
+      "composeFile": "Compose Datei",
+      "mainService": "Haupt Service",
+      "outputDir": "Usgabeverzeichnis",
+      "envVars": "Umgebigsvariable",
+      "containerName": "Container-Name"
+    },
+    "modals": {
+      "editTitle": "Service bearbeite",
+      "logsTitle": "Protokoll",
+      "noLogs": "Kei Protokoll vorhande.",
+      "streaming": "Streaming-Protokoll...",
+      "ended": "Protokoll fertig.",
+      "refreshFailed": "Service-Details händ nöd chöne aktualisiert werde",
+      "refreshError": "Fähler bim Aktualisiere vo de Service-Details"
+    },
+    "project": {
+      "loading": "Projekt wird glade...",
+      "notFound": "Projekt nöd gfunde",
+      "backToProjects": "Zrugg zu de Projekt",
+      "linkBackToProjects": "Zrugg zu de Projekt",
+      "id": "Projekt ID:",
+      "globalStatus": "Gsamtschtaat:",
+      "statusActive": "Aktiv",
+      "settings": "Projekt-Iistellige",
+      "newEnvironment": "Neui Umgäbig",
+      "environment": "Umgäbig",
+      "addServiceTo": "Service zu {name} dezuefüege",
+      "noServices": "Kei Dienscht i dere Umgäbig",
+      "deployFirstService": "Deploy din erschte Dienscht zum ihn da z’gseh."
+    },
+    "newService": {
+      "title": "Neus Projekt deploye",
+      "subtitle": "Importier es Git-Repository zum aafange.",
+      "importGithub": "GitHub Import",
+      "importManual": "Manuella Import",
+      "importLocal": "Lokale Ordner",
+      "importCompose": "Docker Compose",
+      "importDatabase": "Datebank",
+      "step1": "Projekt",
+      "step2": "Importiere",
+      "step3": "Konfiguriere",
+      "repoUrl": "Git Repository URL",
+      "localPath": "Lokale Verzeichnispfad",
+      "localPathHint": "Gib de absolute Pfad zu dim lokale Git-Repository aa.",
+      "branch": "Branch",
+      "projectName": "Projekt Name",
+      "projectNameHint": "Wird bruucht zum din Projekt im Dashboard und i de URL zidentifiziere.",
+      "projectNameValidation": "Nume Chliibuechstabe, Zahle und Bindestrich",
+      "serviceType": "Service Typ",
+      "serviceName": "Service Name",
+      "serviceNameHint": "Wird bruucht zum din Service im Dashboard und i de URL zidentifiziere.",
+      "databaseEngine": "Datebank Engine",
+      "dockerService": "Docker Service",
+      "dockerServiceDesc": "Für Node.js, Python oder eigni Docker Projekt.",
+      "staticSite": "Statische Site",
+      "staticSiteDesc": "Für Angular, React, Vue oder HTML (via Nginx).",
+      "composeStack": "Docker Compose Stack",
+      "composeStackDesc": "Für Multi-Container-Aawendige (z.B. App + DB + Redis).",
+      "buildCommand": "Build Befehl",
+      "startCommand": "Start Befehl",
+      "outputDirectory": "Usgabeverzeichnis",
+      "port": "Port",
+      "portStaticHint": "Statischi Siite werded über Port 80 via Nginx uusgliferet.",
+      "deployButton": "Projekt deploye",
+      "deployingButton": "Am deploye...",
+      "deploySuccess": "Deployment hät erfolgriich gstartet",
+      "errorGeneric": "Fähler bim Service erstelle: ",
+      "errorConnection": "Fähler bi de Verbindig zur API. Bitte überprüef dini Verbindig.",
+      "version": "Version",
+      "addVariable": "Variable dezuefüege",
+      "noEnvVars": "Kei Variable konfiguriert",
+      "dismissError": "Fähler verschlüsse",
+      "mainServiceName": "Haupt-Service Name",
+      "mainServiceDesc": "De Name vom Dienscht im compose.yml für HTTP",
+      "composeFile": "Compose Datei",
+      "imageTag": "Image Tag"
+    }
+  },
+  "settings": {
+    "title": "Iistellige",
+    "subtitle": "Konto und Integratione verwalte",
+    "githubIntegration": "GitHub Integration",
+    "githubDesc": "GitHub-Konto und Repo-Zuegriff verwalte.",
+    "connected": "Verbunde",
+    "disconnected": "Trennet",
+    "accountLinked": "GitHub verchnüpft",
+    "disconnect": "Trenne",
+    "reconnect": "Neu verbinde",
+    "orgAccessTitle": "Organisatione verwalte",
+    "orgAccessDesc": "Du chasch de Zuegriff direkt bi de GitHub-Iistellige aapasse.",
+    "manageOnGithub": "Uf GitHub verwalte",
+    "githubPermissionsTitle": "GitHub Berächtigunge",
+    "githubNotConnected": "GitHub nöd verbunde",
+    "githubNotConnectedDesc": "Verbind GitHub neu zum dini Repositories verwalte.",
+    "dangerZone": "Gfahre-Zone",
+    "irreversible": "Aktionen wo nöd rückgängig gmacht werde chönd.",
+    "deleteAccount": "Konto lösche",
+    "deleteAccountDesc": "Alli Date und Dienschlösche. Das chamer nöd rückgänig mache.",
+    "disconnectConfirm": "Bisch sicher? Du chasch denn nöd me deploye.",
+    "toast": {
+      "githubDisconnected": "GitHub isch trennt worde",
+      "githubDisconnectFailed": "GitHub-Trennung hät nöd klappet",
+      "apiError": "API-Fähler",
+      "loadSettingsFailed": "Iistellige chönd nöd glade werde"
+    }
+  },
+  "userMenu": {
+    "billing": "Abrechnig",
+    "pro": "Pro",
+    "security": "Sicurezza",
+    "support": "Hilf"
+  },
+  "githubPicker": {
+    "searchPlaceholder": "Sueche...",
+    "searchAria": "Repos sueche",
+    "selectOrgAria": "Organisation uswähle",
+    "loadingOrgs": "Organisatione werded glade...",
+    "allRepos": "Alli Repositories",
+    "noOrgsFound": "Kei Organisatione gfunde",
+    "noReposFound": "Nüt gfunde für \"{search}\"",
+    "changeRepo": "Repository wechsle",
+    "branchToDeploy": "Branch zum Deploye",
+    "viewOnGithub": "Uf GitHub aaluege",
+    "sessionExpired": "Sitzig abgloffe. Bitte neu aamälde.",
+    "fetchReposFailed": "Repos chönd nöd glade werde",
+    "fetchBranchesFailed": "Branches chönd nöd glade werde"
+  }
+}

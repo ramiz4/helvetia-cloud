@@ -51,3 +51,8 @@ export {
   IGitHubService,
 } from './IGitHubService';
 export { ILogger, LogContext, LogLevel } from './ILogger';
+
+// Service interfaces
+export { IDeploymentOrchestratorService } from './IDeploymentOrchestratorService';
+export { IProjectManagementService } from './IProjectManagementService';
+export { IServiceManagementService } from './IServiceManagementService';

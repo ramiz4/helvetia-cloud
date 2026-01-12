@@ -43,6 +43,12 @@ export function errorHandler(
   // Handle other errors with statusCode (like Fastify errors)
   const statusCode = (error as FastifyError).statusCode || 500;
 
+  // Handle 429 Rate Limit Exceeded
+  if (statusCode === 429) {
+    const rateLimitError = new AppError(ErrorCode.RATE_LIMIT_EXCEEDED, error.message, 429);
+    return reply.status(429).send(rateLimitError.toJSON());
+  }
+
   // Handle all other errors as internal server errors
   const systemError = new AppError(
     ErrorCode.SYSTEM_ERROR,

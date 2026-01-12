@@ -21,8 +21,11 @@ export class PrismaProjectRepository implements IProjectRepository {
       where: { id },
       include: {
         environments: {
+          orderBy: { createdAt: 'asc' },
           include: {
-            services: true,
+            services: {
+              orderBy: { createdAt: 'asc' },
+            },
           },
         },
       },
@@ -38,8 +41,11 @@ export class PrismaProjectRepository implements IProjectRepository {
       where: { userId },
       include: {
         environments: {
+          orderBy: { createdAt: 'asc' },
           include: {
-            services: true,
+            services: {
+              orderBy: { createdAt: 'asc' },
+            },
           },
         },
       },
@@ -113,7 +119,8 @@ export class PrismaProjectRepository implements IProjectRepository {
   async findEnvironmentsByProjectId(projectId: string): Promise<Environment[]> {
     const envs = await this.prisma.environment.findMany({
       where: { projectId },
-      include: { services: true },
+      include: { services: { orderBy: { createdAt: 'asc' } } },
+      orderBy: { createdAt: 'asc' },
     });
 
     return envs as unknown as Environment[];

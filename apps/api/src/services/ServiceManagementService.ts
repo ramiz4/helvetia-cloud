@@ -5,8 +5,8 @@ import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
 import type {
   IContainerOrchestrator,
   IDeploymentRepository,
+  IServiceManagementService,
   IServiceRepository,
-  IUserRepository,
   Service,
 } from '../interfaces';
 
@@ -15,14 +15,12 @@ import type {
  * Handles business logic for service CRUD operations
  */
 @injectable()
-export class ServiceManagementService {
+export class ServiceManagementService implements IServiceManagementService {
   constructor(
     @inject(Symbol.for('IServiceRepository'))
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
     private deploymentRepository: IDeploymentRepository,
-    @inject(Symbol.for('IUserRepository'))
-    private userRepository: IUserRepository,
     @inject(Symbol.for('IContainerOrchestrator'))
     private containerOrchestrator: IContainerOrchestrator,
   ) {}

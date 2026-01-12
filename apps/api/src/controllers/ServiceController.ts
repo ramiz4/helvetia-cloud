@@ -6,12 +6,11 @@ import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/con
 import { ForbiddenError, NotFoundError } from '../errors';
 import { getServiceMetrics } from '../handlers/metrics.handler';
 import type {
-  IContainerOrchestrator,
   IDeploymentRepository,
+  IServiceManagementService,
   IServiceRepository,
 } from '../interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from '../schemas/service.schema';
-import { ServiceManagementService } from '../services';
 import '../types/fastify';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
@@ -30,10 +29,8 @@ export class ServiceController {
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
     private deploymentRepository: IDeploymentRepository,
-    @inject(Symbol.for('IContainerOrchestrator'))
-    private containerOrchestrator: IContainerOrchestrator,
     @inject(Symbol.for('ServiceManagementService'))
-    private serviceManagement: ServiceManagementService,
+    private serviceManagement: IServiceManagementService,
   ) {}
 
   /**
@@ -65,12 +62,21 @@ export class ServiceController {
     const docker = new Docker();
     const containers = await docker.listContainers({ all: true });
 
-    return servicesWithDeployments.map((service) => ({
-      ...service,
-      projectName: (service as { environment?: { project?: { name?: string } } }).environment
-        ?.project?.name,
-      status: determineServiceStatus(service, containers),
-    }));
+    return servicesWithDeployments.map((service) => {
+      const serviceContainers = containers.filter(
+        (c) => c.Labels['helvetia.serviceId'] === service.id,
+      );
+      const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+
+      return {
+        ...service,
+        projectName: service.environment?.project?.name,
+        environmentName: service.environment?.name,
+        username: user.username,
+        status: determineServiceStatus(service, containers),
+        containerName,
+      };
+    });
   }
 
   /**
@@ -96,12 +102,19 @@ export class ServiceController {
     const docker = new Docker();
     const containers = await docker.listContainers({ all: true });
 
+    const serviceContainers = containers.filter(
+      (c) => c.Labels['helvetia.serviceId'] === service.id,
+    );
+    const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+
     return {
       ...service,
       deployments,
-      projectName: (service as { environment?: { project?: { name?: string } } }).environment
-        ?.project?.name,
+      projectName: service.environment?.project?.name,
+      environmentName: service.environment?.name,
+      username: user.username,
       status: determineServiceStatus({ ...service, deployments }, containers),
+      containerName,
     };
   }
 

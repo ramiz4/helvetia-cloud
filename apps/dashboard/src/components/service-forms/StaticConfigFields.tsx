@@ -11,7 +11,7 @@ export const StaticConfigFields: React.FC<BaseConfigFieldsProps> = ({
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.buildCommand}
+          {t.labels.buildCommand}
         </label>
         <input
           type="text"
@@ -28,7 +28,7 @@ export const StaticConfigFields: React.FC<BaseConfigFieldsProps> = ({
 
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.outputDir}
+          {t.labels.outputDir}
         </label>
         <input
           type="text"
@@ -45,7 +45,7 @@ export const StaticConfigFields: React.FC<BaseConfigFieldsProps> = ({
 
       <div className="space-y-2 opacity-50">
         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-          {t.dashboard.labels.port}
+          {t.labels.port}
         </label>
         <input
           type="number"
@@ -54,9 +54,7 @@ export const StaticConfigFields: React.FC<BaseConfigFieldsProps> = ({
           className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none cursor-not-allowed font-medium"
           disabled={true}
         />
-        <p className="text-[10px] text-slate-500 ml-1 italic">
-          {t.dashboard.newService.portStaticHint}
-        </p>
+        <p className="text-[10px] text-slate-500 ml-1 italic">{t.newService.portStaticHint}</p>
       </div>
     </div>
   );

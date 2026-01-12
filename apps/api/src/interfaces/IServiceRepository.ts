@@ -1,3 +1,5 @@
+import type { Environment } from './IProjectRepository';
+
 /**
  * Service model type (matches Prisma schema)
  */
@@ -22,6 +24,7 @@ export interface Service {
   prNumber: number | null;
   deletedAt: Date | null;
   deleteProtected: boolean;
+  environment?: Environment;
 }
 
 /**

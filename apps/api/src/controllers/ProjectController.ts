@@ -1,12 +1,12 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import { ProjectManagementService } from '../services';
+import { IProjectManagementService } from '../interfaces';
 
 @injectable()
 export class ProjectController {
   constructor(
-    @inject(ProjectManagementService)
-    private projectService: ProjectManagementService,
+    @inject(Symbol.for('ProjectManagementService'))
+    private projectService: IProjectManagementService,
   ) {}
 
   /**

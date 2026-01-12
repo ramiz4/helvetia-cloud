@@ -1,3 +1,5 @@
+import { Translations } from '@/lib/translations';
+
 export type ServiceType = 'DOCKER' | 'STATIC' | 'COMPOSE' | 'DATABASE';
 
 export interface BaseConfigFieldsProps {
@@ -9,6 +11,6 @@ export interface BaseConfigFieldsProps {
     branch?: string;
   };
   onChange: (updates: Record<string, unknown>) => void;
-  translations: unknown;
+  translations: Translations['dashboard'];
   disabled?: boolean;
 }

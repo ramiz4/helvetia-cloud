@@ -13,6 +13,8 @@ export interface Service {
   type: ServiceType;
   environmentId?: string;
   projectName?: string; // Populated from Environment -> Project
+  environmentName?: string;
+  username?: string;
   staticOutputDir?: string;
   envVars?: Record<string, string>;
   customDomain?: string;
@@ -20,6 +22,8 @@ export interface Service {
   prNumber?: number;
   metrics?: { cpu: number; memory: number; memoryLimit: number; status?: string };
   deployments: { id: string; status: string; createdAt: string }[];
+  containerName?: string;
+  createdAt: string;
 }
 
 export interface UpdateServiceData {

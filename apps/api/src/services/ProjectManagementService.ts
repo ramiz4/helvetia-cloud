@@ -1,9 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
-import { Environment, IProjectRepository, Project } from '../interfaces';
+import { Environment, IProjectManagementService, IProjectRepository, Project } from '../interfaces';
 
 @injectable()
-export class ProjectManagementService {
+export class ProjectManagementService implements IProjectManagementService {
   constructor(
     @inject(Symbol.for('IProjectRepository'))
     private projectRepository: IProjectRepository,

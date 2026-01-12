@@ -4,8 +4,11 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 import { ForbiddenError, NotFoundError } from '../errors';
-import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
-import { DeploymentOrchestratorService } from '../services';
+import type {
+  IDeploymentOrchestratorService,
+  IDeploymentRepository,
+  IServiceRepository,
+} from '../interfaces';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { withStatusLock } from '../utils/statusLock';
@@ -20,7 +23,7 @@ import { validateToken } from '../utils/tokenValidation';
 export class DeploymentController {
   constructor(
     @inject(Symbol.for('DeploymentOrchestratorService'))
-    private deploymentService: DeploymentOrchestratorService,
+    private deploymentService: IDeploymentOrchestratorService,
     @inject(Symbol.for('IServiceRepository'))
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
@@ -73,7 +76,10 @@ export class DeploymentController {
     }
 
     const { prisma } = await import('database');
-    const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+    const service = await prisma.service.findFirst({
+      where: { id, userId: user.id },
+      include: { environment: { include: { project: true } } },
+    });
     if (!service) {
       return reply.status(404).send({ error: 'Service not found' });
     }
@@ -104,9 +110,24 @@ export class DeploymentController {
       const containerInfo = await existingContainer.inspect();
       const imageTag = containerInfo.Config.Image;
 
-      // Generate a new container name
+      // Naming convention for uniqueness across users and environments
+      const sanitizedUsername = user.username.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const projectName = service.environment?.project?.name;
+      const environmentName = service.environment?.name;
+
+      let baseName = `${sanitizedUsername}-${service.name}`;
+      if (projectName && environmentName) {
+        baseName = `${sanitizedUsername}-${projectName}-${environmentName}-${service.name}`;
+      } else if (projectName) {
+        baseName = `${sanitizedUsername}-${projectName}-${service.name}`;
+      }
+
+      // Traefik needs a unique identifier for routers and services
+      const traefikIdentifier = baseName;
+
+      // Generate a new container name with postfix
       const postfix = Math.random().toString(36).substring(2, 8);
-      const containerName = `${service.name}-${postfix}`;
+      const containerName = `${baseName}-${postfix}`;
 
       const traefikRule = service.customDomain
         ? `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`) || Host(\`${service.customDomain}\`)`
@@ -116,7 +137,9 @@ export class DeploymentController {
       const newContainer = await docker.createContainer({
         Image: imageTag,
         name: containerName,
-        Env: service.envVars ? Object.entries(service.envVars).map(([k, v]) => `${k}=${v}`) : [],
+        Env: service.envVars
+          ? Object.entries(service.envVars as Record<string, string>).map(([k, v]) => `${k}=${v}`)
+          : [],
         Cmd:
           service.type === 'REDIS' &&
           (service.envVars as Record<string, string> | undefined)?.REDIS_PASSWORD
@@ -128,11 +151,13 @@ export class DeploymentController {
             : undefined,
         Labels: {
           'helvetia.serviceId': service.id,
+          'helvetia.projectName': projectName || 'global',
+          'helvetia.environmentName': environmentName || 'global',
           'helvetia.type': service.type || 'DOCKER',
           'traefik.enable': 'true',
-          [`traefik.http.routers.${service.name}.rule`]: traefikRule,
-          [`traefik.http.routers.${service.name}.entrypoints`]: 'web',
-          [`traefik.http.services.${service.name}.loadbalancer.server.port`]: (
+          [`traefik.http.routers.${traefikIdentifier}.rule`]: traefikRule,
+          [`traefik.http.routers.${traefikIdentifier}.entrypoints`]: 'web',
+          [`traefik.http.services.${traefikIdentifier}.loadbalancer.server.port`]: (
             service.port || getDefaultPortForServiceType(service.type || 'DOCKER')
           ).toString(),
         },
@@ -368,8 +393,12 @@ export class DeploymentController {
       if (!connectionState.isValid) return;
       if (chan === channel) {
         try {
-          // Send log line as an SSE event
-          reply.raw.write(`data: ${message}\n\n`);
+          // Send log line as an SSE event, handling multi-line messages to preserve newlines.
+          // Note: EventSource strips the last trailing newline from the data buffer per spec,
+          // so we add an extra one if the message ends with a newline to preserve it.
+          const messageWithExtraLF = message.endsWith('\n') ? message + '\n' : message;
+          const formatted = messageWithExtraLF.replace(/\n/g, '\ndata: ');
+          reply.raw.write(`data: ${formatted}\n\n`);
           connectionState.messagesReceived++;
         } catch (err) {
           connectionState.errorCount++;
