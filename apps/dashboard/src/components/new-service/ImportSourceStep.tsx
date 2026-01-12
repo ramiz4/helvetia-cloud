@@ -57,9 +57,8 @@ export default function ImportSourceStep({
       <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8 min-h-[400px]">
         {importType === 'github' && (
           <GitHubRepoPicker
-            onSelect={(url, branch, _name) => {
-              updateData({ repoUrl: url, branch: branch });
-              // We intentionally do NOT overwrite project name here as it was set in Step 1
+            onSelect={(url, branch, name) => {
+              updateData({ repoUrl: url, branch: branch, projectName: name });
               onNext();
             }}
           />
@@ -67,8 +66,8 @@ export default function ImportSourceStep({
 
         {importType === 'github-image' && (
           <GitHubImagePicker
-            onSelect={(url, _name) => {
-              updateData({ repoUrl: url, branch: 'latest' }); // Default to latest, can be changed in next step
+            onSelect={(url, name) => {
+              updateData({ repoUrl: url, branch: 'latest', projectName: name });
               onNext();
             }}
           />

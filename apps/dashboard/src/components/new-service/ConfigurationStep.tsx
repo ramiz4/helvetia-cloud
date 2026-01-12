@@ -121,6 +121,14 @@ export default function ConfigurationStep({
                   className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-semibold"
                   placeholder="my-awesome-service"
                 />
+                <p className="text-[10px] text-slate-500 font-medium tracking-tight mt-2">
+                  {t.dashboard.newService.projectNameHint}
+                  {projectName && !/^[a-z0-9-]+$/.test(projectName || '') && (
+                    <span className="text-rose-400 ml-2">
+                      ({t.dashboard.newService.projectNameValidation})
+                    </span>
+                  )}
+                </p>
               </div>
 
               {/* Dynamic Config Fields */}

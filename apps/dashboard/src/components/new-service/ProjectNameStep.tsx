@@ -40,11 +40,7 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
     }
   };
 
-  const isStepValid =
-    data.projectId &&
-    data.environmentId &&
-    data.projectName &&
-    /^[a-z0-9-]+$/.test(data.projectName);
+  const isStepValid = data.projectId && data.environmentId;
 
   if (isLoading) {
     return (
@@ -110,11 +106,10 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
                         environmentId: project.environments?.[0]?.id || '',
                       })
                     }
-                    className={`p-4 rounded-2xl border transition-all flex items-center gap-3 ${
-                      data.projectId === project.id
-                        ? 'bg-indigo-500/10 border-indigo-500 text-white'
-                        : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
-                    }`}
+                    className={`p-4 rounded-2xl border transition-all flex items-center gap-3 ${data.projectId === project.id
+                      ? 'bg-indigo-500/10 border-indigo-500 text-white'
+                      : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
+                      }`}
                   >
                     <Folder
                       size={18}
@@ -140,11 +135,10 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
                   <button
                     key={env.id}
                     onClick={() => updateData({ environmentId: env.id })}
-                    className={`px-6 py-3 rounded-xl border font-bold transition-all ${
-                      data.environmentId === env.id
-                        ? 'bg-indigo-500 text-white border-indigo-500'
-                        : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
-                    }`}
+                    className={`px-6 py-3 rounded-xl border font-bold transition-all ${data.environmentId === env.id
+                      ? 'bg-indigo-500 text-white border-indigo-500'
+                      : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
+                      }`}
                   >
                     {env.name}
                   </button>
@@ -153,28 +147,7 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
             </div>
           )}
 
-          {/* Service Name (formerly project name) */}
-          <div className="space-y-4">
-            <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest">
-              Service Name
-            </label>
-            <input
-              type="text"
-              required
-              value={data.projectName}
-              onChange={(e) => updateData({ projectName: e.target.value })}
-              className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-semibold"
-              placeholder="my-awesome-service"
-            />
-            <p className="text-[10px] text-slate-500 font-medium tracking-tight">
-              {t.dashboard.newService.projectNameHint}
-              {data.projectName && !/^[a-z0-9-]+$/.test(data.projectName || '') && (
-                <span className="text-rose-400 ml-2">
-                  ({t.dashboard.newService.projectNameValidation})
-                </span>
-              )}
-            </p>
-          </div>
+          {/* Service Name input removed */}
 
           <button
             onClick={onNext}
