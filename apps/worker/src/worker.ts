@@ -47,7 +47,7 @@ export const worker = new Worker(
       type,
       staticOutputDir,
       username,
-      requestId, // Extract request ID for tracing
+      requestId, // Extract request ID from job data for cross-service tracing
     } = job.data;
 
     let newContainer: Docker.Container | null = null;

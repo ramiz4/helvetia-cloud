@@ -43,6 +43,7 @@ export class DeploymentController {
 
     try {
       // Create deployment (this includes service existence and ownership validation)
+      // Pass undefined for commitHash (will use latest) and request.id for tracing
       const deployment = await this.deploymentService.createAndQueueDeployment(
         id,
         user.id,

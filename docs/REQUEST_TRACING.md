@@ -292,7 +292,7 @@ export const fastify = Fastify({
 
 - [API Documentation](./API_VERSIONING.md)
 - [Error Handling](./ERROR_CODES.md)
-- [Logging Configuration](.env.example)
+- [Logging Configuration](../README.md#environment-setup)
 
 ## Future Enhancements
 
