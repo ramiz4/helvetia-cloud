@@ -181,6 +181,10 @@ describe('NewServicePage', () => {
     const buildCmdInput = screen.getByPlaceholderText('npm run build');
     fireEvent.change(buildCmdInput, { target: { value: 'npm run build:prod' } });
 
+    // Set Service Name in Step 3 (it's auto-filled from repo name as 'repo')
+    const serviceNameInput = screen.getByPlaceholderText('my-awesome-service');
+    fireEvent.change(serviceNameInput, { target: { value: 'my-static-site' } });
+
     // Submit
     const deployBtn = screen.getByText('Deploy Project');
     fireEvent.click(deployBtn);
@@ -299,7 +303,10 @@ describe('NewServicePage', () => {
     const buildCmdInput = screen.queryByPlaceholderText('npm run build');
     expect(buildCmdInput).not.toBeInTheDocument();
 
-    // Fill form (Project Name already set in Step 1)
+    // Fill form (Service Name auto-filled from repo as 'compose-repo', change it)
+    const serviceNameInput = screen.getByPlaceholderText('my-awesome-service');
+    fireEvent.change(serviceNameInput, { target: { value: 'my-compose-app' } });
+
     fireEvent.change(composeFileInput, { target: { value: 'compose.prod.yml' } });
     fireEvent.change(mainServiceInput, { target: { value: 'web' } });
 

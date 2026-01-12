@@ -20,6 +20,7 @@ describe('ServiceManagementService', () => {
     port: 3000,
     status: 'IDLE',
     userId: 'user-1',
+    environmentId: 'env-1',
     envVars: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -38,6 +39,8 @@ describe('ServiceManagementService', () => {
       findByUserId: vi.fn(),
       findByNameAndUserId: vi.fn(),
       findByNameAll: vi.fn(),
+      findByNameAndEnvironment: vi.fn(),
+      findByEnvironmentId: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -138,6 +141,7 @@ describe('ServiceManagementService', () => {
       const result = await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: 'env-1',
         type: 'DOCKER',
       });
 
@@ -152,13 +156,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should update existing service', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null); // Checking other users
-      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(mockService); // Checking current user
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(mockService);
       vi.mocked(mockServiceRepo.update).mockResolvedValue(mockService);
 
       const result = await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: 'env-1',
         type: 'DOCKER',
       });
 
@@ -166,27 +170,30 @@ describe('ServiceManagementService', () => {
       expect(mockServiceRepo.update).toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenError if name is taken by another user', async () => {
+    it('should throw ConflictError if environmentId is missing', async () => {
       const otherUserService = { ...mockService, userId: 'user-2' };
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(otherUserService);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockRejectedValue(
+        new Error('Should not be called when environmentId is missing'),
+      );
 
       await expect(
         service.createOrUpdateService({
           name: 'test-service',
           userId: 'user-1',
+          environmentId: 'env-1',
           type: 'DOCKER',
         }),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(ConflictError);
     });
 
     it('should set default port for STATIC type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
-      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: 'env-1',
         type: 'STATIC',
       });
 
@@ -198,13 +205,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should set default credentials for POSTGRES type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
-      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: 'env-1',
         type: 'POSTGRES',
       });
 
@@ -221,13 +228,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should set default credentials for REDIS type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
-      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: 'env-1',
         type: 'REDIS',
       });
 
@@ -242,13 +249,13 @@ describe('ServiceManagementService', () => {
     });
 
     it('should set default credentials for MYSQL type', async () => {
-      vi.mocked(mockServiceRepo.findByNameAndUserId).mockResolvedValue(null);
-      vi.mocked(mockServiceRepo.findByNameAll).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByNameAndEnvironment).mockResolvedValue(null);
       vi.mocked(mockServiceRepo.create).mockResolvedValue(mockService);
 
       await service.createOrUpdateService({
         name: 'test-service',
         userId: 'user-1',
+        environmentId: 'env-1',
         type: 'MYSQL',
       });
 
