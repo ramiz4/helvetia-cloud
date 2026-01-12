@@ -26,12 +26,12 @@ import type { FastifyPluginAsync } from 'fastify';
  */
 export const v1Routes: FastifyPluginAsync = async (fastify) => {
   // Import route modules dynamically to avoid circular dependencies
-  const { authRoutes } = await import('../auth.routes');
-  const { serviceRoutes } = await import('../service.routes');
-  const { deploymentRoutes } = await import('../deployment.routes');
-  const { githubRoutes } = await import('../github.routes');
-  const { projectRoutes } = await import('../project.routes');
-  const { webhookRoutes } = await import('../webhook.routes');
+  const { authRoutes } = await import('../auth.routes.js');
+  const { serviceRoutes } = await import('../service.routes.js');
+  const { deploymentRoutes } = await import('../deployment.routes.js');
+  const { githubRoutes } = await import('../github.routes.js');
+  const { projectRoutes } = await import('../project.routes.js');
+  const { webhookRoutes } = await import('../webhook.routes.js');
 
   // Register all v1 routes
   fastify.register(authRoutes);
