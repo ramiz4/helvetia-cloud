@@ -14,7 +14,7 @@ export class FeatureFlagClient {
    */
   static async isEnabled(key: string, userId?: string): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/feature-flags/check`, {
+      const response = await fetch(`${API_BASE_URL}/feature-flags/check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

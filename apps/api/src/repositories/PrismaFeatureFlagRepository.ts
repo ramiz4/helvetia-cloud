@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
+import { Prisma, PrismaClient } from 'database';
 import { inject, injectable } from 'tsyringe';
 import {
   CreateFeatureFlagData,
@@ -40,7 +40,8 @@ export class PrismaFeatureFlagRepository implements IFeatureFlagRepository {
         name: data.name,
         description: data.description ?? null,
         enabled: data.enabled ?? false,
-        segments: data.segments ?? null,
+        segments:
+          data.segments !== undefined ? (data.segments as Prisma.InputJsonValue) : Prisma.JsonNull,
       },
     });
   }
@@ -52,7 +53,8 @@ export class PrismaFeatureFlagRepository implements IFeatureFlagRepository {
         name: data.name,
         description: data.description,
         enabled: data.enabled,
-        segments: data.segments,
+        segments:
+          data.segments !== undefined ? (data.segments as Prisma.InputJsonValue) : undefined,
       },
     });
   }

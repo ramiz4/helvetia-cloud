@@ -60,7 +60,7 @@ export default function FeatureFlagsAdminPage() {
 
   const fetchFlags = useCallback(async () => {
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/feature-flags`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/feature-flags`);
       if (res.ok) {
         const data = await res.json();
         setFlags(data.data);
@@ -84,7 +84,7 @@ export default function FeatureFlagsAdminPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/feature-flags`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/feature-flags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -110,7 +110,7 @@ export default function FeatureFlagsAdminPage() {
     if (!editingFlag) return;
 
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/feature-flags/${editingFlag.id}`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/feature-flags/${editingFlag.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -134,7 +134,7 @@ export default function FeatureFlagsAdminPage() {
 
   const handleToggle = async (flag: FeatureFlag) => {
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/feature-flags/${flag.id}/toggle`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/feature-flags/${flag.id}/toggle`, {
         method: 'POST',
       });
 
@@ -156,7 +156,7 @@ export default function FeatureFlagsAdminPage() {
     }
 
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/feature-flags/${flag.id}`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/feature-flags/${flag.id}`, {
         method: 'DELETE',
       });
 
