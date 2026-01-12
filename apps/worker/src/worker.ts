@@ -150,11 +150,10 @@ export const worker = new Worker(
       buildLogs = result.buildLogs;
 
       // Sanitize logs for PostgreSQL (remove null bytes and invalid UTF8)
-      /* eslint-disable no-control-regex */
       const sanitizedLogs = buildLogs
         .replace(/\0/g, '')
+        // eslint-disable-next-line no-control-regex
         .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
-      /* eslint-enable no-control-regex */
 
       // Scrub sensitive data from logs
       const scrubbedLogs = scrubLogs(sanitizedLogs);

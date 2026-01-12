@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Helper to determine service status based on database state and container state
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function determineServiceStatus(service: any, containers: any[]): string {
   // If the service itself is marked as DEPLOYING in the database, respect that first
   if (service.status === 'DEPLOYING') {

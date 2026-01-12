@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type Docker from 'dockerode';
+import Dockerode from 'dockerode';
 
 /**
  * Get metrics for a service
@@ -8,7 +8,7 @@ import type Docker from 'dockerode';
 export async function getServiceMetrics(
   id: string,
   dockerInstance?: Docker,
-  containerList?: any[],
+  containerList?: Dockerode.ContainerInfo[],
   serviceInfo?: { name: string; type: string; status?: string },
 ) {
   const DockerLib = (await import('dockerode')).default;
@@ -19,7 +19,7 @@ export async function getServiceMetrics(
   // Use either the explicit serviceInfo or try to find it from labels if missing
   // (though callers should provide it for accuracy with COMPOSE)
   const allServiceContainers = containers.filter(
-    (c: any) =>
+    (c: Dockerode.ContainerInfo) =>
       c.Labels['helvetia.serviceId'] === id ||
       (serviceInfo?.type === 'COMPOSE' &&
         c.Labels['com.docker.compose.project'] === serviceInfo?.name),
@@ -30,12 +30,18 @@ export async function getServiceMetrics(
   if (serviceInfo?.status === 'DEPLOYING') {
     status = 'DEPLOYING';
   } else if (allServiceContainers.length > 0) {
-    if (allServiceContainers.some((c: any) => c.State === 'running')) {
+    if (allServiceContainers.some((c: Dockerode.ContainerInfo) => c.State === 'running')) {
       status = 'RUNNING';
-    } else if (allServiceContainers.some((c: any) => ['restarting', 'created'].includes(c.State))) {
+    } else if (
+      allServiceContainers.some((c: Dockerode.ContainerInfo) =>
+        ['restarting', 'created'].includes(c.State),
+      )
+    ) {
       status = 'DEPLOYING';
     } else if (
-      allServiceContainers.some((c: any) => c.State === 'exited' && c.Status.includes('Exited (0)'))
+      allServiceContainers.some(
+        (c: Dockerode.ContainerInfo) => c.State === 'exited' && c.Status.includes('Exited (0)'),
+      )
     ) {
       // If it's a one-off task that finished successfully
       status = 'STOPPED';
@@ -46,7 +52,9 @@ export async function getServiceMetrics(
     status = 'NOT_RUNNING';
   }
 
-  const runningContainers = allServiceContainers.filter((c: any) => c.State === 'running');
+  const runningContainers = allServiceContainers.filter(
+    (c: Dockerode.ContainerInfo) => c.State === 'running',
+  );
 
   if (runningContainers.length === 0) {
     return { cpu: 0, memory: 0, memoryLimit: 0, status };
@@ -58,7 +66,7 @@ export async function getServiceMetrics(
 
   // Process all running containers and sum their metrics
   await Promise.all(
-    runningContainers.map(async (containerInfo: any) => {
+    runningContainers.map(async (containerInfo: Dockerode.ContainerInfo) => {
       try {
         const container = docker.getContainer(containerInfo.Id);
         const stats = await container.stats({ stream: false });

@@ -150,11 +150,30 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // Mock EventSource
-global.EventSource = class MockEventSource {
+global.EventSource = class MockEventSource implements EventSource {
   onmessage = vi.fn();
+  onopen = vi.fn();
+  onerror = vi.fn();
   close = vi.fn();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any;
+  url = '';
+  withCredentials = false;
+  readonly readyState = 0;
+  readonly CONNECTING = 0;
+  readonly OPEN = 1;
+  readonly CLOSED = 2;
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 2;
+
+  constructor(url: string | URL, eventSourceInitDict?: EventSourceInit) {
+    this.url = url.toString();
+    this.withCredentials = eventSourceInitDict?.withCredentials ?? false;
+  }
+
+  addEventListener = vi.fn();
+  removeEventListener = vi.fn();
+  dispatchEvent = vi.fn();
+};
 
 describe('ProjectPage', () => {
   beforeEach(() => {
