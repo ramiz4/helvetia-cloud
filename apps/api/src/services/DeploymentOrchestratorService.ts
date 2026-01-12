@@ -39,6 +39,7 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     serviceId: string,
     userId: string,
     commitHash?: string,
+    requestId?: string,
   ): Promise<Deployment> {
     // Verify service ownership
     const service = await this.serviceRepository.findById(serviceId);
@@ -60,7 +61,7 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     });
 
     // Prepare deployment job data
-    const jobData = await this.prepareDeploymentJobData(service, deployment.id, userId);
+    const jobData = await this.prepareDeploymentJobData(service, deployment.id, userId, requestId);
 
     // Queue the deployment job
     await this.deploymentQueue.add('build', jobData);
@@ -131,6 +132,7 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     service: Service,
     deploymentId: string,
     userId: string,
+    requestId?: string,
   ): Promise<QueueDeploymentJobDto> {
     let repoUrl = service.repoUrl;
 
@@ -182,6 +184,7 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
       projectName,
       environmentName,
       username: user.username,
+      requestId, // Include request ID for tracing
     };
   }
 

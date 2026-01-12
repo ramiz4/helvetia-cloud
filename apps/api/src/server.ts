@@ -361,6 +361,10 @@ fastify.register(rateLimit, {
 import { errorHandler } from './middleware/error.middleware';
 fastify.setErrorHandler(errorHandler);
 
+// Register request ID middleware to add X-Request-Id header to all responses
+import { requestIdMiddleware } from './middleware/request-id.middleware';
+fastify.addHook('onRequest', requestIdMiddleware);
+
 // Auth hook
 fastify.addHook('onRequest', async (request, _reply) => {
   // Public routes that don't require authentication (without version prefix)

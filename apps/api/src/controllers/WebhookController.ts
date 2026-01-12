@@ -103,6 +103,7 @@ export class WebhookController {
   private async createAndQueueDeployment(
     service: ServiceData,
     commitHash: string,
+    requestId?: string,
   ): Promise<unknown> {
     const deployment = await this.deploymentRepository.create({
       serviceId: service.id,
@@ -132,6 +133,7 @@ export class WebhookController {
       customDomain: service.customDomain,
       type: service.type,
       staticOutputDir: service.staticOutputDir,
+      requestId, // Include request ID for tracing
     });
 
     return deployment;
@@ -290,11 +292,11 @@ export class WebhookController {
 
     // Handle Pull Request events
     if (payload.pull_request) {
-      return this.handlePullRequestEvent(payload as PullRequestEvent, reply);
+      return this.handlePullRequestEvent(payload as PullRequestEvent, reply, request.id);
     }
 
     // Handle Push events
-    return this.handlePushEvent(payload as PushEvent, reply);
+    return this.handlePushEvent(payload as PushEvent, reply, request.id);
   }
 
   /**
@@ -303,6 +305,7 @@ export class WebhookController {
   private async handlePullRequestEvent(
     payload: PullRequestEvent,
     reply: FastifyReply,
+    requestId?: string,
   ): Promise<void | FastifyReply> {
     try {
       const pr = payload.pull_request;
@@ -362,7 +365,7 @@ export class WebhookController {
 
         console.log(`Triggering preview deployment for ${service.name}`);
 
-        await this.createAndQueueDeployment(service, pr.head.sha);
+        await this.createAndQueueDeployment(service, pr.head.sha, requestId);
 
         return reply.status(200).send({ success: true, previewService: service.name });
       }
@@ -403,6 +406,7 @@ export class WebhookController {
   private async handlePushEvent(
     payload: PushEvent,
     reply: FastifyReply,
+    requestId?: string,
   ): Promise<void | FastifyReply> {
     // Basic check for push event
     if (!payload.repository || !payload.ref) {
@@ -433,7 +437,7 @@ export class WebhookController {
     try {
       for (const service of services) {
         console.log(`Triggering automated deployment for ${service.name}`);
-        await this.createAndQueueDeployment(service, payload.after);
+        await this.createAndQueueDeployment(service, payload.after, requestId);
       }
       return reply.status(200).send({ success: true, servicesTriggered: services.length });
     } catch (error: unknown) {

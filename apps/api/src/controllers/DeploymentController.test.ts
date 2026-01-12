@@ -185,6 +185,8 @@ describe('DeploymentController', () => {
       expect(mockDeploymentService.createAndQueueDeployment).toHaveBeenCalledWith(
         'service-1',
         'user-1',
+        undefined,
+        mockRequest.id,
       );
       expect(result).toEqual(mockDeployment);
     });

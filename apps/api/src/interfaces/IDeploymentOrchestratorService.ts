@@ -12,6 +12,7 @@ export interface IDeploymentOrchestratorService {
     serviceId: string,
     userId: string,
     commitHash?: string,
+    requestId?: string,
   ): Promise<Deployment>;
 
   /**
