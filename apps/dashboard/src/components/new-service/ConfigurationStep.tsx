@@ -36,7 +36,7 @@ export default function ConfigurationStep({
     serviceType,
     buildCommand,
     startCommand,
-    outputDirectory,
+    staticOutputDir,
     port,
     composeFile,
     mainService,
@@ -265,31 +265,9 @@ export default function ConfigurationStep({
                   <StaticConfigFields
                     data={{
                       buildCommand: buildCommand,
-                      staticOutputDir: outputDirectory,
+                      staticOutputDir: staticOutputDir,
                     }}
-                    onChange={(updates: Partial<ServiceFormData>) => {
-                      const mapping: Partial<ServiceFormData> = {};
-                      if (updates.buildCommand !== undefined)
-                        mapping.buildCommand = updates.buildCommand;
-                      // StaticConfigFields uses staticOutputDir likely. ServiceFormData has outputDirectory.
-                      // ServiceFormData DOES NOT have staticOutputDir? Let's check types.ts.
-                      // types.ts: outputDirectory. No staticOutputDir.
-                      // BUT, the original code checked updates.staticOutputDir.
-                      // So updates has staticOutputDir.
-                      // Partial<ServiceFormData> does NOT have staticOutputDir.
-                      // So I cannot cast updates to Partial<ServiceFormData> if it has staticOutputDir.
-                      // I should cast to Record<string, any> or define a local intersection.
-                      // Or updates is BaseConfigFieldsProps['data']?
-                      // Let's use Record<string, any> for safely reading, but avoid the 'any' lint by typing it slightly better or suppressing.
-                      // Actually, I can use (updates: Record<string, unknown>).
-
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      const u = updates as Record<string, any>;
-                      if (u.buildCommand !== undefined) mapping.buildCommand = u.buildCommand;
-                      if (u.staticOutputDir !== undefined)
-                        mapping.outputDirectory = u.staticOutputDir;
-                      updateData(mapping);
-                    }}
+                    onChange={(updates: Partial<ServiceFormData>) => updateData(updates)}
                     translations={t.dashboard}
                     disabled={loading}
                   />

@@ -78,7 +78,23 @@ vi.mock('@/hooks/useServices', () => ({
 }));
 
 vi.mock('@/components/ServiceCard/ServiceCard', () => ({
-  ServiceCard: ({ service, onEdit, onDelete, onDeploy, onRestart, onStop, onViewLogs }: any) => (
+  ServiceCard: ({
+    service,
+    onEdit,
+    onDelete,
+    onDeploy,
+    onRestart,
+    onStop,
+    onViewLogs,
+  }: {
+    service: { id: string; name: string };
+    onEdit: (s: { id: string; name: string }) => void;
+    onDelete: (id: string) => void;
+    onDeploy: (id: string) => void;
+    onRestart: (id: string) => void;
+    onStop: (id: string) => void;
+    onViewLogs: (id: string) => void;
+  }) => (
     <div data-testid={`service-${service.id}`}>
       {service.name}
       <button onClick={() => onEdit(service)}>Edit</button>
@@ -92,7 +108,15 @@ vi.mock('@/components/ServiceCard/ServiceCard', () => ({
 }));
 
 vi.mock('@/components/EditServiceModal', () => ({
-  EditServiceModal: ({ onSave, onClose, service }: any) => (
+  EditServiceModal: ({
+    onSave,
+    onClose,
+    service,
+  }: {
+    onSave: (service: unknown, envVars: unknown) => void;
+    onClose: () => void;
+    service: unknown;
+  }) => (
     <div data-testid="edit-modal">
       Edit Modal
       <button onClick={() => onSave(service, [{ key: 'NEW_VAR', value: '123' }])}>Save</button>
@@ -102,7 +126,7 @@ vi.mock('@/components/EditServiceModal', () => ({
 }));
 
 vi.mock('@/components/LogsModal', () => ({
-  LogsModal: ({ onClose, logs }: any) => (
+  LogsModal: ({ onClose, logs }: { onClose: () => void; logs: string }) => (
     <div data-testid="logs-modal">
       Logs: {logs}
       <button onClick={onClose}>Close</button>
@@ -228,9 +252,9 @@ describe('ProjectPage', () => {
     mocks.mutateDeployService.mockResolvedValue({ id: 'dep-1' });
     // Mock the logs fetch which happens after deploy
     const { fetchWithAuth } = await import('@/lib/tokenRefresh');
-    (fetchWithAuth as any).mockResolvedValue({
+    vi.mocked(fetchWithAuth).mockResolvedValue({
       json: async () => ({ logs: 'Build started...' }),
-    });
+    } as unknown as Response);
 
     render(<ProjectPage />, { wrapper });
 
@@ -269,9 +293,9 @@ describe('ProjectPage', () => {
 
   test('handles view logs', async () => {
     const { fetchWithAuth } = await import('@/lib/tokenRefresh');
-    (fetchWithAuth as any).mockResolvedValue({
+    vi.mocked(fetchWithAuth).mockResolvedValue({
       json: async () => ({ logs: 'Existing logs...' }),
-    });
+    } as unknown as Response);
 
     render(<ProjectPage />, { wrapper });
 
@@ -288,9 +312,9 @@ describe('ProjectPage', () => {
   test('closes logs modal', async () => {
     // First open logs
     const { fetchWithAuth } = await import('@/lib/tokenRefresh');
-    (fetchWithAuth as any).mockResolvedValue({
+    vi.mocked(fetchWithAuth).mockResolvedValue({
       json: async () => ({ logs: 'Log content' }),
-    });
+    } as unknown as Response);
 
     render(<ProjectPage />, { wrapper });
     await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());

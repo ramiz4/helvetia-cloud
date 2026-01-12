@@ -391,17 +391,20 @@ describe('useServices hooks', () => {
           name: 'test',
           status: 'RUNNING',
           metrics: {
-            cpu: '1%',
-            memory: '10MB',
-            networkIn: '0',
-            networkOut: '0',
-            diskRead: '0',
-            diskWrite: '0',
+            cpu: 1,
+            memory: 10,
+            memoryLimit: 1024,
+            status: 'RUNNING',
           },
           deployments: [],
-          // Add other required fields if necessary
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
       ];
       queryClient.setQueryData(serviceKeys.lists(), initialServices);
 
@@ -410,21 +413,18 @@ describe('useServices hooks', () => {
         {
           id: '1',
           metrics: {
-            cpu: '50%',
-            memory: '500MB',
-            networkIn: '0',
-            networkOut: '0',
-            diskRead: '0',
-            diskWrite: '0',
+            cpu: 50,
+            memory: 500,
+            memoryLimit: 1024,
+            status: 'RUNNING',
           },
           status: 'RUNNING',
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
+        },
       ]);
 
       const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
-      expect(updatedServices![0].metrics?.cpu).toBe('50%');
-      expect(updatedServices![0].metrics?.memory).toBe('500MB');
+      expect(updatedServices![0].metrics?.cpu).toBe(50);
+      expect(updatedServices![0].metrics?.memory).toBe(500);
     });
 
     it('ignores updates for unknown services', () => {
@@ -435,16 +435,20 @@ describe('useServices hooks', () => {
           name: 'test',
           status: 'RUNNING',
           metrics: {
-            cpu: '1%',
-            memory: '10MB',
-            networkIn: '0',
-            networkOut: '0',
-            diskRead: '0',
-            diskWrite: '0',
+            cpu: 1,
+            memory: 10,
+            memoryLimit: 1024,
+            status: 'RUNNING',
           },
           deployments: [],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
       ];
       queryClient.setQueryData(serviceKeys.lists(), initialServices);
 
@@ -453,15 +457,13 @@ describe('useServices hooks', () => {
         {
           id: '2',
           metrics: {
-            cpu: '50%',
-            memory: '500MB',
-            networkIn: '0',
-            networkOut: '0',
-            diskRead: '0',
-            diskWrite: '0',
+            cpu: 50,
+            memory: 500,
+            memoryLimit: 1024,
+            status: 'RUNNING',
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
+          status: 'RUNNING',
+        },
       ]);
 
       const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());

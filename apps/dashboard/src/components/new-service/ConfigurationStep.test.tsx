@@ -1,8 +1,10 @@
 import { ServiceFormData } from '@/components/new-service/types';
-import { useLanguage } from '@/lib/LanguageContext';
+import { TranslationType, useLanguage } from '@/lib/LanguageContext';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ConfigurationStep from './ConfigurationStep';
+
+// Import the real translations
 
 // Mock dependencies
 vi.mock('@/lib/LanguageContext', () => ({
@@ -11,11 +13,11 @@ vi.mock('@/lib/LanguageContext', () => ({
 
 // Mock sub-components to verify props passing and event handling
 vi.mock('../service-forms', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ComposeConfigFields: ({
     onChange,
     data,
   }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onChange: (d: any) => void;
     data: { buildCommand: string };
   }) => (
@@ -56,10 +58,12 @@ vi.mock('../service-forms', () => ({
   ),
 }));
 
+// Cast the imported JSON to the strict TranslationType
+// This is necessary because 'en' is inferred as string types, but TranslationType expects exact string literals (as const)
 const mockT = {
   dashboard: {
     newService: {
-      step3: 'Configuration',
+      step3: 'Configure', // Match en.json
       projectNameHint: 'Project name hint',
       projectNameValidation: 'Invalid name',
       serviceType: 'Service Type',
@@ -71,7 +75,7 @@ const mockT = {
       deployingButton: 'Deploying',
       addVariable: 'Add Variable',
       noEnvVars: 'No variables',
-      dismissError: 'Dismiss',
+      dismissError: 'Dismiss error', // Match en.json
     },
     labels: {
       envVars: 'Environment Variables',
@@ -81,7 +85,7 @@ const mockT = {
     error: 'Error',
     back: 'Back',
   },
-};
+} as unknown as TranslationType;
 
 const defaultData = {
   projectId: 'p1',
@@ -95,17 +99,22 @@ const defaultData = {
   // other fields
   buildCommand: '',
   startCommand: '',
-  outputDirectory: '',
+  staticOutputDir: '',
   port: 8080,
   mainService: '',
   composeFile: '',
 } as unknown as ServiceFormData;
 
+const mockSetLanguage = vi.fn();
+
 describe('ConfigurationStep', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(useLanguage).mockReturnValue({ t: mockT as any } as any);
+    vi.mocked(useLanguage).mockReturnValue({
+      language: 'en',
+      setLanguage: mockSetLanguage,
+      t: mockT,
+    });
   });
 
   it('renders correctly with default data', () => {
@@ -185,7 +194,7 @@ describe('ConfigurationStep', () => {
 
     expect(updateData).toHaveBeenCalledWith({
       buildCommand: 'new-static-build',
-      outputDirectory: 'new-output',
+      staticOutputDir: 'new-output',
     });
   });
 
@@ -285,7 +294,7 @@ describe('ConfigurationStep', () => {
     );
 
     expect(screen.getByText('Test Error')).toBeDefined();
-    fireEvent.click(screen.getByLabelText('Dismiss'));
+    fireEvent.click(screen.getByLabelText('Dismiss error'));
     expect(setError).toHaveBeenCalledWith(null);
   });
 });

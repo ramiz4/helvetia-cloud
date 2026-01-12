@@ -13,7 +13,7 @@ export interface ServiceFormData {
   dbEngine: DbEngine;
   buildCommand: string;
   startCommand: string;
-  outputDirectory: string;
+  staticOutputDir: string;
   port?: number;
   composeFile: string;
   mainService: string;

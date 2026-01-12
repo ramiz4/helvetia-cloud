@@ -1,6 +1,19 @@
 export type ServiceStatus = 'RUNNING' | 'DEPLOYING' | 'FAILED' | 'NOT_RUNNING' | 'STOPPED';
 export type ServiceType = 'DOCKER' | 'STATIC' | 'COMPOSE';
 
+export interface ServiceMetric {
+  cpu: number;
+  memory: number;
+  memoryLimit: number;
+  status?: string;
+}
+
+export interface ServiceDeployment {
+  id: string;
+  status: string;
+  createdAt: string;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -20,8 +33,8 @@ export interface Service {
   customDomain?: string;
   isPreview?: boolean;
   prNumber?: number;
-  metrics?: { cpu: number; memory: number; memoryLimit: number; status?: string };
-  deployments: { id: string; status: string; createdAt: string }[];
+  metrics?: ServiceMetric;
+  deployments: ServiceDeployment[];
   containerName?: string;
   createdAt: string;
 }

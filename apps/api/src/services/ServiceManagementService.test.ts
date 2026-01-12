@@ -1,14 +1,13 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
-import type { IDeploymentRepository, IServiceRepository, IUserRepository } from '../interfaces';
+import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
 import { ServiceManagementService } from './ServiceManagementService';
 
 describe('ServiceManagementService', () => {
   let service: ServiceManagementService;
   let mockServiceRepo: IServiceRepository;
   let mockDeploymentRepo: IDeploymentRepository;
-  let mockUserRepo: IUserRepository;
 
   const mockService = {
     id: 'service-1',
@@ -56,15 +55,6 @@ describe('ServiceManagementService', () => {
       delete: vi.fn(),
       deleteByServiceId: vi.fn(),
       countByServiceId: vi.fn(),
-    };
-
-    mockUserRepo = {
-      findById: vi.fn(),
-      findByGithubId: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      upsert: vi.fn(),
     };
 
     const mockContainerOrchestrator = {

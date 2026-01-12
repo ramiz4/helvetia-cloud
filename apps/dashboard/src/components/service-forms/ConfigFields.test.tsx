@@ -6,25 +6,9 @@ import { DockerConfigFields } from './DockerConfigFields';
 import { GHCRConfigFields } from './GHCRConfigFields';
 import { StaticConfigFields } from './StaticConfigFields';
 
-const mockTranslations = {
-  newService: {
-    databaseEngine: 'Database Engine',
-    imageTag: 'Image Tag',
-    startCommand: 'Start Command',
-    dockerfile: 'Dockerfile Path',
-    buildCommand: 'Build Command',
-    outputDirectory: 'Output Directory',
-    composeFile: 'Compose File Path',
-    mainServiceName: 'Main Service Name',
-    mainServiceDesc: 'Main Service Description',
-  },
-  labels: {
-    port: 'Port',
-    buildCommand: 'Build Command',
-    startCommand: 'Start Command',
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any;
+import en from '../../locales/en.json';
+
+const mockTranslations = en.dashboard;
 
 describe('Service Config Fields', () => {
   describe('DatabaseConfigFields', () => {

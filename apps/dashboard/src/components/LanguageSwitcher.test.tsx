@@ -3,26 +3,24 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LanguageSwitcher from './LanguageSwitcher';
 
+import de from '../locales/de.json';
+import en from '../locales/en.json';
+
 // Mock dependencies
 vi.mock('@/lib/LanguageContext', () => ({
   useLanguage: vi.fn(),
 }));
 
 const mockSetLanguage = vi.fn();
-const mockT = {
-  nav: {
-    selectLanguage: 'Select Language',
-  },
-};
 
 describe('LanguageSwitcher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useLanguage as any).mockReturnValue({
+    vi.mocked(useLanguage).mockReturnValue({
       language: 'en',
       setLanguage: mockSetLanguage,
-      t: mockT,
-    });
+      t: en,
+    } as unknown as ReturnType<typeof useLanguage>);
   });
 
   afterEach(() => {
@@ -41,10 +39,10 @@ describe('LanguageSwitcher', () => {
     });
 
     it('highlights current language', () => {
-      (useLanguage as any).mockReturnValue({
+      vi.mocked(useLanguage).mockReturnValue({
         language: 'de',
         setLanguage: mockSetLanguage,
-        t: mockT,
+        t: de,
       });
       render(<LanguageSwitcher variant="minimal" />);
 

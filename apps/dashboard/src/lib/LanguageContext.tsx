@@ -3,10 +3,12 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Language, translations } from './translations';
 
-type LanguageContextType = {
+export type TranslationType = (typeof translations)['en'];
+
+export type LanguageContextType = {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (typeof translations)['en'];
+  t: TranslationType;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);

@@ -1,4 +1,4 @@
-import { useLanguage } from '@/lib/LanguageContext';
+import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UserMenu from './UserMenu';
@@ -38,8 +38,7 @@ const mockUser = {
 describe('UserMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(useLanguage).mockReturnValue({ t: mockT as any } as any);
+    vi.mocked(useLanguage).mockReturnValue({ t: mockT } as LanguageContextType);
   });
 
   it('renders user information correctly', () => {

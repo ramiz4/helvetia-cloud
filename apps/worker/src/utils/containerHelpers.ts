@@ -4,6 +4,10 @@ import IORedis from 'ioredis';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 import { withStatusLock } from './statusLock';
 
+type NetworkConfig = {
+  Aliases: string[];
+};
+
 /**
  * Ensure a Docker network exists
  */
@@ -138,9 +142,10 @@ export async function startContainer(params: {
   const traefikRule = hosts.map((h) => `Host(\`${h}\`)`).join(' || ');
 
   // Prepare network configuration
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const endpoints: Record<string, any> = {
-    'helvetia-net': {},
+  const endpoints: Record<string, NetworkConfig> = {
+    'helvetia-net': {
+      Aliases: [serviceName],
+    },
   };
 
   if (networkName !== 'helvetia-net') {

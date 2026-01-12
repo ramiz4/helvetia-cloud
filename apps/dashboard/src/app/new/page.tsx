@@ -36,7 +36,7 @@ export default function NewServicePage() {
     dbEngine: 'postgres',
     buildCommand: '',
     startCommand: '',
-    outputDirectory: 'dist',
+    staticOutputDir: 'dist',
     port: undefined,
     composeFile: 'docker-compose.yml',
     mainService: 'app',
@@ -75,7 +75,7 @@ export default function NewServicePage() {
       dbEngine,
       buildCommand,
       startCommand,
-      outputDirectory,
+      staticOutputDir,
       port,
       composeFile,
       mainService,
@@ -98,7 +98,7 @@ export default function NewServicePage() {
         serviceType === 'compose' || importType === 'github-image' ? undefined : buildCommand,
       startCommand:
         serviceType === 'docker' || importType === 'github-image' ? startCommand : undefined,
-      staticOutputDir: serviceType === 'static' ? outputDirectory : undefined,
+      staticOutputDir: serviceType === 'static' ? staticOutputDir : undefined,
       port:
         serviceType === 'docker' || serviceType === 'compose' || importType === 'github-image'
           ? port

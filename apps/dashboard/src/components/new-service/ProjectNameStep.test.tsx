@@ -2,7 +2,7 @@ import { ServiceFormData } from '@/components/new-service/types';
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
 import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
 import { Project } from '@/types/project';
-import { UseQueryResult } from '@tanstack/react-query';
+import { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectNameStep from './ProjectNameStep';
@@ -67,8 +67,7 @@ describe('ProjectNameStep', () => {
     vi.mocked(useCreateProject).mockReturnValue({
       mutateAsync: mockCreateMutateAsync,
       isPending: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as UseMutationResult<Project, Error, string, unknown>);
   });
 
   it('renders projects and loading state', () => {
@@ -86,11 +85,9 @@ describe('ProjectNameStep', () => {
     expect(screen.getByText('Loading Projects...')).toBeDefined();
 
     vi.mocked(useProjects).mockReturnValue({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: mockProjects as any,
+      data: mockProjects,
       isLoading: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as UseQueryResult<Project[], Error>);
     render(
       <ProjectNameStep
         data={{} as unknown as ServiceFormData}
