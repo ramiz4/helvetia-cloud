@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 import { inject, injectable } from 'tsyringe';
 import {
   CreateFeatureFlagData,
@@ -103,16 +104,14 @@ export class PrismaFeatureFlagRepository implements IFeatureFlagRepository {
   /**
    * Generate a deterministic hash for user ID to percentage (0-100)
    * This ensures the same user always gets the same result for a given flag
+   * Uses SHA-256 for better hash distribution
    */
   private hashUserId(userId: string, flagKey: string): number {
     const input = `${userId}:${flagKey}`;
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      const char = input.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    // Convert to positive number and get percentage (0-100)
-    return Math.abs(hash) % 100;
+    const hash = crypto.createHash('sha256').update(input).digest('hex');
+    // Take first 8 characters and convert to int (0-4294967295)
+    const hashInt = parseInt(hash.substring(0, 8), 16);
+    // Convert to percentage (0-99)
+    return hashInt % 100;
   }
 }

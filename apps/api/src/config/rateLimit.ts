@@ -59,5 +59,24 @@ export function createRateLimitConfigs(redisConnection: IORedis) {
     },
   };
 
-  return { authRateLimitConfig, wsRateLimitConfig, deploymentRateLimitConfig };
+  // Rate limiting for public feature flag checks
+  const featureFlagCheckRateLimitConfig = {
+    max: isTestEnv ? 10000 : parseInt(process.env.FEATURE_FLAG_CHECK_RATE_LIMIT_MAX || '100', 10),
+    timeWindow: process.env.FEATURE_FLAG_CHECK_RATE_LIMIT_WINDOW || '1 minute',
+    redis: redisConnection,
+    nameSpace: 'helvetia-feature-flag-check-rate-limit:',
+    skipOnError: true,
+    addHeaders: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true,
+    },
+  };
+
+  return {
+    authRateLimitConfig,
+    wsRateLimitConfig,
+    deploymentRateLimitConfig,
+    featureFlagCheckRateLimitConfig,
+  };
 }

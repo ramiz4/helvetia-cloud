@@ -1,3 +1,4 @@
+import React from 'react';
 import { API_BASE_URL } from './config';
 
 /**
@@ -68,6 +69,3 @@ export function useFeatureFlag(key: string, userId?: string) {
 
   return { enabled, loading };
 }
-
-// Import React for the hook
-import React from 'react';

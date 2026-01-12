@@ -1,5 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
+import IORedis from 'ioredis';
 import { z } from 'zod';
+import { createRateLimitConfigs } from '../config/rateLimit';
 import { resolve } from '../di';
 import type { FeatureFlagService } from '../services';
 
@@ -54,6 +56,12 @@ const checkFlagSchema = z.object({
  * Feature flag routes
  */
 export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
+  // Setup rate limiting for public check endpoint
+  const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    maxRetriesPerRequest: null,
+  });
+  const { featureFlagCheckRateLimitConfig } = createRateLimitConfigs(redisConnection);
+
   /**
    * Get all feature flags
    */
@@ -226,29 +234,38 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
   /**
    * Check if a feature flag is enabled
    * Public endpoint (no authentication required)
+   * Rate limited to prevent abuse
    */
-  fastify.post('/feature-flags/check', async (request, reply) => {
-    try {
-      const parseResult = checkFlagSchema.safeParse(request.body);
+  fastify.post(
+    '/feature-flags/check',
+    {
+      config: {
+        rateLimit: featureFlagCheckRateLimitConfig,
+      },
+    },
+    async (request, reply) => {
+      try {
+        const parseResult = checkFlagSchema.safeParse(request.body);
 
-      if (!parseResult.success) {
-        return reply.code(400).send({
-          success: false,
-          error: 'Invalid request data',
-          details: parseResult.error.flatten(),
-        });
+        if (!parseResult.success) {
+          return reply.code(400).send({
+            success: false,
+            error: 'Invalid request data',
+            details: parseResult.error.flatten(),
+          });
+        }
+
+        const featureFlagService = resolve<FeatureFlagService>(Symbol.for('FeatureFlagService'));
+        const enabled = await featureFlagService.isEnabled(
+          parseResult.data.key,
+          parseResult.data.userId,
+        );
+
+        return reply.send({ success: true, enabled });
+      } catch (error) {
+        fastify.log.error(error, 'Failed to check feature flag');
+        return reply.code(500).send({ success: false, error: 'Failed to check feature flag' });
       }
-
-      const featureFlagService = resolve<FeatureFlagService>(Symbol.for('FeatureFlagService'));
-      const enabled = await featureFlagService.isEnabled(
-        parseResult.data.key,
-        parseResult.data.userId,
-      );
-
-      return reply.send({ success: true, enabled });
-    } catch (error) {
-      fastify.log.error(error, 'Failed to check feature flag');
-      return reply.code(500).send({ success: false, error: 'Failed to check feature flag' });
-    }
-  });
+    },
+  );
 };
