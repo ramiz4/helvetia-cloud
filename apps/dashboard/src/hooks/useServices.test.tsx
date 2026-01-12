@@ -1,3 +1,4 @@
+import { Service } from '@/types/service';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,7 +13,6 @@ import {
   useStopService,
   useUpdateService,
 } from './useServices';
-import { Service } from '@/types/service';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -20,16 +20,18 @@ global.fetch = mockFetch;
 
 // Helper to create a test wrapper with QueryClient
 function createWrapper(client?: QueryClient) {
-  const queryClient = client || new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
+  const queryClient =
+    client ||
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+        mutations: {
+          retry: false,
+        },
       },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
+    });
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
@@ -125,7 +127,10 @@ describe('useServices hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.data).toEqual(mockService);
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/services/1'), expect.anything());
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/services/1'),
+        expect.anything(),
+      );
     });
 
     it('handles fetch single service error', async () => {
@@ -227,7 +232,7 @@ describe('useServices hooks', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        json: async () => { },
+        json: async () => {},
       });
 
       const { result } = renderHook(() => useDeleteService(), { wrapper: createWrapper() });
@@ -326,7 +331,7 @@ describe('useServices hooks', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        json: async () => { },
+        json: async () => {},
       });
 
       const { result } = renderHook(() => useRestartService(), { wrapper: createWrapper() });
@@ -357,8 +362,8 @@ describe('useServices hooks', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/services/1/stop'),
         expect.objectContaining({
-          method: 'POST'
-        })
+          method: 'POST',
+        }),
       );
     });
 
@@ -366,7 +371,7 @@ describe('useServices hooks', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        json: async () => { },
+        json: async () => {},
       });
 
       const { result } = renderHook(() => useStopService(), { wrapper: createWrapper() });
@@ -380,23 +385,39 @@ describe('useServices hooks', () => {
   describe('createUpdateServiceMetrics', () => {
     it('updates services in cache', () => {
       const queryClient = new QueryClient();
-      const initialServices: Service[] = [{
-        id: '1',
-        name: 'test',
-        status: 'RUNNING',
-        metrics: { cpu: '1%', memory: '10MB', networkIn: '0', networkOut: '0', diskRead: '0', diskWrite: '0' },
-        deployments: [],
-        // Add other required fields if necessary
-      } as any];
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'RUNNING',
+          metrics: {
+            cpu: '1%',
+            memory: '10MB',
+            networkIn: '0',
+            networkOut: '0',
+            diskRead: '0',
+            diskWrite: '0',
+          },
+          deployments: [],
+          // Add other required fields if necessary
+        } as any,
+      ];
       queryClient.setQueryData(serviceKeys.lists(), initialServices);
 
       const updater = createUpdateServiceMetrics(queryClient);
       updater([
         {
           id: '1',
-          metrics: { cpu: '50%', memory: '500MB', networkIn: '0', networkOut: '0', diskRead: '0', diskWrite: '0' },
-          status: 'RUNNING'
-        } as any
+          metrics: {
+            cpu: '50%',
+            memory: '500MB',
+            networkIn: '0',
+            networkOut: '0',
+            diskRead: '0',
+            diskWrite: '0',
+          },
+          status: 'RUNNING',
+        } as any,
       ]);
 
       const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
@@ -406,21 +427,37 @@ describe('useServices hooks', () => {
 
     it('ignores updates for unknown services', () => {
       const queryClient = new QueryClient();
-      const initialServices: Service[] = [{
-        id: '1',
-        name: 'test',
-        status: 'RUNNING',
-        metrics: { cpu: '1%', memory: '10MB', networkIn: '0', networkOut: '0', diskRead: '0', diskWrite: '0' },
-        deployments: [],
-      } as any];
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'RUNNING',
+          metrics: {
+            cpu: '1%',
+            memory: '10MB',
+            networkIn: '0',
+            networkOut: '0',
+            diskRead: '0',
+            diskWrite: '0',
+          },
+          deployments: [],
+        } as any,
+      ];
       queryClient.setQueryData(serviceKeys.lists(), initialServices);
 
       const updater = createUpdateServiceMetrics(queryClient);
       updater([
         {
           id: '2',
-          metrics: { cpu: '50%', memory: '500MB', networkIn: '0', networkOut: '0', diskRead: '0', diskWrite: '0' },
-        } as any
+          metrics: {
+            cpu: '50%',
+            memory: '500MB',
+            networkIn: '0',
+            networkOut: '0',
+            diskRead: '0',
+            diskWrite: '0',
+          },
+        } as any,
       ]);
 
       const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import ProjectPage from './page';
 
@@ -51,7 +51,7 @@ const mockServices = [
     environmentId: 'env-1',
     createdAt: '2023-01-02',
     deployments: [],
-  }
+  },
 ];
 
 vi.mock('@/hooks/useProjects', () => ({
@@ -140,7 +140,9 @@ describe('ProjectPage', () => {
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       {children}
     </QueryClientProvider>
   );
@@ -227,7 +229,7 @@ describe('ProjectPage', () => {
     // Mock the logs fetch which happens after deploy
     const { fetchWithAuth } = await import('@/lib/tokenRefresh');
     (fetchWithAuth as any).mockResolvedValue({
-      json: async () => ({ logs: 'Build started...' })
+      json: async () => ({ logs: 'Build started...' }),
     });
 
     render(<ProjectPage />, { wrapper });
@@ -258,7 +260,7 @@ describe('ProjectPage', () => {
       expect(mocks.mutateUpdateService).toHaveBeenCalledWith({
         id: 's1',
         data: expect.objectContaining({
-          envVars: { NEW_VAR: '123' }
+          envVars: { NEW_VAR: '123' },
         }),
       });
       expect(mocks.toastSuccess).toHaveBeenCalled();
@@ -268,7 +270,7 @@ describe('ProjectPage', () => {
   test('handles view logs', async () => {
     const { fetchWithAuth } = await import('@/lib/tokenRefresh');
     (fetchWithAuth as any).mockResolvedValue({
-      json: async () => ({ logs: 'Existing logs...' })
+      json: async () => ({ logs: 'Existing logs...' }),
     });
 
     render(<ProjectPage />, { wrapper });
@@ -287,7 +289,7 @@ describe('ProjectPage', () => {
     // First open logs
     const { fetchWithAuth } = await import('@/lib/tokenRefresh');
     (fetchWithAuth as any).mockResolvedValue({
-      json: async () => ({ logs: 'Log content' })
+      json: async () => ({ logs: 'Log content' }),
     });
 
     render(<ProjectPage />, { wrapper });

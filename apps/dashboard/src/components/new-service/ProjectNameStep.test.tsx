@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ProjectNameStep from './ProjectNameStep';
-import { useLanguage } from '@/lib/LanguageContext';
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
+import { useLanguage } from '@/lib/LanguageContext';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import ProjectNameStep from './ProjectNameStep';
 
 // Mock language
 vi.mock('@/lib/LanguageContext', () => ({
@@ -69,23 +69,11 @@ describe('ProjectNameStep', () => {
 
   it('renders projects and loading state', () => {
     (useProjects as any).mockReturnValue({ data: [], isLoading: true });
-    render(
-      <ProjectNameStep
-        data={{} as any}
-        updateData={() => { }}
-        onNext={() => { }}
-      />
-    );
+    render(<ProjectNameStep data={{} as any} updateData={() => {}} onNext={() => {}} />);
     expect(screen.getByText('Loading Projects...')).toBeDefined();
 
     (useProjects as any).mockReturnValue({ data: mockProjects, isLoading: false });
-    render(
-      <ProjectNameStep
-        data={{} as any}
-        updateData={() => { }}
-        onNext={() => { }}
-      />
-    );
+    render(<ProjectNameStep data={{} as any} updateData={() => {}} onNext={() => {}} />);
     expect(screen.getAllByText('Select Project')).toHaveLength(2);
     expect(screen.getByText('project-1')).toBeDefined();
     expect(screen.getByText('project-2')).toBeDefined();
@@ -93,13 +81,7 @@ describe('ProjectNameStep', () => {
 
   it('selects a project and updates data', () => {
     const updateData = vi.fn();
-    render(
-      <ProjectNameStep
-        data={{} as any}
-        updateData={updateData}
-        onNext={() => { }}
-      />
-    );
+    render(<ProjectNameStep data={{} as any} updateData={updateData} onNext={() => {}} />);
 
     fireEvent.click(screen.getByText('project-1'));
 
@@ -113,9 +95,9 @@ describe('ProjectNameStep', () => {
     render(
       <ProjectNameStep
         data={{ projectId: 'p1', environmentId: 'e1' } as any}
-        updateData={() => { }}
-        onNext={() => { }}
-      />
+        updateData={() => {}}
+        onNext={() => {}}
+      />,
     );
 
     expect(screen.getByText('production')).toBeDefined();
@@ -131,8 +113,8 @@ describe('ProjectNameStep', () => {
       <ProjectNameStep
         data={{ projectId: 'p1', environmentId: 'e1' } as any}
         updateData={updateData}
-        onNext={() => { }}
-      />
+        onNext={() => {}}
+      />,
     );
 
     fireEvent.click(screen.getByText('staging'));
@@ -140,13 +122,7 @@ describe('ProjectNameStep', () => {
   });
 
   it('toggles new project creation mode', () => {
-    render(
-      <ProjectNameStep
-        data={{} as any}
-        updateData={() => { }}
-        onNext={() => { }}
-      />
-    );
+    render(<ProjectNameStep data={{} as any} updateData={() => {}} onNext={() => {}} />);
 
     fireEvent.click(screen.getByText('New Project'));
     expect(screen.getByPlaceholderText('project-name')).toBeDefined();
@@ -161,19 +137,15 @@ describe('ProjectNameStep', () => {
     mockCreateMutateAsync.mockResolvedValue({
       id: 'p3',
       name: 'new-project',
-      environments: [{ id: 'e4', name: 'production' }]
+      environments: [{ id: 'e4', name: 'production' }],
     });
 
-    render(
-      <ProjectNameStep
-        data={{} as any}
-        updateData={updateData}
-        onNext={() => { }}
-      />
-    );
+    render(<ProjectNameStep data={{} as any} updateData={updateData} onNext={() => {}} />);
 
     fireEvent.click(screen.getByText('New Project'));
-    fireEvent.change(screen.getByPlaceholderText('project-name'), { target: { value: 'new-project' } });
+    fireEvent.change(screen.getByPlaceholderText('project-name'), {
+      target: { value: 'new-project' },
+    });
     fireEvent.click(screen.getByText('Create'));
 
     await waitFor(() => {
@@ -190,9 +162,9 @@ describe('ProjectNameStep', () => {
     render(
       <ProjectNameStep
         data={{ projectId: 'p1', environmentId: 'e1' } as any}
-        updateData={() => { }}
+        updateData={() => {}}
         onNext={onNext}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText('Next'));
@@ -204,9 +176,9 @@ describe('ProjectNameStep', () => {
     render(
       <ProjectNameStep
         data={{ projectId: '', environmentId: '' } as any}
-        updateData={() => { }}
+        updateData={() => {}}
         onNext={onNext}
-      />
+      />,
     );
 
     // Check disabled attribute

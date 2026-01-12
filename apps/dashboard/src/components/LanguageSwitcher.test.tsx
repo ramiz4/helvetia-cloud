@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '@/lib/LanguageContext';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import LanguageSwitcher from './LanguageSwitcher';
 
 // Mock dependencies
 vi.mock('@/lib/LanguageContext', () => ({
@@ -98,7 +98,7 @@ describe('LanguageSwitcher', () => {
         <div>
           <div data-testid="outside">Outside</div>
           <LanguageSwitcher variant="dropdown" />
-        </div>
+        </div>,
       );
 
       // Open
