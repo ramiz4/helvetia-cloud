@@ -27,22 +27,16 @@ describe('Service Config Fields', () => {
       render(
         <GHCRConfigFields
           translations={mockTranslations}
-          data={{ branch: 'v1', startCommand: 'npm start', port: 3000 }}
+          data={{ branch: 'v1', port: 3000 }}
           onChange={onChange}
         />,
       );
 
       expect(screen.getByDisplayValue('v1')).toBeDefined();
-      expect(screen.getByDisplayValue('npm start')).toBeDefined();
       expect(screen.getByDisplayValue('3000')).toBeDefined();
 
       fireEvent.change(screen.getByPlaceholderText('latest'), { target: { value: 'latest-v2' } });
       expect(onChange).toHaveBeenCalledWith({ branch: 'latest-v2' });
-
-      fireEvent.change(screen.getByPlaceholderText('optional override'), {
-        target: { value: 'node app.js' },
-      });
-      expect(onChange).toHaveBeenCalledWith({ startCommand: 'node app.js' });
 
       fireEvent.change(screen.getByPlaceholderText('8080'), { target: { value: '80' } });
       expect(onChange).toHaveBeenCalledWith({ port: 80 });
@@ -55,23 +49,18 @@ describe('Service Config Fields', () => {
       render(
         <DockerConfigFields
           translations={mockTranslations}
-          data={{ buildCommand: 'npm run test', startCommand: 'npm start' }}
+          data={{ buildCommand: 'npm run test', port: 3000 }}
           onChange={onChange}
         />,
       );
 
       expect(screen.getByDisplayValue('npm run test')).toBeDefined();
-      expect(screen.getByDisplayValue('npm start')).toBeDefined();
+      expect(screen.getByDisplayValue('3000')).toBeDefined();
 
       fireEvent.change(screen.getByPlaceholderText('npm run build'), {
         target: { value: 'yarn build' },
       });
       expect(onChange).toHaveBeenCalledWith({ buildCommand: 'yarn build' });
-
-      fireEvent.change(screen.getByPlaceholderText('npm start'), {
-        target: { value: 'yarn start' },
-      });
-      expect(onChange).toHaveBeenCalledWith({ startCommand: 'yarn start' });
     });
   });
 
