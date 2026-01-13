@@ -3,6 +3,7 @@
 import { API_BASE_URL } from '@/lib/config';
 import { useFeatureFlag } from '@/lib/featureFlags';
 import { useLanguage } from '@/lib/LanguageContext';
+import { Role } from '@/types/organization';
 import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, Shield, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -18,8 +19,9 @@ export default function Navigation() {
     id: string;
     username: string;
     avatarUrl?: string;
-    role?: string;
+    role?: Role;
   } | null>(null);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -175,7 +177,7 @@ export default function Navigation() {
                     <span>{t.nav.deployments}</span>
                   </Link>
                 )}
-                {user?.role === 'ADMIN' && (
+                {user?.role === Role.ADMIN && (
                   <Link
                     href="/admin"
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
@@ -270,7 +272,7 @@ export default function Navigation() {
                       <span>{t.nav.deployments}</span>
                     </Link>
                   )}
-                  {user?.role === 'ADMIN' && (
+                  {user?.role === Role.ADMIN && (
                     <Link
                       href="/admin"
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${

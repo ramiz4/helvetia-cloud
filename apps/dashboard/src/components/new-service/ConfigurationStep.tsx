@@ -167,10 +167,11 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'docker' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'docker'
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            serviceType === 'docker'
                               ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
                               : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                            }`}
+                          }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -180,10 +181,11 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'static' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'static'
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            serviceType === 'static'
                               ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
                               : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                            }`}
+                          }`}
                         >
                           <Globe size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -193,10 +195,11 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'compose' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'compose'
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                            serviceType === 'compose'
                               ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
                               : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                            }`}
+                          }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">

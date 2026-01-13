@@ -1,35 +1,11 @@
 'use client';
 
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Activity, BarChart3, Flag, Lock, Settings, Shield, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 export default function AdminDashboard() {
-  const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<{ username: string; role: string } | null>(null);
-
-  useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr);
-        if (userData.role === 'ADMIN') {
-          setIsAdmin(true);
-          setUser(userData);
-        } else {
-          router.push('/');
-        }
-      } catch {
-        router.push('/admin/login');
-      }
-    } else {
-      router.push('/admin/login');
-    }
-    setLoading(false);
-  }, [router]);
+  const { isAdmin, loading, user } = useAdminAuth();
 
   if (loading) {
     return (

@@ -6,6 +6,7 @@ import { FolderPlus, Plus, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import LandingPage from '../components/LandingPage';
 import { useCreateProject, useDeleteProject, useProjects } from '../hooks/useProjects';
@@ -18,6 +19,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const { currentOrganization } = useOrganizationContext();
 
   // Project hooks
@@ -59,17 +61,13 @@ export default function Home() {
     }
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this project? All associated services will be affected.',
-      )
-    )
-      return;
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
 
     try {
-      await deleteProjectMutation.mutateAsync(projectId);
+      await deleteProjectMutation.mutateAsync(projectToDelete);
       toast.success('Project deleted successfully');
+      setProjectToDelete(null);
     } catch {
       toast.error('Failed to delete project');
     }
@@ -180,7 +178,11 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} onDelete={handleDeleteProject} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onDelete={() => setProjectToDelete(project.id)}
+              />
             ))}
           </div>
         )}
@@ -189,6 +191,18 @@ export default function Home() {
           <NewProjectModal
             onClose={() => setShowNewProjectModal(false)}
             onSave={handleCreateProject}
+          />
+        )}
+
+        {projectToDelete && (
+          <ConfirmationModal
+            title="Delete Project"
+            message="Are you sure you want to delete this project? All associated services and environments will be permanently removed. This action cannot be undone."
+            confirmLabel="Delete"
+            onConfirm={handleDeleteProject}
+            onCancel={() => setProjectToDelete(null)}
+            isDanger
+            isLoading={deleteProjectMutation.isPending}
           />
         )}
       </div>

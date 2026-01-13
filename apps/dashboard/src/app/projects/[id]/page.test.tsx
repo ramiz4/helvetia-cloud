@@ -233,7 +233,17 @@ describe('ProjectPage', () => {
 
     await waitFor(() => expect(screen.getByTestId('service-s1')).toBeInTheDocument());
 
+    // Click delete on service card
     fireEvent.click(screen.getByText('Delete', { selector: '[data-testid="service-s1"] button' }));
+
+    // Wait for confirmation modal and click Delete
+    await waitFor(() =>
+      expect(screen.getByText(/Are you sure you want to delete this service/)).toBeInTheDocument(),
+    );
+
+    fireEvent.click(
+      screen.getAllByRole('button', { name: en.dashboard.actions.delete }).slice(-1)[0],
+    );
 
     await waitFor(() => {
       expect(mocks.mutateDeleteService).toHaveBeenCalledWith('s1');

@@ -1,5 +1,6 @@
 'use client';
 
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAddMember, useRemoveMember, useUpdateMember } from '@/hooks/useOrganizations';
 import { Organization, Role } from '@/types/organization';
 import { Trash2, User as UserIcon, UserPlus } from 'lucide-react';
@@ -14,7 +15,8 @@ interface MemberManagementProps {
 export default function MemberManagement({ organization }: MemberManagementProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteUserId, setInviteUserId] = useState('');
-  const [inviteRole, setInviteRole] = useState<Role>('MEMBER');
+  const [inviteRole, setInviteRole] = useState<Role>(Role.MEMBER);
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
 
   const addMemberMutation = useAddMember();
   const updateMemberMutation = useUpdateMember();
@@ -49,14 +51,15 @@ export default function MemberManagement({ organization }: MemberManagementProps
     }
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this member?')) return;
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
     try {
       await removeMemberMutation.mutateAsync({
         orgId: organization.id,
-        userId,
+        userId: memberToRemove,
       });
       toast.success('Member removed');
+      setMemberToRemove(null);
     } catch (error) {
       toast.error((error as Error).message || 'Failed to remove member');
     }
@@ -185,7 +188,7 @@ export default function MemberManagement({ organization }: MemberManagementProps
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
-                      onClick={() => handleRemoveMember(member.userId)}
+                      onClick={() => setMemberToRemove(member.userId)}
                       className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                       title="Remove Member"
                     >
@@ -198,6 +201,18 @@ export default function MemberManagement({ organization }: MemberManagementProps
           </table>
         </div>
       </div>
+
+      {memberToRemove && (
+        <ConfirmationModal
+          title="Remove Member"
+          message="Are you sure you want to remove this member from the organization? This action cannot be undone."
+          confirmLabel="Remove"
+          onConfirm={handleRemoveMember}
+          onCancel={() => setMemberToRemove(null)}
+          isDanger
+          isLoading={removeMemberMutation.isPending}
+        />
+      )}
     </div>
   );
 }

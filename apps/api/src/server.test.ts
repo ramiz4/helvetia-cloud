@@ -78,8 +78,32 @@ vi.mock('database', () => {
         findMany: vi.fn(),
         deleteMany: vi.fn(),
       },
+      organization: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      organizationMember: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
     },
     PrismaClient: vi.fn(),
+    Prisma: {
+      JsonNull: 'JsonNull',
+      DbNull: 'DbNull',
+    },
+    Role: {
+      OWNER: 'OWNER',
+      ADMIN: 'ADMIN',
+      MEMBER: 'MEMBER',
+      VIEWER: 'VIEWER',
+    },
   };
 });
 

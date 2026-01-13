@@ -1,10 +1,12 @@
 'use client';
 
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { EditServiceModal } from '@/components/EditServiceModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LogsModal } from '@/components/LogsModal';
 import { NewEnvironmentModal } from '@/components/NewEnvironmentModal';
 import { ServiceCard } from '@/components/ServiceCard/ServiceCard';
+
 import { useCreateEnvironment, useProject } from '@/hooks/useProjects';
 import {
   createUpdateServiceMetrics,
@@ -38,6 +40,7 @@ export default function ProjectPage() {
   const [activeDeploymentId, setActiveDeploymentId] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [showNewEnvironmentModal, setShowNewEnvironmentModal] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
 
   const { data: project, isLoading: projectLoading } = useProject(id);
   const { data: services = [], isLoading: servicesLoading } = useServices({
@@ -129,11 +132,12 @@ export default function ProjectPage() {
     }
   };
 
-  const handleDelete = async (serviceId: string) => {
-    if (!confirm(t.dashboard.actions.deleteConfirm)) return;
+  const handleDelete = async () => {
+    if (!serviceToDelete) return;
     try {
-      await deleteServiceMutation.mutateAsync(serviceId);
+      await deleteServiceMutation.mutateAsync(serviceToDelete);
       toast.success(t.common.success);
+      setServiceToDelete(null);
     } catch {
       toast.error(t.dashboard.actions.deleteFailed);
     }
@@ -341,7 +345,7 @@ export default function ProjectPage() {
                       key={service.id}
                       service={service}
                       onEdit={setEditingService}
-                      onDelete={handleDelete}
+                      onDelete={() => setServiceToDelete(service.id)}
                       onDeploy={handleDeploy}
                       onRestart={handleRestart}
                       onStop={handleStop}
@@ -385,6 +389,18 @@ export default function ProjectPage() {
           <NewEnvironmentModal
             onClose={() => setShowNewEnvironmentModal(false)}
             onSave={handleCreateEnvironment}
+          />
+        )}
+
+        {serviceToDelete && (
+          <ConfirmationModal
+            title={t.dashboard.actions.delete}
+            message={t.dashboard.actions.deleteConfirm}
+            confirmLabel={t.dashboard.actions.delete}
+            onConfirm={handleDelete}
+            onCancel={() => setServiceToDelete(null)}
+            isDanger
+            isLoading={deleteServiceMutation.isPending}
           />
         )}
       </div>

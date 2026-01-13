@@ -1,4 +1,9 @@
-export type Role = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+export enum Role {
+  OWNER = 'OWNER',
+  ADMIN = 'ADMIN',
+  MEMBER = 'MEMBER',
+  VIEWER = 'VIEWER',
+}
 
 export interface OrganizationMember {
   id: string;

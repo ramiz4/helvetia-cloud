@@ -140,6 +140,8 @@ const defaultData = {
   port: 8080,
   mainService: '',
   composeFile: '',
+  volumes: [],
+  dbEngine: 'postgres',
 } as ServiceFormData;
 
 const mockSetLanguage = vi.fn();

@@ -80,7 +80,7 @@ export class InitializationService {
    * Simple password hashing using Node.js crypto
    */
   private hashPassword(password: string): string {
-    // In a real production app, use bcrypt or argon2 with a proper salt
+    // TODO: In a real production app, use bcrypt or argon2 with a proper salt
     return crypto.createHash('sha256').update(password).digest('hex');
   }
 }

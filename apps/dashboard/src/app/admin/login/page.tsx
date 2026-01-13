@@ -2,6 +2,7 @@
 
 import { API_BASE_URL } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
+import { Role } from '@/types/organization';
 import { Loader2, Lock, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -33,7 +34,7 @@ function AdminLoginContent() {
       const data = await res.json();
 
       if (res.ok && data.user) {
-        if (data.user.role !== 'ADMIN') {
+        if (data.user.role !== Role.ADMIN) {
           setLocalError('Access denied. Admin privileges required.');
           return;
         }
