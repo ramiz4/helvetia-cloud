@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { TOKENS } from '../di/tokens';
 import { ValidationError } from '../errors';
 import { OrganizationService } from '../services/OrganizationService';
+import { formatZodError } from '../utils/errorFormatting';
 
 const createOrganizationSchema = z.object({
   name: z.string().min(3).max(50),
@@ -30,7 +31,7 @@ export class OrganizationController {
       return reply.status(201).send(org);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new ValidationError('Validation failed', error.issues);
+        throw new ValidationError('Validation failed', formatZodError(error));
       }
       throw error;
     }
@@ -49,7 +50,7 @@ export class OrganizationController {
       return await this.organizationService.getOrganizationById(id, userId);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new ValidationError('Validation failed', error.issues);
+        throw new ValidationError('Validation failed', formatZodError(error));
       }
       throw error;
     }
@@ -70,7 +71,7 @@ export class OrganizationController {
       return reply.status(201).send(member);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new ValidationError('Validation failed', error.issues);
+        throw new ValidationError('Validation failed', formatZodError(error));
       }
       throw error;
     }
@@ -97,7 +98,7 @@ export class OrganizationController {
       );
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new ValidationError('Validation failed', error.issues);
+        throw new ValidationError('Validation failed', formatZodError(error));
       }
       throw error;
     }
@@ -117,7 +118,7 @@ export class OrganizationController {
       return reply.status(204).send();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new ValidationError('Validation failed', error.issues);
+        throw new ValidationError('Validation failed', formatZodError(error));
       }
       throw error;
     }

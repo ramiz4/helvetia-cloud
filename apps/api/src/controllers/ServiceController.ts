@@ -12,6 +12,7 @@ import type {
 } from '../interfaces';
 import { ServiceCreateSchema, ServiceUpdateSchema } from '../schemas/service.schema';
 import '../types/fastify';
+import { formatZodError } from '../utils/errorFormatting';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { determineServiceStatus } from '../utils/helpers/status.helper';
@@ -131,10 +132,7 @@ export class ServiceController {
       if (error instanceof ZodError) {
         return reply.status(400).send({
           error: 'Validation failed',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
+          details: formatZodError(error),
         });
       }
       throw error;
@@ -214,10 +212,7 @@ export class ServiceController {
       if (error instanceof ZodError) {
         return reply.status(400).send({
           error: 'Validation failed',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
+          details: formatZodError(error),
         });
       }
       throw error;
