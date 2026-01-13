@@ -199,7 +199,7 @@ export const worker = new Worker(
 
       if (isStateful) {
         context.onLog?.(
-          `Stateful service detected. Stopping and removing old containers before starting new one (Recreate Strategy)...\n`,
+          `Stateful service detected. Stopping old containers before starting new one (Recreate Strategy)...\n`,
         );
         // For stateful services, we must remove the old container first to avoid matching aliases
         // (Round-Robin DNS issue) and to ensure volume locks are released.
@@ -256,7 +256,6 @@ export const worker = new Worker(
 
       context.onLog?.(`✅ Cleanup complete.\n\n`);
 
-      context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
       context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
 
       // Update deployment and service status
