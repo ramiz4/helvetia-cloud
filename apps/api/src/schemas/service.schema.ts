@@ -70,6 +70,7 @@ const commonFieldValidations = {
   staticOutputDir: optionalString(
     z.string().max(255, 'Static output directory must not exceed 255 characters'),
   ),
+  volumes: z.array(z.string()).optional(),
 };
 
 /**
@@ -106,6 +107,9 @@ export const ServiceCreateSchema = z.object({
 
   // Static output directory: limit length
   staticOutputDir: commonFieldValidations.staticOutputDir,
+
+  // Volumes: list of bind mounts or named volumes
+  volumes: commonFieldValidations.volumes,
 
   // Helper fields for COMPOSE type (mapped to buildCommand and startCommand)
   composeFile: optionalString(
@@ -151,6 +155,9 @@ export const ServiceUpdateSchema = z.object({
 
   // Static output directory: limit length
   staticOutputDir: commonFieldValidations.staticOutputDir,
+
+  // Volumes: list of bind mounts or named volumes
+  volumes: commonFieldValidations.volumes,
 
   environmentId: z.string().uuid('Invalid environment ID').optional(),
 });

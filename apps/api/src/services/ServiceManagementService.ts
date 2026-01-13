@@ -97,6 +97,7 @@ export class ServiceManagementService implements IServiceManagementService {
         type,
         staticOutputDir: dto.staticOutputDir || 'dist',
         envVars: finalEnvVars,
+        volumes: dto.volumes,
         environmentId: dto.environmentId,
         deletedAt: null,
       });
@@ -115,6 +116,7 @@ export class ServiceManagementService implements IServiceManagementService {
         type,
         staticOutputDir: dto.staticOutputDir || 'dist',
         envVars: finalEnvVars,
+        volumes: dto.volumes,
       });
     }
   }

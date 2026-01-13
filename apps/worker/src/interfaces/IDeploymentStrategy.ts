@@ -32,6 +32,7 @@ export interface DeploymentContext {
   projectName?: string;
   environmentName?: string;
   username?: string;
+  volumes?: string[];
   onLog?: (log: string) => void;
 }
 

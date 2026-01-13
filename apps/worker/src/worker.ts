@@ -47,6 +47,7 @@ export const worker = new Worker(
       type,
       staticOutputDir,
       username,
+      volumes,
       requestId, // Extract request ID from job data for cross-service tracing
     } = job.data;
 
@@ -140,6 +141,7 @@ export const worker = new Worker(
         projectName: job.data.projectName,
         environmentName: job.data.environmentName,
         username,
+        volumes,
         onLog: (log) => {
           const sanitized = log
             .replace(/\0/g, '')
@@ -201,6 +203,7 @@ export const worker = new Worker(
         projectName: context.projectName,
         environmentName: context.environmentName,
         username: context.username,
+        volumes: volumes,
         onLog: context.onLog,
       });
       newContainer = containerResult.container;

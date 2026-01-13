@@ -69,6 +69,8 @@ export class PrismaServiceRepository implements IServiceRepository {
         ...data,
         envVars:
           data.envVars !== undefined ? (data.envVars as Prisma.InputJsonValue) : Prisma.JsonNull,
+        volumes:
+          data.volumes !== undefined ? (data.volumes as Prisma.InputJsonValue) : Prisma.JsonNull,
       },
     }) as unknown as Promise<Service>;
   }
@@ -79,6 +81,7 @@ export class PrismaServiceRepository implements IServiceRepository {
       data: {
         ...data,
         envVars: data.envVars !== undefined ? (data.envVars as Prisma.InputJsonValue) : undefined,
+        volumes: data.volumes !== undefined ? (data.volumes as Prisma.InputJsonValue) : undefined,
       },
     }) as unknown as Promise<Service>;
   }

@@ -41,6 +41,7 @@ export default function NewServicePage() {
     composeFile: 'docker-compose.yml',
     mainService: 'app',
     envVars: [],
+    volumes: [],
   });
 
   // Handle pre-selection when search params change
@@ -80,6 +81,7 @@ export default function NewServicePage() {
       composeFile,
       mainService,
       envVars,
+      volumes,
     } = formData;
 
     let finalType = serviceType === 'compose' ? 'COMPOSE' : serviceType.toUpperCase();
@@ -106,6 +108,7 @@ export default function NewServicePage() {
       composeFile: serviceType === 'compose' ? composeFile : undefined,
       mainService: serviceType === 'compose' ? mainService : undefined,
       envVars: Object.fromEntries(envVars.map((ev) => [ev.key, ev.value])),
+      volumes: volumes.filter((v) => v.trim() !== ''),
     };
 
     try {

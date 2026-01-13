@@ -41,7 +41,17 @@ export default function ConfigurationStep({
     composeFile,
     mainService,
     envVars,
+    volumes,
   } = data;
+
+  const addVolume = () => updateData({ volumes: [...volumes, ''] });
+  const removeVolume = (index: number) =>
+    updateData({ volumes: volumes.filter((_, i) => i !== index) });
+  const updateVolume = (index: number, value: string) => {
+    const newVolumes = [...volumes];
+    newVolumes[index] = value;
+    updateData({ volumes: newVolumes });
+  };
 
   const addEnvVar = () => updateData({ envVars: [...envVars, { key: '', value: '' }] });
   const removeEnvVar = (index: number) =>
@@ -157,11 +167,10 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'docker' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                            serviceType === 'docker'
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'docker'
                               ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
                               : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                          }`}
+                            }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -171,11 +180,10 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'static' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                            serviceType === 'static'
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'static'
                               ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
                               : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                          }`}
+                            }`}
                         >
                           <Globe size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -185,11 +193,10 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'compose' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                            serviceType === 'compose'
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'compose'
                               ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
                               : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                          }`}
+                            }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -330,6 +337,51 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => removeEnvVar(i)}
+                          className="p-2.5 bg-white/5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Volumes Section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-400">Volumes</label>
+                  <button
+                    type="button"
+                    onClick={addVolume}
+                    className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 transition-all"
+                  >
+                    <Plus size={12} /> Add Volume
+                  </button>
+                </div>
+
+                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                  {volumes.length === 0 ? (
+                    <div className="py-8 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600">
+                      <Combine size={24} className="mb-2 opacity-20" />
+                      <span className="text-[10px]">No volume mappings defined</span>
+                    </div>
+                  ) : (
+                    volumes.map((vol, i) => (
+                      <div
+                        key={i}
+                        className="flex gap-2 animate-in fade-in zoom-in-95 duration-200"
+                      >
+                        <input
+                          type="text"
+                          placeholder="/host/path:/container/path"
+                          value={vol}
+                          onChange={(e) => updateVolume(i, e.target.value)}
+                          className="flex-1 px-3 py-2.5 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeVolume(i)}
                           className="p-2.5 bg-white/5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all"
                         >
                           <Trash2 size={16} />

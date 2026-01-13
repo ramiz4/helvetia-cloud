@@ -16,6 +16,7 @@ export interface CreateServiceDto {
   customDomain?: string | null;
   type?: string;
   staticOutputDir?: string | null;
+  volumes?: string[];
   userId: string;
   environmentId?: string | null;
 }
@@ -34,6 +35,7 @@ export interface UpdateServiceDto {
   customDomain?: string | null;
   type?: string;
   staticOutputDir?: string | null;
+  volumes?: string[];
   deletedAt?: Date | null;
   deleteProtected?: boolean;
   status?: string;
@@ -60,6 +62,7 @@ export interface ServiceWithMetricsDto {
   customDomain: string | null;
   staticOutputDir: string | null;
   type: string;
+  volumes: string[] | null;
   isPreview: boolean;
   prNumber: number | null;
   deleteProtected: boolean;

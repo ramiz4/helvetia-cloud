@@ -216,6 +216,7 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
       customDomain: service.customDomain,
       type: service.type,
       staticOutputDir: service.staticOutputDir,
+      volumes: service.volumes as string[] | undefined,
       githubToken,
       projectName,
       environmentName,

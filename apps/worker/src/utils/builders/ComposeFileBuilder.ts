@@ -21,6 +21,7 @@ export class ComposeFileBuilder {
     projectName?: string;
     environmentName?: string;
     username?: string;
+    volumes?: string[];
   }): string {
     const {
       serviceName,
@@ -32,6 +33,7 @@ export class ComposeFileBuilder {
       projectName,
       environmentName,
       username,
+      volumes,
     } = params;
 
     const networkName = getNetworkName({ username, projectName, environmentName });
@@ -59,6 +61,7 @@ export class ComposeFileBuilder {
           ],
           networks: ['helvetia-net', 'project-net'],
           ...(envVars && Object.keys(envVars).length > 0 ? { environment: envVars } : {}),
+          ...(volumes && volumes.length > 0 ? { volumes } : {}),
         },
       },
       networks: {

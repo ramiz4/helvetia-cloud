@@ -1,6 +1,6 @@
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { DockerfileBuilder } from '../utils/builders';
-import { ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
+import { ensureImageExists, ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
 import { getSecureBindMounts } from '../utils/workspace';
 
 /**
@@ -101,6 +101,9 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
     if (networkName !== 'helvetia-net') {
       await ensureNetworkExists(docker, networkName, context.projectName);
     }
+
+    // Ensure builder image exists
+    await ensureImageExists(docker, 'docker:cli');
 
     // 1. Create builder container
     const builderName = `builder-${deploymentId}`;

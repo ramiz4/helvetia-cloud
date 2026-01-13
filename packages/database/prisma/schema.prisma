@@ -100,6 +100,7 @@ model Service {
   customDomain    String?
   staticOutputDir String?      @default("dist")
   type            String       @default("DOCKER")
+  volumes         Json?
   isPreview       Boolean      @default(false)
   prNumber        Int?
   deletedAt       DateTime?

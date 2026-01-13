@@ -18,4 +18,5 @@ export interface ServiceFormData {
   composeFile: string;
   mainService: string;
   envVars: { key: string; value: string }[];
+  volumes: string[];
 }
