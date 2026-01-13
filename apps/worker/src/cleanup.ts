@@ -4,7 +4,8 @@ import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
 import path from 'path';
-import { DockerContainerOrchestrator, VolumeManager } from './orchestration';
+import { DockerContainerOrchestrator } from 'shared';
+import { VolumeManager } from './orchestration';
 import { cleanupDockerImages } from './services/imageCleanup';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });

@@ -1,7 +1,7 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
+import { withStatusLock } from 'shared';
 import { STATUS_RECONCILIATION_LOCK_TTL_MS } from '../config/constants';
-import { withStatusLock } from '../utils/statusLock';
 
 const docker = new Docker();
 

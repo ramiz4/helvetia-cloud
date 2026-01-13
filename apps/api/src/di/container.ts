@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import 'reflect-metadata';
+import { DockerContainerOrchestrator } from 'shared';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/AuthController';
 import { DeploymentController } from '../controllers/DeploymentController';
@@ -11,7 +12,6 @@ import { OrganizationController } from '../controllers/OrganizationController';
 import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
 import { WebhookController } from '../controllers/WebhookController';
-import { DockerContainerOrchestrator } from '../orchestration';
 import {
   PrismaDeploymentRepository,
   PrismaFeatureFlagRepository,
@@ -47,10 +47,14 @@ export function initializeContainer(): void {
   container.registerInstance<PrismaClient>('PrismaClient', prisma);
 
   // Register Docker instance
-  container.registerInstance(TOKENS.Docker, new Docker());
+  const dockerInstance = new Docker();
+  container.registerInstance(TOKENS.Docker, dockerInstance);
 
-  // Register container orchestrator implementation
-  container.registerSingleton(TOKENS.ContainerOrchestrator, DockerContainerOrchestrator);
+  // Register container orchestrator implementation with Docker instance
+  container.registerInstance(
+    TOKENS.ContainerOrchestrator,
+    new DockerContainerOrchestrator(dockerInstance),
+  );
 
   // Register repository implementations
   container.registerSingleton(TOKENS.ServiceRepository, PrismaServiceRepository);
