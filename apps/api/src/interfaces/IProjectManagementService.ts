@@ -9,6 +9,7 @@ export interface IProjectManagementService {
    * Get all projects for a user
    */
   getUserProjects(userId: string): Promise<Project[]>;
+  getOrganizationProjects(organizationId: string, userId: string): Promise<Project[]>;
 
   /**
    * Get a single project by ID
@@ -18,7 +19,7 @@ export interface IProjectManagementService {
   /**
    * Create a new project
    */
-  createProject(userId: string, name: string): Promise<Project>;
+  createProject(userId: string, name: string, organizationId?: string): Promise<Project>;
 
   /**
    * Delete a project

@@ -11,6 +11,7 @@ export {
   IFeatureFlagRepository,
   UpdateFeatureFlagData,
 } from './IFeatureFlagRepository';
+export { IOrganizationRepository } from './IOrganizationRepository';
 export {
   Environment,
   EnvironmentCreateInput,

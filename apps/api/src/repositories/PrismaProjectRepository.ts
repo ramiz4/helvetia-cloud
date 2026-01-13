@@ -55,6 +55,25 @@ export class PrismaProjectRepository implements IProjectRepository {
     return projects as unknown as Project[];
   }
 
+  async findByOrganizationId(organizationId: string): Promise<Project[]> {
+    const projects = await this.prisma.project.findMany({
+      where: { organizationId },
+      include: {
+        environments: {
+          orderBy: { createdAt: 'asc' },
+          include: {
+            services: {
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return projects as unknown as Project[];
+  }
+
   async findByNameAndUserId(name: string, userId: string): Promise<Project | null> {
     const project = await this.prisma.project.findUnique({
       where: {
@@ -73,6 +92,7 @@ export class PrismaProjectRepository implements IProjectRepository {
       data: {
         name: data.name,
         userId: data.userId,
+        organizationId: data.organizationId,
         environments: {
           create: {
             name: 'Production',

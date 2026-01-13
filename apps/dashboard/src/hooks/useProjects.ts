@@ -15,8 +15,11 @@ export const projectKeys = {
 };
 
 // Fetch all projects
-async function fetchProjects(): Promise<Project[]> {
-  const response = await fetchWithAuth(`${API_BASE_URL}/projects`);
+async function fetchProjects(organizationId?: string): Promise<Project[]> {
+  const url = organizationId
+    ? `${API_BASE_URL}/projects?organizationId=${organizationId}`
+    : `${API_BASE_URL}/projects`;
+  const response = await fetchWithAuth(url);
 
   if (response.status === 401) {
     throw new Error('Unauthorized');
@@ -41,13 +44,13 @@ async function fetchProject(id: string): Promise<Project> {
 }
 
 // Create project
-async function createProject(name: string): Promise<Project> {
+async function createProject(name: string, organizationId?: string): Promise<Project> {
   const response = await fetchWithAuth(`${API_BASE_URL}/projects`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, organizationId }),
   });
 
   if (!response.ok) {
@@ -86,10 +89,10 @@ async function createEnvironment(projectId: string, name: string): Promise<Envir
 }
 
 // Hook: Fetch all projects
-export function useProjects(options: { enabled?: boolean } = {}) {
+export function useProjects(organizationId?: string, options: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: projectKeys.lists(),
-    queryFn: fetchProjects,
+    queryKey: projectKeys.list({ organizationId }),
+    queryFn: () => fetchProjects(organizationId),
     ...options,
   });
 }
@@ -108,7 +111,8 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createProject,
+    mutationFn: ({ name, organizationId }: { name: string; organizationId?: string }) =>
+      createProject(name, organizationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
     },

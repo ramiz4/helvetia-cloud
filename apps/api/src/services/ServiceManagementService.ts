@@ -1,10 +1,12 @@
 import crypto from 'crypto';
 import { inject, injectable } from 'tsyringe';
+import { TOKENS } from '../di/tokens';
 import type { CreateServiceDto, UpdateServiceDto } from '../dto';
 import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
 import type {
   IContainerOrchestrator,
   IDeploymentRepository,
+  IOrganizationRepository,
   IServiceManagementService,
   IServiceRepository,
   Service,
@@ -23,6 +25,8 @@ export class ServiceManagementService implements IServiceManagementService {
     private deploymentRepository: IDeploymentRepository,
     @inject(Symbol.for('IContainerOrchestrator'))
     private containerOrchestrator: IContainerOrchestrator,
+    @inject(TOKENS.OrganizationRepository)
+    private organizationRepository: IOrganizationRepository,
   ) {}
 
   /**
@@ -44,7 +48,17 @@ export class ServiceManagementService implements IServiceManagementService {
     }
 
     if (service.userId !== userId) {
-      throw new ForbiddenError('Unauthorized access to service');
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new ForbiddenError('Unauthorized access to service');
+        }
+      } else {
+        throw new ForbiddenError('Unauthorized access to service');
+      }
     }
 
     return service;
@@ -186,7 +200,17 @@ export class ServiceManagementService implements IServiceManagementService {
     }
 
     if (service.userId !== userId) {
-      throw new ForbiddenError('Unauthorized access to service');
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new ForbiddenError('Unauthorized access to service');
+        }
+      } else {
+        throw new ForbiddenError('Unauthorized access to service');
+      }
     }
 
     if (!service.deletedAt) {
@@ -223,7 +247,17 @@ export class ServiceManagementService implements IServiceManagementService {
 
     // Verify ownership if userId is provided
     if (userId && service.userId !== userId) {
-      throw new ForbiddenError('Unauthorized service deletion attempt');
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new ForbiddenError('Unauthorized service deletion attempt');
+        }
+      } else {
+        throw new ForbiddenError('Unauthorized service deletion attempt');
+      }
     }
 
     // Delete deployments first

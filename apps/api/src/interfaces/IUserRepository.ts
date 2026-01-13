@@ -1,3 +1,5 @@
+import { Role } from 'database';
+
 /**
  * User model type (matches Prisma schema)
  */
@@ -9,6 +11,8 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   githubAccessToken: string | null;
+  role: Role;
+  password?: string | null;
 }
 
 /**
@@ -20,6 +24,8 @@ export interface UserCreateInput {
   username: string;
   avatarUrl?: string | null;
   githubAccessToken?: string | null;
+  role?: Role;
+  password?: string | null;
 }
 
 /**
@@ -30,6 +36,8 @@ export interface UserUpdateInput {
   username?: string;
   avatarUrl?: string | null;
   githubAccessToken?: string | null;
+  role?: Role;
+  password?: string | null;
 }
 
 /**
@@ -53,6 +61,11 @@ export interface IUserRepository {
    * Find a user by GitHub ID
    */
   findByGithubId(githubId: string): Promise<User | null>;
+
+  /**
+   * Find a user by username
+   */
+  findByUsername(username: string): Promise<User | null>;
 
   /**
    * Create a new user
