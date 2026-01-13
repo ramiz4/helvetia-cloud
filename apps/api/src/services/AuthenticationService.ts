@@ -96,6 +96,7 @@ export class AuthenticationService {
       },
     );
 
+    // TODO: The organization creation automatically creates a personal organization for GitHub authenticated users, but this happens on every GitHub authentication (not just first-time). This could potentially create multiple personal organizations if the check fails or if the user's organizations are not properly loaded. Consider adding a transaction or more robust duplicate prevention.
     // Check if user has organizations, if not create a personal one
     const userOrgs = await this.organizationService.getUserOrganizations(user.id);
     if (userOrgs.length === 0) {
