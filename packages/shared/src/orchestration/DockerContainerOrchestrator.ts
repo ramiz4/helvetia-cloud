@@ -1,5 +1,4 @@
 import Docker from 'dockerode';
-import { injectable } from 'tsyringe';
 import {
   BuildImageOptions,
   ContainerStatus,
@@ -11,7 +10,6 @@ import {
  * Docker implementation of the IContainerOrchestrator interface
  * Provides a clean abstraction over Docker container operations
  */
-@injectable()
 export class DockerContainerOrchestrator implements IContainerOrchestrator {
   private docker: Docker;
 

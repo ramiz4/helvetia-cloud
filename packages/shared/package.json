@@ -20,9 +20,7 @@
   "dependencies": {
     "dockerode": "^4.0.9",
     "ioredis": "^5.8.2",
-    "redlock": "5.0.0-beta.2",
-    "reflect-metadata": "^0.2.2",
-    "tsyringe": "^4.10.0"
+    "redlock": "5.0.0-beta.2"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.47",

@@ -333,12 +333,6 @@ importers:
       redlock:
         specifier: 5.0.0-beta.2
         version: 5.0.0-beta.2
-      reflect-metadata:
-        specifier: ^0.2.2
-        version: 0.2.2
-      tsyringe:
-        specifier: ^4.10.0
-        version: 4.10.0
     devDependencies:
       '@types/dockerode':
         specifier: ^3.3.47

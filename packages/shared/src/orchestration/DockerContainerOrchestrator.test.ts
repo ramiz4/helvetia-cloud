@@ -1,5 +1,4 @@
 import Docker from 'dockerode';
-import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DockerContainerOrchestrator } from './DockerContainerOrchestrator';
 
