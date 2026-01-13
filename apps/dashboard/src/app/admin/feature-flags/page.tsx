@@ -1,9 +1,9 @@
 'use client';
 
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { API_BASE_URL } from '@/lib/config';
 import { fetchWithAuth } from '@/lib/tokenRefresh';
-import { Role } from '@/types/organization';
 import {
   CheckCircle2,
   Edit,
@@ -48,9 +48,9 @@ interface CreateFlagData {
 }
 
 export default function FeatureFlagsAdminPage() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingFlag, setEditingFlag] = useState<FeatureFlag | null>(null);
@@ -61,24 +61,6 @@ export default function FeatureFlagsAdminPage() {
     enabled: false,
   });
   const [flagToDelete, setFlagToDelete] = useState<FeatureFlag | null>(null);
-
-  useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        if (user.role === Role.ADMIN) {
-          setIsAdmin(true);
-        } else {
-          window.location.href = '/';
-        }
-      } catch {
-        window.location.href = '/login';
-      }
-    } else {
-      window.location.href = '/login';
-    }
-  }, []);
 
   const fetchFlags = useCallback(async () => {
     try {
@@ -205,7 +187,7 @@ export default function FeatureFlagsAdminPage() {
     setShowEditModal(true);
   };
 
-  if (loading || !isAdmin) {
+  if (authLoading || loading || !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
