@@ -13,6 +13,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "tsc",
+    "pretest": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
