@@ -11,6 +11,21 @@ This is a monorepo managed by PNPM Workspaces containing:
 - `apps/worker`: Background worker service.
 - `packages/database`: Shared Prisma database client.
 
+### Code Documentation
+
+All project documentation is located in the `.docs/` folder (hidden directory):
+
+- **Architecture & Design**: `.docs/ARCHITECTURE.md` - System architecture and design decisions
+- **API Documentation**: `.docs/api/` - API-specific documentation including logging, versioning, and patterns
+- **Worker Documentation**: `.docs/worker/` - Worker service documentation including health checks and monitoring
+- **Security**: `.docs/SECURITY.md`, `.docs/DOCKER_SECURITY_HARDENING.md` - Security guidelines and hardening
+- **Feature Documentation**: `.docs/API_VERSIONING.md`, `.docs/ERROR_CODES.md`, `.docs/FEATURE_FLAGS.md`, `.docs/REQUEST_TRACING.md`
+- **Roadmap**: `.docs/ROADMAP.md` - Project roadmap and future plans
+- **Database**: `.docs/DATABASE_MIGRATIONS.md` - Database migration guidelines
+- **Testing**: `.docs/INTEGRATION_TESTS.md`, `.docs/TEST_COVERAGE_REPORT.md` - Testing documentation
+
+When working on features or making changes, always check the `.docs/` folder for relevant documentation.
+
 ## Tech Stack & Guidelines
 
 ### General
