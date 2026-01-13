@@ -3,19 +3,23 @@
 import { API_BASE_URL } from '@/lib/config';
 import { useFeatureFlag } from '@/lib/featureFlags';
 import { useLanguage } from '@/lib/LanguageContext';
-import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, X } from 'lucide-react';
+import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, Shield, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
+import OrganizationSwitcher from './OrganizationSwitcher';
 import UserMenu from './UserMenu';
 
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<{ id: string; username: string; avatarUrl?: string } | null>(
-    null,
-  );
+  const [user, setUser] = useState<{
+    id: string;
+    username: string;
+    avatarUrl?: string;
+    role?: string;
+  } | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -135,6 +139,12 @@ export default function Navigation() {
             </span>
           </Link>
 
+          {isLoggedIn && (
+            <div className="hidden lg:block ml-4">
+              <OrganizationSwitcher />
+            </div>
+          )}
+
           {/* Desktop Navigation */}
           {isLoggedIn ? (
             <div className="hidden lg:flex items-center gap-6">
@@ -162,6 +172,19 @@ export default function Navigation() {
                     <BookOpen size={18} />
                     <span>{t.nav.deployments}</span>
                   </a>
+                )}
+                {user?.role === 'ADMIN' && (
+                  <Link
+                    href="/admin/feature-flags"
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                      pathname.startsWith('/admin')
+                        ? 'bg-indigo-500/10 text-indigo-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <Shield size={18} />
+                    <span>Admin</span>
+                  </Link>
                 )}
               </div>
 
@@ -244,6 +267,19 @@ export default function Navigation() {
                       <BookOpen size={20} />
                       <span>{t.nav.deployments}</span>
                     </a>
+                  )}
+                  {user?.role === 'ADMIN' && (
+                    <Link
+                      href="/admin/feature-flags"
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                        pathname.startsWith('/admin')
+                          ? 'bg-indigo-500/10 text-indigo-400'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <Shield size={20} />
+                      <span>Admin</span>
+                    </Link>
                   )}
                   <a
                     href="/settings"

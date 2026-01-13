@@ -48,6 +48,7 @@ interface CreateFlagData {
 export default function FeatureFlagsAdminPage() {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingFlag, setEditingFlag] = useState<FeatureFlag | null>(null);
@@ -57,6 +58,24 @@ export default function FeatureFlagsAdminPage() {
     description: '',
     enabled: false,
   });
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role === 'ADMIN') {
+          setIsAdmin(true);
+        } else {
+          window.location.href = '/';
+        }
+      } catch {
+        window.location.href = '/login';
+      }
+    } else {
+      window.location.href = '/login';
+    }
+  }, []);
 
   const fetchFlags = useCallback(async () => {
     try {
@@ -184,7 +203,7 @@ export default function FeatureFlagsAdminPage() {
     setShowEditModal(true);
   };
 
-  if (loading) {
+  if (loading || !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />

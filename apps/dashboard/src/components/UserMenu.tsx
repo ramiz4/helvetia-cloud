@@ -1,7 +1,17 @@
 'use client';
 
 import { useLanguage } from '@/lib/LanguageContext';
-import { ChevronDown, CreditCard, HelpCircle, LogOut, Settings, Shield, User } from 'lucide-react';
+import { useOrganizationContext } from '@/lib/OrganizationContext';
+import {
+  Building2,
+  ChevronDown,
+  CreditCard,
+  HelpCircle,
+  LogOut,
+  Settings,
+  Shield,
+  User,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -18,6 +28,7 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
+  const { currentOrganization } = useOrganizationContext();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -105,6 +116,21 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             />
             <span>{t.nav.settings}</span>
           </Link>
+
+          {currentOrganization && (
+            <Link
+              href={`/organizations/${currentOrganization.id}/settings`}
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 text-[13px] font-medium transition-all group/item"
+              role="menuitem"
+            >
+              <Building2
+                size={16}
+                className="text-slate-400 group-hover/item:text-indigo-400 transition-colors"
+              />
+              <span>Organization Settings</span>
+            </Link>
+          )}
 
           <button
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item"
