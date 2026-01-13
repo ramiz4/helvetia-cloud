@@ -147,31 +147,31 @@ Helvetia Cloud dashboard is designed to be fully accessible to all users, includ
 
 ### Level A (Essential) - ✅ Complete
 
-| Criterion                        | Status | Description                                  |
-| -------------------------------- | ------ | -------------------------------------------- |
-| 1.1.1 Non-text Content           | ✅     | All icons have proper labels                 |
-| 1.3.1 Info and Relationships     | ✅     | Proper semantic HTML and ARIA                |
-| 2.1.1 Keyboard                   | ✅     | All functionality available via keyboard     |
-| 2.1.2 No Keyboard Trap           | ✅     | Focus trap properly implemented              |
-| 2.4.1 Bypass Blocks              | ✅     | Skip navigation link implemented             |
-| 3.2.1 On Focus                   | ✅     | No context changes on focus                  |
-| 4.1.2 Name, Role, Value          | ✅     | All controls properly labeled                |
+| Criterion                    | Status | Description                              |
+| ---------------------------- | ------ | ---------------------------------------- |
+| 1.1.1 Non-text Content       | ✅     | All icons have proper labels             |
+| 1.3.1 Info and Relationships | ✅     | Proper semantic HTML and ARIA            |
+| 2.1.1 Keyboard               | ✅     | All functionality available via keyboard |
+| 2.1.2 No Keyboard Trap       | ✅     | Focus trap properly implemented          |
+| 2.4.1 Bypass Blocks          | ✅     | Skip navigation link implemented         |
+| 3.2.1 On Focus               | ✅     | No context changes on focus              |
+| 4.1.2 Name, Role, Value      | ✅     | All controls properly labeled            |
 
 ### Level AA (Recommended) - ⚠️ Mostly Complete
 
-| Criterion                        | Status | Description                                  |
-| -------------------------------- | ------ | -------------------------------------------- |
-| 2.4.3 Focus Order                | ✅     | Logical focus order maintained               |
-| 2.4.7 Focus Visible              | ✅     | Focus indicators present                     |
-| 3.2.4 Consistent Identification  | ✅     | Consistent UI patterns                       |
-| 1.4.3 Contrast (Minimum)         | ⚠️     | Needs additional review (see recommendations)|
+| Criterion                       | Status | Description                                   |
+| ------------------------------- | ------ | --------------------------------------------- |
+| 2.4.3 Focus Order               | ✅     | Logical focus order maintained                |
+| 2.4.7 Focus Visible             | ✅     | Focus indicators present                      |
+| 3.2.4 Consistent Identification | ✅     | Consistent UI patterns                        |
+| 1.4.3 Contrast (Minimum)        | ⚠️     | Needs additional review (see recommendations) |
 
 ### Level AAA (Advanced) - Future Enhancement
 
-| Criterion                        | Status | Description                                  |
-| -------------------------------- | ------ | -------------------------------------------- |
-| 2.4.8 Location                   | ⚠️     | Breadcrumbs could be added                   |
-| 1.4.6 Contrast (Enhanced)        | ⚠️     | Would need significant color changes         |
+| Criterion                 | Status | Description                          |
+| ------------------------- | ------ | ------------------------------------ |
+| 2.4.8 Location            | ⚠️     | Breadcrumbs could be added           |
+| 1.4.6 Contrast (Enhanced) | ⚠️     | Would need significant color changes |
 
 ---
 
@@ -200,6 +200,7 @@ pnpm --filter dashboard test
 ```
 
 **Current Results:**
+
 - ✅ axe-core tests pass for all tested components
 - ✅ Zero critical accessibility violations
 - ✅ Tests integrated into CI/CD pipeline
@@ -263,22 +264,27 @@ For comprehensive accessibility validation, test with:
 ### Files Modified
 
 **Components:**
+
 - `src/components/Navigation.tsx` - ARIA labels and keyboard support
 - `src/components/UserMenu.tsx` - ARIA attributes and keyboard navigation
 - `src/components/CookieBanner.tsx` - Dialog role and proper labeling
 - `src/components/FocusTrap.tsx` - **NEW:** Reusable focus trap component
 
 **Pages:**
+
 - `src/app/page.tsx` - Improved button labels and modal accessibility
 - `src/app/layout.tsx` - Skip navigation link and main landmark
 
 **Styles:**
+
 - `src/app/tailwind.css` - `.sr-only` and `.skip-to-main` utilities
 
 **Translations:**
+
 - `src/lib/translations.ts` - Accessibility-related translations
 
 **Tests:**
+
 - `src/test/accessibility.test.tsx` - **NEW:** Comprehensive test suite
 
 ### Code Examples
@@ -286,26 +292,20 @@ For comprehensive accessibility validation, test with:
 #### Skip Navigation Link
 
 ```tsx
-<a
-  href="#main-content"
-  className="skip-to-main"
->
+<a href="#main-content" className="skip-to-main">
   Skip to main content
-</a>
+</a>;
 
-{/* Later in the page */}
-<main id="main-content">
-  {/* Page content */}
-</main>
+{
+  /* Later in the page */
+}
+<main id="main-content">{/* Page content */}</main>;
 ```
 
 #### ARIA Labels on Buttons
 
 ```tsx
-<button
-  onClick={() => handleEdit(service)}
-  aria-label={`Edit ${service.name}`}
->
+<button onClick={() => handleEdit(service)} aria-label={`Edit ${service.name}`}>
   <Edit size={16} />
 </button>
 ```

@@ -28,6 +28,7 @@ This document covers Server-Sent Events (SSE) implementation for real-time updat
 **Authentication:** Requires valid JWT token
 
 **Features:**
+
 - Token validation on every metrics update cycle
 - Graceful connection closure on token expiration
 - Automatic client-side reconnection handling
@@ -41,6 +42,7 @@ This document covers Server-Sent Events (SSE) implementation for real-time updat
 **Authentication:** Requires valid JWT token + deployment ownership verification
 
 **Features:**
+
 - Periodic token validation (every 30 seconds)
 - Graceful connection closure on token expiration
 - Automatic client-side reconnection handling
@@ -63,15 +65,17 @@ JWT tokens are configured with the following settings:
 #### 1. Connection Establishment
 
 **Client Request:**
+
 ```typescript
 const eventSource = new EventSource('/services/metrics/stream', {
   headers: {
-    Authorization: `Bearer ${token}`
-  }
+    Authorization: `Bearer ${token}`,
+  },
 });
 ```
 
 **Server Response:**
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: text/event-stream
@@ -82,6 +86,7 @@ Connection: keep-alive
 #### 2. Token Validation
 
 **Metrics Stream** validates tokens every cycle (5 seconds):
+
 ```typescript
 // On every metrics update
 const decoded = fastify.jwt.verify(token);
@@ -93,6 +98,7 @@ if (tokenIsExpired(decoded)) {
 ```
 
 **Logs Stream** validates tokens every 30 seconds:
+
 ```typescript
 setInterval(async () => {
   try {
@@ -205,10 +211,13 @@ const connectionState = {
 #### 3. Automatic Timeout
 
 ```typescript
-const timeoutHandle = setTimeout(() => {
-  fastify.log.warn({ reqId }, 'SSE connection timeout (30 minutes)');
-  cleanup();
-}, 30 * 60 * 1000); // 30 minutes
+const timeoutHandle = setTimeout(
+  () => {
+    fastify.log.warn({ reqId }, 'SSE connection timeout (30 minutes)');
+    cleanup();
+  },
+  30 * 60 * 1000,
+); // 30 minutes
 ```
 
 #### 4. Comprehensive Error Handling
@@ -311,6 +320,7 @@ await withStatusLock(id, async () => {
 **When:** Deployment job completes (success or failure)
 
 **Actions:**
+
 - On success: Sets status to `RUNNING` with distributed lock
 - On failure with rollback: Sets status to `RUNNING` with distributed lock
 - On failure without rollback: Sets status to `FAILED` with distributed lock
@@ -334,7 +344,7 @@ await withStatusLock(serviceId, async () => {
 await withStatusLock(serviceId, async () => {
   const container = await docker.getContainer(containerName);
   const { State } = await container.inspect();
-  
+
   let newStatus: ServiceStatus;
   if (State.Running) {
     newStatus = 'RUNNING';
@@ -373,10 +383,7 @@ const redlock = new Redlock([redis], {
 #### Lock Usage
 
 ```typescript
-export async function withStatusLock<T>(
-  serviceId: string,
-  callback: () => Promise<T>
-): Promise<T> {
+export async function withStatusLock<T>(serviceId: string, callback: () => Promise<T>): Promise<T> {
   const lockKey = `status:lock:${serviceId}`;
   const lockTTL = 5000; // 5 seconds
 
@@ -395,6 +402,7 @@ export async function withStatusLock<T>(
 **Scenario:** Worker completes deployment while reconciliation service checks status
 
 **Without Lock:**
+
 ```
 Time  | Worker              | Reconciliation     | Final Status
 ------|---------------------|-------------------|-------------
@@ -404,6 +412,7 @@ T+2   |                     | Write: STOPPED    | STOPPED ❌
 ```
 
 **With Lock:**
+
 ```
 Time  | Worker              | Reconciliation     | Final Status
 ------|---------------------|-------------------|-------------
@@ -418,14 +427,14 @@ T+6   |                     | Keep: RUNNING     | RUNNING ✅
 
 ### Status Transition Matrix
 
-| Current Status | Allowed Next States           | Trigger                      |
-| -------------- | ----------------------------- | ---------------------------- |
-| IDLE           | DEPLOYING                     | User deploys                 |
-| DEPLOYING      | RUNNING, FAILED               | Deployment completes         |
-| RUNNING        | DEPLOYING, STOPPED, CRASHING  | User redeploys, container stops |
-| STOPPED        | DEPLOYING, RUNNING            | User redeploys, container starts |
-| FAILED         | DEPLOYING                     | User retries deployment      |
-| CRASHING       | RUNNING, STOPPED, FAILED      | Container stabilizes or fails |
+| Current Status | Allowed Next States          | Trigger                          |
+| -------------- | ---------------------------- | -------------------------------- |
+| IDLE           | DEPLOYING                    | User deploys                     |
+| DEPLOYING      | RUNNING, FAILED              | Deployment completes             |
+| RUNNING        | DEPLOYING, STOPPED, CRASHING | User redeploys, container stops  |
+| STOPPED        | DEPLOYING, RUNNING           | User redeploys, container starts |
+| FAILED         | DEPLOYING                    | User retries deployment          |
+| CRASHING       | RUNNING, STOPPED, FAILED     | Container stabilizes or fails    |
 
 ### Lock Performance Considerations
 
@@ -544,15 +553,16 @@ ERROR: Failed to acquire status lock (serviceId: xxx, error: xxx)
 ### For SSE Connections
 
 1. **Always Implement Reconnection Logic**
+
    ```typescript
    const connectSSE = () => {
      const es = new EventSource('/services/metrics/stream');
-     
+
      es.addEventListener('token-expired', () => {
        es.close();
        refreshToken().then(() => connectSSE());
      });
-     
+
      es.onerror = () => {
        es.close();
        setTimeout(connectSSE, 5000); // Retry after 5s
@@ -571,6 +581,7 @@ ERROR: Failed to acquire status lock (serviceId: xxx, error: xxx)
 ### For Status Updates
 
 1. **Always Use Locks**
+
    ```typescript
    // ✅ Good
    await withStatusLock(serviceId, async () => {
@@ -606,6 +617,7 @@ ERROR: Failed to acquire status lock (serviceId: xxx, error: xxx)
 **Problem:** Connection closes immediately
 
 **Solution:**
+
 - Check JWT token validity
 - Verify CORS settings allow SSE
 - Check server logs for errors
@@ -613,6 +625,7 @@ ERROR: Failed to acquire status lock (serviceId: xxx, error: xxx)
 **Problem:** No data received
 
 **Solution:**
+
 - Verify metrics interval is running
 - Check if user has services
 - Look for errors in metrics fetching
@@ -622,6 +635,7 @@ ERROR: Failed to acquire status lock (serviceId: xxx, error: xxx)
 **Problem:** API memory grows over time
 
 **Solution:**
+
 - Check for unclosed SSE connections
 - Verify cleanup function is called
 - Look for uncleared intervals/timeouts
@@ -632,6 +646,7 @@ ERROR: Failed to acquire status lock (serviceId: xxx, error: xxx)
 **Problem:** Status stuck in wrong state
 
 **Solution:**
+
 - Wait for reconciliation (runs every 30s)
 - Check lock acquisition logs
 - Verify Docker container state
@@ -640,6 +655,7 @@ ERROR: Failed to acquire status lock (serviceId: xxx, error: xxx)
 **Problem:** Lock acquisition timeouts
 
 **Solution:**
+
 - Check Redis connectivity
 - Verify Redis performance
 - Reduce lock TTL if appropriate

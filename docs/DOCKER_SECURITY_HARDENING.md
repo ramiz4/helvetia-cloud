@@ -50,16 +50,19 @@ The proxy starts automatically and everything works out of the box.
 If you're already running Helvetia Cloud, here's how to update:
 
 1. **Pull latest changes:**
+
    ```bash
    git pull origin main
    ```
 
 2. **Start the proxy:**
+
    ```bash
    docker-compose up -d docker-socket-proxy
    ```
 
 3. **Restart worker and Traefik:**
+
    ```bash
    docker-compose up -d worker traefik
    ```
@@ -74,22 +77,26 @@ That's it! Your deployment now uses the secure proxy.
 ### What's Protected Now?
 
 **Before (⚠️ Risky):**
+
 ```
 Worker → Direct Socket Access → Full Docker Control → Root Access to Host
 ```
 
 **After (✅ Secure):**
+
 ```
 Worker → Proxy (with ACLs) → Limited Docker Control → Isolated Operations
 ```
 
 **Blocked Operations:**
+
 - ❌ Creating privileged containers
 - ❌ Docker Swarm operations
 - ❌ Unrestricted volume mounts
 - ❌ System-wide operations
 
 **Still Works:**
+
 - ✅ Building images
 - ✅ Creating/managing containers
 - ✅ Network management

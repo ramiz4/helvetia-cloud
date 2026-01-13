@@ -368,7 +368,7 @@ request.log.info({ userId }, 'User created');
 - [Fastify Logging](https://www.fastify.io/docs/latest/Reference/Logging/)
 - [Pino Documentation](https://getpino.io/)
 - [Backend Instructions](.github/instructions/backend.instructions.md)
-This document shows actual examples of the logging output in different environments.
+  This document shows actual examples of the logging output in different environments.
 
 ## Development Mode (Pretty Logs)
 

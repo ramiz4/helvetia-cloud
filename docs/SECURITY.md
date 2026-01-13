@@ -271,6 +271,7 @@ Helvetia Cloud uses a dual-token authentication system with JWT access tokens an
 ### Access Tokens
 
 **Configuration:**
+
 - **Expiration**: 15 minutes (900 seconds)
 - **Storage**: httpOnly cookie
 - **Secure Flag**: Enabled in production
@@ -287,6 +288,7 @@ Helvetia Cloud uses a dual-token authentication system with JWT access tokens an
 ### Refresh Tokens
 
 **Configuration:**
+
 - **Expiration**: 30 days (2,592,000 seconds)
 - **Storage**: httpOnly cookie + database
 - **Generation**: `crypto.randomBytes(32)` - 256 bits entropy
@@ -321,6 +323,7 @@ export function generateRefreshToken(): string {
 ### Token Rotation Mechanism
 
 **Implementation:**
+
 - Old refresh token immediately revoked upon successful refresh
 - New refresh token issued with each refresh request
 - Database tracking of token status (revoked field)
@@ -338,6 +341,7 @@ export function generateRefreshToken(): string {
 ### Token Revocation List
 
 **Redis Implementation:**
+
 - Key prefix: `revoked:refresh:{token}`
 - TTL: 30 days (matching refresh token lifetime)
 - Lookup: Fast O(1) operation
@@ -365,7 +369,7 @@ model RefreshToken {
   revoked   Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
-  
+
   @@index([userId])
   @@index([token])
   @@index([expiresAt])

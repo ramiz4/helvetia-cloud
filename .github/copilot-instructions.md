@@ -13,21 +13,21 @@ This is a monorepo managed by PNPM Workspaces containing:
 
 ### Code Documentation
 
-All project documentation is located in the `.docs/` folder (hidden directory):
+All project documentation is located in the `docs/` folder:
 
-- **Architecture & Design**: `.docs/ARCHITECTURE.md` - System architecture and design decisions
-- **API Documentation**: `.docs/api/` - API-specific documentation including logging, versioning, body size limits, and safe query patterns
-- **Worker Documentation**: `.docs/worker/` - Worker service documentation including health checks, monitoring, and integration tests
-- **Security**: `.docs/SECURITY.md`, `.docs/DOCKER_SECURITY_HARDENING.md` - Security guidelines, authentication, token management, and Docker hardening
-- **Feature Documentation**: `.docs/API_VERSIONING.md`, `.docs/ERROR_CODES.md`, `.docs/FEATURE_FLAGS.md`, `.docs/REQUEST_TRACING.md`
-- **Accessibility**: `.docs/ACCESSIBILITY.md` - WCAG compliance, keyboard navigation, and accessibility testing
-- **Real-time Features**: `.docs/SSE_AND_STATUS_MANAGEMENT.md` - Server-Sent Events, memory leak prevention, and distributed status management
-- **Roadmap**: `.docs/ROADMAP.md` - Project roadmap and future plans
-- **Database**: `.docs/DATABASE_MIGRATIONS.md` - Database migration guidelines
-- **Testing**: `.docs/INTEGRATION_TESTS.md`, `.docs/TEST_COVERAGE_REPORT.md` - Testing documentation and coverage reports
-- **Implementation Summaries**: `.docs/DI_IMPLEMENTATION_SUMMARY.md`, `.docs/MIGRATION_GUIDE.md`
+- **Architecture & Design**: `docs/ARCHITECTURE.md` - System architecture and design decisions
+- **API Documentation**: `docs/api/` - API-specific documentation including logging, versioning, body size limits, and safe query patterns
+- **Worker Documentation**: `docs/worker/` - Worker service documentation including health checks, monitoring, and integration tests
+- **Security**: `docs/SECURITY.md`, `docs/DOCKER_SECURITY_HARDENING.md` - Security guidelines, authentication, token management, and Docker hardening
+- **Feature Documentation**: `docs/API_VERSIONING.md`, `docs/ERROR_CODES.md`, `docs/FEATURE_FLAGS.md`, `docs/REQUEST_TRACING.md`
+- **Accessibility**: `docs/ACCESSIBILITY.md` - WCAG compliance, keyboard navigation, and accessibility testing
+- **Real-time Features**: `docs/SSE_AND_STATUS_MANAGEMENT.md` - Server-Sent Events, memory leak prevention, and distributed status management
+- **Roadmap**: `docs/ROADMAP.md` - Project roadmap and future plans
+- **Database**: `docs/DATABASE_MIGRATIONS.md` - Database migration guidelines
+- **Testing**: `docs/INTEGRATION_TESTS.md`, `docs/TEST_COVERAGE_REPORT.md` - Testing documentation and coverage reports
+- **Implementation Summaries**: `docs/DI_IMPLEMENTATION_SUMMARY.md`, `docs/MIGRATION_GUIDE.md`
 
-When working on features or making changes, always check the `.docs/` folder for relevant documentation.
+When working on features or making changes, always check the `docs/` folder for relevant documentation.
 
 ## Tech Stack & Guidelines
 
