@@ -18,6 +18,8 @@ const redisClient = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379
   maxRetriesPerRequest: null,
 });
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - redlock@5.0.0-beta.2 typings may be incompatible with ioredis 5.x client types in some environments
 const redlock = new Redlock([redisClient], {
   // Retry settings for lock acquisition
   retryCount: 10,

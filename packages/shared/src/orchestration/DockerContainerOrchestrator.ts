@@ -7,12 +7,27 @@ import {
 } from './IContainerOrchestrator';
 
 /**
- * Docker implementation of the IContainerOrchestrator interface
- * Provides a clean abstraction over Docker container operations
+ * Docker implementation of the IContainerOrchestrator interface.
+ * Provides a clean abstraction over Docker container operations.
+ *
+ * NOTE ON DEPENDENCY INJECTION:
+ * This shared implementation intentionally does not use framework-specific
+ * dependency injection decorators (e.g. `@injectable`, `@inject`) to avoid
+ * coupling the shared package to a particular DI library.
+ *
+ * Applications (e.g. API, Worker) are expected to integrate this class with
+ * their DI containers explicitly (for example, via `registerInstance` or
+ * equivalent registration APIs). This preserves the existing architecture
+ * while keeping the shared package independent of any DI framework.
  */
 export class DockerContainerOrchestrator implements IContainerOrchestrator {
   private docker: Docker;
 
+  /**
+   * Optionally accepts a pre-configured Docker client, which can be provided
+   * by the application's DI container. If none is provided, a new Docker
+   * client instance is created.
+   */
   constructor(docker?: Docker) {
     this.docker = docker || new Docker();
   }

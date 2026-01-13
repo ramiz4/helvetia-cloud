@@ -1,3 +1,4 @@
+import Docker from 'dockerode';
 import 'reflect-metadata';
 import { DockerContainerOrchestrator } from 'shared';
 import { container } from 'tsyringe';
@@ -17,8 +18,15 @@ import { TOKENS } from './tokens';
  * This should be called at application startup
  */
 export function initializeContainer(): void {
-  // Register container orchestrator implementation
-  container.registerInstance(TOKENS.ContainerOrchestrator, new DockerContainerOrchestrator());
+  // Register Docker instance
+  const dockerInstance = new Docker();
+  container.registerInstance(TOKENS.Docker, dockerInstance);
+
+  // Register container orchestrator implementation with Docker instance
+  container.registerInstance(
+    TOKENS.ContainerOrchestrator,
+    new DockerContainerOrchestrator(dockerInstance),
+  );
 
   // Implementations will be registered by respective issues
   // Example registration (to be replaced by actual implementations):
