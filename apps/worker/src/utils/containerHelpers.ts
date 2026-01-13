@@ -170,13 +170,13 @@ export async function startContainer(params: {
   // Prepare network configuration
   const endpoints: Record<string, NetworkConfig> = {
     'helvetia-net': {
-      Aliases: [serviceName],
+      Aliases: [serviceName, baseName],
     },
   };
 
   if (networkName !== 'helvetia-net') {
     endpoints[networkName] = {
-      Aliases: [serviceName],
+      Aliases: [serviceName, baseName],
     };
   }
 

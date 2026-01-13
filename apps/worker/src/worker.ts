@@ -190,6 +190,25 @@ export const worker = new Worker(
         return;
       }
 
+      // Check if service is stateful (Database)
+      const isStateful = ['POSTGRES', 'REDIS', 'MYSQL'].includes(type);
+
+      if (isStateful) {
+        context.onLog?.(
+          `Stateful service detected. Stopping old containers before starting new one (Recreate Strategy)...\n`,
+        );
+        // For stateful services, we must remove the old container first to avoid matching aliases
+        // (Round-Robin DNS issue) and to ensure volume locks are released.
+        await cleanupOldContainers({
+          docker,
+          serviceId,
+          serviceName,
+          // Pass a dummy postfix so it doesn't match any existing container,
+          // effectively ensuring ALL old containers for this service are removed.
+          currentPostfix: '___recreate_strategy___',
+        });
+      }
+
       // Start new container
       const containerResult = await startContainer({
         docker,
@@ -213,12 +232,15 @@ export const worker = new Worker(
       context.onLog?.(`==== Cleaning up old containers ====\n`);
 
       // Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
-      await cleanupOldContainers({
-        docker,
-        serviceId,
-        serviceName,
-        currentPostfix: containerPostfix,
-      });
+      // Only for stateless services where we want overlap.
+      if (!isStateful) {
+        await cleanupOldContainers({
+          docker,
+          serviceId,
+          serviceName,
+          currentPostfix: containerPostfix,
+        });
+      }
 
       context.onLog?.(`✅ Cleanup complete.\n\n`);
       context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
