@@ -108,6 +108,26 @@ vi.mock('database', () => {
 
 import { fastify } from './server';
 
+/**
+ * Helper function to check if a field has an error in the new Zod v4 format
+ * New format: { formErrors: [], fieldErrors: { [field]: [...] } }
+ */
+function hasFieldError(details: any, field: string): boolean {
+  if (!details) return false;
+
+  // New Zod v4 format
+  if (details.fieldErrors && typeof details.fieldErrors === 'object') {
+    return field in details.fieldErrors && details.fieldErrors[field].length > 0;
+  }
+
+  // Legacy format (for backward compatibility)
+  if (Array.isArray(details)) {
+    return details.some((d: any) => d.field === field);
+  }
+
+  return false;
+}
+
 describe('API Service Normalization', () => {
   let token: string;
 
@@ -187,6 +207,6 @@ describe('API Service Normalization', () => {
     expect(response.statusCode).toBe(400);
     expect(response.json().error).toBe('Validation failed');
     // Check that the validation error mentions the type field
-    expect(response.json().details.some((d: any) => d.field === 'type')).toBe(true);
+    expect(hasFieldError(response.json().details, 'type')).toBe(true);
   });
 });
