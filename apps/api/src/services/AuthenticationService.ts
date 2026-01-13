@@ -36,6 +36,7 @@ export class AuthenticationService {
       throw new UnauthorizedError('Invalid username or password');
     }
 
+    // TODO: The password hashing uses SHA-256 without salt, which is the same weak implementation used in InitializationService. This creates a security vulnerability. Passwords should be hashed using bcrypt, scrypt, or argon2 with proper salting.
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
     if (user.password !== hashedPassword) {
       throw new UnauthorizedError('Invalid username or password');
