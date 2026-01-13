@@ -1,13 +1,11 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
 import { Activity, BarChart3, Flag, Lock, Settings, Shield, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function AdminDashboard() {
-  const { t } = useLanguage();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
