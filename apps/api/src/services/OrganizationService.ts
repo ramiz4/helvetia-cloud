@@ -19,6 +19,7 @@ export class OrganizationService {
 
     // Check if slug exists
     const existing = await this.organizationRepository.findBySlug(slug);
+    // TODO: Use crypto.randomBytes() or UUID instead of Math.random() for better uniqueness and security
     const finalSlug = existing ? `${slug}-${Math.random().toString(36).substring(2, 7)}` : slug;
 
     return this.organizationRepository.create({
