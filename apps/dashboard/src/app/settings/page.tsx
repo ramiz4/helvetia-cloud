@@ -1,5 +1,6 @@
 'use client';
 
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { API_BASE_URL, GITHUB_CLIENT_ID } from '@/lib/config';
 import { useLanguage } from '@/lib/LanguageContext';
 import { fetchWithAuth } from '@/lib/tokenRefresh';
@@ -30,6 +31,8 @@ export default function SettingsPage() {
   const { t } = useLanguage();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -55,16 +58,14 @@ export default function SettingsPage() {
   }, [fetchUser]);
 
   const disconnectGithub = async () => {
-    if (!confirm(t.settings.disconnectConfirm)) {
-      return;
-    }
-
+    setIsDisconnecting(true);
     try {
       const res = await fetchWithAuth(`${API_BASE_URL}/auth/github/disconnect`, {
         method: 'DELETE',
       });
       if (res.ok) {
         toast.success(t.settings.toast.githubDisconnected);
+        setShowDisconnectModal(false);
         fetchUser();
       } else {
         toast.error(t.settings.toast.githubDisconnectFailed);
@@ -72,6 +73,8 @@ export default function SettingsPage() {
     } catch (err) {
       console.error(err);
       toast.error(t.common.apiError);
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -179,7 +182,7 @@ export default function SettingsPage() {
 
               {user?.hasGitHubConnected ? (
                 <button
-                  onClick={disconnectGithub}
+                  onClick={() => setShowDisconnectModal(true)}
                   className="w-full sm:w-auto text-sm text-rose-400 hover:text-white font-bold transition-all flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 hover:bg-rose-500 rounded-xl border border-rose-500/20 shadow-md active:scale-95"
                 >
                   <LogOut size={16} /> {t.settings.disconnect}
@@ -248,6 +251,18 @@ export default function SettingsPage() {
           </div>
         </section>
       </div>
+
+      {showDisconnectModal && (
+        <ConfirmationModal
+          title="Disconnect GitHub"
+          message={t.settings.disconnectConfirm}
+          confirmLabel={t.settings.disconnect}
+          onConfirm={disconnectGithub}
+          onCancel={() => setShowDisconnectModal(false)}
+          isDanger
+          isLoading={isDisconnecting}
+        />
+      )}
     </div>
   );
 }

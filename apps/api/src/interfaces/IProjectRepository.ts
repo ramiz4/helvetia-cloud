@@ -4,6 +4,7 @@ export interface Project {
   id: string;
   name: string;
   userId: string;
+  organizationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   environments?: Environment[];
@@ -22,6 +23,7 @@ export interface Environment {
 export interface ProjectCreateInput {
   name: string;
   userId: string;
+  organizationId?: string;
 }
 
 export interface EnvironmentCreateInput {
@@ -32,6 +34,7 @@ export interface EnvironmentCreateInput {
 export interface IProjectRepository {
   findById(id: string): Promise<Project | null>;
   findByUserId(userId: string): Promise<Project[]>;
+  findByOrganizationId(organizationId: string): Promise<Project[]>;
   findByNameAndUserId(name: string, userId: string): Promise<Project | null>;
   create(data: ProjectCreateInput): Promise<Project>;
   delete(id: string): Promise<void>;

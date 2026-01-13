@@ -1,3 +1,5 @@
+import { Role } from 'database';
+
 /**
  * Data Transfer Objects for Authentication operations
  */
@@ -18,6 +20,7 @@ export interface AuthResponseDto {
     username: string;
     avatarUrl: string | null;
     githubId: string;
+    role: Role;
   };
   token: string;
 }

@@ -5,11 +5,17 @@ import './load-env';
 initEnv();
 
 import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
+import { resolve, TOKENS } from './di';
 import { fastify } from './server';
+import { InitializationService } from './services/InitializationService';
 import { statusReconciliationService } from './utils/statusReconciliation';
 
 const start = async () => {
   try {
+    // Run initializations
+    const initService = resolve<InitializationService>(TOKENS.InitializationService);
+    await initService.initialize();
+
     await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
     console.log(`API Server listening on port ${env.PORT}`);
 

@@ -5,6 +5,8 @@
 
 import type { Redis } from 'ioredis';
 
+import type { Role } from 'database';
+
 /**
  * JWT Payload structure
  * Contains the authenticated user's information
@@ -12,6 +14,7 @@ import type { Redis } from 'ioredis';
 export interface JwtPayload {
   id: string;
   username: string;
+  role: Role;
 }
 
 /**

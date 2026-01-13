@@ -31,6 +31,7 @@ export function EditServiceModal({
       ? Object.entries(initialService.envVars).map(([key, value]) => ({ key, value }))
       : [],
   );
+  const [editingVolumes, setEditingVolumes] = useState<string[]>(initialService.volumes || []);
   const editModalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,7 +40,8 @@ export function EditServiceModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(editingService, editingEnvVarsList);
+    const updatedService = { ...editingService, volumes: editingVolumes };
+    await onSave(updatedService, editingEnvVarsList);
   };
 
   return (
@@ -222,7 +224,7 @@ export function EditServiceModal({
                             newList[i].key = e.target.value;
                             setEditingEnvVarsList(newList);
                           }}
-                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs uppercase"
                         />
                         <input
                           type="text"
@@ -239,6 +241,53 @@ export function EditServiceModal({
                           type="button"
                           onClick={() =>
                             setEditingEnvVarsList((prev) => prev.filter((_, idx) => idx !== i))
+                          }
+                          className="p-2 bg-white/5 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                    Volumes
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setEditingVolumes((prev) => [...prev, ''])}
+                    className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 transition-all"
+                  >
+                    <Plus size={12} /> Add Volume
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                  {editingVolumes.length === 0 ? (
+                    <div className="py-8 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600">
+                      <span className="text-xs">No volume mappings defined</span>
+                    </div>
+                  ) : (
+                    editingVolumes.map((vol, i) => (
+                      <div key={i} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="/host/path:/container/path"
+                          value={vol}
+                          onChange={(e) => {
+                            const newList = [...editingVolumes];
+                            newList[i] = e.target.value;
+                            setEditingVolumes(newList);
+                          }}
+                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingVolumes((prev) => prev.filter((_, idx) => idx !== i))
                           }
                           className="p-2 bg-white/5 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
                         >

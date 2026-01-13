@@ -65,6 +65,12 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
 
   // If we get a 401, try to refresh the token and retry once
   if (response.status === 401) {
+    const user = localStorage.getItem('user');
+    if (!user) {
+      // If we're not logged in locally, don't even try to refresh
+      throw new Error('Unauthorized');
+    }
+
     console.log('Received 401, attempting to refresh token');
 
     const refreshed = await refreshAccessToken();

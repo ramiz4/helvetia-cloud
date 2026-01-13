@@ -77,7 +77,7 @@ export async function verifyAndRotateRefreshToken(
 
   // Generate new access token
   const accessToken = fastify.jwt.sign(
-    { id: user.id, username: user.username },
+    { id: user.id, username: user.username, role: user.role },
     { expiresIn: `${ACCESS_TOKEN_EXPIRY_MINUTES}m` },
   );
 

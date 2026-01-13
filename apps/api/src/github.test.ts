@@ -78,8 +78,27 @@ vi.mock('database', () => ({
       findMany: vi.fn(),
       deleteMany: vi.fn(),
     },
+    organization: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    organizationMember: {
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      findUnique: vi.fn(),
+    },
   },
   PrismaClient: vi.fn(),
+  Role: {
+    OWNER: 'OWNER',
+    ADMIN: 'ADMIN',
+    MEMBER: 'MEMBER',
+    VIEWER: 'VIEWER',
+  },
 }));
 
 vi.mock('dockerode', () => {
@@ -141,6 +160,7 @@ describe('GitHub Integration', () => {
         username: 'testuser',
         avatarUrl: 'https://avatar.com/u/12345',
         githubAccessToken: mockAccessToken,
+        role: 'MEMBER',
       };
 
       // Mock GitHub API responses
@@ -154,6 +174,8 @@ describe('GitHub Integration', () => {
       // Mock Prisma upsert
       const { prisma } = await import('database');
       vi.mocked(prisma.user.upsert).mockResolvedValue(mockDbUser as never);
+      vi.mocked(prisma.organization.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.organization.create).mockResolvedValue({ id: 'org-id' } as never);
 
       const response = await fastify.inject({
         method: 'POST',

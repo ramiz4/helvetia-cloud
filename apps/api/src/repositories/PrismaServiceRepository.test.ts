@@ -24,6 +24,7 @@ describe('PrismaServiceRepository', () => {
     customDomain: null,
     staticOutputDir: null,
     type: 'DOCKER',
+    volumes: {},
     isPreview: false,
     prNumber: null,
     deletedAt: null,
@@ -131,6 +132,7 @@ describe('PrismaServiceRepository', () => {
         data: {
           ...createInput,
           envVars: Prisma.JsonNull,
+          volumes: Prisma.JsonNull,
         },
       });
     });

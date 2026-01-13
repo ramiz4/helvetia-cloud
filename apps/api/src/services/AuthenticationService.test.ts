@@ -1,9 +1,11 @@
 import axios from 'axios';
+import { Role } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnauthorizedError } from '../errors';
 import type { IUserRepository } from '../interfaces';
 import { AuthenticationService } from './AuthenticationService';
+import { OrganizationService } from './OrganizationService';
 
 vi.mock('axios');
 vi.mock('../utils/crypto', () => ({
@@ -23,6 +25,7 @@ vi.mock('../utils/refreshToken', () => ({
 describe('AuthenticationService', () => {
   let service: AuthenticationService;
   let mockUserRepo: IUserRepository;
+  let mockOrgService: OrganizationService;
 
   const mockUser = {
     id: 'user-1',
@@ -30,6 +33,7 @@ describe('AuthenticationService', () => {
     avatarUrl: 'https://avatar.url',
     githubId: '123456',
     githubAccessToken: 'encrypted_github_token',
+    role: Role.MEMBER,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -44,13 +48,19 @@ describe('AuthenticationService', () => {
     mockUserRepo = {
       findById: vi.fn(),
       findByGithubId: vi.fn(),
+      findByUsername: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
       upsert: vi.fn(),
-    };
+    } as any;
 
-    service = new AuthenticationService(mockUserRepo);
+    mockOrgService = {
+      getUserOrganizations: vi.fn().mockResolvedValue([]),
+      createOrganization: vi.fn().mockResolvedValue({ id: 'org-1' }),
+    } as any;
+
+    service = new AuthenticationService(mockUserRepo, mockOrgService);
     vi.clearAllMocks();
   });
 
@@ -74,6 +84,7 @@ describe('AuthenticationService', () => {
           username: 'testuser',
           avatarUrl: 'https://avatar.url',
           githubId: '123456',
+          role: Role.MEMBER,
         },
         accessToken: 'jwt_user-1',
         refreshToken: 'refresh_token_user-1',
@@ -142,9 +153,6 @@ describe('AuthenticationService', () => {
   });
 
   describe('refreshAccessToken', () => {
-    // Note: Full testing of refreshAccessToken requires database mocking
-    // Here we test the basic validation logic
-
     it('should throw UnauthorizedError if refresh token is missing', async () => {
       const mockJwtSign = vi.fn();
 
@@ -163,6 +171,7 @@ describe('AuthenticationService', () => {
         username: 'testuser',
         avatarUrl: 'https://avatar.url',
         githubId: '123456',
+        role: Role.MEMBER,
       });
       expect(mockUserRepo.findById).toHaveBeenCalledWith('user-1');
     });

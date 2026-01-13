@@ -151,6 +151,7 @@ export class ServiceController {
       type,
       staticOutputDir,
       envVars,
+      volumes,
       // Helper fields for COMPOSE
       composeFile,
       mainService,
@@ -188,6 +189,7 @@ export class ServiceController {
         type: finalType,
         staticOutputDir: staticOutputDir || undefined,
         envVars,
+        volumes,
       });
     } catch (error) {
       if (error instanceof ForbiddenError) {
@@ -233,6 +235,7 @@ export class ServiceController {
       type,
       staticOutputDir,
       environmentId,
+      volumes,
     } = validatedData;
 
     const user = request.user;
@@ -259,6 +262,7 @@ export class ServiceController {
       type: type,
       staticOutputDir,
       environmentId,
+      volumes,
     });
 
     // Fetch the updated service with relations

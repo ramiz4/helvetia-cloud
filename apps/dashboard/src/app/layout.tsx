@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
 import { LanguageProvider } from '../lib/LanguageContext';
+import { OrganizationProvider } from '../lib/OrganizationContext';
 import QueryProvider from '../lib/QueryProvider';
 import './tailwind.css';
 
@@ -35,16 +36,18 @@ export default function RootLayout({
         </a>
         <LanguageProvider>
           <QueryProvider>
-            <div className="flex flex-col min-h-screen bg-slate-950">
-              <Navigation />
-              <main
-                id="main-content"
-                className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
-              >
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <OrganizationProvider>
+              <div className="flex flex-col min-h-screen bg-slate-950">
+                <Navigation />
+                <main
+                  id="main-content"
+                  className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
+                >
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </OrganizationProvider>
             <Toaster
               position="bottom-right"
               toastOptions={{

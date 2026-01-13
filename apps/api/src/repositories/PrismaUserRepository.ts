@@ -23,14 +23,18 @@ export class PrismaUserRepository implements IUserRepository {
     return this.prisma.user.findUnique({ where: { githubId } });
   }
 
+  async findByUsername(username: string): Promise<User | null> {
+    return this.prisma.user.findFirst({ where: { username } });
+  }
+
   async create(data: UserCreateInput): Promise<User> {
-    return this.prisma.user.create({ data });
+    return this.prisma.user.create({ data: data as unknown as Prisma.UserCreateInput });
   }
 
   async update(id: string, data: UserUpdateInput): Promise<User> {
     return this.prisma.user.update({
       where: { id },
-      data,
+      data: data as unknown as Prisma.UserUpdateInput,
     });
   }
 
@@ -41,8 +45,8 @@ export class PrismaUserRepository implements IUserRepository {
   ): Promise<User> {
     return this.prisma.user.upsert({
       where: where as unknown as Prisma.UserWhereUniqueInput,
-      create,
-      update,
+      create: create as unknown as Prisma.UserCreateInput,
+      update: update as unknown as Prisma.UserUpdateInput,
     });
   }
 

@@ -48,3 +48,6 @@ apps/*/node_modules
 apps/dashboard/.next
 packages/database/node_modules
 packages/database/generated-client
+
+# Database Backups
+backups/

@@ -7,6 +7,7 @@ import { AuthController } from '../controllers/AuthController';
 import { DeploymentController } from '../controllers/DeploymentController';
 import { FeatureFlagController } from '../controllers/FeatureFlagController';
 import { GitHubController } from '../controllers/GitHubController';
+import { OrganizationController } from '../controllers/OrganizationController';
 import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
 import { WebhookController } from '../controllers/WebhookController';
@@ -14,6 +15,7 @@ import { DockerContainerOrchestrator } from '../orchestration';
 import {
   PrismaDeploymentRepository,
   PrismaFeatureFlagRepository,
+  PrismaOrganizationRepository,
   PrismaProjectRepository,
   PrismaServiceRepository,
   PrismaUserRepository,
@@ -23,6 +25,8 @@ import {
   DeploymentOrchestratorService,
   FeatureFlagService,
   GitHubService,
+  InitializationService,
+  OrganizationService,
   ProjectManagementService,
   ServiceManagementService,
 } from '../services';
@@ -54,6 +58,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.DeploymentRepository, PrismaDeploymentRepository);
   container.registerSingleton(TOKENS.UserRepository, PrismaUserRepository);
   container.registerSingleton(TOKENS.FeatureFlagRepository, PrismaFeatureFlagRepository);
+  container.registerSingleton(TOKENS.OrganizationRepository, PrismaOrganizationRepository);
 
   // Register service implementations
   container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
@@ -62,6 +67,8 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.AuthenticationService, AuthenticationService);
   container.registerSingleton(TOKENS.GitHubService, GitHubService);
   container.registerSingleton(TOKENS.FeatureFlagService, FeatureFlagService);
+  container.registerSingleton(TOKENS.OrganizationService, OrganizationService);
+  container.registerSingleton(TOKENS.InitializationService, InitializationService);
 
   // Register controllers
   container.registerSingleton(TOKENS.ServiceController, ServiceController);
@@ -71,6 +78,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.WebhookController, WebhookController);
   container.registerSingleton(TOKENS.AuthController, AuthController);
   container.registerSingleton(TOKENS.FeatureFlagController, FeatureFlagController);
+  container.registerSingleton(TOKENS.OrganizationController, OrganizationController);
 }
 
 /**

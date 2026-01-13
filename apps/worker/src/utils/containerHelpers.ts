@@ -38,6 +38,30 @@ export async function ensureNetworkExists(
 }
 
 /**
+ * Ensure a Docker image exists locally, pull if not
+ */
+export async function ensureImageExists(docker: Docker, imageTag: string): Promise<void> {
+  try {
+    const images = await docker.listImages({ filters: { reference: [imageTag] } });
+    if (images.length === 0) {
+      console.log(`Pulling image: ${imageTag}`);
+      const stream = await docker.pull(imageTag);
+      await new Promise<void>((resolve, reject) => {
+        docker.modem.followProgress(
+          stream,
+          (err, _res) => (err ? reject(err) : resolve()),
+          () => {}, // Silent progress
+        );
+      });
+      console.log(`Successfully pulled image: ${imageTag}`);
+    }
+  } catch (err) {
+    console.error(`Failed to ensure image ${imageTag} exists:`, err);
+    throw err;
+  }
+}
+
+/**
  * Get the standardized network name for a project and environment
  */
 export function getNetworkName(params: {
@@ -72,6 +96,7 @@ export async function startContainer(params: {
   projectName?: string;
   environmentName?: string;
   username?: string;
+  volumes?: string[];
   onLog?: (log: string) => void;
 }): Promise<{ container: Docker.Container; postfix: string }> {
   const {
@@ -86,6 +111,7 @@ export async function startContainer(params: {
     projectName,
     environmentName,
     username,
+    volumes,
     onLog,
   } = params;
 
@@ -182,14 +208,16 @@ export async function startContainer(params: {
       RestartPolicy: { Name: 'always' },
       Memory: CONTAINER_MEMORY_LIMIT_BYTES,
       NanoCpus: CONTAINER_CPU_NANOCPUS,
-      Binds:
-        type === 'POSTGRES'
+      Binds: [
+        ...(type === 'POSTGRES'
           ? [`${baseName}-data:/var/lib/postgresql/data`]
           : type === 'REDIS'
             ? [`${baseName}-data:/data`]
             : type === 'MYSQL'
               ? [`${baseName}-data:/var/lib/mysql`]
-              : [],
+              : []),
+        ...(volumes && Array.isArray(volumes) ? volumes : []),
+      ],
       LogConfig: {
         Type: 'json-file',
         Config: {},

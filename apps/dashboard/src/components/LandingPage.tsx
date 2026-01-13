@@ -3,6 +3,7 @@
 import { useLanguage } from '@/lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
+import Link from 'next/link';
 import CookieBanner from './CookieBanner';
 
 export default function LandingPage() {
@@ -74,12 +75,12 @@ export default function LandingPage() {
               {t.hero.description}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
+              <Link
                 href="/login"
                 className="inline-flex items-center justify-center px-8 py-4 rounded-2xl font-bold cursor-pointer transition-all border border-transparent shadow-[0_8px_32px_rgba(99,102,241,0.3)] bg-indigo-500 text-white hover:bg-indigo-400 hover:-translate-y-1 active:scale-95 text-lg"
               >
                 {t.hero.ctaPrimary} <ArrowRight size={20} className="ml-2" />
-              </a>
+              </Link>
               <a
                 href="https://github.com/ramiz4/helvetia-cloud"
                 target="_blank"
@@ -133,12 +134,12 @@ export default function LandingPage() {
             <p className="text-slate-400 mb-12 text-xl max-w-2xl mx-auto">
               {t.ctaSection.subtitle}
             </p>
-            <a
+            <Link
               href="/login"
               className="inline-flex items-center justify-center px-10 py-5 rounded-2xl font-bold cursor-pointer transition-all border border-transparent shadow-[0_8px_32px_rgba(99,102,241,0.3)] bg-indigo-500 text-white hover:bg-indigo-400 hover:-translate-y-1 active:scale-95 text-xl"
             >
               {t.ctaSection.button} <ArrowUpRight size={22} className="ml-2" />
-            </a>
+            </Link>
           </div>
         </div>
       </section>

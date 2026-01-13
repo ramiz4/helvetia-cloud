@@ -80,8 +80,8 @@ function LoginContent() {
               <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none" />
             </button>
 
-            <div className="mt-8 text-center">
-              <p className="text-slate-500 text-sm font-semibold">
+            <div className="mt-8 text-center pt-4">
+              <p className="text-slate-500 text-xs font-semibold">
                 {t.login.termsPrivacy.split('{terms}')[0]}
                 <a href="#" className="text-indigo-400 hover:text-indigo-300 transition-colors">
                   {t.login.terms}

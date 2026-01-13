@@ -1,5 +1,7 @@
 'use client';
 
+import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { API_BASE_URL } from '@/lib/config';
 import { fetchWithAuth } from '@/lib/tokenRefresh';
 import {
@@ -46,6 +48,7 @@ interface CreateFlagData {
 }
 
 export default function FeatureFlagsAdminPage() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -57,6 +60,7 @@ export default function FeatureFlagsAdminPage() {
     description: '',
     enabled: false,
   });
+  const [flagToDelete, setFlagToDelete] = useState<FeatureFlag | null>(null);
 
   const fetchFlags = useCallback(async () => {
     try {
@@ -150,18 +154,17 @@ export default function FeatureFlagsAdminPage() {
     }
   };
 
-  const handleDelete = async (flag: FeatureFlag) => {
-    if (!confirm(`Are you sure you want to delete "${flag.name}"?`)) {
-      return;
-    }
+  const handleDelete = async () => {
+    if (!flagToDelete) return;
 
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/feature-flags/${flag.id}`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/feature-flags/${flagToDelete.id}`, {
         method: 'DELETE',
       });
 
       if (res.ok) {
         toast.success('Feature flag deleted successfully');
+        setFlagToDelete(null);
         fetchFlags();
       } else {
         toast.error('Failed to delete feature flag');
@@ -184,7 +187,7 @@ export default function FeatureFlagsAdminPage() {
     setShowEditModal(true);
   };
 
-  if (loading) {
+  if (authLoading || loading || !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
@@ -290,7 +293,7 @@ export default function FeatureFlagsAdminPage() {
                     <Edit size={18} />
                   </button>
                   <button
-                    onClick={() => handleDelete(flag)}
+                    onClick={() => setFlagToDelete(flag)}
                     className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all"
                     title="Delete flag"
                   >
@@ -479,6 +482,17 @@ export default function FeatureFlagsAdminPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {flagToDelete && (
+        <ConfirmationModal
+          title="Delete Feature Flag"
+          message={`Are you sure you want to delete "${flagToDelete.name}"? This action cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+          onCancel={() => setFlagToDelete(null)}
+          isDanger
+        />
       )}
     </div>
   );

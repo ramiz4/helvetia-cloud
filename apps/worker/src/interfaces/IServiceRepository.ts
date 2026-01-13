@@ -17,6 +17,7 @@ export interface Service {
   customDomain: string | null;
   staticOutputDir: string | null;
   type: string;
+  volumes: unknown;
   isPreview: boolean;
   prNumber: number | null;
   deletedAt: Date | null;
@@ -40,6 +41,7 @@ export interface ServiceCreateInput {
   customDomain?: string | null;
   staticOutputDir?: string | null;
   type?: string;
+  volumes?: unknown;
   isPreview?: boolean;
   prNumber?: number | null;
   deleteProtected?: boolean;
@@ -60,6 +62,7 @@ export interface ServiceUpdateInput {
   customDomain?: string | null;
   staticOutputDir?: string | null;
   type?: string;
+  volumes?: unknown;
   isPreview?: boolean;
   prNumber?: number | null;
   deletedAt?: Date | null;

@@ -2,6 +2,7 @@
 
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useOrganizationContext } from '@/lib/OrganizationContext';
 import { ChevronRight, Folder, Loader2, Plus, Settings } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -15,7 +16,8 @@ interface ProjectNameStepProps {
 
 export default function ProjectNameStep({ data, updateData, onNext }: ProjectNameStepProps) {
   const { t } = useLanguage();
-  const { data: projects = [], isLoading } = useProjects();
+  const { currentOrganization } = useOrganizationContext();
+  const { data: projects = [], isLoading } = useProjects(currentOrganization?.id);
   const createProjectMutation = useCreateProject();
 
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -27,7 +29,10 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) return;
     try {
-      const project = await createProjectMutation.mutateAsync(newProjectName.trim());
+      const project = await createProjectMutation.mutateAsync({
+        name: newProjectName.trim(),
+        organizationId: currentOrganization?.id,
+      });
       updateData({
         projectId: project.id,
         environmentId: project.environments?.[0]?.id || '',

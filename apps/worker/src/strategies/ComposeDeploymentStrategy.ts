@@ -1,6 +1,6 @@
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { ComposeFileBuilder } from '../utils/builders';
-import { ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
+import { ensureImageExists, ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
 import { getSecureBindMounts } from '../utils/workspace';
 
 /**
@@ -26,6 +26,7 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
       envVars,
       customDomain,
       username,
+      volumes,
     } = context;
 
     let buildLogs = '';
@@ -42,6 +43,9 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
     if (networkName !== 'helvetia-net') {
       await ensureNetworkExists(docker, networkName, context.projectName);
     }
+
+    // Ensure builder image exists
+    await ensureImageExists(docker, 'docker:cli');
 
     // 1. Create builder container
     const builderName = `builder-${deploymentId}`;
@@ -102,6 +106,7 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
         projectName: context.projectName,
         environmentName: context.environmentName,
         username: context.username,
+        volumes,
       });
 
       // 4. Prepare build script

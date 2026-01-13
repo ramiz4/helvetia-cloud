@@ -106,7 +106,12 @@
     "terms": "Bedingige",
     "privacy": "Datenschutz",
     "builtBy": "Baut vo Masoft GmbH 🇨🇭",
-    "authenticating": "Am aamelde bi GitHub..."
+    "authenticating": "Am aamelde bi GitHub...",
+    "adminLogin": "Helvetia Cloud Admin Login",
+    "username": "Benutzername",
+    "password": "Passwuort",
+    "signIn": "Anmeldi",
+    "invalidCredentials": "Ungiültige Benutzername oder Passwuort"
   },
   "dashboard": {
     "title": "Dashboard",

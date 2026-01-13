@@ -172,14 +172,16 @@ export class DeploymentController {
           RestartPolicy: { Name: 'always' },
           Memory: CONTAINER_MEMORY_LIMIT_BYTES,
           NanoCpus: CONTAINER_CPU_NANOCPUS,
-          Binds:
-            service.type === 'POSTGRES'
+          Binds: [
+            ...(service.type === 'POSTGRES'
               ? [`helvetia-data-${service.name}:/var/lib/postgresql/data`]
               : service.type === 'REDIS'
                 ? [`helvetia-data-${service.name}:/data`]
                 : service.type === 'MYSQL'
                   ? [`helvetia-data-${service.name}:/var/lib/mysql`]
-                  : [],
+                  : []),
+            ...((service.volumes as string[] | undefined) || []),
+          ],
           LogConfig: {
             Type: 'json-file',
             Config: {},

@@ -14,6 +14,13 @@ export class ProjectController {
    */
   async listProjects(req: FastifyRequest, reply: FastifyReply) {
     const userId = req.user.id;
+    const { organizationId } = req.query as { organizationId?: string };
+
+    if (organizationId) {
+      const projects = await this.projectService.getOrganizationProjects(organizationId, userId);
+      return reply.send(projects);
+    }
+
     const projects = await this.projectService.getUserProjects(userId);
     return reply.send(projects);
   }
@@ -30,9 +37,16 @@ export class ProjectController {
   /**
    * Create a new project
    */
-  async createProject(req: FastifyRequest<{ Body: { name: string } }>, reply: FastifyReply) {
+  async createProject(
+    req: FastifyRequest<{ Body: { name: string; organizationId?: string } }>,
+    reply: FastifyReply,
+  ) {
     const userId = req.user.id;
-    const project = await this.projectService.createProject(userId, req.body.name);
+    const project = await this.projectService.createProject(
+      userId,
+      req.body.name,
+      req.body.organizationId,
+    );
     return reply.status(201).send(project);
   }
 

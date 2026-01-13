@@ -30,6 +30,7 @@ export interface Service {
   username?: string;
   staticOutputDir?: string;
   envVars?: Record<string, string>;
+  volumes?: string[];
   customDomain?: string;
   isPreview?: boolean;
   prNumber?: number;
@@ -49,5 +50,6 @@ export interface UpdateServiceData {
   type?: ServiceType;
   staticOutputDir?: string;
   envVars?: Record<string, string>;
+  volumes?: string[];
   customDomain?: string;
 }

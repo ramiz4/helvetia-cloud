@@ -1,16 +1,34 @@
 import { inject, injectable } from 'tsyringe';
+import { TOKENS } from '../di/tokens';
 import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
-import { Environment, IProjectManagementService, IProjectRepository, Project } from '../interfaces';
+import {
+  Environment,
+  IOrganizationRepository,
+  IProjectManagementService,
+  IProjectRepository,
+  Project,
+} from '../interfaces';
 
 @injectable()
 export class ProjectManagementService implements IProjectManagementService {
   constructor(
     @inject(Symbol.for('IProjectRepository'))
     private projectRepository: IProjectRepository,
+    @inject(TOKENS.OrganizationRepository)
+    private organizationRepository: IOrganizationRepository,
   ) {}
 
   async getUserProjects(userId: string): Promise<Project[]> {
     return this.projectRepository.findByUserId(userId);
+  }
+
+  // TODO: The getOrganizationProjects method lacks test coverage. Tests should verify that organization members can access projects, non-members are rejected with ForbiddenError, and projects are correctly retrieved by organizationId.
+  async getOrganizationProjects(organizationId: string, userId: string): Promise<Project[]> {
+    const member = await this.organizationRepository.getMember(organizationId, userId);
+    if (!member) {
+      throw new ForbiddenError('You are not a member of this organization');
+    }
+    return this.projectRepository.findByOrganizationId(organizationId);
   }
 
   async getProjectById(projectId: string, userId: string): Promise<Project> {
@@ -21,19 +39,26 @@ export class ProjectManagementService implements IProjectManagementService {
     }
 
     if (project.userId !== userId) {
-      throw new ForbiddenError('Unauthorized access to project');
+      if (project.organizationId) {
+        const member = await this.organizationRepository.getMember(project.organizationId, userId);
+        if (!member) {
+          throw new ForbiddenError('Unauthorized access to project');
+        }
+      } else {
+        throw new ForbiddenError('Unauthorized access to project');
+      }
     }
 
     return project;
   }
 
-  async createProject(userId: string, name: string): Promise<Project> {
+  async createProject(userId: string, name: string, organizationId?: string): Promise<Project> {
     const existing = await this.projectRepository.findByNameAndUserId(name, userId);
     if (existing) {
       throw new ConflictError('Project with this name already exists');
     }
 
-    return this.projectRepository.create({ name, userId });
+    return this.projectRepository.create({ name, userId, organizationId });
   }
 
   async deleteProject(projectId: string, userId: string): Promise<void> {

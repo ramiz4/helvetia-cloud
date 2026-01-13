@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ForbiddenError, NotFoundError } from '../errors';
 import type {
   IDeploymentRepository,
+  IOrganizationRepository,
   IProjectRepository,
   IServiceRepository,
   IUserRepository,
@@ -28,6 +29,7 @@ describe('DeploymentOrchestratorService', () => {
   let mockDeploymentRepo: IDeploymentRepository;
   let mockUserRepo: IUserRepository;
   let mockProjectRepo: IProjectRepository;
+  let mockOrganizationRepo: IOrganizationRepository;
   let mockQueue: Queue;
 
   const mockService: Service = {
@@ -86,6 +88,7 @@ describe('DeploymentOrchestratorService', () => {
       delete: vi.fn(),
       findByStatus: vi.fn(),
       findAll: vi.fn(),
+      findByNameAndEnvironment: vi.fn(),
     };
 
     mockDeploymentRepo = {
@@ -116,6 +119,20 @@ describe('DeploymentOrchestratorService', () => {
       createEnvironment: vi.fn(),
       findByNameAndUserId: vi.fn(),
       findEnvironmentsByProjectId: vi.fn(),
+      findByOrganizationId: vi.fn(),
+    };
+
+    mockOrganizationRepo = {
+      create: vi.fn(),
+      findById: vi.fn(),
+      findBySlug: vi.fn(),
+      findByUserId: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      addMember: vi.fn(),
+      updateMemberRole: vi.fn(),
+      removeMember: vi.fn(),
+      getMember: vi.fn(),
     };
 
     mockQueue = {
@@ -127,6 +144,7 @@ describe('DeploymentOrchestratorService', () => {
       mockDeploymentRepo,
       mockUserRepo,
       mockProjectRepo,
+      mockOrganizationRepo,
       mockQueue,
     );
   });

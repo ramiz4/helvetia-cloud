@@ -3,24 +3,32 @@
 import { API_BASE_URL } from '@/lib/config';
 import { useFeatureFlag } from '@/lib/featureFlags';
 import { useLanguage } from '@/lib/LanguageContext';
-import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, X } from 'lucide-react';
+import { Role } from '@/types/organization';
+import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, Shield, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
+import OrganizationSwitcher from './OrganizationSwitcher';
 import UserMenu from './UserMenu';
 
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<{ id: string; username: string; avatarUrl?: string } | null>(
-    null,
-  );
+  const [user, setUser] = useState<{
+    id: string;
+    username: string;
+    avatarUrl?: string;
+    role?: Role;
+  } | null>(null);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
-  const { enabled: showDeployments } = useFeatureFlag('show-deployments');
+  const { enabled: showDeployments } = useFeatureFlag('show-deployments', user?.id, {
+    enabled: isLoggedIn,
+  });
 
   // Check login status on mount and when interactions occur
   useEffect(() => {
@@ -135,6 +143,12 @@ export default function Navigation() {
             </span>
           </Link>
 
+          {isLoggedIn && (
+            <div className="hidden lg:block ml-4">
+              <OrganizationSwitcher />
+            </div>
+          )}
+
           {/* Desktop Navigation */}
           {isLoggedIn ? (
             <div className="hidden lg:flex items-center gap-6">
@@ -151,7 +165,7 @@ export default function Navigation() {
                   <span>{t.nav.dashboard}</span>
                 </Link>
                 {showDeployments && (
-                  <a
+                  <Link
                     href="/deployments"
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
                       pathname === '/deployments'
@@ -161,7 +175,20 @@ export default function Navigation() {
                   >
                     <BookOpen size={18} />
                     <span>{t.nav.deployments}</span>
-                  </a>
+                  </Link>
+                )}
+                {user?.role === Role.ADMIN && (
+                  <Link
+                    href="/admin"
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                      pathname.startsWith('/admin')
+                        ? 'bg-indigo-500/10 text-indigo-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <Shield size={18} />
+                    <span>Admin</span>
+                  </Link>
                 )}
               </div>
 
@@ -175,13 +202,13 @@ export default function Navigation() {
             <div className="hidden lg:flex items-center gap-4">
               <LanguageSwitcher />
               <div className="w-px h-6 bg-white/10 mx-1" />
-              <a
+              <Link
                 href="/login"
                 className="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium cursor-pointer transition-all border border-transparent text-[14px] gap-2 bg-indigo-500 text-white shadow-lg hover:bg-indigo-600 hover:-translate-y-0.5 active:scale-95"
               >
                 <LogIn size={16} />
                 <span>{t.nav.login}</span>
-              </a>
+              </Link>
             </div>
           )}
 
@@ -233,7 +260,7 @@ export default function Navigation() {
                     <span>{t.nav.dashboard}</span>
                   </Link>
                   {showDeployments && (
-                    <a
+                    <Link
                       href="/deployments"
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
                         pathname === '/deployments'
@@ -243,9 +270,22 @@ export default function Navigation() {
                     >
                       <BookOpen size={20} />
                       <span>{t.nav.deployments}</span>
-                    </a>
+                    </Link>
                   )}
-                  <a
+                  {user?.role === Role.ADMIN && (
+                    <Link
+                      href="/admin"
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                        pathname.startsWith('/admin')
+                          ? 'bg-indigo-500/10 text-indigo-400'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <Shield size={20} />
+                      <span>Admin</span>
+                    </Link>
+                  )}
+                  <Link
                     href="/settings"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
                       pathname === '/settings'
@@ -255,7 +295,7 @@ export default function Navigation() {
                   >
                     <Settings size={20} />
                     <span>{t.nav.settings}</span>
-                  </a>
+                  </Link>
                 </div>
 
                 <div className="h-px bg-white/10" />
@@ -310,13 +350,13 @@ export default function Navigation() {
                   <span className="text-slate-400 text-sm font-medium">{t.nav.selectLanguage}</span>
                   <LanguageSwitcher variant="minimal" />
                 </div>
-                <a
+                <Link
                   href="/login"
                   className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold bg-indigo-500 text-white shadow-lg gap-2"
                 >
                   <LogIn size={20} />
                   <span>{t.nav.login}</span>
-                </a>
+                </Link>
               </div>
             )}
           </nav>

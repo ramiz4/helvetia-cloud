@@ -3,12 +3,15 @@
 import { NewProjectModal } from '@/components/NewProjectModal';
 import { ProjectCard } from '@/components/ProjectCard';
 import { FolderPlus, Plus, Rocket } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import LandingPage from '../components/LandingPage';
 import { useCreateProject, useDeleteProject, useProjects } from '../hooks/useProjects';
 import { useLanguage } from '../lib/LanguageContext';
+import { useOrganizationContext } from '../lib/OrganizationContext';
 import { checkAndRefreshToken } from '../lib/tokenRefresh';
 
 export default function Home() {
@@ -16,6 +19,8 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const { currentOrganization } = useOrganizationContext();
 
   // Project hooks
   const {
@@ -23,7 +28,7 @@ export default function Home() {
     isLoading,
     isError,
     error,
-  } = useProjects({ enabled: !!isAuthenticated });
+  } = useProjects(currentOrganization?.id, { enabled: !!isAuthenticated && !!currentOrganization });
 
   const createProjectMutation = useCreateProject();
   const deleteProjectMutation = useDeleteProject();
@@ -48,7 +53,7 @@ export default function Home() {
 
   const handleCreateProject = async (name: string) => {
     try {
-      await createProjectMutation.mutateAsync(name);
+      await createProjectMutation.mutateAsync({ name, organizationId: currentOrganization?.id });
       toast.success('Project created successfully');
       setShowNewProjectModal(false);
     } catch {
@@ -56,17 +61,13 @@ export default function Home() {
     }
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this project? All associated services will be affected.',
-      )
-    )
-      return;
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
 
     try {
-      await deleteProjectMutation.mutateAsync(projectId);
+      await deleteProjectMutation.mutateAsync(projectToDelete);
       toast.success('Project deleted successfully');
+      setProjectToDelete(null);
     } catch {
       toast.error('Failed to delete project');
     }
@@ -117,13 +118,13 @@ export default function Home() {
               <FolderPlus size={22} />
               New Project
             </button>
-            <a
+            <Link
               href="/new"
               className="inline-flex items-center justify-center px-8 py-4 rounded-2xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-xl shadow-indigo-500/20 active:scale-95 gap-3"
             >
               <Rocket size={22} />
               Deploy Service
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -177,7 +178,11 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} onDelete={handleDeleteProject} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onDelete={() => setProjectToDelete(project.id)}
+              />
             ))}
           </div>
         )}
@@ -186,6 +191,18 @@ export default function Home() {
           <NewProjectModal
             onClose={() => setShowNewProjectModal(false)}
             onSave={handleCreateProject}
+          />
+        )}
+
+        {projectToDelete && (
+          <ConfirmationModal
+            title="Delete Project"
+            message="Are you sure you want to delete this project? All associated services and environments will be permanently removed. This action cannot be undone."
+            confirmLabel="Delete"
+            onConfirm={handleDeleteProject}
+            onCancel={() => setProjectToDelete(null)}
+            isDanger
+            isLoading={deleteProjectMutation.isPending}
           />
         )}
       </div>
