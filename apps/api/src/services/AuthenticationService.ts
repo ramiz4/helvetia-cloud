@@ -1,10 +1,13 @@
 import axios from 'axios';
+import crypto from 'crypto';
+import { Role } from 'database';
 import { inject, injectable } from 'tsyringe';
 import type { AuthResponseDto, GitHubUserDto } from '../dto';
 import { UnauthorizedError } from '../errors';
 import type { IUserRepository } from '../interfaces';
 import { decrypt, encrypt } from '../utils/crypto';
 import { createRefreshToken } from '../utils/refreshToken';
+import { OrganizationService } from './OrganizationService';
 
 /**
  * AuthenticationService
@@ -15,7 +18,47 @@ export class AuthenticationService {
   constructor(
     @inject(Symbol.for('IUserRepository'))
     private userRepository: IUserRepository,
+    @inject(Symbol.for('OrganizationService'))
+    private organizationService: OrganizationService,
   ) {}
+
+  /**
+   * Authenticate user with username and password (local admin)
+   */
+  async authenticateLocal(
+    username: string,
+    password: string,
+    jwtSign: (payload: { id: string; username: string; role: Role }) => string,
+  ): Promise<{ user: AuthResponseDto['user']; accessToken: string; refreshToken: string }> {
+    const user = await this.userRepository.findByUsername(username);
+
+    if (!user || !user.password) {
+      throw new UnauthorizedError('Invalid username or password');
+    }
+
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    if (user.password !== hashedPassword) {
+      throw new UnauthorizedError('Invalid username or password');
+    }
+
+    // Generate JWT access token
+    const jwtToken = jwtSign({ id: user.id, username: user.username, role: user.role });
+
+    // Generate refresh token
+    const refreshToken = await createRefreshToken(user.id);
+
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        githubId: user.githubId,
+        role: user.role,
+      },
+      accessToken: jwtToken,
+      refreshToken,
+    };
+  }
 
   /**
    * Authenticate user with GitHub OAuth code
@@ -23,7 +66,7 @@ export class AuthenticationService {
    */
   async authenticateWithGitHub(
     code: string,
-    jwtSign: (payload: { id: string; username: string }) => string,
+    jwtSign: (payload: { id: string; username: string; role: Role }) => string,
   ): Promise<{ user: AuthResponseDto['user']; accessToken: string; refreshToken: string }> {
     if (!code) {
       throw new UnauthorizedError('Authorization code is required');
@@ -52,8 +95,14 @@ export class AuthenticationService {
       },
     );
 
+    // Check if user has organizations, if not create a personal one
+    const userOrgs = await this.organizationService.getUserOrganizations(user.id);
+    if (userOrgs.length === 0) {
+      await this.organizationService.createOrganization(`${user.username}'s Personal`, user.id);
+    }
+
     // Generate JWT access token (short-lived)
-    const jwtToken = jwtSign({ id: user.id, username: user.username });
+    const jwtToken = jwtSign({ id: user.id, username: user.username, role: user.role });
 
     // Generate refresh token (long-lived)
     const refreshToken = await createRefreshToken(user.id);
@@ -64,6 +113,7 @@ export class AuthenticationService {
         username: user.username,
         avatarUrl: user.avatarUrl,
         githubId: user.githubId,
+        role: user.role,
       },
       accessToken: jwtToken,
       refreshToken,
@@ -77,7 +127,7 @@ export class AuthenticationService {
    */
   async refreshAccessToken(
     refreshToken: string,
-    jwtSign: (payload: { id: string; username: string }) => string,
+    jwtSign: (payload: { id: string; username: string; role: Role }) => string,
   ): Promise<{ accessToken: string; refreshToken: string; userId: string } | null> {
     if (!refreshToken) {
       throw new UnauthorizedError('Refresh token is required');
@@ -110,7 +160,7 @@ export class AuthenticationService {
     const user = refreshTokenRecord.user;
 
     // Generate new JWT access token
-    const newAccessToken = jwtSign({ id: user.id, username: user.username });
+    const newAccessToken = jwtSign({ id: user.id, username: user.username, role: user.role });
 
     // Generate new refresh token
     const newRefreshToken = await createRefreshToken(user.id);
@@ -143,6 +193,7 @@ export class AuthenticationService {
       username: user.username,
       avatarUrl: user.avatarUrl,
       githubId: user.githubId,
+      role: user.role,
     };
   }
 

@@ -40,7 +40,9 @@ const envSchema = z.object({
 
   // Platform Configuration
   PLATFORM_DOMAIN: z.string().default('helvetia.cloud'),
-  APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  APP_BASE_URL: z.url().default('http://localhost:3000'),
+  HELVETIA_ADMIN: z.string().optional(),
+  HELVETIA_ADMIN_PASSWORD: z.string().optional(),
 
   // CORS Configuration
   ALLOWED_ORIGINS: z.string().optional(),

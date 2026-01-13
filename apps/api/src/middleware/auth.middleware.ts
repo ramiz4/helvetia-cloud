@@ -1,3 +1,4 @@
+import { Role } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UnauthorizedError } from '../errors';
 
@@ -8,6 +9,7 @@ export const PUBLIC_ROUTES = [
   '/health',
   '/webhooks/github',
   '/auth/github',
+  '/auth/login',
   '/auth/refresh',
   '/auth/logout',
 ];
@@ -47,6 +49,20 @@ export const authenticate = async (request: FastifyRequest, _reply: FastifyReply
     await request.jwtVerify();
   } catch {
     throw new UnauthorizedError('Authentication required');
+  }
+};
+
+/**
+ * Admin role required middleware
+ * Verifies that the authenticated user has ADMIN role
+ */
+export const requireAdmin = async (request: FastifyRequest, _reply: FastifyReply) => {
+  // First ensure they are authenticated
+  await authenticate(request, _reply);
+
+  // Then check the role
+  if (request.user?.role !== Role.ADMIN) {
+    throw new UnauthorizedError('Admin privileges required');
   }
 };
 

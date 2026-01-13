@@ -28,6 +28,19 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   /**
+   * POST /auth/login
+   * Login with username and password (local admin)
+   */
+  fastify.post(
+    '/auth/login',
+    {
+      config: { rateLimit: authRateLimitConfig },
+      bodyLimit: BODY_LIMIT_SMALL,
+    },
+    (request, reply) => authController.loginLocal(request, reply),
+  );
+
+  /**
    * POST /auth/refresh
    * Refresh access token using refresh token
    */
