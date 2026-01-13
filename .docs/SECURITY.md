@@ -5,6 +5,7 @@
 1. [Docker Socket Security](#docker-socket-security)
 2. [CORS Configuration](#cors-configuration)
 3. [Docker Volume Mounts](#docker-volume-mounts)
+4. [Authentication and Token Security](#authentication-and-token-security)
 
 ---
 
@@ -256,3 +257,216 @@ Always follow the principle of least privilege:
 
 - [Docker Security Best Practices](https://docs.docker.com/engine/security/)
 - [CIS Docker Benchmark](https://www.cisecurity.org/benchmark/docker)
+
+---
+
+## Authentication and Token Security
+
+### Overview
+
+Helvetia Cloud uses a dual-token authentication system with JWT access tokens and refresh tokens for secure user authentication. This section validates the security measures implemented in the token flow.
+
+**Last Validated:** 2026-01-09
+
+### Access Tokens
+
+**Configuration:**
+- **Expiration**: 15 minutes (900 seconds)
+- **Storage**: httpOnly cookie
+- **Secure Flag**: Enabled in production
+- **SameSite**: `lax` (CSRF protection)
+- **Path**: `/`
+
+**Security Assessment:** ✅ PASS
+
+- httpOnly flag prevents XSS attacks (tokens inaccessible to JavaScript)
+- Secure flag ensures HTTPS-only transmission in production
+- SameSite protection against CSRF attacks
+- Short expiration window (15 min) limits exposure time
+
+### Refresh Tokens
+
+**Configuration:**
+- **Expiration**: 30 days (2,592,000 seconds)
+- **Storage**: httpOnly cookie + database
+- **Generation**: `crypto.randomBytes(32)` - 256 bits entropy
+- **Rotation**: Single-use tokens with immediate revocation
+- **Revocation List**: Redis-based with 30-day TTL
+
+**Security Assessment:** ✅ PASS
+
+- Same security measures as access tokens
+- Longer expiration acceptable due to rotation mechanism
+- Stored securely in database with revocation capability
+- Cryptographically secure PRNG for token generation
+- No predictable patterns or sequential generation
+
+### Token Generation
+
+Implementation (`apps/api/src/utils/refreshToken.ts`):
+
+```typescript
+export function generateRefreshToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+```
+
+**Security Assessment:** ✅ PASS
+
+- Uses Node.js built-in `crypto.randomBytes()` - cryptographically secure
+- 32 bytes = 256 bits of entropy
+- Hex encoding produces 64-character string
+- No predictable patterns
+
+### Token Rotation Mechanism
+
+**Implementation:**
+- Old refresh token immediately revoked upon successful refresh
+- New refresh token issued with each refresh request
+- Database tracking of token status (revoked field)
+- Redis-based revocation list with 30-day TTL
+
+**Security Assessment:** ✅ PASS
+
+- Prevents token replay attacks
+- Limits impact of token theft (single-use tokens)
+- Immediate revocation ensures old tokens cannot be reused
+- Dual-layer validation (database + Redis) for redundancy
+
+**Code Location:** `apps/api/src/utils/refreshToken.ts:verifyAndRotateRefreshToken()`
+
+### Token Revocation List
+
+**Redis Implementation:**
+- Key prefix: `revoked:refresh:{token}`
+- TTL: 30 days (matching refresh token lifetime)
+- Lookup: Fast O(1) operation
+- Cleanup: Automatic via Redis TTL
+
+**Security Assessment:** ✅ PASS
+
+- Fast validation prevents performance bottlenecks
+- Automatic expiration prevents memory bloat
+- Centralized revocation for distributed systems
+- Immediate effect across all API instances
+
+**Code Location:** `apps/api/src/utils/refreshToken.ts:revokeRefreshToken()`
+
+### Database Security
+
+**RefreshToken Model Schema:**
+
+```prisma
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+```
+
+**Security Assessment:** ✅ PASS
+
+- Proper indexes for performance
+- Cascade delete on user removal
+- Unique constraint on token field
+- Tracks revocation status
+
+### JWT Configuration
+
+**Settings** (`apps/api/src/server.ts`):
+
+```typescript
+{
+  secret: process.env.JWT_SECRET,
+  sign: {
+    expiresIn: '15m' // 15 minutes
+  },
+  cookie: {
+    cookieName: 'token',
+    signed: false,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  }
+}
+```
+
+**Security Assessment:** ✅ PASS
+
+- JWT secret loaded from environment variable
+- Short access token lifetime (15 minutes)
+- Secure cookie configuration
+- Production-aware secure flag
+
+### Security Best Practices
+
+1. **Token Storage**
+   - ✅ Never store tokens in localStorage (XSS vulnerable)
+   - ✅ Use httpOnly cookies (JavaScript cannot access)
+   - ✅ Enable secure flag in production (HTTPS only)
+
+2. **Token Rotation**
+   - ✅ Rotate refresh tokens on every use
+   - ✅ Revoke old tokens immediately
+   - ✅ Use cryptographically secure random generation
+
+3. **Token Validation**
+   - ✅ Validate both database and revocation list
+   - ✅ Check expiration timestamps
+   - ✅ Verify user ownership
+
+4. **Token Revocation**
+   - ✅ Implement immediate revocation on logout
+   - ✅ Use Redis for fast lookup
+   - ✅ Set appropriate TTL for cleanup
+
+5. **Production Deployment**
+   - ⚠️ Always use HTTPS in production
+   - ⚠️ Use strong JWT_SECRET (minimum 32 characters)
+   - ⚠️ Monitor failed authentication attempts
+   - ⚠️ Implement rate limiting on auth endpoints
+   - ⚠️ Set up alerts for suspicious token usage patterns
+
+### Testing
+
+Run security validation tests:
+
+```bash
+# Test refresh token flow
+pnpm --filter api test src/refresh-token.test.ts
+
+# Test token validation
+pnpm --filter api test src/utils/tokenValidation.ts
+
+# Test authentication middleware
+pnpm --filter api test src/middleware/auth.middleware.ts
+```
+
+### Security Checklist
+
+- [x] Access tokens expire in 15 minutes
+- [x] Refresh tokens use cryptographically secure generation
+- [x] Tokens stored in httpOnly cookies
+- [x] Refresh tokens rotate on every use
+- [x] Revoked tokens cannot be reused
+- [x] Redis revocation list with automatic cleanup
+- [x] Database tracking of all tokens
+- [x] Cascade delete on user removal
+- [ ] Rate limiting on authentication endpoints
+- [ ] Monitoring of failed authentication attempts
+- [ ] Alerting on suspicious patterns
+
+### References
+
+- [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
+- [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
+- [Token Rotation Pattern](https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation)
