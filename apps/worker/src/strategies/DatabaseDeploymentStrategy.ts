@@ -20,10 +20,20 @@ export class DatabaseDeploymentStrategy implements IDeploymentStrategy {
     POSTGRES: 'postgres:15-alpine',
     REDIS: 'redis:7-alpine',
     MYSQL: 'mysql:8',
+    MONGODB: 'mongo:6',
+    MARIADB: 'mariadb:11',
+    CASSANDRA: 'cassandra:4',
+    ELASTICSEARCH: 'elasticsearch:8.11.1',
+    COUCHDB: 'couchdb:3',
+    RABBITMQ: 'rabbitmq:3-management',
+    NEO4J: 'neo4j:5',
+    ZOOKEEPER: 'zookeeper:3.9',
+    CLICKHOUSE: 'clickhouse/clickhouse-server:23',
+    INFLUXDB: 'influxdb:2',
   };
 
   canHandle(type: string): boolean {
-    return ['POSTGRES', 'REDIS', 'MYSQL'].includes(type);
+    return Object.keys(this.databaseImages).includes(type);
   }
 
   async deploy(context: DeploymentContext): Promise<DeploymentResult> {

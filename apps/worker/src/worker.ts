@@ -24,6 +24,29 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 // Initialize strategy factory
 const strategyFactory = new DeploymentStrategyFactory();
 
+/**
+ * List of service types that are inherently stateful.
+ * These services require the 'Recreate' deployment strategy (stop old -> start new)
+ * to prevent data corruption or file locking issues, as opposed to 'Rolling Update'.
+ *
+ * Users can also force this behavior by setting 'HELVETIA_STATEFUL=true' in environment variables.
+ */
+const STATEFUL_SERVICE_TYPES = [
+  'POSTGRES',
+  'REDIS',
+  'MYSQL',
+  'MONGODB',
+  'MARIADB',
+  'CASSANDRA',
+  'ELASTICSEARCH',
+  'COUCHDB',
+  'RABBITMQ',
+  'NEO4J',
+  'ZOOKEEPER',
+  'CLICKHOUSE',
+  'INFLUXDB',
+];
+
 export const worker = new Worker(
   'deployments',
   async (job: Job) => {
@@ -195,7 +218,14 @@ export const worker = new Worker(
       // two containers trying to write to the same files simultaneously (file locking issues).
       const hasWriteVolumes =
         volumes?.some((v: string) => !v.toLowerCase().endsWith(':ro')) ?? false;
-      const isStateful = ['POSTGRES', 'REDIS', 'MYSQL'].includes(type) || hasWriteVolumes;
+
+      const isKnownStatefulType = STATEFUL_SERVICE_TYPES.includes(type?.toUpperCase());
+
+      // Allow explicit override via environment variables (HELVETIA_STATEFUL=true)
+      const isExplicitlyStateful =
+        envVars?.['STATEFUL'] === 'true' || envVars?.['HELVETIA_STATEFUL'] === 'true';
+
+      const isStateful = isKnownStatefulType || hasWriteVolumes || isExplicitlyStateful;
 
       if (isStateful) {
         context.onLog?.(
@@ -351,6 +381,3 @@ export const worker = new Worker(
   },
   { connection: redisConnection },
 );
-
-// Removed auto-start for testing
-// console.log('Worker started and listening for jobs...');
