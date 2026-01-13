@@ -1,10 +1,26 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import CookieBanner from '../components/CookieBanner';
 import Navigation from '../components/Navigation';
 import UserMenu from '../components/UserMenu';
 import { LanguageProvider } from '../lib/LanguageContext';
+
+vi.mock('../lib/OrganizationContext', () => ({
+  useOrganizationContext: () => ({
+    currentOrganization: { id: 'org1', name: 'Org 1' },
+    setCurrentOrganization: vi.fn(),
+    organizations: [],
+    isLoading: false,
+  }),
+}));
+
+vi.mock('../hooks/useOrganizations', () => ({
+  useOrganizations: () => ({
+    data: [{ id: 'org1', name: 'Org 1' }],
+    isLoading: false,
+  }),
+}));
 
 // Helper to wrap components with LanguageProvider
 const renderWithProviders = (component: React.ReactElement) => {

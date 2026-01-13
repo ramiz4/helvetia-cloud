@@ -46,6 +46,10 @@ vi.mock('../../lib/LanguageContext', () => ({
   }),
 }));
 
+vi.mock('@/lib/OrganizationContext', () => ({
+  useOrganizationContext: vi.fn(),
+}));
+
 // Mock toast
 vi.mock('react-hot-toast', () => ({
   default: {
@@ -54,11 +58,32 @@ vi.mock('react-hot-toast', () => ({
   },
 }));
 
+import { OrganizationContextType, useOrganizationContext } from '@/lib/OrganizationContext';
 import { fetchWithAuth } from '../../lib/tokenRefresh';
 
 describe('NewServicePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useOrganizationContext).mockReturnValue({
+      currentOrganization: {
+        id: 'org-1',
+        name: 'My Org',
+        slug: '',
+        createdAt: '',
+        updatedAt: '',
+      },
+      organizations: [
+        {
+          id: 'org-1',
+          name: 'My Org',
+          slug: '',
+          createdAt: '',
+          updatedAt: '',
+        },
+      ],
+      setCurrentOrganization: vi.fn(),
+      isLoading: false,
+    } as OrganizationContextType);
   });
 
   test('should send correct payload for Static Site Service', async () => {

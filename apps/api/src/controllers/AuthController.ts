@@ -63,6 +63,49 @@ export class AuthController {
   }
 
   /**
+   * POST /auth/login
+   * Login with username and password (local admin)
+   */
+  async loginLocal(request: FastifyRequest, reply: FastifyReply) {
+    const { username, password } = request.body as { username?: string; password?: string };
+
+    if (!username || !password) {
+      return reply.status(400).send({ error: 'Username and password are required' });
+    }
+
+    try {
+      const jwtSign = (payload: JwtPayload) => request.server.jwt.sign(payload);
+      const result = await this.authService.authenticateLocal(username, password, jwtSign);
+
+      // Set cookies
+      reply.setCookie('token', result.accessToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 15,
+      });
+
+      reply.setCookie('refreshToken', result.refreshToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30,
+      });
+
+      return { user: result.user, token: result.accessToken };
+    } catch (err: unknown) {
+      const error = err as Error;
+      if (error.name === 'UnauthorizedError') {
+        return reply.status(401).send({ error: error.message });
+      }
+      console.error('Local auth error:', error.message);
+      return reply.status(500).send({ error: 'Authentication failed' });
+    }
+  }
+
+  /**
    * POST /auth/refresh
    * Refresh access token using refresh token
    */

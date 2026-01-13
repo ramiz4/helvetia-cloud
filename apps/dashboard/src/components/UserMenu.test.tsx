@@ -1,4 +1,5 @@
 import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
+import { OrganizationContextType, useOrganizationContext } from '@/lib/OrganizationContext';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UserMenu from './UserMenu';
@@ -6,6 +7,10 @@ import UserMenu from './UserMenu';
 // Mock language
 vi.mock('@/lib/LanguageContext', () => ({
   useLanguage: vi.fn(),
+}));
+
+vi.mock('@/lib/OrganizationContext', () => ({
+  useOrganizationContext: vi.fn(),
 }));
 
 // Mock next/image
@@ -39,6 +44,18 @@ describe('UserMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useLanguage).mockReturnValue({ t: mockT } as LanguageContextType);
+    vi.mocked(useOrganizationContext).mockReturnValue({
+      currentOrganization: {
+        id: 'org1',
+        name: 'Org 1',
+        slug: '',
+        createdAt: '',
+        updatedAt: '',
+      },
+      setCurrentOrganization: vi.fn(),
+      organizations: [],
+      isLoading: false,
+    } as OrganizationContextType);
   });
 
   it('renders user information correctly', () => {

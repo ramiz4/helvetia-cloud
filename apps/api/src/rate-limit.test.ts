@@ -64,6 +64,12 @@ vi.mock('bullmq', () => {
 
 vi.mock('database', () => {
   return {
+    Role: {
+      OWNER: 'OWNER',
+      ADMIN: 'ADMIN',
+      MEMBER: 'MEMBER',
+      VIEWER: 'VIEWER',
+    },
     prisma: {
       service: {
         findMany: vi.fn(),
@@ -92,6 +98,22 @@ vi.mock('database', () => {
         updateMany: vi.fn(),
         findMany: vi.fn(),
         deleteMany: vi.fn(),
+      },
+      organization: {
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      organizationMember: {
+        findMany: vi.fn(),
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
       },
     },
     PrismaClient: vi.fn(),
@@ -225,6 +247,7 @@ describe('Rate Limiting', () => {
       githubId: '123',
       avatarUrl: 'https://example.com/avatar.jpg',
       githubAccessToken: 'encrypted-token',
+      role: 'MEMBER',
       createdAt: new Date(),
       updatedAt: new Date(),
     } as never);
@@ -234,6 +257,10 @@ describe('Rate Limiting', () => {
       url: '/api/v1/auth/github',
       payload: { code: 'test-code' },
     });
+
+    if (response.statusCode === 500) {
+      console.log('API Error Payload:', response.payload);
+    }
 
     // Auth endpoint is accessible
     expect(response.statusCode).toBe(200);

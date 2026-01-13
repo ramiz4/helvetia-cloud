@@ -9,6 +9,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import LandingPage from '../components/LandingPage';
 import { useCreateProject, useDeleteProject, useProjects } from '../hooks/useProjects';
 import { useLanguage } from '../lib/LanguageContext';
+import { useOrganizationContext } from '../lib/OrganizationContext';
 import { checkAndRefreshToken } from '../lib/tokenRefresh';
 
 export default function Home() {
@@ -16,6 +17,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { currentOrganization } = useOrganizationContext();
 
   // Project hooks
   const {
@@ -23,7 +25,7 @@ export default function Home() {
     isLoading,
     isError,
     error,
-  } = useProjects({ enabled: !!isAuthenticated });
+  } = useProjects(currentOrganization?.id, { enabled: !!isAuthenticated && !!currentOrganization });
 
   const createProjectMutation = useCreateProject();
   const deleteProjectMutation = useDeleteProject();
@@ -48,7 +50,7 @@ export default function Home() {
 
   const handleCreateProject = async (name: string) => {
     try {
-      await createProjectMutation.mutateAsync(name);
+      await createProjectMutation.mutateAsync({ name, organizationId: currentOrganization?.id });
       toast.success('Project created successfully');
       setShowNewProjectModal(false);
     } catch {

@@ -374,6 +374,7 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/metrics/json',
     '/webhooks/github',
     '/auth/github',
+    '/auth/login',
     '/auth/refresh',
     '/auth/logout',
     '/feature-flags/check',

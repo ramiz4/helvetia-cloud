@@ -16,6 +16,22 @@ vi.mock('next/image', () => ({
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
 
+vi.mock('@/lib/OrganizationContext', () => ({
+  useOrganizationContext: () => ({
+    currentOrganization: { id: 'org1', name: 'Org 1' },
+    setCurrentOrganization: vi.fn(),
+    organizations: [],
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/hooks/useOrganizations', () => ({
+  useOrganizations: () => ({
+    data: [{ id: 'org1', name: 'Org 1' }],
+    isLoading: false,
+  }),
+}));
+
 describe('Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();

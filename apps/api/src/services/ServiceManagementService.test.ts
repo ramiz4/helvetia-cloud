@@ -1,13 +1,18 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
-import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
+import type {
+  IDeploymentRepository,
+  IOrganizationRepository,
+  IServiceRepository,
+} from '../interfaces';
 import { ServiceManagementService } from './ServiceManagementService';
 
 describe('ServiceManagementService', () => {
   let service: ServiceManagementService;
   let mockServiceRepo: IServiceRepository;
   let mockDeploymentRepo: IDeploymentRepository;
+  let mockOrganizationRepo: IOrganizationRepository;
 
   const mockService = {
     id: 'service-1',
@@ -72,10 +77,24 @@ describe('ServiceManagementService', () => {
       getDockerInstance: vi.fn(),
     };
 
+    mockOrganizationRepo = {
+      create: vi.fn(),
+      findById: vi.fn(),
+      findBySlug: vi.fn(),
+      findByUserId: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      addMember: vi.fn(),
+      updateMemberRole: vi.fn(),
+      removeMember: vi.fn(),
+      getMember: vi.fn(),
+    };
+
     service = new ServiceManagementService(
       mockServiceRepo,
       mockDeploymentRepo,
       mockContainerOrchestrator,
+      mockOrganizationRepo,
     );
   });
 

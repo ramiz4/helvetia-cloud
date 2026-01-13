@@ -1,6 +1,7 @@
 import { ServiceFormData } from '@/components/new-service/types';
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
 import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
+import { useOrganizationContext } from '@/lib/OrganizationContext';
 import { Project } from '@/types/project';
 import { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -10,6 +11,10 @@ import ProjectNameStep from './ProjectNameStep';
 // Mock language
 vi.mock('@/lib/LanguageContext', () => ({
   useLanguage: vi.fn(),
+}));
+
+vi.mock('@/lib/OrganizationContext', () => ({
+  useOrganizationContext: vi.fn(),
 }));
 
 // Mock hooks
@@ -60,6 +65,18 @@ describe('ProjectNameStep', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useLanguage).mockReturnValue({ t: mockT } as LanguageContextType);
+    vi.mocked(useOrganizationContext).mockReturnValue({
+      currentOrganization: {
+        id: 'org1',
+        name: 'Org 1',
+        slug: '',
+        createdAt: '',
+        updatedAt: '',
+      },
+      setCurrentOrganization: vi.fn(),
+      organizations: [],
+      isLoading: false,
+    });
     vi.mocked(useProjects).mockReturnValue({
       data: mockProjects,
       isLoading: false,
@@ -67,7 +84,12 @@ describe('ProjectNameStep', () => {
     vi.mocked(useCreateProject).mockReturnValue({
       mutateAsync: mockCreateMutateAsync,
       isPending: false,
-    } as unknown as UseMutationResult<Project, Error, string, unknown>);
+    } as unknown as UseMutationResult<
+      Project,
+      Error,
+      { name: string; organizationId?: string },
+      unknown
+    >);
   });
 
   it('renders projects and loading state', () => {
@@ -188,7 +210,10 @@ describe('ProjectNameStep', () => {
     fireEvent.click(screen.getByText('Create'));
 
     await waitFor(() => {
-      expect(mockCreateMutateAsync).toHaveBeenCalledWith('new-project');
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith({
+        name: 'new-project',
+        organizationId: 'org1',
+      });
       expect(updateData).toHaveBeenCalledWith({
         projectId: 'p3',
         environmentId: 'e4',

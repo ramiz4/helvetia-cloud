@@ -1,11 +1,13 @@
 import { Queue } from 'bullmq';
 import { inject, injectable } from 'tsyringe';
+import { TOKENS } from '../di/tokens';
 import type { QueueDeploymentJobDto } from '../dto';
 import { ForbiddenError, NotFoundError } from '../errors';
 import type {
   Deployment,
   IDeploymentOrchestratorService,
   IDeploymentRepository,
+  IOrganizationRepository,
   IProjectRepository,
   IServiceRepository,
   IUserRepository,
@@ -28,6 +30,8 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     private userRepository: IUserRepository,
     @inject(Symbol.for('IProjectRepository'))
     private projectRepository: IProjectRepository,
+    @inject(TOKENS.OrganizationRepository)
+    private organizationRepository: IOrganizationRepository,
     @inject(Symbol.for('IDeploymentQueue'))
     private deploymentQueue: Queue,
   ) {}
@@ -49,8 +53,17 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     }
 
     if (service.userId !== userId) {
-      // Return 404 instead of 403 to avoid leaking service existence
-      throw new NotFoundError('Service not found');
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new NotFoundError('Service not found'); // Use 404 to avoid leaking
+        }
+      } else {
+        throw new NotFoundError('Service not found');
+      }
     }
 
     // Create deployment record
@@ -81,8 +94,22 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
 
     // Verify service ownership
     const service = await this.serviceRepository.findById(deployment.serviceId);
-    if (!service || service.userId !== userId) {
+    if (!service) {
       throw new ForbiddenError('Unauthorized access to deployment');
+    }
+
+    if (service.userId !== userId) {
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new ForbiddenError('Unauthorized access to deployment');
+        }
+      } else {
+        throw new ForbiddenError('Unauthorized access to deployment');
+      }
     }
 
     return deployment;
@@ -104,8 +131,17 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     }
 
     if (service.userId !== userId) {
-      // Return 404 instead of 403 to avoid leaking service existence
-      throw new NotFoundError('Service not found');
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new NotFoundError('Service not found');
+        }
+      } else {
+        throw new NotFoundError('Service not found');
+      }
     }
 
     return this.deploymentRepository.findByServiceId(serviceId, options);
@@ -200,8 +236,17 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     }
 
     if (service.userId !== userId) {
-      // Return 404 instead of 403 to avoid leaking service existence
-      throw new NotFoundError('Service not found');
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new NotFoundError('Service not found');
+        }
+      } else {
+        throw new NotFoundError('Service not found');
+      }
     }
 
     await this.deploymentRepository.deleteByServiceId(serviceId);
@@ -219,8 +264,17 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     }
 
     if (service.userId !== userId) {
-      // Return 404 instead of 403 to avoid leaking service existence
-      throw new NotFoundError('Service not found');
+      if (service.environment?.project?.organizationId) {
+        const member = await this.organizationRepository.getMember(
+          service.environment.project.organizationId,
+          userId,
+        );
+        if (!member) {
+          throw new NotFoundError('Service not found');
+        }
+      } else {
+        throw new NotFoundError('Service not found');
+      }
     }
 
     return this.deploymentRepository.countByServiceId(serviceId);
