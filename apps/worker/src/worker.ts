@@ -199,7 +199,7 @@ export const worker = new Worker(
 
       if (isStateful) {
         context.onLog?.(
-          `Stateful service detected. Stopping old containers before starting new one (Recreate Strategy)...\n`,
+          `Stateful service detected. Stopping and removing old containers before starting new one (Recreate Strategy)...\n`,
         );
         // For stateful services, we must remove the old container first to avoid matching aliases
         // (Round-Robin DNS issue) and to ensure volume locks are released.
@@ -212,9 +212,12 @@ export const worker = new Worker(
           serviceId,
           serviceName,
           currentPostfix: RECREATE_STRATEGY_POSTFIX,
+          stopOnly: true, // Only stop them so we can rollback if new container fails
         });
 
-        context.onLog?.(`✅ Old containers removed (Recreate Strategy complete).\n\n`);
+        context.onLog?.(
+          `✅ Old containers stopped (Recreate Strategy: ready to start new container).\n\n`,
+        );
       }
 
       // Start new container
@@ -239,19 +242,19 @@ export const worker = new Worker(
       context.onLog?.(`✅ Container ${containerResult.postfix} started successfully.\n\n`);
 
       // Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
-      // Only for stateless services where we want overlap.
-      if (!isStateful) {
-        context.onLog?.(`==== Cleaning up old containers ====\n`);
+      // For stateful services, this removes the containers we 'stopped' earlier.
+      // For stateless services, this stops and removes the running old containers.
+      context.onLog?.(`==== Cleaning up old containers ====\n`);
 
-        await cleanupOldContainers({
-          docker,
-          serviceId,
-          serviceName,
-          currentPostfix: containerPostfix,
-        });
+      await cleanupOldContainers({
+        docker,
+        serviceId,
+        serviceName,
+        currentPostfix: containerPostfix,
+        stopOnly: false,
+      });
 
-        context.onLog?.(`✅ Cleanup complete.\n\n`);
-      }
+      context.onLog?.(`✅ Cleanup complete.\n\n`);
 
       context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
       context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);

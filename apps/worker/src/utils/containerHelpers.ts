@@ -240,10 +240,11 @@ export async function cleanupOldContainers(params: {
   serviceId: string;
   serviceName: string;
   currentPostfix: string;
+  stopOnly?: boolean;
 }): Promise<void> {
-  const { docker, serviceId, serviceName, currentPostfix } = params;
+  const { docker, serviceId, serviceName, currentPostfix, stopOnly } = params;
 
-  console.log(`Cleaning up old containers for ${serviceName}...`);
+  console.log(`Cleaning up old containers for ${serviceName} (stopOnly: ${!!stopOnly})...`);
   const currentContainers = await docker.listContainers({ all: true });
   const containersToRemove = currentContainers.filter(
     (c) =>
@@ -254,7 +255,9 @@ export async function cleanupOldContainers(params: {
   for (const old of containersToRemove) {
     const container = docker.getContainer(old.Id);
     await container.stop().catch(() => {});
-    await container.remove().catch(() => {});
+    if (!stopOnly) {
+      await container.remove().catch(() => {});
+    }
   }
 }
 
