@@ -1,8 +1,8 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import IORedis from 'ioredis';
+import { withStatusLock } from 'shared';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
-import { withStatusLock } from './statusLock';
 
 type NetworkConfig = {
   Aliases: string[];

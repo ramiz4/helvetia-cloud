@@ -1,6 +1,7 @@
 import '../types/fastify';
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { withStatusLock } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 import { ForbiddenError, NotFoundError } from '../errors';
@@ -11,7 +12,6 @@ import type {
 } from '../interfaces';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
-import { withStatusLock } from '../utils/statusLock';
 import { validateToken } from '../utils/tokenValidation';
 
 /**

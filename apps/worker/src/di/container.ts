@@ -1,6 +1,6 @@
 import 'reflect-metadata';
+import { DockerContainerOrchestrator } from 'shared';
 import { container } from 'tsyringe';
-import { DockerContainerOrchestrator } from '../orchestration';
 import { TOKENS } from './tokens';
 
 /**
@@ -18,7 +18,7 @@ import { TOKENS } from './tokens';
  */
 export function initializeContainer(): void {
   // Register container orchestrator implementation
-  container.registerSingleton(TOKENS.ContainerOrchestrator, DockerContainerOrchestrator);
+  container.registerInstance(TOKENS.ContainerOrchestrator, new DockerContainerOrchestrator());
 
   // Implementations will be registered by respective issues
   // Example registration (to be replaced by actual implementations):
