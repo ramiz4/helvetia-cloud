@@ -3,6 +3,7 @@
 import { NewProjectModal } from '@/components/NewProjectModal';
 import { ProjectCard } from '@/components/ProjectCard';
 import { FolderPlus, Plus, Rocket } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -119,13 +120,13 @@ export default function Home() {
               <FolderPlus size={22} />
               New Project
             </button>
-            <a
+            <Link
               href="/new"
               className="inline-flex items-center justify-center px-8 py-4 rounded-2xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-xl shadow-indigo-500/20 active:scale-95 gap-3"
             >
               <Rocket size={22} />
               Deploy Service
-            </a>
+            </Link>
           </div>
         </div>
 

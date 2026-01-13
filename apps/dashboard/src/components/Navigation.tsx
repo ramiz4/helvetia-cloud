@@ -163,7 +163,7 @@ export default function Navigation() {
                   <span>{t.nav.dashboard}</span>
                 </Link>
                 {showDeployments && (
-                  <a
+                  <Link
                     href="/deployments"
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
                       pathname === '/deployments'
@@ -173,7 +173,7 @@ export default function Navigation() {
                   >
                     <BookOpen size={18} />
                     <span>{t.nav.deployments}</span>
-                  </a>
+                  </Link>
                 )}
                 {user?.role === 'ADMIN' && (
                   <Link
@@ -200,13 +200,13 @@ export default function Navigation() {
             <div className="hidden lg:flex items-center gap-4">
               <LanguageSwitcher />
               <div className="w-px h-6 bg-white/10 mx-1" />
-              <a
+              <Link
                 href="/login"
                 className="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium cursor-pointer transition-all border border-transparent text-[14px] gap-2 bg-indigo-500 text-white shadow-lg hover:bg-indigo-600 hover:-translate-y-0.5 active:scale-95"
               >
                 <LogIn size={16} />
                 <span>{t.nav.login}</span>
-              </a>
+              </Link>
             </div>
           )}
 
@@ -258,7 +258,7 @@ export default function Navigation() {
                     <span>{t.nav.dashboard}</span>
                   </Link>
                   {showDeployments && (
-                    <a
+                    <Link
                       href="/deployments"
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
                         pathname === '/deployments'
@@ -268,7 +268,7 @@ export default function Navigation() {
                     >
                       <BookOpen size={20} />
                       <span>{t.nav.deployments}</span>
-                    </a>
+                    </Link>
                   )}
                   {user?.role === 'ADMIN' && (
                     <Link
@@ -283,7 +283,7 @@ export default function Navigation() {
                       <span>Admin</span>
                     </Link>
                   )}
-                  <a
+                  <Link
                     href="/settings"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
                       pathname === '/settings'
@@ -293,7 +293,7 @@ export default function Navigation() {
                   >
                     <Settings size={20} />
                     <span>{t.nav.settings}</span>
-                  </a>
+                  </Link>
                 </div>
 
                 <div className="h-px bg-white/10" />
@@ -348,13 +348,13 @@ export default function Navigation() {
                   <span className="text-slate-400 text-sm font-medium">{t.nav.selectLanguage}</span>
                   <LanguageSwitcher variant="minimal" />
                 </div>
-                <a
+                <Link
                   href="/login"
                   className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold bg-indigo-500 text-white shadow-lg gap-2"
                 >
                   <LogIn size={20} />
                   <span>{t.nav.login}</span>
-                </a>
+                </Link>
               </div>
             )}
           </nav>
