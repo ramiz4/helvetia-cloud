@@ -213,6 +213,8 @@ export const worker = new Worker(
           serviceName,
           currentPostfix: RECREATE_STRATEGY_POSTFIX,
         });
+
+        context.onLog?.(`✅ Old containers removed (Recreate Strategy complete).\n\n`);
       }
 
       // Start new container
@@ -235,20 +237,23 @@ export const worker = new Worker(
       containerPostfix = containerResult.postfix;
 
       context.onLog?.(`✅ Container ${containerResult.postfix} started successfully.\n\n`);
-      context.onLog?.(`==== Cleaning up old containers ====\n`);
 
       // Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
       // Only for stateless services where we want overlap.
       if (!isStateful) {
+        context.onLog?.(`==== Cleaning up old containers ====\n`);
+
         await cleanupOldContainers({
           docker,
           serviceId,
           serviceName,
           currentPostfix: containerPostfix,
         });
+
+        context.onLog?.(`✅ Cleanup complete.\n\n`);
       }
 
-      context.onLog?.(`✅ Cleanup complete.\n\n`);
+      context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
       context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
 
       // Update deployment and service status
