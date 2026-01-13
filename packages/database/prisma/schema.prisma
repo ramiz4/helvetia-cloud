@@ -17,16 +17,52 @@ model User {
   updatedAt         DateTime       @updatedAt
   /// @sensitive - GitHub OAuth access token. Handle securely.
   githubAccessToken String?
+  role              Role           @default(MEMBER)
+  /// @sensitive - Hashed password for local auth (e.g. admin)
+  password          String?
   services          Service[]
   projects          Project[]
   refreshTokens     RefreshToken[]
+  organizations     OrganizationMember[]
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Organization {
+  id        String               @id @default(uuid())
+  name      String
+  slug      String               @unique
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  members   OrganizationMember[]
+  projects  Project[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid())
+  organizationId String
+  userId         String
+  role           Role         @default(MEMBER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
 }
 
 model Project {
   id           String        @id @default(uuid())
-  name         String
-  userId       String
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  userId         String
+  organizationId String?
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   environments Environment[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
