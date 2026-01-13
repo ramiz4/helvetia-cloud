@@ -8,6 +8,7 @@ import {
   UpdateFlagSchema,
 } from '../schemas/feature-flag.schema';
 import type { FeatureFlagService } from '../services';
+import { formatZodError } from '../utils/errorFormatting';
 
 /**
  * FeatureFlagController
@@ -66,10 +67,7 @@ export class FeatureFlagController {
         return reply.code(400).send({
           success: false,
           error: 'Validation failed',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
+          details: formatZodError(error),
         });
       }
 
@@ -97,10 +95,7 @@ export class FeatureFlagController {
         return reply.code(400).send({
           success: false,
           error: 'Validation failed',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
+          details: formatZodError(error),
         });
       }
 
@@ -165,10 +160,7 @@ export class FeatureFlagController {
         return reply.code(400).send({
           success: false,
           error: 'Validation failed',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
+          details: formatZodError(error),
         });
       }
 

@@ -127,6 +127,54 @@ vi.mock('@fastify/rate-limit', () => {
 
 import { fastify } from './server';
 
+/**
+ * Helper function to check if a field has an error in the new Zod v4 format
+ * New format: { formErrors: [], fieldErrors: { [field]: [...] } }
+ */
+function hasFieldError(details: any, field: string): boolean {
+  if (!details) return false;
+
+  // New Zod v4 format
+  if (details.fieldErrors && typeof details.fieldErrors === 'object') {
+    return field in details.fieldErrors && details.fieldErrors[field].length > 0;
+  }
+
+  // Legacy format (for backward compatibility)
+  if (Array.isArray(details)) {
+    return details.some((d: any) => d.field === field);
+  }
+
+  return false;
+}
+
+/**
+ * Helper function to check if details contains a specific message
+ */
+function hasErrorMessage(details: any, messageFragment: string): boolean {
+  if (!details) return false;
+
+  // New Zod v4 format
+  if (details.formErrors && Array.isArray(details.formErrors)) {
+    if (details.formErrors.some((msg: string) => msg.includes(messageFragment))) {
+      return true;
+    }
+  }
+
+  if (details.fieldErrors && typeof details.fieldErrors === 'object') {
+    return Object.values(details.fieldErrors).some(
+      (errors: any) =>
+        Array.isArray(errors) && errors.some((msg: string) => msg.includes(messageFragment)),
+    );
+  }
+
+  // Legacy format
+  if (Array.isArray(details)) {
+    return details.some((d: any) => d.message && d.message.includes(messageFragment));
+  }
+
+  return false;
+}
+
 describe('Service Input Validation', () => {
   // Helper function to generate auth token
   const getAuthToken = () => {
@@ -162,7 +210,7 @@ describe('Service Input Validation', () => {
       const json = response.json();
       expect(json.error).toBe('Validation failed');
       expect(json.details).toBeDefined();
-      expect(json.details.some((d: any) => d.field === 'name')).toBe(true);
+      expect(hasFieldError(json.details, 'name')).toBe(true);
     });
 
     it('should reject service with name longer than 63 characters', async () => {
@@ -185,7 +233,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'name')).toBe(true);
+      expect(hasFieldError(json.details, 'name')).toBe(true);
     });
 
     it('should reject service with invalid name format (uppercase)', async () => {
@@ -207,7 +255,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'name')).toBe(true);
+      expect(hasFieldError(json.details, 'name')).toBe(true);
     });
 
     it('should reject service with invalid name format (special characters)', async () => {
@@ -229,7 +277,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'name')).toBe(true);
+      expect(hasFieldError(json.details, 'name')).toBe(true);
     });
 
     it('should accept service with valid name format', async () => {
@@ -303,7 +351,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'branch')).toBe(true);
+      expect(hasFieldError(json.details, 'branch')).toBe(true);
     });
 
     it('should accept service with valid branch name', async () => {
@@ -352,7 +400,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'buildCommand')).toBe(true);
+      expect(hasFieldError(json.details, 'buildCommand')).toBe(true);
     });
 
     it('should reject service with too long startCommand', async () => {
@@ -375,7 +423,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'startCommand')).toBe(true);
+      expect(hasFieldError(json.details, 'startCommand')).toBe(true);
     });
 
     it('should reject service with invalid port (too low)', async () => {
@@ -398,7 +446,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'port')).toBe(true);
+      expect(hasFieldError(json.details, 'port')).toBe(true);
     });
 
     it('should reject service with invalid port (too high)', async () => {
@@ -421,7 +469,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'port')).toBe(true);
+      expect(hasFieldError(json.details, 'port')).toBe(true);
     });
 
     it('should accept service with valid port', async () => {
@@ -477,7 +525,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.message.includes('10KB'))).toBe(true);
+      expect(hasErrorMessage(json.details, '10KB')).toBe(true);
     });
 
     it('should accept service with valid envVars', async () => {
@@ -529,7 +577,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'customDomain')).toBe(true);
+      expect(hasFieldError(json.details, 'customDomain')).toBe(true);
     });
 
     it('should reject service with too long staticOutputDir', async () => {
@@ -552,7 +600,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'staticOutputDir')).toBe(true);
+      expect(hasFieldError(json.details, 'staticOutputDir')).toBe(true);
     });
   });
 
@@ -578,7 +626,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'name')).toBe(true);
+      expect(hasFieldError(json.details, 'name')).toBe(true);
     });
 
     it('should reject update with invalid branch name', async () => {
@@ -602,7 +650,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'branch')).toBe(true);
+      expect(hasFieldError(json.details, 'branch')).toBe(true);
     });
 
     it('should reject update with invalid port', async () => {
@@ -626,7 +674,7 @@ describe('Service Input Validation', () => {
       expect(response.statusCode).toBe(400);
       const json = response.json();
       expect(json.error).toBe('Validation failed');
-      expect(json.details.some((d: any) => d.field === 'port')).toBe(true);
+      expect(hasFieldError(json.details, 'port')).toBe(true);
     });
 
     it('should accept valid update', async () => {
