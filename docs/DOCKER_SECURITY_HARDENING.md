@@ -3,19 +3,104 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Docker Socket Security Risks](#docker-socket-security-risks)
-3. [Mitigation Strategies](#mitigation-strategies)
-4. [Docker Socket Proxy Implementation](#docker-socket-proxy-implementation)
-5. [SELinux/AppArmor Policies](#selinuxapparmor-policies)
-6. [Rootless Docker](#rootless-docker)
-7. [Kubernetes Migration Path](#kubernetes-migration-path)
-8. [Security Checklist](#security-checklist)
+2. [Quick Start](#quick-start)
+3. [Docker Socket Security Risks](#docker-socket-security-risks)
+4. [Mitigation Strategies](#mitigation-strategies)
+5. [Docker Socket Proxy Implementation](#docker-socket-proxy-implementation)
+6. [SELinux/AppArmor Policies](#selinuxapparmor-policies)
+7. [Rootless Docker](#rootless-docker)
+8. [Kubernetes Migration Path](#kubernetes-migration-path)
+9. [Security Checklist](#security-checklist)
 
 ---
 
 ## Overview
 
 Helvetia Cloud uses Docker to build and deploy containerized applications. This guide addresses the security implications of Docker socket access and provides hardening recommendations for production deployments.
+
+To improve security, Helvetia Cloud uses a **Docker Socket Proxy** instead of direct Docker socket access. This prevents container escape attacks and limits what services can do with Docker.
+
+---
+
+## Quick Start
+
+### For New Users
+
+**Good news:** Nothing extra to do! Just follow the regular setup:
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/ramiz4/helvetia-cloud.git
+cd helvetia-cloud
+cp .env.example .env
+
+# 2. Start infrastructure (includes proxy now)
+docker-compose up -d postgres redis docker-socket-proxy traefik
+
+# 3. Install and run
+pnpm install
+pnpm db:push
+pnpm dev
+```
+
+The proxy starts automatically and everything works out of the box.
+
+### For Existing Users
+
+If you're already running Helvetia Cloud, here's how to update:
+
+1. **Pull latest changes:**
+
+   ```bash
+   git pull origin main
+   ```
+
+2. **Start the proxy:**
+
+   ```bash
+   docker-compose up -d docker-socket-proxy
+   ```
+
+3. **Restart worker and Traefik:**
+
+   ```bash
+   docker-compose up -d worker traefik
+   ```
+
+4. **Verify it works:**
+   ```bash
+   docker-compose logs worker | grep "Successfully"
+   ```
+
+That's it! Your deployment now uses the secure proxy.
+
+### What's Protected Now?
+
+**Before (⚠️ Risky):**
+
+```
+Worker → Direct Socket Access → Full Docker Control → Root Access to Host
+```
+
+**After (✅ Secure):**
+
+```
+Worker → Proxy (with ACLs) → Limited Docker Control → Isolated Operations
+```
+
+**Blocked Operations:**
+
+- ❌ Creating privileged containers
+- ❌ Docker Swarm operations
+- ❌ Unrestricted volume mounts
+- ❌ System-wide operations
+
+**Still Works:**
+
+- ✅ Building images
+- ✅ Creating/managing containers
+- ✅ Network management
+- ✅ Volume management for deployments
 
 ## Docker Socket Security Risks
 
