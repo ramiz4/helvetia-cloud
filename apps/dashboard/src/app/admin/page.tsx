@@ -1,16 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/lib/LanguageContext';
-import {
-  Activity,
-  BarChart3,
-  Flag,
-  Lock,
-  Settings,
-  Shield,
-  Users,
-  Zap,
-} from 'lucide-react';
+import { Activity, BarChart3, Flag, Lock, Settings, Shield, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -210,9 +201,7 @@ export default function AdminDashboard() {
                   <h3 className="text-2xl mb-3 font-bold text-white tracking-tight">
                     {card.title}
                   </h3>
-                  <p className="text-slate-400 leading-relaxed text-sm mb-4">
-                    {card.description}
-                  </p>
+                  <p className="text-slate-400 leading-relaxed text-sm mb-4">{card.description}</p>
                   <div className="flex items-center justify-between">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${colors.bg} ${colors.text} border ${colors.border}`}
@@ -239,9 +228,7 @@ export default function AdminDashboard() {
                   <h3 className="text-2xl mb-3 font-bold text-white tracking-tight">
                     {card.title}
                   </h3>
-                  <p className="text-slate-400 leading-relaxed text-sm mb-4">
-                    {card.description}
-                  </p>
+                  <p className="text-slate-400 leading-relaxed text-sm mb-4">{card.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-800 text-slate-500 border border-slate-700">
                       {card.stats}

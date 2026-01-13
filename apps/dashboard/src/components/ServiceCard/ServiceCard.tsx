@@ -95,27 +95,16 @@ export function ServiceCard({
 
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all duration-700 ${
-              service.status === 'RUNNING'
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-                : 'bg-slate-500/10 border-white/10 text-slate-400'
-            }`}
-          >
-            {service.status === 'RUNNING' ? (
-              <RotateCw size={24} className="animate-spin-slow" />
-            ) : (
-              <Square size={24} />
-            )}
-          </div>
           <div>
+            <h3 className="text-3xl font-black text-white tracking-tighter mb-4 leading-none">
+              {service.name}
+            </h3>
             <div className="flex items-center gap-3">
               <span
-                className={`text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${
-                  service.status === 'RUNNING'
-                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                    : 'bg-white/5 border-white/10 text-slate-500'
-                }`}
+                className={`text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${service.status === 'RUNNING'
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                  : 'bg-white/5 border-white/10 text-slate-500'
+                  }`}
               >
                 {service.status || t.status.notRunning}
               </span>
@@ -127,28 +116,10 @@ export function ServiceCard({
                     : t.newService.composeStack}
               </span>
             </div>
-            <h3 className="text-3xl font-black text-white tracking-tighter mt-2 leading-none">
-              {service.name}
-            </h3>
           </div>
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center gap-3 text-sm text-slate-500">
-            <div className="w-2 h-2 rounded-full bg-slate-600 shadow-[0_0_8px_rgba(71,85,105,0.5)]" />
-            <span className="truncate font-medium">{service.repoUrl}</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-indigo-400/80 hover:text-indigo-400 transition-colors">
-            <Globe size={12} />
-            <a
-              href={serviceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="truncate font-medium hover:underline"
-            >
-              {serviceUrl.replace('http://', '')}
-            </a>
-          </div>
           {service.containerName && (
             <div className="flex items-center gap-2 mt-1">
               <button
@@ -173,6 +144,17 @@ export function ServiceCard({
               </button>
             </div>
           )}
+          <div className="flex items-center gap-3 text-sm text-indigo-400/80 hover:text-indigo-400 transition-colors">
+            <Globe size={12} />
+            <a
+              href={serviceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="truncate font-medium hover:underline"
+            >
+              {serviceUrl.replace('http://', '').replace('https://', '').toLocaleLowerCase()}
+            </a>
+          </div>
         </div>
       </div>
 
@@ -182,7 +164,7 @@ export function ServiceCard({
             <Cpu size={14} className="opacity-70" />
             <span className="text-[11px] font-bold uppercase tracking-widest">{t.labels.cpu}</span>
           </div>
-          <div className="text-2xl font-bold text-white tabular-nums tracking-tight">
+          <div className="text-xl font-bold text-white tabular-nums tracking-tight">
             {service.metrics?.cpu || 0}
             <span className="text-sm font-medium text-slate-500 ml-1">%</span>
           </div>
@@ -192,7 +174,7 @@ export function ServiceCard({
             <Zap size={14} className="opacity-70" />
             <span className="text-[11px] font-bold uppercase tracking-widest">{t.labels.ram}</span>
           </div>
-          <div className="text-2xl font-bold text-white tabular-nums tracking-tight">
+          <div className="text-xl font-bold text-white tabular-nums tracking-tight">
             {service.metrics?.memory || 0}
             <span className="text-sm font-medium text-slate-500 ml-1">MB</span>
           </div>

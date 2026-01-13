@@ -79,7 +79,7 @@ export default function Navigation() {
       console.error('Logout failed', e);
       alert(
         t.nav.logoutNetworkError ||
-        'Network error during logout, but you will be logged out locally.',
+          'Network error during logout, but you will be logged out locally.',
       );
     } finally {
       localStorage.removeItem('user');
@@ -153,10 +153,11 @@ export default function Navigation() {
               <div className="flex gap-2">
                 <Link
                   href="/"
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${pathname === '/'
-                    ? 'bg-indigo-500/10 text-indigo-400'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                    pathname === '/'
+                      ? 'bg-indigo-500/10 text-indigo-400'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
                 >
                   <LayoutDashboard size={18} />
                   <span>{t.nav.dashboard}</span>
@@ -164,10 +165,11 @@ export default function Navigation() {
                 {showDeployments && (
                   <Link
                     href="/deployments"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${pathname === '/deployments'
-                      ? 'bg-indigo-500/10 text-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                      }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                      pathname === '/deployments'
+                        ? 'bg-indigo-500/10 text-indigo-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
                   >
                     <BookOpen size={18} />
                     <span>{t.nav.deployments}</span>
@@ -176,10 +178,11 @@ export default function Navigation() {
                 {user?.role === 'ADMIN' && (
                   <Link
                     href="/admin"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${pathname.startsWith('/admin')
-                      ? 'bg-indigo-500/10 text-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                      }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                      pathname.startsWith('/admin')
+                        ? 'bg-indigo-500/10 text-indigo-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
                   >
                     <Shield size={18} />
                     <span>Admin</span>
@@ -245,10 +248,11 @@ export default function Navigation() {
                 <div className="flex flex-col gap-2">
                   <Link
                     href="/"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${pathname === '/'
-                      ? 'bg-indigo-500/10 text-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                      }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                      pathname === '/'
+                        ? 'bg-indigo-500/10 text-indigo-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
                   >
                     <LayoutDashboard size={20} />
                     <span>{t.nav.dashboard}</span>
@@ -256,10 +260,11 @@ export default function Navigation() {
                   {showDeployments && (
                     <Link
                       href="/deployments"
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${pathname === '/deployments'
-                        ? 'bg-indigo-500/10 text-indigo-400'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                        }`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                        pathname === '/deployments'
+                          ? 'bg-indigo-500/10 text-indigo-400'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
                     >
                       <BookOpen size={20} />
                       <span>{t.nav.deployments}</span>
@@ -268,10 +273,11 @@ export default function Navigation() {
                   {user?.role === 'ADMIN' && (
                     <Link
                       href="/admin"
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${pathname.startsWith('/admin')
-                        ? 'bg-indigo-500/10 text-indigo-400'
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                        }`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                        pathname.startsWith('/admin')
+                          ? 'bg-indigo-500/10 text-indigo-400'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      }`}
                     >
                       <Shield size={20} />
                       <span>Admin</span>
@@ -279,10 +285,11 @@ export default function Navigation() {
                   )}
                   <Link
                     href="/settings"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${pathname === '/settings'
-                      ? 'bg-indigo-500/10 text-indigo-400'
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                      }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                      pathname === '/settings'
+                        ? 'bg-indigo-500/10 text-indigo-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
                   >
                     <Settings size={20} />
                     <span>{t.nav.settings}</span>
