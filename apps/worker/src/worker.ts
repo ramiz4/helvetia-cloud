@@ -24,6 +24,29 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 // Initialize strategy factory
 const strategyFactory = new DeploymentStrategyFactory();
 
+/**
+ * List of service types that are inherently stateful.
+ * These services require the 'Recreate' deployment strategy (stop old -> start new)
+ * to prevent data corruption or file locking issues, as opposed to 'Rolling Update'.
+ *
+ * Users can also force this behavior by setting 'HELVETIA_STATEFUL=true' in environment variables.
+ */
+const STATEFUL_SERVICE_TYPES = [
+  'POSTGRES',
+  'REDIS',
+  'MYSQL',
+  'MONGODB',
+  'MARIADB',
+  'CASSANDRA',
+  'ELASTICSEARCH',
+  'COUCHDB',
+  'RABBITMQ',
+  'NEO4J',
+  'ZOOKEEPER',
+  'CLICKHOUSE',
+  'INFLUXDB',
+];
+
 export const worker = new Worker(
   'deployments',
   async (job: Job) => {
@@ -190,6 +213,43 @@ export const worker = new Worker(
         return;
       }
 
+      // Check if service is stateful (Database) or has writable volumes
+      // If a service has writable volumes, we should use Recreate strategy to avoid
+      // two containers trying to write to the same files simultaneously (file locking issues).
+      const hasWriteVolumes =
+        volumes?.some((v: string) => !v.toLowerCase().endsWith(':ro')) ?? false;
+
+      const isKnownStatefulType = STATEFUL_SERVICE_TYPES.includes(type?.toUpperCase());
+
+      // Allow explicit override via environment variables (HELVETIA_STATEFUL=true)
+      const isExplicitlyStateful =
+        envVars?.['STATEFUL'] === 'true' || envVars?.['HELVETIA_STATEFUL'] === 'true';
+
+      const isStateful = isKnownStatefulType || hasWriteVolumes || isExplicitlyStateful;
+
+      if (isStateful) {
+        context.onLog?.(
+          `Stateful service detected. Stopping old containers before starting new one (Recreate Strategy)...\n`,
+        );
+        // For stateful services, we must remove the old container first to avoid matching aliases
+        // (Round-Robin DNS issue) and to ensure volume locks are released.
+        // We pass a dummy postfix so it doesn't match any existing container,
+        // effectively ensuring ALL old containers for this service are removed.
+        const RECREATE_STRATEGY_POSTFIX = '___recreate_strategy___';
+
+        await cleanupOldContainers({
+          docker,
+          serviceId,
+          serviceName,
+          currentPostfix: RECREATE_STRATEGY_POSTFIX,
+          stopOnly: true, // Only stop them so we can rollback if new container fails
+        });
+
+        context.onLog?.(
+          `✅ Old containers stopped (Recreate Strategy: ready to start new container).\n\n`,
+        );
+      }
+
       // Start new container
       const containerResult = await startContainer({
         docker,
@@ -210,17 +270,22 @@ export const worker = new Worker(
       containerPostfix = containerResult.postfix;
 
       context.onLog?.(`✅ Container ${containerResult.postfix} started successfully.\n\n`);
-      context.onLog?.(`==== Cleaning up old containers ====\n`);
 
       // Cleanup old containers (Zero-Downtime: Do this AFTER starting the new one)
+      // For stateful services, this removes the containers we 'stopped' earlier.
+      // For stateless services, this stops and removes the running old containers.
+      context.onLog?.(`==== Cleaning up old containers ====\n`);
+
       await cleanupOldContainers({
         docker,
         serviceId,
         serviceName,
         currentPostfix: containerPostfix,
+        stopOnly: false,
       });
 
       context.onLog?.(`✅ Cleanup complete.\n\n`);
+
       context.onLog?.(`🚀 Deployment ${deploymentId} successful!\n`);
 
       // Update deployment and service status
@@ -316,6 +381,3 @@ export const worker = new Worker(
   },
   { connection: redisConnection },
 );
-
-// Removed auto-start for testing
-// console.log('Worker started and listening for jobs...');
