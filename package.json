@@ -15,6 +15,7 @@
     "migrate:create": "pnpm --filter database migrate:create",
     "generate": "pnpm --filter database generate",
     "db:backup": "./scripts/db/backup.sh",
+    "db:restore": "./scripts/db/restore.sh",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "pnpm --filter '*' --parallel test",

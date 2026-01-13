@@ -10,6 +10,7 @@ This document provides comprehensive guidance on using Prisma Migrate for databa
 - [Common Commands](#common-commands)
 - [Development Workflow](#development-workflow)
 - [Production Deployment](#production-deployment)
+- [Backup & Restore](#backup--restore)
 - [Rollback Procedures](#rollback-procedures)
 - [Team Collaboration](#team-collaboration)
 - [Troubleshooting](#troubleshooting)
@@ -267,6 +268,38 @@ The GitHub Actions workflow automatically applies migrations:
 
 ---
 
+## Backup & Restore
+
+Helvetia Cloud provides helper scripts for database backup and restoration.
+
+### Creating Backups
+
+To create a timestamped backup of your database:
+
+```bash
+pnpm db:backup
+```
+
+- **Location**: `backups/db/`
+- **Format**: `helvetia_YYYYMMDD_HHMMSS.sql`
+- **Retention**: By default, the last 5 backups are kept.
+
+### Restoring Backups
+
+To restore a database backup:
+
+```bash
+# Restore the latest available backup
+pnpm db:restore
+
+# Restore a specific backup file
+./scripts/db/restore.sh backups/db/helvetia_20260101_120000.sql
+```
+
+> **⚠️ Warning**: Restoration drops and recreates the `public` schema. All existing data in the target database will be overwritten.
+
+---
+
 ## Rollback Procedures
 
 Prisma Migrate does not have a built-in rollback command. Here's how to handle rollbacks:
@@ -308,7 +341,8 @@ If a migration caused critical issues:
 2. **Restore database from backup**:
 
    ```bash
-   psql $DATABASE_URL < backup.sql
+   # Restore the latest backup
+   pnpm db:restore
    ```
 
 3. **Reset migration state** (if needed):
