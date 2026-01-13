@@ -190,8 +190,12 @@ export const worker = new Worker(
         return;
       }
 
-      // Check if service is stateful (Database)
-      const isStateful = ['POSTGRES', 'REDIS', 'MYSQL'].includes(type);
+      // Check if service is stateful (Database) or has writable volumes
+      // If a service has writable volumes, we should use Recreate strategy to avoid
+      // two containers trying to write to the same files simultaneously (file locking issues).
+      const hasWriteVolumes =
+        volumes?.some((v: string) => !v.toLowerCase().endsWith(':ro')) ?? false;
+      const isStateful = ['POSTGRES', 'REDIS', 'MYSQL'].includes(type) || hasWriteVolumes;
 
       if (isStateful) {
         context.onLog?.(
