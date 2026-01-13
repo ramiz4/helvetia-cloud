@@ -22,6 +22,7 @@ export class ProjectManagementService implements IProjectManagementService {
     return this.projectRepository.findByUserId(userId);
   }
 
+  // TODO: The getOrganizationProjects method lacks test coverage. Tests should verify that organization members can access projects, non-members are rejected with ForbiddenError, and projects are correctly retrieved by organizationId.
   async getOrganizationProjects(organizationId: string, userId: string): Promise<Project[]> {
     const member = await this.organizationRepository.getMember(organizationId, userId);
     if (!member) {
