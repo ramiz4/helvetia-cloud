@@ -203,13 +203,15 @@ export const worker = new Worker(
         );
         // For stateful services, we must remove the old container first to avoid matching aliases
         // (Round-Robin DNS issue) and to ensure volume locks are released.
+        // We pass a dummy postfix so it doesn't match any existing container,
+        // effectively ensuring ALL old containers for this service are removed.
+        const RECREATE_STRATEGY_POSTFIX = '___recreate_strategy___';
+
         await cleanupOldContainers({
           docker,
           serviceId,
           serviceName,
-          // Pass a dummy postfix so it doesn't match any existing container,
-          // effectively ensuring ALL old containers for this service are removed.
-          currentPostfix: '___recreate_strategy___',
+          currentPostfix: RECREATE_STRATEGY_POSTFIX,
         });
       }
 
