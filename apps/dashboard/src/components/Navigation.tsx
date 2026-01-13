@@ -24,7 +24,9 @@ export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
-  const { enabled: showDeployments } = useFeatureFlag('show-deployments');
+  const { enabled: showDeployments } = useFeatureFlag('show-deployments', user?.id, {
+    enabled: isLoggedIn,
+  });
 
   // Check login status on mount and when interactions occur
   useEffect(() => {

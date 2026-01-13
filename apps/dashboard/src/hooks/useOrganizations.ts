@@ -66,10 +66,11 @@ async function removeMember(orgId: string, userId: string): Promise<void> {
   if (!response.ok) throw new Error(await getErrorMessage(response));
 }
 
-export function useOrganizations() {
+export function useOrganizations(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: organizationKeys.lists(),
     queryFn: fetchOrganizations,
+    ...options,
   });
 }
 

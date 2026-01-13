@@ -96,6 +96,9 @@ describe('tokenRefresh', () => {
       const mockSuccessResponse = { status: 200, ok: true };
       const mockRefreshResponse = { ok: true };
 
+      // Mock user in localStorage so refresh is attempted
+      (localStorage.getItem as any).mockReturnValue(JSON.stringify({ name: 'test' }));
+
       (fetch as any).mockImplementation(async (url: string) => {
         if (url.includes('/auth/refresh')) return mockRefreshResponse;
         // First call to the endpoint returns 401, second (retry) returns 200
@@ -115,6 +118,9 @@ describe('tokenRefresh', () => {
     it('should throw Error if refresh fails after 401', async () => {
       const mock401Response = { status: 401 };
       const mockRefreshResponse = { ok: false };
+
+      // Mock user in localStorage so refresh is attempted
+      (localStorage.getItem as any).mockReturnValue(JSON.stringify({ name: 'test' }));
 
       (fetch as any).mockImplementation(async (url: string) => {
         if (url.includes('/auth/refresh')) return mockRefreshResponse;

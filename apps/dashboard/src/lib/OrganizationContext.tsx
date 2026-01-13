@@ -14,7 +14,18 @@ export interface OrganizationContextType {
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: React.ReactNode }) {
-  const { data: organizations, isLoading } = useOrganizations();
+  const [user, setUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUser(localStorage.getItem('user'));
+
+    // Listen for storage events to update auth state
+    const handleStorage = () => setUser(localStorage.getItem('user'));
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const { data: organizations, isLoading } = useOrganizations({ enabled: !!user });
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
 
   useEffect(() => {
