@@ -65,6 +65,8 @@ describe('Environment Validation - API', () => {
       process.env.GITHUB_CLIENT_SECRET = 'test-client-secret';
       process.env.JWT_SECRET = 'test-jwt-secret';
       process.env.ENCRYPTION_KEY = '12345678901234567890123456789012';
+      delete process.env.PLATFORM_DOMAIN;
+      delete process.env.APP_BASE_URL;
 
       const env = validateEnv();
 
