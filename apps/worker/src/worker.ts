@@ -184,13 +184,6 @@ export const worker = new Worker(
       // Execute deployment using the appropriate strategy
       const result = await strategy.deploy(context);
       imageTag = result.imageTag;
-      // buildLogs is already accumulated and scrubbed via the onLog callback during deploy
-
-      // Build logs are already accumulated and sanitized via the onLog callback
-      // during the strategy.deploy execution.
-
-      // Publish logs to Redis for real-time streaming (already done in onLog, but can be done as a final push)
-      await publishLogs(redisConnection, deploymentId, buildLogs);
 
       // Update logs in DB (logs are already sanitized/scrubbed via onLog)
       await prisma.deployment.update({

@@ -111,7 +111,8 @@
     "username": "Benutzername",
     "password": "Passwort",
     "signIn": "Anmelden",
-    "invalidCredentials": "Ungültiger Benutzername oder Passwort"
+    "invalidCredentials": "Ungültiger Benutzername oder Passwort",
+    "orgAccessHelp": "Deployment von einer GitHub Organisation? Stellen Sie sicher, dass Sie der Helvetia OAuth App Zugriff auf Ihre Organisation gewährt haben."
   },
   "dashboard": {
     "title": "Dashboard",

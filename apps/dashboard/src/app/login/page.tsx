@@ -80,6 +80,15 @@ function LoginContent() {
               <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none" />
             </button>
 
+            <div className="mt-6 p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+              <div className="p-1 bg-indigo-500/20 rounded-lg text-indigo-400 mt-0.5">
+                <Shield size={14} />
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed italic">
+                {t.login.orgAccessHelp}
+              </p>
+            </div>
+
             <div className="mt-8 text-center pt-4">
               <p className="text-slate-500 text-xs font-semibold">
                 {t.login.termsPrivacy.split('{terms}')[0]}

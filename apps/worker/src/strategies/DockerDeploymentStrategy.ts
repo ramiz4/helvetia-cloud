@@ -60,8 +60,23 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
           docker.modem.followProgress(
             stream,
             (err, _res) => {
-              if (err) reject(err);
-              else resolve();
+              if (err) {
+                if (err.toString().includes('403')) {
+                  context.onLog?.(`\n❌ GHCR access denied (403). Common fixes:\n`);
+                  context.onLog?.(
+                    `   1. Ensure you have granted "Organization Access" to your OAuth App in GitHub settings.\n`,
+                  );
+                  context.onLog?.(
+                    `   2. Try logging out and back in to refresh token scopes (requires 'read:packages').\n`,
+                  );
+                  context.onLog?.(
+                    `   3. Verify that your GitHub user has access to the image: ${fullImage}\n`,
+                  );
+                }
+                reject(err);
+              } else {
+                resolve();
+              }
             },
             (event) => {
               const status = event.status || '';
