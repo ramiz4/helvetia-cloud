@@ -62,7 +62,7 @@ excludeAgent: ''
   const createServiceSchema = z.object({
     name: z.string().min(1).max(100),
     type: z.enum(['DOCKER', 'STATIC']),
-    repository: z.string().url(),
+    repository: z.url(),
   });
 
   fastify.post('/services', async (request, reply) => {

@@ -6,9 +6,9 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   // Next.js Public Environment Variables
-  NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:3001'),
+  NEXT_PUBLIC_API_URL: z.url().default('http://localhost:3001'),
   NEXT_PUBLIC_WS_URL: z.string().default('ws://localhost:3001'),
-  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+  NEXT_PUBLIC_APP_URL: z.url().default('http://localhost:3000'),
   NEXT_PUBLIC_GITHUB_CLIENT_ID: z.string().optional(),
   NEXT_PUBLIC_PLATFORM_DOMAIN: z.string().default('helvetia.localhost'),
 
