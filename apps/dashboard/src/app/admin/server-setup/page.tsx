@@ -18,6 +18,8 @@ export default function ServerSetupPage() {
     encryptionSalt: 'provide_64_char_hex_salt',
     repoUrl: 'https://github.com/ramiz4/helvetia-cloud.git',
     branch: 'feature/deployment-setup',
+    helvetiaAdmin: 'admin',
+    helvetiaAdminPassword: 'admin',
   });
 
   const [copied, setCopied] = useState(false);
@@ -87,6 +89,8 @@ JWT_SECRET=${config.jwtSecret}
 COOKIE_SECRET=${config.cookieSecret}
 ENCRYPTION_KEY=${config.encryptionKey}
 ENCRYPTION_SALT=${config.encryptionSalt}
+HELVETIA_ADMIN=${config.helvetiaAdmin}
+HELVETIA_ADMIN_PASSWORD=${config.helvetiaAdminPassword}
 EOL
 
 # 6. Create Directories for Volumes
@@ -217,6 +221,31 @@ echo "------------------------------------------------"
                       type="password"
                       value={config.grafanaPassword}
                       onChange={(e) => setConfig({ ...config, grafanaPassword: e.target.value })}
+                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Dashboard Admin User
+                    </label>
+                    <input
+                      type="text"
+                      value={config.helvetiaAdmin}
+                      onChange={(e) => setConfig({ ...config, helvetiaAdmin: e.target.value })}
+                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Dashboard Admin Password
+                    </label>
+                    <input
+                      type="password"
+                      value={config.helvetiaAdminPassword}
+                      onChange={(e) => setConfig({ ...config, helvetiaAdminPassword: e.target.value })}
                       className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                     />
                   </div>
