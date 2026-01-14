@@ -105,7 +105,13 @@ echo "🚀 Starting services (building images, this may take a while)..."
 docker compose -f docker-compose.prod.yml up -d --build
 
 # 9. Run Database Migrations
-echo "🐘 Running database migrations..."
+echo "🐘 Waiting for PostgreSQL to be ready..."
+until docker compose -f docker-compose.prod.yml exec postgres pg_isready -U helvetia; do
+  echo "⏳ Database is starting up..."
+  sleep 2
+done
+
+echo "🏗️ Running database migrations..."
 docker compose -f docker-compose.prod.yml exec api pnpm --filter database migrate:deploy
 
 echo "✅ Deployment complete!"
@@ -249,7 +255,9 @@ echo "------------------------------------------------"
                     <input
                       type="password"
                       value={config.helvetiaAdminPassword}
-                      onChange={(e) => setConfig({ ...config, helvetiaAdminPassword: e.target.value })}
+                      onChange={(e) =>
+                        setConfig({ ...config, helvetiaAdminPassword: e.target.value })
+                      }
                       className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                     />
                   </div>

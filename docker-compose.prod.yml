@@ -128,11 +128,12 @@ services:
       PLATFORM_DOMAIN: ${DOMAIN_NAME}
       NODE_ENV: production
     depends_on:
-      - redis
-      - docker-socket-proxy
-      # Worker depends on database migrations which are usually run by API or separate job.
-      # Ideally we rely on health of postgres.
-      - postgres
+      redis:
+        condition: service_started
+      docker-socket-proxy:
+        condition: service_healthy
+      postgres:
+        condition: service_started
     networks:
       - helvetia-net
 
