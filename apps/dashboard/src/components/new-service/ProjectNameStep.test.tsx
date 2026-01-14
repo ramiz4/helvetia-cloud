@@ -1,6 +1,6 @@
 import { ServiceFormData } from '@/components/new-service/types';
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
-import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
+import { LanguageContextType, useLanguage } from 'shared-ui';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
 import { Project } from '@/types/project';
 import { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
@@ -9,9 +9,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectNameStep from './ProjectNameStep';
 
 // Mock language
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: vi.fn(),
-}));
+vi.mock('shared-ui', async () => {
+  const actual = await vi.importActual('shared-ui');
+  return {
+    ...actual,
+    useLanguage: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/OrganizationContext', () => ({
   useOrganizationContext: vi.fn(),

@@ -1,4 +1,4 @@
-import { LanguageProvider } from '@/lib/LanguageContext';
+import { LanguageProvider } from 'shared-ui';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import GitHubRepoPicker from './GitHubRepoPicker';

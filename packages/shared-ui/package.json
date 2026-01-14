@@ -10,7 +10,8 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
-    }
+    },
+    "./locales/*": "./src/locales/*"
   },
   "scripts": {
     "build": "tsc",

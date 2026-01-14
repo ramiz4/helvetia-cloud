@@ -6,4 +6,5 @@ export {
   PLATFORM_DOMAIN,
   WS_BASE_URL,
   env,
+  validateEnv,
 } from './env';

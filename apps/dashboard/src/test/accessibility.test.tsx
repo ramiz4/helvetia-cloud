@@ -4,7 +4,7 @@ import { axe } from 'vitest-axe';
 import CookieBanner from '../components/CookieBanner';
 import Navigation from '../components/Navigation';
 import UserMenu from '../components/UserMenu';
-import { LanguageProvider } from '../lib/LanguageContext';
+import { LanguageProvider } from 'shared-ui';
 
 vi.mock('../lib/OrganizationContext', () => ({
   useOrganizationContext: () => ({

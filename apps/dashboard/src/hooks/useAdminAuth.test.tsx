@@ -1,4 +1,4 @@
-import { Role } from '@/types/organization';
+import { Role } from 'shared-ui';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

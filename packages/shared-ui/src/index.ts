@@ -14,10 +14,16 @@ export {
   PLATFORM_DOMAIN,
   WS_BASE_URL,
   env,
+  validateEnv,
 } from './config/config';
 
 // Authentication & Token Management
-export { checkAndRefreshToken, fetchWithAuth, refreshAccessToken } from './config/tokenRefresh';
+export {
+  _resetRefreshState,
+  checkAndRefreshToken,
+  fetchWithAuth,
+  refreshAccessToken,
+} from './config/tokenRefresh';
 
 // Internationalization
 export { LanguageProvider, useLanguage } from './config/LanguageContext';

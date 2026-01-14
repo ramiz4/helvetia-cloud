@@ -1,18 +1,22 @@
-import { TranslationType, useLanguage } from '@/lib/LanguageContext';
+import { TranslationType, useLanguage } from 'shared-ui';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import StepIndicator from './StepIndicator';
 
 // Import the real translations
-import en from '../../locales/en.json';
+import en from 'shared-ui/locales/en.json';
 
 // Cast the imported JSON to the strict TranslationType
 // This is necessary because 'en' is inferred as string types, but TranslationType expects exact string literals (as const)
 const mockT = en as unknown as TranslationType;
 
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: vi.fn(),
-}));
+vi.mock('shared-ui', async () => {
+  const actual = await vi.importActual('shared-ui');
+  return {
+    ...actual,
+    useLanguage: vi.fn(),
+  };
+});
 
 const mockSetLanguage = vi.fn();
 

@@ -6,7 +6,7 @@ import { DockerConfigFields } from './DockerConfigFields';
 import { GHCRConfigFields } from './GHCRConfigFields';
 import { StaticConfigFields } from './StaticConfigFields';
 
-import en from '../../locales/en.json';
+import en from 'shared-ui/locales/en.json';
 
 const mockTranslations = en.dashboard;
 

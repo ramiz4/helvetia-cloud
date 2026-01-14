@@ -1,5 +1,5 @@
+import { API_BASE_URL, validateEnv } from 'shared-ui';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { API_BASE_URL, validateEnv } from './env';
 
 describe('Environment Validation - Dashboard', () => {
   let originalEnv: NodeJS.ProcessEnv;

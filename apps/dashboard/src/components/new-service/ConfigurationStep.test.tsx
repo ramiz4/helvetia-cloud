@@ -1,5 +1,5 @@
 import { ServiceFormData } from '@/components/new-service/types';
-import { TranslationType, useLanguage } from '@/lib/LanguageContext';
+import { TranslationType, useLanguage } from 'shared-ui';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ConfigurationStep from './ConfigurationStep';
@@ -7,9 +7,13 @@ import ConfigurationStep from './ConfigurationStep';
 // Import the real translations
 
 // Mock dependencies
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: vi.fn(),
-}));
+vi.mock('shared-ui', async () => {
+  const actual = await vi.importActual('shared-ui');
+  return {
+    ...actual,
+    useLanguage: vi.fn(),
+  };
+});
 
 // Mock sub-components to verify props passing and event handling
 vi.mock('../service-forms', () => ({
