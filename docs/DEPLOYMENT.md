@@ -101,6 +101,14 @@ Use the production Compose file to start services:
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+### 5. Run Database Migrations
+
+After starting the services, you must run the database migrations to set up the schema:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm api pnpm --filter database migrate:deploy
+```
+
 ---
 
 ## 🏗️ Production Architecture
@@ -131,4 +139,5 @@ To update your production instance to the latest version:
 cd /opt/helvetia
 git pull
 docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml run --rm api pnpm --filter database migrate:deploy
 ```
