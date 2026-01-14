@@ -1,9 +1,9 @@
 'use client';
 
-import { useLanguage } from 'shared-ui';
 import { ExternalLink, Mail, ShieldCheck, Twitter } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useLanguage } from 'shared-ui';
 import { GithubIcon } from './icons/GithubIcon';
 
 export default function Footer() {

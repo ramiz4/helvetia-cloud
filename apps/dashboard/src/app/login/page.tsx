@@ -1,11 +1,10 @@
 'use client';
 
-import { GITHUB_CLIENT_ID } from 'shared-ui';
-import { useLanguage } from 'shared-ui';
 import { Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
 
 function LoginContent() {

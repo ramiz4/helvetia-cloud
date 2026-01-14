@@ -1,9 +1,5 @@
 'use client';
 
-import { ConfirmationModal } from 'shared-ui';
-import { API_BASE_URL, GITHUB_CLIENT_ID } from 'shared-ui';
-import { useLanguage } from 'shared-ui';
-import { fetchWithAuth } from 'shared-ui';
 import {
   AlertCircle,
   ArrowUpRight,
@@ -17,6 +13,13 @@ import {
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import {
+  API_BASE_URL,
+  ConfirmationModal,
+  fetchWithAuth,
+  GITHUB_CLIENT_ID,
+  useLanguage,
+} from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
 
 interface UserInfo {

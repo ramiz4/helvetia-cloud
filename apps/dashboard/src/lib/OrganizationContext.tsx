@@ -1,8 +1,8 @@
 'use client';
 
 import { useOrganizations } from '@/hooks/useOrganizations';
-import type { Organization } from 'shared-ui';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { Organization } from 'shared-ui';
 
 export interface OrganizationContextType {
   currentOrganization: Organization | null;

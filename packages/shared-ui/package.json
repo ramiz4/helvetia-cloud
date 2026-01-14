@@ -28,6 +28,7 @@
     "@types/react": "^19",
     "@vitest/coverage-v8": "^4.0.16",
     "lucide-react": "^0.562.0",
+    "react": "^19.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   },

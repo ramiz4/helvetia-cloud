@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
+import { LanguageProvider } from 'shared-ui';
 import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
-import { LanguageProvider } from 'shared-ui';
 import { OrganizationProvider } from '../lib/OrganizationContext';
 import QueryProvider from '../lib/QueryProvider';
 import './tailwind.css';

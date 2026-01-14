@@ -1,10 +1,10 @@
 'use client';
 
 import FocusTrap from '@/components/FocusTrap';
-import { Translations } from 'shared-ui';
 import type { Service, ServiceType } from '@/types/service';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Translations } from 'shared-ui';
 import {
   ComposeConfigFields,
   DockerConfigFields,
