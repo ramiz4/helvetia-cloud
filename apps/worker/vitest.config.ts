@@ -11,6 +11,11 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     exclude: ['**/node_modules/**', '**/dist/**'],
+    env: {
+      DATABASE_URL:
+        process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/helvetia_test',
+      REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6380',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
