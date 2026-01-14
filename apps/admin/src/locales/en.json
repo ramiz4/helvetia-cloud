@@ -1,0 +1,293 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "success": "Success",
+    "allSystemsOperational": "All systems operational",
+    "version": "Version",
+    "freePlan": "Free Plan",
+    "earlyAccess": "Early Access",
+    "personalAccount": "Personal Account",
+    "apiError": "Error connecting to API"
+  },
+  "hero": {
+    "badge": "v1.0 Public Beta",
+    "titleLine1": "Switzerland",
+    "titleLine2": "hosting platform",
+    "subtitle": "All services and databases are hosted in Switzerland.",
+    "description": "Helvetia Cloud is the modern Platform-as-a-Service for developers who want the power of Kubernetes with the simplicity of Heroku.",
+    "ctaPrimary": "Get Started",
+    "ctaSecondary": "View Source"
+  },
+  "features": {
+    "zeroDowntime": {
+      "title": "Zero Downtime",
+      "desc": "Deploy updates without dropping a single active connection."
+    },
+    "gitIntegrated": {
+      "title": "Git Integrated",
+      "desc": "Push to your branch and watch it deploy automatically."
+    },
+    "secure": {
+      "title": "Secure by Design",
+      "desc": "Isolated build environments and strict resource limits."
+    },
+    "global": {
+      "title": "Swiss Quality",
+      "desc": "Hosted 100% in Switzerland for maximum privacy and reliability."
+    },
+    "resource": {
+      "title": "Resource Control",
+      "desc": "Fine-grained control over CPU and memory allocation."
+    },
+    "container": {
+      "title": "Container Native",
+      "desc": "Built on top of Docker for maximum compatibility."
+    }
+  },
+  "ctaSection": {
+    "title": "Ready to deploy?",
+    "subtitle": "Join thousands of developers building on Helvetia Cloud.",
+    "button": "Start Deploys Now"
+  },
+  "footer": {
+    "rights": "© {year} Helvetia Cloud. Open source under MIT License.",
+    "brandDesc": "The modern Platform-as-a-Service for developers who want the power of Kubernetes with the simplicity of Heroku. Hosted entirely in Switzerland.",
+    "product": "Product",
+    "pricing": "Pricing",
+    "resources": "Resources",
+    "documentation": "Documentation",
+    "blog": "Blog",
+    "changelog": "Changelog",
+    "status": "Status",
+    "legalSwiss": "Legal & Swiss Made",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "gdprCompliant": "DSGVO / GDPR Compliant",
+    "hostedInSwiss": "Hosted in Switzerland"
+  },
+  "cookie": {
+    "title": "DSGVO / GDPR Compliance",
+    "text": "We use cookies to ensure you get the best experience on our website. This includes compliance with DSGVO/GDPR.",
+    "accept": "Accept"
+  },
+  "nav": {
+    "brand": "HELVETIA",
+    "login": "Login",
+    "dashboard": "Dashboard",
+    "deployments": "Deployments",
+    "settings": "Settings",
+    "logout": "Logout",
+    "homeAria": "Helvetia Cloud Home",
+    "logoAlt": "Helvetia Cloud Logo",
+    "logoutFailed": "Logout failed on server, but you will be logged out locally.",
+    "logoutNetworkError": "Network error during logout, but you will be logged out locally.",
+    "selectLanguage": "Select Language",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "mobileMenu": "Mobile navigation"
+  },
+  "login": {
+    "backToHome": "Back to home",
+    "swissCloudSecurity": "Swiss Cloud Security",
+    "securityDesc": "The high-performance platform for modern developers.",
+    "authError": "Auth Error",
+    "codeExpired": "The authorization code has expired.",
+    "continueWithGithub": "Continue with GitHub",
+    "termsPrivacy": "By continuing, you agree to our {terms} & {privacy}",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "builtBy": "Built by Masoft GmbH 🇨🇭",
+    "authenticating": "Authenticating with GitHub...",
+    "adminLogin": "Helvetia Cloud Admin Login",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign In",
+    "invalidCredentials": "Invalid username or password",
+    "orgAccessHelp": "Deploying from a GitHub Organization? Make sure to grant 'Organization Access' to the Helvetia OAuth App in your GitHub settings."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Manage your deployments and services",
+    "loading": "Loading your workspace...",
+    "stats": {
+      "total": "Total Services",
+      "active": "Active",
+      "failed": "Failed"
+    },
+    "search": {
+      "placeholder": "Search services...",
+      "noResults": "No services found",
+      "tryAgain": "Try adjusting your search query.",
+      "getStarted": "Get started by deploying your first service."
+    },
+    "actions": {
+      "redeploy": "Redeploy",
+      "restart": "Restart",
+      "logs": "Logs",
+      "visit": "Visit",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteFailed": "Failed to delete service",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "restartSuccess": "Container restarted successfully!",
+      "restartFailed": "Failed to restart container",
+      "updateFailed": "Failed to update service",
+      "deleteConfirm": "Are you sure you want to delete this service?\n\nThis will stop the app and remove all data.",
+      "fetchLogsFailed": "Failed to fetch logs",
+      "deployTriggerFailed": "Failed to trigger deployment",
+      "stopSuccess": "Service stopped successfully",
+      "stopFailed": "Failed to stop service",
+      "createEnvSuccess": "Environment created successfully",
+      "createEnvFailed": "Failed to create environment"
+    },
+    "status": {
+      "notRunning": "Not Running"
+    },
+    "createNewService": "Create New Service",
+    "labels": {
+      "cpu": "CPU",
+      "ram": "RAM",
+      "serviceName": "Service Name",
+      "repoUrl": "Repository / Path",
+      "serviceType": "Service Type",
+      "port": "Port",
+      "branch": "Branch",
+      "buildCommand": "Build Command",
+      "startCommand": "Start Command",
+      "composeFile": "Compose File",
+      "mainService": "Main Service",
+      "outputDir": "Output Directory",
+      "envVars": "Environment Variables",
+      "containerName": "Container Name"
+    },
+    "modals": {
+      "editTitle": "Edit Service",
+      "logsTitle": "Logs",
+      "noLogs": "No logs available.",
+      "streaming": "Streaming logs...",
+      "ended": "Logs ended.",
+      "refreshFailed": "Failed to refresh service details",
+      "refreshError": "Error refreshing service details"
+    },
+    "project": {
+      "loading": "Loading Project...",
+      "notFound": "Project not found",
+      "backToProjects": "Back to Projects",
+      "linkBackToProjects": "Back to Projects",
+      "id": "Project ID:",
+      "globalStatus": "Global Status:",
+      "statusActive": "Active",
+      "settings": "Project Settings",
+      "newEnvironment": "New Environment",
+      "environment": "Environment",
+      "addServiceTo": "Add Service to {name}",
+      "noServices": "No services in this environment",
+      "deployFirstService": "Deploy your first service to start seeing it here."
+    },
+    "newService": {
+      "title": "Deploy a new Project",
+      "subtitle": "Import a Git repository to get started with your deployment.",
+      "importGithub": "GitHub Import",
+      "importManual": "Manual Git Import",
+      "importLocal": "Local Folder",
+      "importCompose": "Docker Compose",
+      "importDatabase": "Database",
+      "step1": "Project",
+      "step2": "Import",
+      "step3": "Configure",
+      "repoUrl": "Git Repository URL",
+      "localPath": "Local Directory Path",
+      "localPathHint": "Enter the absolute path to your local git repository.",
+      "branch": "Branch",
+      "projectName": "Project Name",
+      "projectNameHint": "Used to identify your project in the dashboard and URL.",
+      "projectNameValidation": "Lowercase alphanumeric and hyphens only",
+      "serviceType": "Service Type",
+      "serviceName": "Service Name",
+      "serviceNameHint": "Used to identify your service in the dashboard and URL.",
+      "databaseEngine": "Database Engine",
+      "dockerService": "Docker Service",
+      "dockerServiceDesc": "For Node.js, Python, or custom Docker projects.",
+      "staticSite": "Static Site",
+      "staticSiteDesc": "For Angular, React, Vue, or static HTML (via Nginx).",
+      "composeStack": "Docker Compose Stack",
+      "composeStackDesc": "For multi-container applications (e.g. App + DB + Redis).",
+      "buildCommand": "Build Command",
+      "startCommand": "Start Command",
+      "outputDirectory": "Output Directory",
+      "port": "Port",
+      "portStaticHint": "Static sites are served on port 80 via Nginx.",
+      "deployButton": "Deploy Project",
+      "deployingButton": "Deploying Project...",
+      "deploySuccess": "Deployment started successfully",
+      "errorGeneric": "Failed to create service: ",
+      "errorConnection": "Error connecting to API. Please check your connection and try again.",
+      "version": "Version",
+      "addVariable": "Add Variable",
+      "noEnvVars": "No environment variables configuration",
+      "dismissError": "Dismiss error",
+      "mainServiceName": "Main Service Name",
+      "mainServiceDesc": "The service name in docker-compose.yml that receives HTTP traffic",
+      "composeFile": "Compose File",
+      "imageTag": "Image Tag"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account and integrations",
+    "githubIntegration": "GitHub Integration",
+    "githubDesc": "Manage your connected GitHub account and repository access.",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "accountLinked": "GitHub Account Linked",
+    "disconnect": "Disconnect",
+    "reconnect": "Reconnect",
+    "orgAccessTitle": "Managing Organization Access",
+    "orgAccessDesc": "If you need to grant or revoke access to specific GitHub Organizations, you can do so directly in your GitHub Personal Settings. This platform only requests the permissions you explicitly grant.",
+    "manageOnGithub": "Manage on GitHub",
+    "githubPermissionsTitle": "GitHub Permissions",
+    "githubNotConnected": "GitHub Not Connected",
+    "githubNotConnectedDesc": "Reconnect to GitHub to manage your repositories.",
+    "dangerZone": "Danger Zone",
+    "irreversible": "Irreversible actions for your account.",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDesc": "Permanently remove all your data, services, and deployments. This cannot be undone.",
+    "disconnectConfirm": "Are you sure you want to disconnect GitHub? You will not be able to deploy from your repositories until you reconnect.",
+    "toast": {
+      "githubDisconnected": "GitHub disconnected successfully",
+      "githubDisconnectFailed": "Failed to disconnect GitHub",
+      "apiError": "Error connecting to API",
+      "loadSettingsFailed": "Failed to load user settings"
+    }
+  },
+  "userMenu": {
+    "billing": "Billing",
+    "pro": "Pro",
+    "security": "Security",
+    "support": "Support"
+  },
+  "githubPicker": {
+    "searchPlaceholder": "Search repositories...",
+    "searchAria": "Search repositories",
+    "selectOrgAria": "Select organization",
+    "loadingOrgs": "Loading organizations...",
+    "allRepos": "All Repositories",
+    "noOrgsFound": "No organizations found",
+    "noReposFound": "No repositories found matching \"{search}\"",
+    "changeRepo": "Change Repository",
+    "branchToDeploy": "Branch to Deploy",
+    "viewOnGithub": "View on GitHub",
+    "sessionExpired": "Session expired. Please log in again.",
+    "fetchReposFailed": "Failed to fetch repositories",
+    "fetchBranchesFailed": "Failed to fetch branches"
+  }
+}
