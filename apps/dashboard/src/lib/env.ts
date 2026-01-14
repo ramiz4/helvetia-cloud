@@ -10,6 +10,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_WS_URL: z.string().default('ws://localhost:3001'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   NEXT_PUBLIC_GITHUB_CLIENT_ID: z.string().optional(),
+  NEXT_PUBLIC_PLATFORM_DOMAIN: z.string().default('helvetia.localhost'),
 
   // Node Environment (available at build time)
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -30,6 +31,7 @@ export function validateEnv(): Env {
       NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       NEXT_PUBLIC_GITHUB_CLIENT_ID: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
+      NEXT_PUBLIC_PLATFORM_DOMAIN: process.env.NEXT_PUBLIC_PLATFORM_DOMAIN,
       NODE_ENV: process.env.NODE_ENV,
     };
     return envSchema.parse(envVars);
@@ -66,3 +68,4 @@ export const API_BASE_URL = `${env.NEXT_PUBLIC_API_URL}/api/v1`;
 export const WS_BASE_URL = env.NEXT_PUBLIC_WS_URL;
 export const APP_BASE_URL = env.NEXT_PUBLIC_APP_URL;
 export const GITHUB_CLIENT_ID = env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+export const PLATFORM_DOMAIN = env.NEXT_PUBLIC_PLATFORM_DOMAIN;
