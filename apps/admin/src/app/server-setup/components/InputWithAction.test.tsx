@@ -46,12 +46,7 @@ describe('InputWithAction', () => {
 
   it('should display placeholder text', () => {
     render(
-      <InputWithAction
-        label="Test"
-        value=""
-        onChange={vi.fn()}
-        placeholder="Enter value here"
-      />,
+      <InputWithAction label="Test" value="" onChange={vi.fn()} placeholder="Enter value here" />,
     );
 
     const input = screen.getByPlaceholderText('Enter value here');
@@ -72,7 +67,9 @@ describe('InputWithAction', () => {
 
   it('should call onGenerate when generate button is clicked', () => {
     const handleGenerate = vi.fn();
-    render(<InputWithAction label="Test" value="" onChange={vi.fn()} onGenerate={handleGenerate} />);
+    render(
+      <InputWithAction label="Test" value="" onChange={vi.fn()} onGenerate={handleGenerate} />,
+    );
 
     const generateButton = screen.getByTitle('Generate secure value');
     fireEvent.click(generateButton);
@@ -82,14 +79,7 @@ describe('InputWithAction', () => {
 
   it('should render labelAction when provided', () => {
     const labelAction = <span>Custom Action</span>;
-    render(
-      <InputWithAction
-        label="Test"
-        value=""
-        onChange={vi.fn()}
-        labelAction={labelAction}
-      />,
-    );
+    render(<InputWithAction label="Test" value="" onChange={vi.fn()} labelAction={labelAction} />);
 
     expect(screen.getByText('Custom Action')).toBeInTheDocument();
   });
