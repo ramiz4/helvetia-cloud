@@ -171,6 +171,10 @@ export const worker = new Worker(
             // eslint-disable-next-line no-control-regex
             .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
           const scrubbed = scrubLogs(sanitized);
+
+          // Accumulate logs locally so they are available in the catch block
+          buildLogs += scrubbed;
+
           publishLogs(redisConnection, deploymentId, scrubbed).catch((err) =>
             console.error('Failed to publish real-time logs:', err),
           );
@@ -180,24 +184,18 @@ export const worker = new Worker(
       // Execute deployment using the appropriate strategy
       const result = await strategy.deploy(context);
       imageTag = result.imageTag;
-      buildLogs = result.buildLogs;
+      // buildLogs is already accumulated and scrubbed via the onLog callback during deploy
 
-      // Sanitize logs for PostgreSQL (remove null bytes and invalid UTF8)
-      const sanitizedLogs = buildLogs
-        .replace(/\0/g, '')
-        // eslint-disable-next-line no-control-regex
-        .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+      // Build logs are already accumulated and sanitized via the onLog callback
+      // during the strategy.deploy execution.
 
-      // Scrub sensitive data from logs
-      const scrubbedLogs = scrubLogs(sanitizedLogs);
+      // Publish logs to Redis for real-time streaming (already done in onLog, but can be done as a final push)
+      await publishLogs(redisConnection, deploymentId, buildLogs);
 
-      // Publish logs to Redis for real-time streaming
-      await publishLogs(redisConnection, deploymentId, scrubbedLogs);
-
-      // Update logs in DB
+      // Update logs in DB (logs are already sanitized/scrubbed via onLog)
       await prisma.deployment.update({
         where: { id: deploymentId },
-        data: { logs: scrubbedLogs },
+        data: { logs: buildLogs },
       });
 
       // For COMPOSE deployments, we don't need to start individual containers
@@ -207,7 +205,7 @@ export const worker = new Worker(
           deploymentId,
           serviceId,
           status: 'SUCCESS',
-          logs: scrubbedLogs,
+          logs: buildLogs,
         });
         console.log(`${logPrefix}Deployment ${deploymentId} successful!`);
         return;

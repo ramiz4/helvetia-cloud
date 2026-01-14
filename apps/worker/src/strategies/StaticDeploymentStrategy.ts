@@ -125,7 +125,7 @@ NGINX_EOF
         fi
 
         echo "===== Starting Docker Build ====="
-        docker build -t ${imageTag} .
+        docker build --load -t ${imageTag} .
       `;
 
       // 5. Execute build
@@ -140,7 +140,11 @@ NGINX_EOF
 
       await new Promise<void>((resolve, reject) => {
         stream.on('data', (chunk: Buffer) => {
-          const log = chunk.toString();
+          const log = chunk
+            .toString()
+            .replace(/\0/g, '')
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
           buildLogs += log;
           context.onLog?.(log);
         });
