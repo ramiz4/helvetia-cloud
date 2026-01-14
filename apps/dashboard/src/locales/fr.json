@@ -111,7 +111,8 @@
     "username": "Nom d'utilisateur",
     "password": "Mot de passe",
     "signIn": "Se connecter",
-    "invalidCredentials": "Identifiants invalides"
+    "invalidCredentials": "Identifiants invalides",
+    "orgAccessHelp": "Déploiement depuis une organisation GitHub ? Assurez-vous d'avoir accordé l'accès à votre organisation à l'application OAuth Helvetia."
   },
   "dashboard": {
     "title": "Tableau de bord",

@@ -111,7 +111,8 @@
     "username": "Nome utente",
     "password": "Password",
     "signIn": "Accedi",
-    "invalidCredentials": "Nome utente o password non validi"
+    "invalidCredentials": "Nome utente o password non validi",
+    "orgAccessHelp": "Distribuzione da un'organizzazione GitHub? Assicuratevi di aver concesso l'accesso alla vostra organizzazione all'app OAuth di Helvetia."
   },
   "dashboard": {
     "title": "Dashboard",

@@ -1,0 +1,231 @@
+services:
+  # Docker Socket Proxy
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker-socket-proxy
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+      POST: 1
+      BUILD: 1
+      COMMIT: 1
+      IMAGES: 1
+      NETWORKS: 1
+      VOLUMES: 1
+      EXEC: 1
+      ALLOW_START: 1
+      ALLOW_STOP: 1
+      ALLOW_RESTARTS: 1
+      SERVICES: 0
+      TASKS: 0
+      SWARM: 0
+      INFO: 1
+      VERSION: 1
+      PING: 1
+    networks:
+      - helvetia-net
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:2375/version']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Reverse Proxy
+  traefik:
+    image: traefik:v2.11
+    command:
+      - '--api.insecure=false'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--providers.docker.endpoint=tcp://docker-socket-proxy:2375'
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.websecure.address=:443'
+      - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
+      - '--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}'
+      - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - helvetia-net
+    depends_on:
+      docker-socket-proxy:
+        condition: service_healthy
+
+  # Database
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-helvetia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-helvetia}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - helvetia-net
+
+  # Queue
+  redis:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - helvetia-net
+
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ENCRYPTION_SALT: ${ENCRYPTION_SALT}
+      PLATFORM_DOMAIN: ${DOMAIN_NAME}
+      APP_BASE_URL: https://${DOMAIN_NAME}
+      NODE_ENV: production
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      API_URL: http://api:3001
+      DASHBOARD_URL: https://${DOMAIN_NAME}
+      HELVETIA_ADMIN: ${HELVETIA_ADMIN}
+      HELVETIA_ADMIN_PASSWORD: ${HELVETIA_ADMIN_PASSWORD}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - helvetia-net
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api.rule=Host(`api.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.api.entrypoints=websecure'
+      - 'traefik.http.routers.api.tls.certresolver=myresolver'
+      - 'traefik.http.services.api.loadbalancer.server.port=3001'
+
+  # Worker Service
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: always
+    environment:
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL}
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ENCRYPTION_SALT: ${ENCRYPTION_SALT}
+      PLATFORM_DOMAIN: ${DOMAIN_NAME}
+      NODE_ENV: production
+    depends_on:
+      redis:
+        condition: service_started
+      docker-socket-proxy:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    networks:
+      - helvetia-net
+
+  # Dashboard Service
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://api.${DOMAIN_NAME}
+        - NEXT_PUBLIC_GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+        - NEXT_PUBLIC_WS_URL=wss://api.${DOMAIN_NAME}
+        - NEXT_PUBLIC_APP_URL=https://${DOMAIN_NAME}
+        - NEXT_PUBLIC_PLATFORM_DOMAIN=${DOMAIN_NAME}
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: https://api.${DOMAIN_NAME}
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      NEXT_PUBLIC_WS_URL: wss://api.${DOMAIN_NAME}
+      NEXT_PUBLIC_APP_URL: https://${DOMAIN_NAME}
+      NEXT_PUBLIC_PLATFORM_DOMAIN: ${DOMAIN_NAME}
+      DATABASE_URL: ${DATABASE_URL}
+      # Any other env vars?
+    depends_on:
+      - api
+    networks:
+      - helvetia-net
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.dashboard.rule=Host(`${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.dashboard.entrypoints=websecure'
+      - 'traefik.http.routers.dashboard.tls.certresolver=myresolver'
+      - 'traefik.http.services.dashboard.loadbalancer.server.port=3000'
+
+  # Monitoring Stack
+  loki:
+    image: grafana/loki:2.9.4
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - helvetia-net
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - helvetia-net
+
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - helvetia-net
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana-dashboard.json:/var/lib/grafana/dashboards/helvetia.json
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - helvetia-net
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.grafana.rule=Host(`monitor.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.grafana.entrypoints=websecure'
+      - 'traefik.http.routers.grafana.tls.certresolver=myresolver'
+      - 'traefik.http.services.grafana.loadbalancer.server.port=3000'
+
+networks:
+  helvetia-net:
+    name: helvetia-net
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

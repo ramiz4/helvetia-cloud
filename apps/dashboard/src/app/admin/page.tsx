@@ -1,7 +1,17 @@
 'use client';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { Activity, BarChart3, Flag, Lock, Settings, Shield, Users, Zap } from 'lucide-react';
+import {
+  Activity,
+  BarChart3,
+  Flag,
+  Lock,
+  Server,
+  Settings,
+  Shield,
+  Users,
+  Zap,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
@@ -18,6 +28,14 @@ export default function AdminDashboard() {
   if (!isAdmin) return null;
 
   const adminCards = [
+    {
+      title: 'Server Setup',
+      description: 'Generate deployment scripts for VPS',
+      icon: Server,
+      href: '/admin/server-setup',
+      color: 'blue',
+      stats: 'Active',
+    },
     {
       title: 'Feature Flags',
       description: 'Manage feature toggles and A/B testing',

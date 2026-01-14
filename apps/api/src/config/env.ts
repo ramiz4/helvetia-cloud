@@ -20,10 +20,10 @@ const envSchema = z.object({
     ),
 
   // Database Configuration
-  DATABASE_URL: z.string().url().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.url().min(1, 'DATABASE_URL is required'),
 
   // Redis Configuration
-  REDIS_URL: z.string().url().min(1, 'REDIS_URL is required'),
+  REDIS_URL: z.url().min(1, 'REDIS_URL is required'),
 
   // GitHub OAuth Configuration
   GITHUB_CLIENT_ID: z.string().min(1, 'GITHUB_CLIENT_ID is required'),

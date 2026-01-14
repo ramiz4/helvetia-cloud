@@ -51,9 +51,8 @@ export class StaticDeploymentStrategy implements IDeploymentStrategy {
       Entrypoint: ['sleep', '3600'],
       Env: process.env.DOCKER_HOST ? [`DOCKER_HOST=${process.env.DOCKER_HOST}`] : [],
       HostConfig: {
-        AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: networkName,
+        NetworkMode: 'helvetia-net',
       },
     });
 
@@ -125,7 +124,7 @@ NGINX_EOF
         fi
 
         echo "===== Starting Docker Build ====="
-        docker build -t ${imageTag} .
+        docker build --load -t ${imageTag} .
       `;
 
       // 5. Execute build
@@ -140,7 +139,11 @@ NGINX_EOF
 
       await new Promise<void>((resolve, reject) => {
         stream.on('data', (chunk: Buffer) => {
-          const log = chunk.toString();
+          const log = chunk
+            .toString()
+            .replace(/\0/g, '')
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
           buildLogs += log;
           context.onLog?.(log);
         });

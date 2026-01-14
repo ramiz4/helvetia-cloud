@@ -81,7 +81,7 @@ Always validate user input before using it in database queries:
 import { z } from 'zod';
 
 const repoSchema = z.object({
-  repoUrl: z.string().url().max(500),
+  repoUrl: z.url().max(500),
   branch: z.string().min(1).max(100),
 });
 

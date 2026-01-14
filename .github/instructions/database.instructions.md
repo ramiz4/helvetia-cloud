@@ -1,6 +1,5 @@
 ---
 applyTo: 'packages/database/**/*.{ts,prisma}'
-excludeAgent: ''
 ---
 
 # Database & Prisma Instructions

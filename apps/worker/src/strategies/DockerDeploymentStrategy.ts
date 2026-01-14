@@ -60,8 +60,23 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
           docker.modem.followProgress(
             stream,
             (err, _res) => {
-              if (err) reject(err);
-              else resolve();
+              if (err) {
+                if (err.toString().includes('403')) {
+                  context.onLog?.(`\n❌ GHCR access denied (403). Common fixes:\n`);
+                  context.onLog?.(
+                    `   1. Ensure you have granted "Organization Access" to your OAuth App in GitHub settings.\n`,
+                  );
+                  context.onLog?.(
+                    `   2. Try logging out and back in to refresh token scopes (requires 'read:packages').\n`,
+                  );
+                  context.onLog?.(
+                    `   3. Verify that your GitHub user has access to the image: ${fullImage}\n`,
+                  );
+                }
+                reject(err);
+              } else {
+                resolve();
+              }
             },
             (event) => {
               const status = event.status || '';
@@ -113,9 +128,8 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
       Entrypoint: ['sleep', '3600'],
       Env: process.env.DOCKER_HOST ? [`DOCKER_HOST=${process.env.DOCKER_HOST}`] : [],
       HostConfig: {
-        AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: networkName,
+        NetworkMode: 'helvetia-net',
       },
     });
 
@@ -171,7 +185,7 @@ EOF
         fi
 
         echo "===== Starting Docker Build ====="
-        docker build -t ${imageTag} .
+        docker build --load -t ${imageTag} .
       `;
 
       // 4. Execute build
@@ -186,7 +200,11 @@ EOF
 
       await new Promise<void>((resolve, reject) => {
         stream.on('data', (chunk: Buffer) => {
-          const log = chunk.toString();
+          const log = chunk
+            .toString()
+            .replace(/\0/g, '')
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
           buildLogs += log;
           context.onLog?.(log);
         });

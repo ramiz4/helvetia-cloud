@@ -51,3 +51,6 @@ packages/database/generated-client
 
 # Database Backups
 backups/
+
+# Local Test Artifacts
+docker-compose.local-test.yml
