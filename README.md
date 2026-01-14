@@ -214,7 +214,20 @@ pnpm dev
 - **Worker Health Check**: [http://localhost:3002/health](http://localhost:3002/health)
 - **Traefik Dashboard**: [http://localhost:8090](http://localhost:8090)
 
-### 6. Running in Production Mode
+### 6. 🌍 Deploying to Production
+
+For deploying to a live VPS (e.g., DigitalOcean, AWS, Hetzner), we provide a comprehensive **Deployment Guide** and an automated setup generator.
+
+👉 **[Read the Deployment Guide](./docs/DEPLOYMENT.md)**
+
+The guide covers:
+
+- VPS Prerequisites
+- Using the **Admin Server Setup** generator
+- Manual configuration steps
+- Architecture details (Traefik, SSL, etc.)
+
+### 7. Running Locally in Production Mode
 
 To run the optimized, built version of the application:
 
