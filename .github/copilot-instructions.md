@@ -20,7 +20,6 @@ Project documentation is organized by component in their respective directories:
   - `docs/ROADMAP.md` - Project roadmap and future plans
   - `docs/INTEGRATION_TESTS.md`, `docs/TEST_COVERAGE_REPORT.md` - Testing documentation
   - `docs/DOCKER_SECURITY_HARDENING.md` - Docker security hardening guide
-  
 - **API Documentation** (`apps/api/docs/`): API-specific documentation
   - `apps/api/docs/API_VERSIONING.md`, `apps/api/docs/ERROR_CODES.md` - API versioning and error codes
   - `apps/api/docs/LOGGING.md`, `apps/api/docs/REQUEST_TRACING.md` - Logging and request tracing
@@ -31,16 +30,13 @@ Project documentation is organized by component in their respective directories:
   - `apps/api/docs/DI_IMPLEMENTATION_SUMMARY.md`, `apps/api/docs/MIGRATION_GUIDE.md` - DI framework and migration
   - `apps/api/docs/IMPLEMENTATION_SUMMARY.md` - API implementation details
   - `apps/api/docs/TYPE_PATTERNS.md`, `apps/api/docs/TYPE_SAFETY_IMPROVEMENTS.md` - TypeScript patterns
-  
 - **Worker Documentation** (`apps/worker/docs/`): Worker service documentation
   - `apps/worker/docs/HEALTH_CHECK.md` - Health check endpoints and format
   - `apps/worker/docs/MONITORING_SETUP.md` - Monitoring and observability setup
   - `apps/worker/docs/INTEGRATION_TESTS.md` - Worker integration tests
-  
 - **Dashboard Documentation** (`apps/dashboard/docs/`): Frontend-specific documentation
   - `apps/dashboard/docs/ACCESSIBILITY.md` - WCAG compliance, keyboard navigation, and accessibility testing
   - `apps/dashboard/docs/FEATURE_FLAGS.md` - Feature flag system and usage
-  
 - **Database Documentation** (`packages/database/docs/`): Database-specific documentation
   - `packages/database/docs/DATABASE_MIGRATIONS.md` - Database migration guidelines
 

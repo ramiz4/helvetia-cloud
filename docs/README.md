@@ -13,11 +13,13 @@ This directory contains general documentation that applies to the entire Helveti
 ## Component-Specific Documentation
 
 ### API Documentation
+
 Location: `apps/api/docs/`
 
 API-specific documentation including versioning, error codes, security, logging, metrics, and implementation details.
 
 **Key Files:**
+
 - [API_VERSIONING.md](../apps/api/docs/API_VERSIONING.md) - API versioning strategy
 - [ERROR_CODES.md](../apps/api/docs/ERROR_CODES.md) - Error code reference
 - [SECURITY.md](../apps/api/docs/SECURITY.md) - Security guidelines and authentication
@@ -31,11 +33,13 @@ API-specific documentation including versioning, error codes, security, logging,
 [View all API documentation →](../apps/api/docs/)
 
 ### Worker Documentation
+
 Location: `apps/worker/docs/`
 
 Worker service documentation including health checks, monitoring, and integration tests.
 
 **Key Files:**
+
 - [HEALTH_CHECK.md](../apps/worker/docs/HEALTH_CHECK.md) - Health check endpoints and format
 - [MONITORING_SETUP.md](../apps/worker/docs/MONITORING_SETUP.md) - Monitoring and observability setup
 - [INTEGRATION_TESTS.md](../apps/worker/docs/INTEGRATION_TESTS.md) - Worker integration tests
@@ -43,22 +47,26 @@ Worker service documentation including health checks, monitoring, and integratio
 [View all Worker documentation →](../apps/worker/docs/)
 
 ### Dashboard Documentation
+
 Location: `apps/dashboard/docs/`
 
 Frontend-specific documentation including accessibility and feature flags.
 
 **Key Files:**
+
 - [ACCESSIBILITY.md](../apps/dashboard/docs/ACCESSIBILITY.md) - WCAG compliance and accessibility testing
 - [FEATURE_FLAGS.md](../apps/dashboard/docs/FEATURE_FLAGS.md) - Feature flag system and usage
 
 [View all Dashboard documentation →](../apps/dashboard/docs/)
 
 ### Database Documentation
+
 Location: `packages/database/docs/`
 
 Database-specific documentation including migration guidelines.
 
 **Key Files:**
+
 - [DATABASE_MIGRATIONS.md](../packages/database/docs/DATABASE_MIGRATIONS.md) - Database migration guidelines
 
 [View all Database documentation →](../packages/database/docs/)
