@@ -1,5 +1,5 @@
-import { TranslationType, useLanguage } from 'shared-ui';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { TranslationType, useLanguage } from 'shared-ui';
 import { describe, expect, it, vi } from 'vitest';
 import StepIndicator from './StepIndicator';
 

@@ -1,6 +1,6 @@
 import { ServiceFormData } from '@/components/new-service/types';
-import { TranslationType, useLanguage } from 'shared-ui';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { TranslationType, useLanguage } from 'shared-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ConfigurationStep from './ConfigurationStep';
 

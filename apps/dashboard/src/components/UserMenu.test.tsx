@@ -1,6 +1,6 @@
-import { LanguageContextType, useLanguage } from 'shared-ui';
 import { OrganizationContextType, useOrganizationContext } from '@/lib/OrganizationContext';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { LanguageContextType, useLanguage } from 'shared-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UserMenu from './UserMenu';
 

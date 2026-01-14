@@ -1,10 +1,10 @@
 import { ServiceFormData } from '@/components/new-service/types';
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
-import { LanguageContextType, useLanguage } from 'shared-ui';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
 import { Project } from '@/types/project';
 import { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { LanguageContextType, useLanguage } from 'shared-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectNameStep from './ProjectNameStep';
 

@@ -1,5 +1,5 @@
-import { useLanguage } from 'shared-ui';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { useLanguage } from 'shared-ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LanguageSwitcher from './LanguageSwitcher';
 

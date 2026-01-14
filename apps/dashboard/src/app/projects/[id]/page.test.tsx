@@ -30,8 +30,8 @@ vi.mock('next/navigation', async () => {
   };
 });
 
-import en from 'shared-ui/locales/en.json';
 import { LanguageProvider } from 'shared-ui';
+import en from 'shared-ui/locales/en.json';
 
 vi.mock('shared-ui', async () => {
   const actual = await vi.importActual('shared-ui');
