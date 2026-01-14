@@ -36,5 +36,5 @@ This directory contains API-specific documentation for the Helvetia Cloud API se
 ## Related Documentation
 
 - **General Documentation**: See [../../docs/](../../docs/) for system-wide documentation
-- **Worker Documentation**: See [../worker/docs/](../worker/docs/) for worker service documentation
+- **Worker Documentation**: See [../../worker/docs/](../../worker/docs/) for worker service documentation
 - **Database Documentation**: See [../../packages/database/docs/](../../packages/database/docs/) for database documentation
