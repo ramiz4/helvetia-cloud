@@ -153,7 +153,7 @@ until docker compose -f docker-compose.prod.yml exec postgres pg_isready -U helv
 done
 
 echo "🏗️ Running database migrations..."
-docker compose -f docker-compose.prod.yml exec api pnpm --filter database migrate:deploy
+docker compose -f docker-compose.prod.yml run --rm api pnpm --filter database migrate:deploy
 
 echo "✅ Deployment complete!"
 echo "------------------------------------------------"
