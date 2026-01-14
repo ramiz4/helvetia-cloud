@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Check, Copy, Globe, Info, Server, Terminal } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Globe, Info, Server, Sparkles, Terminal } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -8,21 +8,82 @@ export default function ServerSetupPage() {
   const [config, setConfig] = useState({
     domain: 'example.com',
     email: 'admin@example.com',
-    postgresPassword: 'secure_password_here',
-    grafanaPassword: 'admin',
+    postgresPassword: '',
+    grafanaPassword: '',
     githubClientId: '',
     githubClientSecret: '',
-    jwtSecret: 'generate_a_secure_random_string',
-    cookieSecret: 'generate_another_secure_random_string',
-    encryptionKey: 'provide_32_char_hex_key',
-    encryptionSalt: 'provide_64_char_hex_salt',
+    jwtSecret: '',
+    cookieSecret: '',
+    encryptionKey: '',
+    encryptionSalt: '',
     repoUrl: 'https://github.com/ramiz4/helvetia-cloud.git',
     branch: 'feature/deployment-setup',
     helvetiaAdmin: 'admin',
-    helvetiaAdminPassword: 'admin',
+    helvetiaAdminPassword: '',
   });
 
   const [copied, setCopied] = useState(false);
+
+  const generateRandomString = (length: number, hex = false) => {
+    const chars = hex
+      ? '0123456789abcdef'
+      : 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    const array = new Uint8Array(length);
+    window.crypto.getRandomValues(array);
+    return Array.from(array)
+      .map((x) => chars[x % chars.length])
+      .join('');
+  };
+
+  const handleGenerate = (key: keyof typeof config, length = 32, hex = false) => {
+    setConfig((prev) => ({ ...prev, [key]: generateRandomString(length, hex) }));
+  };
+
+  const InputWithAction = ({
+    label,
+    value,
+    onChange,
+    type = 'text',
+    placeholder,
+    onGenerate,
+    labelAction,
+  }: {
+    label: string;
+    value: string;
+    onChange: (val: string) => void;
+    type?: string;
+    placeholder?: string;
+    onGenerate?: () => void;
+    labelAction?: React.ReactNode;
+  }) => (
+    <div className="space-y-1.5 group">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-slate-400 group-focus-within:text-blue-400 transition-colors">
+          {label}
+        </label>
+        {labelAction}
+      </div>
+      <div className="relative">
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-slate-600"
+          placeholder={placeholder}
+        />
+        {onGenerate && (
+          <button
+            onClick={onGenerate}
+            title="Generate secure value"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all border border-blue-500/20 flex items-center gap-1.5"
+          >
+            <Sparkles size={14} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Auto</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generateScript());
@@ -76,7 +137,7 @@ fi
 
 # 5. Create .env file
 echo "📝 Configuring environment variables..."
-cat > .env <<EOL
+cat > .env <<'EOL'
 DOMAIN_NAME=${config.domain}
 ACME_EMAIL=${config.email}
 POSTGRES_PASSWORD=${config.postgresPassword}
@@ -161,156 +222,129 @@ echo "------------------------------------------------"
               </h2>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    Domain Name
-                  </label>
-                  <input
-                    type="text"
-                    value={config.domain}
-                    onChange={(e) => setConfig({ ...config, domain: e.target.value })}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    placeholder="example.com"
-                  />
-                </div>
+                <InputWithAction
+                  label="Domain Name"
+                  value={config.domain}
+                  onChange={(val) => setConfig({ ...config, domain: val })}
+                  placeholder="example.com"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    Admin Email (SSL)
-                  </label>
-                  <input
-                    type="email"
-                    value={config.email}
-                    onChange={(e) => setConfig({ ...config, email: e.target.value })}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    placeholder="admin@example.com"
-                  />
-                </div>
+                <InputWithAction
+                  label="Admin Email (SSL)"
+                  value={config.email}
+                  onChange={(val) => setConfig({ ...config, email: val })}
+                  placeholder="admin@example.com"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    Repository URL
-                  </label>
-                  <input
-                    type="text"
-                    value={config.repoUrl}
-                    onChange={(e) => setConfig({ ...config, repoUrl: e.target.value })}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                  />
-                </div>
+                <InputWithAction
+                  label="Repository URL"
+                  value={config.repoUrl}
+                  onChange={(val) => setConfig({ ...config, repoUrl: val })}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
-                    Repository Branch
-                  </label>
-                  <input
-                    type="text"
-                    value={config.branch}
-                    onChange={(e) => setConfig({ ...config, branch: e.target.value })}
-                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                <InputWithAction
+                  label="Repository Branch"
+                  value={config.branch}
+                  onChange={(val) => setConfig({ ...config, branch: val })}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <InputWithAction
+                    label="Postgres Password"
+                    type="password"
+                    value={config.postgresPassword}
+                    onChange={(val) => setConfig({ ...config, postgresPassword: val })}
+                    onGenerate={() => handleGenerate('postgresPassword')}
+                    placeholder="Click Auto to generate"
+                  />
+                  <InputWithAction
+                    label="Grafana Password"
+                    type="password"
+                    value={config.grafanaPassword}
+                    onChange={(val) => setConfig({ ...config, grafanaPassword: val })}
+                    onGenerate={() => handleGenerate('grafanaPassword')}
+                    placeholder="Click Auto to generate"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Postgres Password
-                    </label>
-                    <input
-                      type="password"
-                      value={config.postgresPassword}
-                      onChange={(e) => setConfig({ ...config, postgresPassword: e.target.value })}
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Grafana Password
-                    </label>
-                    <input
-                      type="password"
-                      value={config.grafanaPassword}
-                      onChange={(e) => setConfig({ ...config, grafanaPassword: e.target.value })}
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
+                  <InputWithAction
+                    label="Dashboard Admin User"
+                    value={config.helvetiaAdmin}
+                    onChange={(val) => setConfig({ ...config, helvetiaAdmin: val })}
+                  />
+                  <InputWithAction
+                    label="Dashboard Admin Password"
+                    type="password"
+                    value={config.helvetiaAdminPassword}
+                    onChange={(val) => setConfig({ ...config, helvetiaAdminPassword: val })}
+                    onGenerate={() => handleGenerate('helvetiaAdminPassword')}
+                    placeholder="Click Auto to generate"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Dashboard Admin User
-                    </label>
-                    <input
-                      type="text"
-                      value={config.helvetiaAdmin}
-                      onChange={(e) => setConfig({ ...config, helvetiaAdmin: e.target.value })}
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Dashboard Admin Password
-                    </label>
-                    <input
-                      type="password"
-                      value={config.helvetiaAdminPassword}
-                      onChange={(e) =>
-                        setConfig({ ...config, helvetiaAdminPassword: e.target.value })
-                      }
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
+                  <InputWithAction
+                    label="GitHub Client ID"
+                    value={config.githubClientId}
+                    onChange={(val) => setConfig({ ...config, githubClientId: val })}
+                    placeholder="Optional"
+                    labelAction={
+                      <a
+                        href="https://github.com/settings/developers"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors font-bold uppercase tracking-widest"
+                      >
+                        Get from GitHub
+                      </a>
+                    }
+                  />
+                  <InputWithAction
+                    label="GitHub Client Secret"
+                    type="password"
+                    value={config.githubClientSecret}
+                    onChange={(val) => setConfig({ ...config, githubClientSecret: val })}
+                    placeholder="Optional"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      GitHub Client ID
-                    </label>
-                    <input
-                      type="text"
-                      value={config.githubClientId}
-                      onChange={(e) => setConfig({ ...config, githubClientId: e.target.value })}
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      GitHub Client Secret
-                    </label>
-                    <input
-                      type="password"
-                      value={config.githubClientSecret}
-                      onChange={(e) => setConfig({ ...config, githubClientSecret: e.target.value })}
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
+                  <InputWithAction
+                    label="JWT Secret"
+                    type="password"
+                    value={config.jwtSecret}
+                    onChange={(val) => setConfig({ ...config, jwtSecret: val })}
+                    onGenerate={() => handleGenerate('jwtSecret', 64)}
+                    placeholder="Click Auto to generate"
+                  />
+                  <InputWithAction
+                    label="Cookie Secret"
+                    type="password"
+                    value={config.cookieSecret}
+                    onChange={(val) => setConfig({ ...config, cookieSecret: val })}
+                    onGenerate={() => handleGenerate('cookieSecret', 64)}
+                    placeholder="Click Auto to generate"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Encryption Key (32 char hex)
-                    </label>
-                    <input
-                      type="text"
-                      value={config.encryptionKey}
-                      onChange={(e) => setConfig({ ...config, encryptionKey: e.target.value })}
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">
-                      Encryption Salt (hex)
-                    </label>
-                    <input
-                      type="text"
-                      value={config.encryptionSalt}
-                      onChange={(e) => setConfig({ ...config, encryptionSalt: e.target.value })}
-                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                    />
-                  </div>
+                  <InputWithAction
+                    label="Encryption Key (32 char hex)"
+                    type="password"
+                    value={config.encryptionKey}
+                    onChange={(val) => setConfig({ ...config, encryptionKey: val })}
+                    onGenerate={() => handleGenerate('encryptionKey', 32, true)}
+                    placeholder="Click Auto to generate"
+                  />
+                  <InputWithAction
+                    label="Encryption Salt (64 char hex)"
+                    type="password"
+                    value={config.encryptionSalt}
+                    onChange={(val) => setConfig({ ...config, encryptionSalt: val })}
+                    onGenerate={() => handleGenerate('encryptionSalt', 64, true)}
+                    placeholder="Click Auto to generate"
+                  />
                 </div>
               </div>
             </div>
