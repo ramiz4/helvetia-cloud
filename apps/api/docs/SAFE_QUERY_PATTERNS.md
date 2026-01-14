@@ -82,7 +82,7 @@ import { z } from 'zod';
 
 const repoSchema = z.object({
   repoUrl: z.url().max(500),
-  branch: z.min(1).max(100),
+  branch: z.string().min(1).max(100),
 });
 
 // Validate before querying

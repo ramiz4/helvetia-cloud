@@ -1,6 +1,5 @@
 ---
 applyTo: 'apps/dashboard/**/*.{ts,tsx,js,jsx,css}'
-excludeAgent: ''
 ---
 
 # Frontend (Dashboard) Instructions

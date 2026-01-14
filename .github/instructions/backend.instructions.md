@@ -1,6 +1,5 @@
 ---
 applyTo: 'apps/{api,worker}/**/*.{ts,js}'
-excludeAgent: ''
 ---
 
 # Backend (API & Worker) Instructions
