@@ -9,10 +9,10 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
   // Database Configuration
-  DATABASE_URL: z.string().url().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.url().min(1, 'DATABASE_URL is required'),
 
   // Redis Configuration
-  REDIS_URL: z.string().url().min(1, 'REDIS_URL is required'),
+  REDIS_URL: z.url().min(1, 'REDIS_URL is required'),
 
   // Platform Configuration
   PLATFORM_DOMAIN: z.string().default('helvetia.cloud'),
