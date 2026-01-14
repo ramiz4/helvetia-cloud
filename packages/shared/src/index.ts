@@ -1,5 +1,6 @@
 /**
- * Shared package for common logic used by API, Worker, Dashboard and Admin
+ * Shared package for common backend logic used by API and Worker
+ * Contains Docker orchestration, Redis utilities, and distributed locks
  */
 
 // Orchestration exports (for API/Worker)
@@ -7,12 +8,3 @@ export * from './orchestration';
 
 // Utility exports (for API/Worker)
 export * from './utils';
-
-// UI Components (for Dashboard/Admin)
-export * from './ui';
-
-// Configuration & i18n (for Dashboard/Admin)
-export * from './config';
-
-// Type definitions (for all apps)
-export * from './types';

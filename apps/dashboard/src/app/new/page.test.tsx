@@ -59,7 +59,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 import { OrganizationContextType, useOrganizationContext } from '@/lib/OrganizationContext';
-import { fetchWithAuth } from '../../lib/tokenRefresh';
+import { fetchWithAuth } from 'shared-ui';
 
 describe('NewServicePage', () => {
   beforeEach(() => {

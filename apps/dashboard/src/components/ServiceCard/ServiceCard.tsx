@@ -1,6 +1,6 @@
 'use client';
 
-import { PLATFORM_DOMAIN } from '@/lib/env';
+import { PLATFORM_DOMAIN } from 'shared-ui';
 import type { Service } from '@/types/service';
 import {
   Check,

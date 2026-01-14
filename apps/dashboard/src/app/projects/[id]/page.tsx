@@ -1,6 +1,6 @@
 'use client';
 
-import { ConfirmationModal } from 'shared';
+import { ConfirmationModal } from 'shared-ui';
 import { EditServiceModal } from '@/components/EditServiceModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LogsModal } from '@/components/LogsModal';
@@ -17,9 +17,9 @@ import {
   useStopService,
   useUpdateService,
 } from '@/hooks/useServices';
-import { API_BASE_URL } from 'shared';
-import { useLanguage } from 'shared';
-import { checkAndRefreshToken, fetchWithAuth } from '@/lib/tokenRefresh';
+import { API_BASE_URL } from 'shared-ui';
+import { useLanguage } from 'shared-ui';
+import { checkAndRefreshToken, fetchWithAuth } from 'shared-ui';
 import type { Service } from '@/types/service';
 import { useQueryClient } from '@tanstack/react-query';
 import { Activity, ArrowLeft, Box, Layout, Loader2, Plus, Settings, Shield } from 'lucide-react';

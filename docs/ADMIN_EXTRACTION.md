@@ -145,6 +145,46 @@ The admin panel requires users to have the `ADMIN` role:
 - All admin features work identically to before
 - No changes to dashboard login or user experience
 
+## Shared Code Architecture
+
+To eliminate code duplication between Dashboard and Admin apps, shared frontend code has been consolidated into the `packages/shared-ui` package.
+
+### `packages/shared-ui`
+
+A new package containing React components and frontend utilities that can be safely used in Next.js applications:
+
+**Contents:**
+
+- **UI Components**: `ConfirmationModal`
+- **Configuration**: `config.ts`, `env.ts` (environment validation)
+- **Authentication**: `tokenRefresh.ts` (JWT token management)
+- **Internationalization**: `LanguageContext`, `translations`, locale files
+- **Type Definitions**: `organization.ts` (roles, types)
+
+**Why Separate from `packages/shared`?**
+
+The original `packages/shared` contains backend-only utilities (Docker, Redis, distributed locks) that cannot be imported in browser/Next.js code. By creating `packages/shared-ui`, we:
+
+1. ✅ Avoid pulling Node.js dependencies into browser bundles
+2. ✅ Enable safe code sharing between Dashboard and Admin
+3. ✅ Maintain clear separation between frontend and backend
+4. ✅ Improve build performance and bundle sizes
+
+### Package Structure
+
+```
+packages/
+├── database/      # Prisma client (all services)
+├── shared/        # Backend utilities (API, Worker)
+│   ├── orchestration/  # Docker container management
+│   └── utils/          # Redis locks, logs
+└── shared-ui/     # Frontend utilities (Dashboard, Admin)
+    ├── config/         # Environment, auth, i18n
+    ├── ui/             # React components
+    ├── types/          # TypeScript types
+    └── locales/        # Translation files
+```
+
 ## Testing
 
 Both applications have been tested and confirmed working:

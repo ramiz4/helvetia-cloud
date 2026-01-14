@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from 'shared';
+import { useLanguage } from 'shared-ui';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';

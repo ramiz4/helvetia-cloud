@@ -1,9 +1,9 @@
 'use client';
 
-import { API_BASE_URL } from 'shared';
+import { API_BASE_URL } from 'shared-ui';
 import { useFeatureFlag } from '@/lib/featureFlags';
-import { useLanguage } from 'shared';
-import { Role } from 'shared';
+import { useLanguage } from 'shared-ui';
+import { Role } from 'shared-ui';
 import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

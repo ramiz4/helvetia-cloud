@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Role } from 'shared';
+import { Role } from 'shared-ui';
 
 interface User {
   username: string;

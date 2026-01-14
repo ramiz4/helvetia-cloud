@@ -1,9 +1,9 @@
 'use client';
 
-import { useLanguage } from 'shared';
+import { useLanguage } from 'shared-ui';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef } from 'react';
-import { API_BASE_URL } from '../../../lib/config';
+import { API_BASE_URL } from 'shared-ui';
 
 function CallbackContent() {
   const router = useRouter();

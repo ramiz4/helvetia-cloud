@@ -1,9 +1,9 @@
 'use client';
 
-import { ConfirmationModal } from 'shared';
+import { ConfirmationModal } from 'shared-ui';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { API_BASE_URL } from 'shared';
-import { fetchWithAuth } from 'shared';
+import { API_BASE_URL } from 'shared-ui';
+import { fetchWithAuth } from 'shared-ui';
 import {
   CheckCircle2,
   Edit,

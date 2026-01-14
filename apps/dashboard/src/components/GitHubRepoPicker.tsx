@@ -1,8 +1,8 @@
 'use client';
 
-import { useLanguage } from 'shared';
-import { API_BASE_URL } from 'shared';
-import { fetchWithAuth } from 'shared';
+import { useLanguage } from 'shared-ui';
+import { API_BASE_URL } from 'shared-ui';
+import { fetchWithAuth } from 'shared-ui';
 import { useCallback, useEffect, useState } from 'react';
 
 interface Repo {

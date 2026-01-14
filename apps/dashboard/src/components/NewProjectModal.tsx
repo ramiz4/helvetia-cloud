@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from 'shared';
+import { useLanguage } from 'shared-ui';
 import { Loader2, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 

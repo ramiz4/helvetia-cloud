@@ -1,8 +1,8 @@
 'use client';
 
-import { ConfirmationModal } from 'shared';
+import { ConfirmationModal } from 'shared-ui';
 import { useAddMember, useRemoveMember, useUpdateMember } from '@/hooks/useOrganizations';
-import { Organization, Role } from 'shared';
+import { Organization, Role } from 'shared-ui';
 import { Trash2, User as UserIcon, UserPlus } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';

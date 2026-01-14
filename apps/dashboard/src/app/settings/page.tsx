@@ -1,9 +1,9 @@
 'use client';
 
-import { ConfirmationModal } from 'shared';
-import { API_BASE_URL, GITHUB_CLIENT_ID } from 'shared';
-import { useLanguage } from 'shared';
-import { fetchWithAuth } from 'shared';
+import { ConfirmationModal } from 'shared-ui';
+import { API_BASE_URL, GITHUB_CLIENT_ID } from 'shared-ui';
+import { useLanguage } from 'shared-ui';
+import { fetchWithAuth } from 'shared-ui';
 import {
   AlertCircle,
   ArrowUpRight,

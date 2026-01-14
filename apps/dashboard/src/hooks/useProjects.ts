@@ -2,7 +2,7 @@
 
 import type { Environment, Project } from '@/types/project';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_BASE_URL, fetchWithAuth } from 'shared';
+import { API_BASE_URL, fetchWithAuth } from 'shared-ui';
 
 // Query keys
 export const projectKeys = {

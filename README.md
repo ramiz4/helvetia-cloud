@@ -34,7 +34,8 @@ helvetia-cloud/
 │   └── worker/       # Background job processor
 └── packages/
     ├── database/     # Shared Prisma client
-    └── shared/       # Shared utilities
+    ├── shared/       # Shared backend utilities (Docker, Redis)
+    └── shared-ui/    # Shared frontend utilities & UI components
 ```
 
 The platform consists of three main frontend applications:
@@ -43,6 +44,12 @@ The platform consists of three main frontend applications:
 - **Admin Panel** (`apps/admin`): Standalone administrative control panel for platform management
 - **API** (`apps/api`): Backend REST API service
 - **Worker** (`apps/worker`): Background job processor for deployments
+
+### Shared Packages
+
+- **`packages/shared`**: Backend utilities for API and Worker (Docker orchestration, Redis, distributed locks)
+- **`packages/shared-ui`**: Frontend utilities for Dashboard and Admin (React components, i18n, auth, types)
+- **`packages/database`**: Prisma client used by all services
 
 ---
 

@@ -1,4 +1,4 @@
-import { Translations } from 'shared';
+import { Translations } from 'shared-ui';
 
 export type ServiceType = 'DOCKER' | 'STATIC' | 'COMPOSE' | 'DATABASE';
 

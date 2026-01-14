@@ -1,4 +1,4 @@
-import { useLanguage } from 'shared';
+import { useLanguage } from 'shared-ui';
 
 interface StepIndicatorProps {
   step: number;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useLanguage } from 'shared';
-import { type Language } from 'shared';
+import { useLanguage } from 'shared-ui';
+import { type Language } from 'shared-ui';
 import { ChevronDown, Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
