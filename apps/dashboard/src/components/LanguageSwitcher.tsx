@@ -1,7 +1,7 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
-import { type Language } from '@/lib/translations';
+import { useLanguage } from 'shared';
+import { type Language } from 'shared';
 import { ChevronDown, Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 

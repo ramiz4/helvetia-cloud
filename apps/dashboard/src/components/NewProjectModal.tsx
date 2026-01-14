@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { Loader2, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 

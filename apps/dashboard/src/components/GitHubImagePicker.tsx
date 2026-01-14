@@ -1,8 +1,8 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
-import { API_BASE_URL } from '@/lib/config';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
+import { useLanguage } from 'shared';
+import { API_BASE_URL } from 'shared';
+import { fetchWithAuth } from 'shared';
 import { useCallback, useEffect, useState } from 'react';
 
 interface GitHubPackage {

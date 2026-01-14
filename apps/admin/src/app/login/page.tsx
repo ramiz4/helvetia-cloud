@@ -1,8 +1,8 @@
 'use client';
 
-import { API_BASE_URL } from '@/lib/config';
-import { useLanguage } from '@/lib/LanguageContext';
-import { Role } from '@/types/organization';
+import { API_BASE_URL } from 'shared';
+import { useLanguage } from 'shared';
+import { Role } from 'shared';
 import { Loader2, Lock, Shield } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';

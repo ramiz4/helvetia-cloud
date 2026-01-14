@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
-import { LanguageProvider } from '../lib/LanguageContext';
+import { LanguageProvider } from 'shared';
 import './tailwind.css';
 
 export const metadata: Metadata = {

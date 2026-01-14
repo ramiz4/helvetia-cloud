@@ -1,6 +1,6 @@
 'use client';
 
-import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { ConfirmationModal } from 'shared';
 import { EditServiceModal } from '@/components/EditServiceModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LogsModal } from '@/components/LogsModal';
@@ -17,8 +17,8 @@ import {
   useStopService,
   useUpdateService,
 } from '@/hooks/useServices';
-import { API_BASE_URL } from '@/lib/config';
-import { useLanguage } from '@/lib/LanguageContext';
+import { API_BASE_URL } from 'shared';
+import { useLanguage } from 'shared';
 import { checkAndRefreshToken, fetchWithAuth } from '@/lib/tokenRefresh';
 import type { Service } from '@/types/service';
 import { useQueryClient } from '@tanstack/react-query';

@@ -1,7 +1,7 @@
 'use client';
 
 import FocusTrap from '@/components/FocusTrap';
-import { Translations } from '@/lib/translations';
+import { Translations } from 'shared';
 import type { Service, ServiceType } from '@/types/service';
 import { Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';

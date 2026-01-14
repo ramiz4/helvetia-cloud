@@ -1,10 +1,10 @@
 'use client';
 
-import { API_BASE_URL } from '@/lib/config';
 import { getErrorMessage } from '@/lib/errorUtils';
 import { fetchWithAuth } from '@/lib/tokenRefresh';
 import type { Service, ServiceStatus, UpdateServiceData } from '@/types/service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { API_BASE_URL } from 'shared';
 
 // Query keys
 export const serviceKeys = {

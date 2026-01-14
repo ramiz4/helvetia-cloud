@@ -1,9 +1,9 @@
 'use client';
 
-import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { ConfirmationModal } from 'shared';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { API_BASE_URL } from '@/lib/config';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
+import { API_BASE_URL } from 'shared';
+import { fetchWithAuth } from 'shared';
 import {
   CheckCircle2,
   Edit,

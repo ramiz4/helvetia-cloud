@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../../lib/config';

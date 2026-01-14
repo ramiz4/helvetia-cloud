@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';

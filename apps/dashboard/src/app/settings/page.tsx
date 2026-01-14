@@ -1,9 +1,9 @@
 'use client';
 
-import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { API_BASE_URL, GITHUB_CLIENT_ID } from '@/lib/config';
-import { useLanguage } from '@/lib/LanguageContext';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
+import { ConfirmationModal } from 'shared';
+import { API_BASE_URL, GITHUB_CLIENT_ID } from 'shared';
+import { useLanguage } from 'shared';
+import { fetchWithAuth } from 'shared';
 import {
   AlertCircle,
   ArrowUpRight,

@@ -1,4 +1,4 @@
-import { Translations } from '@/lib/translations';
+import { Translations } from 'shared';
 
 export type ServiceType = 'DOCKER' | 'STATIC' | 'COMPOSE' | 'DATABASE';
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { API_BASE_URL } from '@/lib/config';
+import { API_BASE_URL } from 'shared';
 import { useFeatureFlag } from '@/lib/featureFlags';
-import { useLanguage } from '@/lib/LanguageContext';
-import { Role } from '@/types/organization';
+import { useLanguage } from 'shared';
+import { Role } from 'shared';
 import { BookOpen, LayoutDashboard, LogIn, LogOut, Menu, Settings, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { useFeatureFlag } from '@/lib/featureFlags';
 import { Activity, AlertCircle, CheckCircle2, Clock, Rocket } from 'lucide-react';
 import { useRouter } from 'next/navigation';

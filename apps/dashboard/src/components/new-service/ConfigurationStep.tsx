@@ -1,4 +1,4 @@
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { Code, Combine, Globe, Loader2, Plus, Rocket, Settings, Trash2, X } from 'lucide-react';
 import {
   ComposeConfigFields,

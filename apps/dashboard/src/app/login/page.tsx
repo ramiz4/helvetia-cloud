@@ -1,7 +1,7 @@
 'use client';
 
-import { GITHUB_CLIENT_ID } from '@/lib/config';
-import { useLanguage } from '@/lib/LanguageContext';
+import { GITHUB_CLIENT_ID } from 'shared';
+import { useLanguage } from 'shared';
 import { Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';

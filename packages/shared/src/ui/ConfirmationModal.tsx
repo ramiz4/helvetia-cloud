@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from 'shared';
+import { useLanguage } from '../config/LanguageContext';
 import { AlertTriangle, Loader2, X } from 'lucide-react';
 
 interface ConfirmationModalProps {

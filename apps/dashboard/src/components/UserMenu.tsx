@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
 import {
   Building2,

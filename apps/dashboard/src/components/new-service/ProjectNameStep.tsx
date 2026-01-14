@@ -1,7 +1,7 @@
 'use client';
 
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
 import { ChevronRight, Folder, Loader2, Plus, Settings } from 'lucide-react';
 import { useState } from 'react';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared';
 import { ExternalLink, Mail, ShieldCheck, Twitter } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

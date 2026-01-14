@@ -9,6 +9,18 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "import": "./dist/ui/index.js",
+      "require": "./dist/ui/index.js",
+      "default": "./dist/ui/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js",
+      "require": "./dist/types/index.js",
+      "default": "./dist/types/index.js"
     }
   },
   "scripts": {
@@ -22,14 +34,21 @@
   "dependencies": {
     "dockerode": "^4.0.9",
     "ioredis": "^5.8.2",
-    "redlock": "5.0.0-beta.2"
+    "redlock": "5.0.0-beta.2",
+    "zod": "^4.3.4"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.47",
     "@types/node": "^22.19.5",
+    "@types/react": "^19",
     "@types/redlock": "^4.0.8",
     "@vitest/coverage-v8": "^4.0.16",
+    "lucide-react": "^0.562.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "lucide-react": "^0.562.0"
   }
 }
