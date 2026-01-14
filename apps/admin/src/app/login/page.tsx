@@ -1,12 +1,9 @@
 'use client';
 
-import { API_BASE_URL } from '@/lib/config';
-import { useLanguage } from '@/lib/LanguageContext';
-import { Role } from '@/types/organization';
 import { Loader2, Lock, Shield } from 'lucide-react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
+import { API_BASE_URL, Role, useLanguage } from 'shared-ui';
 
 function AdminLoginContent() {
   const { t } = useLanguage();
@@ -39,7 +36,7 @@ function AdminLoginContent() {
           return;
         }
         localStorage.setItem('user', JSON.stringify(data.user));
-        window.location.href = '/admin';
+        window.location.href = '/';
       } else {
         setLocalError(data.error || t.login.invalidCredentials);
       }
@@ -59,14 +56,6 @@ function AdminLoginContent() {
       </div>
 
       <div className="w-full max-w-md">
-        <Link
-          href="/"
-          className="inline-flex items-center text-slate-400 hover:text-white mb-8 transition-colors group"
-        >
-          <span className="mr-2 transform group-hover:-translate-x-1 transition-transform">←</span>
-          {t.login.backToHome}
-        </Link>
-
         <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-red-500 via-orange-500 to-red-500" />
 

@@ -1,9 +1,10 @@
 /**
- * Shared package for common logic used by API and Worker
+ * Shared package for common backend logic used by API and Worker
+ * Contains Docker orchestration, Redis utilities, and distributed locks
  */
 
-// Orchestration exports
+// Orchestration exports (for API/Worker)
 export * from './orchestration';
 
-// Utility exports
+// Utility exports (for API/Worker)
 export * from './utils';

@@ -1,9 +1,9 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from 'shared-ui';
 import CookieBanner from './CookieBanner';
 
 export default function LandingPage() {

@@ -1,13 +1,17 @@
-import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
 import { OrganizationContextType, useOrganizationContext } from '@/lib/OrganizationContext';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { LanguageContextType, useLanguage } from 'shared-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UserMenu from './UserMenu';
 
 // Mock language
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: vi.fn(),
-}));
+vi.mock('shared-ui', async () => {
+  const actual = await vi.importActual('shared-ui');
+  return {
+    ...actual,
+    useLanguage: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/OrganizationContext', () => ({
   useOrganizationContext: vi.fn(),

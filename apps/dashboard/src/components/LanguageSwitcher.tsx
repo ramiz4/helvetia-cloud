@@ -1,9 +1,8 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
-import { type Language } from '@/lib/translations';
 import { ChevronDown, Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage, type Language } from 'shared-ui';
 
 interface LanguageSwitcherProps {
   variant?: 'dropdown' | 'minimal';

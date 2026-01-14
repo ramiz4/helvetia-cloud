@@ -6,15 +6,13 @@ import ProjectNameStep from '@/components/new-service/ProjectNameStep';
 import StepIndicator from '@/components/new-service/StepIndicator';
 import { ServiceFormData } from '@/components/new-service/types';
 import { serviceKeys } from '@/hooks/useServices';
-import { useLanguage } from '@/lib/LanguageContext';
-import { API_BASE_URL } from '@/lib/config';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL, fetchWithAuth, useLanguage } from 'shared-ui';
 
 export default function NewServicePage() {
   const { t } = useLanguage();

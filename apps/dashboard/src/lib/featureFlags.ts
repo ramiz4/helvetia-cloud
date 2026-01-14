@@ -1,5 +1,5 @@
 import React from 'react';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL } from 'shared-ui';
 
 /**
  * Feature flag utility for checking if a feature is enabled

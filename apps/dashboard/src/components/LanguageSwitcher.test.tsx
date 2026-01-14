@@ -1,15 +1,19 @@
-import { useLanguage } from '@/lib/LanguageContext';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { useLanguage } from 'shared-ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LanguageSwitcher from './LanguageSwitcher';
 
-import de from '../locales/de.json';
-import en from '../locales/en.json';
+import de from 'shared-ui/locales/de.json';
+import en from 'shared-ui/locales/en.json';
 
 // Mock dependencies
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: vi.fn(),
-}));
+vi.mock('shared-ui', async () => {
+  const actual = await vi.importActual('shared-ui');
+  return {
+    ...actual,
+    useLanguage: vi.fn(),
+  };
+});
 
 const mockSetLanguage = vi.fn();
 

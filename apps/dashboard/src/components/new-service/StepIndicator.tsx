@@ -1,4 +1,4 @@
-import { useLanguage } from '@/lib/LanguageContext';
+import { useLanguage } from 'shared-ui';
 
 interface StepIndicatorProps {
   step: number;

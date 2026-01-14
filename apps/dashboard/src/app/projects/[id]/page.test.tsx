@@ -30,10 +30,20 @@ vi.mock('next/navigation', async () => {
   };
 });
 
-vi.mock('@/lib/tokenRefresh', () => ({
-  fetchWithAuth: vi.fn(),
-  checkAndRefreshToken: vi.fn().mockResolvedValue(true),
-}));
+import { LanguageProvider } from 'shared-ui';
+import en from 'shared-ui/locales/en.json';
+
+vi.mock('shared-ui', async () => {
+  const actual = await vi.importActual('shared-ui');
+  return {
+    ...actual,
+    fetchWithAuth: vi.fn(),
+    checkAndRefreshToken: vi.fn().mockResolvedValue(true),
+    useLanguage: () => ({
+      t: en,
+    }),
+  };
+});
 
 const mockServices = [
   {
@@ -134,14 +144,6 @@ vi.mock('@/components/LogsModal', () => ({
   ),
 }));
 
-import en from '../../../locales/en.json';
-
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: () => ({
-    t: en,
-  }),
-}));
-
 vi.mock('react-hot-toast', () => ({
   default: {
     success: mocks.toastSuccess,
@@ -183,11 +185,13 @@ describe('ProjectPage', () => {
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
-      {children}
-    </QueryClientProvider>
+    <LanguageProvider>
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        {children}
+      </QueryClientProvider>
+    </LanguageProvider>
   );
 
   test('renders project details and services', async () => {
@@ -280,7 +284,7 @@ describe('ProjectPage', () => {
   test('handles service deploy', async () => {
     mocks.mutateDeployService.mockResolvedValue({ id: 'dep-1' });
     // Mock the logs fetch which happens after deploy
-    const { fetchWithAuth } = await import('@/lib/tokenRefresh');
+    const { fetchWithAuth } = await import('shared-ui');
     vi.mocked(fetchWithAuth).mockResolvedValue({
       json: async () => ({ logs: 'Build started...' }),
     } as unknown as Response);
@@ -321,7 +325,7 @@ describe('ProjectPage', () => {
   });
 
   test('handles view logs', async () => {
-    const { fetchWithAuth } = await import('@/lib/tokenRefresh');
+    const { fetchWithAuth } = await import('shared-ui');
     vi.mocked(fetchWithAuth).mockResolvedValue({
       json: async () => ({ logs: 'Existing logs...' }),
     } as unknown as Response);
@@ -340,7 +344,7 @@ describe('ProjectPage', () => {
 
   test('closes logs modal', async () => {
     // First open logs
-    const { fetchWithAuth } = await import('@/lib/tokenRefresh');
+    const { fetchWithAuth } = await import('shared-ui');
     vi.mocked(fetchWithAuth).mockResolvedValue({
       json: async () => ({ logs: 'Log content' }),
     } as unknown as Response);

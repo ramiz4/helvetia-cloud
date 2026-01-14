@@ -1,17 +1,11 @@
-import { LanguageContextType, useLanguage } from '@/lib/LanguageContext';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import GitHubImagePicker from './GitHubImagePicker';
 
-// Mock dependencies
-vi.mock('@/lib/LanguageContext', () => ({
-  useLanguage: vi.fn(),
-}));
-
-vi.mock('@/lib/tokenRefresh', () => ({
-  fetchWithAuth: vi.fn(),
-}));
+// Define mock type
+type LanguageContextType = {
+  t: typeof mockT;
+};
 
 // Setup default mocks
 const mockT = {
@@ -22,6 +16,16 @@ const mockT = {
     sessionExpired: 'Session expired',
   },
 };
+
+// Mock shared-ui module
+vi.mock('shared-ui', () => ({
+  useLanguage: vi.fn(),
+  fetchWithAuth: vi.fn(),
+  API_BASE_URL: 'http://localhost:3001',
+}));
+
+// Import mocked functions after mock is defined
+const { useLanguage, fetchWithAuth } = await import('shared-ui');
 
 const mockPackages = [
   {

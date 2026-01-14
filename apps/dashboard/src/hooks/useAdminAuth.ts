@@ -1,8 +1,8 @@
 'use client';
 
-import { Role } from '@/types/organization';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Role } from 'shared-ui';
 
 interface User {
   username: string;

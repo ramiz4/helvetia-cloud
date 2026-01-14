@@ -1,10 +1,9 @@
 'use client';
 
-import { API_BASE_URL } from '@/lib/config';
 import { getErrorMessage } from '@/lib/errorUtils';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
-import type { Organization, OrganizationMember, Role } from '@/types/organization';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Organization, OrganizationMember, Role } from 'shared-ui';
+import { API_BASE_URL, fetchWithAuth } from 'shared-ui';
 
 export const organizationKeys = {
   all: ['organizations'] as const,

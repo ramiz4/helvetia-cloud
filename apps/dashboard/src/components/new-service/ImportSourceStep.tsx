@@ -1,6 +1,6 @@
-import { useLanguage } from '@/lib/LanguageContext';
 import { ChevronRight, Container, Database, FileCode, Github } from 'lucide-react';
 import { useState } from 'react';
+import { useLanguage } from 'shared-ui';
 import GitHubImagePicker from '../GitHubImagePicker';
 import GitHubRepoPicker from '../GitHubRepoPicker';
 import { DbEngine, ImportType, ServiceFormData } from './types';

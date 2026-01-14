@@ -1,11 +1,11 @@
 'use client';
 
-import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { EditServiceModal } from '@/components/EditServiceModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LogsModal } from '@/components/LogsModal';
 import { NewEnvironmentModal } from '@/components/NewEnvironmentModal';
 import { ServiceCard } from '@/components/ServiceCard/ServiceCard';
+import { ConfirmationModal } from 'shared-ui';
 
 import { useCreateEnvironment, useProject } from '@/hooks/useProjects';
 import {
@@ -17,9 +17,6 @@ import {
   useStopService,
   useUpdateService,
 } from '@/hooks/useServices';
-import { API_BASE_URL } from '@/lib/config';
-import { useLanguage } from '@/lib/LanguageContext';
-import { checkAndRefreshToken, fetchWithAuth } from '@/lib/tokenRefresh';
 import type { Service } from '@/types/service';
 import { useQueryClient } from '@tanstack/react-query';
 import { Activity, ArrowLeft, Box, Layout, Loader2, Plus, Settings, Shield } from 'lucide-react';
@@ -27,6 +24,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL, checkAndRefreshToken, fetchWithAuth, useLanguage } from 'shared-ui';
 
 export default function ProjectPage() {
   const params = useParams();

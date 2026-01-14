@@ -1,11 +1,11 @@
 'use client';
 
 import { useCreateProject, useProjects } from '@/hooks/useProjects';
-import { useLanguage } from '@/lib/LanguageContext';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
 import { ChevronRight, Folder, Loader2, Plus, Settings } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useLanguage } from 'shared-ui';
 import { ServiceFormData } from './types';
 
 interface ProjectNameStepProps {

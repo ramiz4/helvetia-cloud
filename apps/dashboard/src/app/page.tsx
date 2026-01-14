@@ -6,13 +6,11 @@ import { FolderPlus, Plus, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ConfirmationModal } from '../components/ConfirmationModal';
+import { checkAndRefreshToken, ConfirmationModal, useLanguage } from 'shared-ui';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import LandingPage from '../components/LandingPage';
 import { useCreateProject, useDeleteProject, useProjects } from '../hooks/useProjects';
-import { useLanguage } from '../lib/LanguageContext';
 import { useOrganizationContext } from '../lib/OrganizationContext';
-import { checkAndRefreshToken } from '../lib/tokenRefresh';
 
 export default function Home() {
   const { t } = useLanguage();

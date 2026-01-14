@@ -1,6 +1,5 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
 import {
   Building2,
@@ -15,6 +14,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from 'shared-ui';
 
 interface UserMenuProps {
   user: {

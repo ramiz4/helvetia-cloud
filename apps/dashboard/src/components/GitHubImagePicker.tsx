@@ -1,9 +1,7 @@
 'use client';
 
-import { useLanguage } from '@/lib/LanguageContext';
-import { API_BASE_URL } from '@/lib/config';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
 import { useCallback, useEffect, useState } from 'react';
+import { API_BASE_URL, fetchWithAuth, useLanguage } from 'shared-ui';
 
 interface GitHubPackage {
   id: number;

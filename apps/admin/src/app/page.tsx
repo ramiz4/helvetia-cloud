@@ -32,7 +32,7 @@ export default function AdminDashboard() {
       title: 'Server Setup',
       description: 'Generate deployment scripts for VPS',
       icon: Server,
-      href: '/admin/server-setup',
+      href: '/server-setup',
       color: 'blue',
       stats: 'Active',
     },
@@ -40,7 +40,7 @@ export default function AdminDashboard() {
       title: 'Feature Flags',
       description: 'Manage feature toggles and A/B testing',
       icon: Flag,
-      href: '/admin/feature-flags',
+      href: '/feature-flags',
       color: 'indigo',
       stats: 'Active',
     },
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
       title: 'User Management',
       description: 'Manage users, roles, and permissions',
       icon: Users,
-      href: '/admin/users',
+      href: '/users',
       color: 'emerald',
       stats: 'Coming Soon',
     },
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
       title: 'System Analytics',
       description: 'Monitor platform performance and usage',
       icon: BarChart3,
-      href: '/admin/analytics',
+      href: '/analytics',
       color: 'blue',
       stats: 'Coming Soon',
     },
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
       title: 'Security Settings',
       description: 'Configure security policies and access control',
       icon: Lock,
-      href: '/admin/security',
+      href: '/security',
       color: 'red',
       stats: 'Coming Soon',
     },
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
       title: 'Activity Logs',
       description: 'View system and user activity logs',
       icon: Activity,
-      href: '/admin/logs',
+      href: '/logs',
       color: 'purple',
       stats: 'Coming Soon',
     },
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
       title: 'Platform Settings',
       description: 'Configure global platform settings',
       icon: Settings,
-      href: '/admin/settings',
+      href: '/settings',
       color: 'orange',
       stats: 'Coming Soon',
     },
@@ -91,26 +91,18 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-[24px] bg-red-500/10 flex items-center justify-center text-red-400 border border-red-500/20 shadow-inner">
-                <Shield size={32} />
-              </div>
-              <div>
-                <h1 className="text-5xl font-black text-white tracking-tighter leading-none">
-                  Admin Dashboard
-                </h1>
-                <p className="text-slate-400 text-lg font-medium mt-2">
-                  Welcome back, {user?.username}
-                </p>
-              </div>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 rounded-[24px] bg-red-500/10 flex items-center justify-center text-red-400 border border-red-500/20 shadow-inner">
+              <Shield size={32} />
             </div>
-            <Link
-              href="/"
-              className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all font-medium"
-            >
-              Back to Platform
-            </Link>
+            <div>
+              <h1 className="text-5xl font-black text-white tracking-tighter leading-none">
+                Admin Dashboard
+              </h1>
+              <p className="text-slate-400 text-lg font-medium mt-2">
+                Welcome back, {user?.username}
+              </p>
+            </div>
           </div>
 
           {/* Warning Banner */}

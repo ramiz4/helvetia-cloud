@@ -1,6 +1,6 @@
-import { Role } from '@/types/organization';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
+import { Role } from 'shared-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAdminAuth } from './useAdminAuth';
 

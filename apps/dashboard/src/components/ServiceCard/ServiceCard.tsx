@@ -1,6 +1,5 @@
 'use client';
 
-import { PLATFORM_DOMAIN } from '@/lib/env';
 import type { Service } from '@/types/service';
 import {
   Check,
@@ -16,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PLATFORM_DOMAIN } from 'shared-ui';
 
 interface ServiceCardProps {
   service: Service;

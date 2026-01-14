@@ -17,10 +17,39 @@ A premium, production-realistic **Platform-as-a-Service (PaaS)** designed for se
 ## 🛠 Tech Stack
 
 - **Dashboard**: [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/)
+- **Admin Panel**: [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/) (Standalone)
 - **API Engine**: [Fastify](https://www.fastify.io/), [Prisma](https://www.prisma.io/), [JWT Auth](https://jwt.io/)
 - **Workforce**: [BullMQ](https://docs.bullmq.io/) (Redis), [Dockerode](https://github.com/apocas/dockerode)
 - **Networking**: [Traefik](https://traefik.io/), [Docker Compose](https://docs.docker.com/compose/)
 - **Storage**: [PostgreSQL](https://www.postgresql.org/), [Redis](https://redis.io/)
+
+## 📦 Monorepo Structure
+
+```
+helvetia-cloud/
+├── apps/
+│   ├── dashboard/    # Main user dashboard (port 3000)
+│   ├── admin/        # Admin control panel (port 3002)
+│   ├── api/          # REST API service (port 3001)
+│   └── worker/       # Background job processor
+└── packages/
+    ├── database/     # Shared Prisma client
+    ├── shared/       # Shared backend utilities (Docker, Redis)
+    └── shared-ui/    # Shared frontend utilities & UI components
+```
+
+The platform consists of three main frontend applications:
+
+- **Dashboard** (`apps/dashboard`): Main user interface for managing projects and deployments
+- **Admin Panel** (`apps/admin`): Standalone administrative control panel for platform management
+- **API** (`apps/api`): Backend REST API service
+- **Worker** (`apps/worker`): Background job processor for deployments
+
+### Shared Packages
+
+- **`packages/shared`**: Backend utilities for API and Worker (Docker orchestration, Redis, distributed locks)
+- **`packages/shared-ui`**: Frontend utilities for Dashboard and Admin (React components, i18n, auth, types)
+- **`packages/database`**: Prisma client used by all services
 
 ---
 
@@ -204,14 +233,24 @@ pnpm migrate:dev
 pnpm dev
 ```
 
+Or start specific services individually:
+
+```bash
+pnpm dev:dashboard  # Start dashboard on http://localhost:3000
+pnpm dev:admin      # Start admin panel on http://localhost:3002
+pnpm dev:api        # Start API on http://localhost:3001
+pnpm dev:worker     # Start background worker
+```
+
 ### 5. Access the Platform
 
-- **Dashboard**: [http://localhost:3000](http://localhost:3000)
-- **Observability (Grafana)**: [http://localhost:3010](http://localhost:3010) (`admin`/`admin`)
+- **Dashboard**: [http://localhost:3000](http://localhost:3000) - Main user interface
+- **Admin Panel**: [http://localhost:3002](http://localhost:3002) - Administrative control panel (requires admin role)
 - **API Engine**: [http://localhost:3001](http://localhost:3001)
   - **API v1 Endpoints**: `http://localhost:3001/api/v1/*`
   - See [API Versioning Strategy](./apps/api/docs/API_VERSIONING.md) for details
 - **Worker Health Check**: [http://localhost:3002/health](http://localhost:3002/health)
+- **Observability (Grafana)**: [http://localhost:3010](http://localhost:3010) (`admin`/`admin`)
 - **Traefik Dashboard**: [http://localhost:8090](http://localhost:8090)
 
 ### 6. 🌍 Deploying to Production

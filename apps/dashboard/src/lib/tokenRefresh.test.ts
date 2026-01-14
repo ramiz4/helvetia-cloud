@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { API_BASE_URL } from './config';
 import {
   _resetRefreshState,
+  API_BASE_URL,
   checkAndRefreshToken,
   fetchWithAuth,
   refreshAccessToken,
-} from './tokenRefresh';
+} from 'shared-ui';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('tokenRefresh', () => {
   beforeEach(() => {

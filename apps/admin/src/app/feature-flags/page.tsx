@@ -1,9 +1,6 @@
 'use client';
 
-import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { API_BASE_URL } from '@/lib/config';
-import { fetchWithAuth } from '@/lib/tokenRefresh';
 import {
   CheckCircle2,
   Edit,
@@ -19,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL, ConfirmationModal, fetchWithAuth } from 'shared-ui';
 
 interface FeatureFlag {
   id: string;

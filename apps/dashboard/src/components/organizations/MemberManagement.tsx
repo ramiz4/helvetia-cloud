@@ -1,12 +1,11 @@
 'use client';
 
-import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { useAddMember, useRemoveMember, useUpdateMember } from '@/hooks/useOrganizations';
-import { Organization, Role } from '@/types/organization';
 import { Trash2, User as UserIcon, UserPlus } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { ConfirmationModal, Organization, Role } from 'shared-ui';
 
 interface MemberManagementProps {
   organization: Organization;

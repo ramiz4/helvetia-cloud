@@ -17,9 +17,24 @@ vi.mock('next/navigation', async () => {
   };
 });
 
-vi.mock('../../lib/tokenRefresh', () => ({
-  fetchWithAuth: vi.fn(),
+// Mock GitHubRepoPicker
+vi.mock('@/components/GitHubRepoPicker', () => ({
+  default: () => <div data-testid="github-repo-picker">GitHub Repo Picker</div>,
 }));
+
+import en from 'shared-ui/locales/en.json';
+
+// Mock shared-ui (both fetchWithAuth and useLanguage)
+vi.mock('shared-ui', async () => {
+  const actual = await vi.importActual('shared-ui');
+  return {
+    ...actual,
+    fetchWithAuth: vi.fn(),
+    useLanguage: () => ({
+      t: en,
+    }),
+  };
+});
 
 vi.mock('@/hooks/useProjects', () => ({
   useProjects: () => ({
@@ -29,20 +44,6 @@ vi.mock('@/hooks/useProjects', () => ({
   useCreateProject: () => ({
     mutateAsync: vi.fn(),
     isPending: false,
-  }),
-}));
-
-// Mock GitHubRepoPicker
-vi.mock('@/components/GitHubRepoPicker', () => ({
-  default: () => <div data-testid="github-repo-picker">GitHub Repo Picker</div>,
-}));
-
-import en from '../../locales/en.json';
-
-// Mock translations
-vi.mock('../../lib/LanguageContext', () => ({
-  useLanguage: () => ({
-    t: en,
   }),
 }));
 
@@ -59,7 +60,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 import { OrganizationContextType, useOrganizationContext } from '@/lib/OrganizationContext';
-import { fetchWithAuth } from '../../lib/tokenRefresh';
+import { fetchWithAuth } from 'shared-ui';
 
 describe('NewServicePage', () => {
   beforeEach(() => {

@@ -24,7 +24,7 @@ export default function ServerSetupPage() {
         {/* Header */}
         <div className="mb-12">
           <Link
-            href="/admin"
+            href="/"
             className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
           >
             <ArrowLeft size={20} />

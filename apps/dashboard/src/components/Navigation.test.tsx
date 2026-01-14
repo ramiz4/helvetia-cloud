@@ -1,5 +1,5 @@
-import { LanguageProvider } from '@/lib/LanguageContext';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { LanguageProvider } from 'shared-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Navigation from './Navigation';
 
