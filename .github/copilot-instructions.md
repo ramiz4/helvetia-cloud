@@ -13,21 +13,34 @@ This is a monorepo managed by PNPM Workspaces containing:
 
 ### Code Documentation
 
-All project documentation is located in the `docs/` folder:
+Project documentation is organized by component in their respective directories:
 
-- **Architecture & Design**: `docs/ARCHITECTURE.md` - System architecture and design decisions
-- **API Documentation**: `docs/api/` - API-specific documentation including logging, versioning, body size limits, and safe query patterns
-- **Worker Documentation**: `docs/worker/` - Worker service documentation including health checks, monitoring, and integration tests
-- **Security**: `docs/SECURITY.md`, `docs/DOCKER_SECURITY_HARDENING.md` - Security guidelines, authentication, token management, and Docker hardening
-- **Feature Documentation**: `docs/API_VERSIONING.md`, `docs/ERROR_CODES.md`, `docs/FEATURE_FLAGS.md`, `docs/REQUEST_TRACING.md`
-- **Accessibility**: `docs/ACCESSIBILITY.md` - WCAG compliance, keyboard navigation, and accessibility testing
-- **Real-time Features**: `docs/SSE_AND_STATUS_MANAGEMENT.md` - Server-Sent Events, memory leak prevention, and distributed status management
-- **Roadmap**: `docs/ROADMAP.md` - Project roadmap and future plans
-- **Database**: `docs/DATABASE_MIGRATIONS.md` - Database migration guidelines
-- **Testing**: `docs/INTEGRATION_TESTS.md`, `docs/TEST_COVERAGE_REPORT.md` - Testing documentation and coverage reports
-- **Implementation Summaries**: `docs/DI_IMPLEMENTATION_SUMMARY.md`, `docs/MIGRATION_GUIDE.md`
+- **General Documentation** (`docs/`): Architecture, roadmap, integration tests, and Docker security
+  - `docs/ARCHITECTURE.md` - System architecture and design decisions
+  - `docs/ROADMAP.md` - Project roadmap and future plans
+  - `docs/INTEGRATION_TESTS.md`, `docs/TEST_COVERAGE_REPORT.md` - Testing documentation
+  - `docs/DOCKER_SECURITY_HARDENING.md` - Docker security hardening guide
+- **API Documentation** (`apps/api/docs/`): API-specific documentation
+  - `apps/api/docs/API_VERSIONING.md`, `apps/api/docs/ERROR_CODES.md` - API versioning and error codes
+  - `apps/api/docs/LOGGING.md`, `apps/api/docs/REQUEST_TRACING.md` - Logging and request tracing
+  - `apps/api/docs/BODY_SIZE_LIMITS.md`, `apps/api/docs/SAFE_QUERY_PATTERNS.md` - API patterns and limits
+  - `apps/api/docs/SECURITY.md` - Security guidelines, authentication, and token management
+  - `apps/api/docs/SSE_AND_STATUS_MANAGEMENT.md` - Server-Sent Events and status management
+  - `apps/api/docs/METRICS.md` - Observability and monitoring metrics
+  - `apps/api/docs/DI_IMPLEMENTATION_SUMMARY.md`, `apps/api/docs/MIGRATION_GUIDE.md` - DI framework and migration
+  - `apps/api/docs/IMPLEMENTATION_SUMMARY.md` - API implementation details
+  - `apps/api/docs/TYPE_PATTERNS.md`, `apps/api/docs/TYPE_SAFETY_IMPROVEMENTS.md` - TypeScript patterns
+- **Worker Documentation** (`apps/worker/docs/`): Worker service documentation
+  - `apps/worker/docs/HEALTH_CHECK.md` - Health check endpoints and format
+  - `apps/worker/docs/MONITORING_SETUP.md` - Monitoring and observability setup
+  - `apps/worker/docs/INTEGRATION_TESTS.md` - Worker integration tests
+- **Dashboard Documentation** (`apps/dashboard/docs/`): Frontend-specific documentation
+  - `apps/dashboard/docs/ACCESSIBILITY.md` - WCAG compliance, keyboard navigation, and accessibility testing
+  - `apps/dashboard/docs/FEATURE_FLAGS.md` - Feature flag system and usage
+- **Database Documentation** (`packages/database/docs/`): Database-specific documentation
+  - `packages/database/docs/DATABASE_MIGRATIONS.md` - Database migration guidelines
 
-When working on features or making changes, always check the `docs/` folder for relevant documentation.
+When working on features or making changes, check the relevant component's `docs/` folder for documentation.
 
 ## Tech Stack & Guidelines
 
