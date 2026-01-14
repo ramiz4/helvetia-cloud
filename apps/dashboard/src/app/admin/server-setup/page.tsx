@@ -96,11 +96,15 @@ EOL
 # 6. Create Directories for Volumes
 mkdir -p letsencrypt postgres_data prometheus_data grafana_data
 
-# 7. Start Services
+# 7. Cleanup old services
+echo "🧹 Removing old services..."
+docker compose -f docker-compose.prod.yml down -v
+
+# 8. Start Services
 echo "🚀 Starting services (building images, this may take a while)..."
 docker compose -f docker-compose.prod.yml up -d --build
 
-# 8. Run Database Migrations
+# 9. Run Database Migrations
 echo "🐘 Running database migrations..."
 docker compose -f docker-compose.prod.yml exec api pnpm --filter database migrate:deploy
 

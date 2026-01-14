@@ -115,7 +115,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
       HostConfig: {
         AutoRemove: true,
         Binds: getSecureBindMounts(),
-        NetworkMode: networkName,
+        NetworkMode: 'helvetia-net',
       },
     });
 
