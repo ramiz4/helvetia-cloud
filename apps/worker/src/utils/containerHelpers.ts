@@ -135,13 +135,10 @@ export async function startContainer(params: {
   const traefikIdentifier = baseName;
 
   // Ensure networks exist
-  console.log(`Ensuring network helvetia-net exists...`);
   await ensureNetworkExists(docker, 'helvetia-net');
   if (networkName !== 'helvetia-net') {
-    console.log(`Ensuring network ${networkName} exists...`);
     await ensureNetworkExists(docker, networkName, projectName);
   }
-  console.log(`Networks verified.`);
 
   // Generate a short 4-char postfix (keeps names cleaner but unique for deployment)
   const postfix = Math.random().toString(36).substring(2, 6);
@@ -183,7 +180,6 @@ export async function startContainer(params: {
     };
   }
 
-  console.log(`Creating container ${containerName} with image ${imageTag}...`);
   const container = await docker.createContainer({
     Image: imageTag,
     name: containerName,
@@ -229,7 +225,6 @@ export async function startContainer(params: {
     },
   });
 
-  console.log(`Starting container ${containerName}...`);
   await container.start();
   console.log(`New container ${containerName} started on network ${networkName}.`);
   onLog?.(`🚀 Started container: ${containerName} on network: ${networkName}\n`);

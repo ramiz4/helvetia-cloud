@@ -51,7 +51,6 @@ export class StaticDeploymentStrategy implements IDeploymentStrategy {
       Entrypoint: ['sleep', '3600'],
       Env: process.env.DOCKER_HOST ? [`DOCKER_HOST=${process.env.DOCKER_HOST}`] : [],
       HostConfig: {
-        AutoRemove: true,
         Binds: getSecureBindMounts(),
         NetworkMode: 'helvetia-net',
       },
