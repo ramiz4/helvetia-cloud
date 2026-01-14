@@ -11,11 +11,14 @@ RUN npm install -g pnpm
 # Copy source code
 COPY . .
 
+ENV CI=true
+
 # Install dependencies based on the lockfile
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
+RUN npm install -g pnpm
 COPY --from=deps /app ./
 
 # Build the dashboard application
