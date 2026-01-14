@@ -25,8 +25,9 @@
     "paths": {
       "database": ["../../packages/database/src/index.ts"],
       "shared": ["../../packages/shared/src/index.ts"]
-    }
+    },
+    "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/*.test.ts", "node_modules"]
+  "exclude": ["node_modules"]
 }

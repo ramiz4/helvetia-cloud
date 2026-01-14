@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Terminal, Server, Shield, Globe, Copy, Check, Info, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Globe, Info, Server, Terminal } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function ServerSetupPage() {
   const [config, setConfig] = useState({
@@ -14,6 +14,8 @@ export default function ServerSetupPage() {
     githubClientSecret: '',
     jwtSecret: 'generate_a_secure_random_string',
     cookieSecret: 'generate_another_secure_random_string',
+    encryptionKey: 'provide_32_char_hex_key',
+    encryptionSalt: 'provide_64_char_hex_salt',
     repoUrl: 'https://github.com/ramizloki/helvetia-cloud.git',
   });
 
@@ -80,6 +82,8 @@ GITHUB_CLIENT_ID=${config.githubClientId}
 GITHUB_CLIENT_SECRET=${config.githubClientSecret}
 JWT_SECRET=${config.jwtSecret}
 COOKIE_SECRET=${config.cookieSecret}
+ENCRYPTION_KEY=${config.encryptionKey}
+ENCRYPTION_SALT=${config.encryptionSalt}
 EOL
 
 # 6. Create Directories for Volumes
@@ -88,6 +92,10 @@ mkdir -p letsencrypt postgres_data prometheus_data grafana_data
 # 7. Start Services
 echo "🚀 Starting services (building images, this may take a while)..."
 docker compose -f docker-compose.prod.yml up -d --build
+
+# 8. Run Database Migrations
+echo "🐘 Running database migrations..."
+docker compose -f docker-compose.prod.yml exec api pnpm --filter database migrate:deploy
 
 echo "✅ Deployment complete!"
 echo "------------------------------------------------"
@@ -137,7 +145,9 @@ echo "------------------------------------------------"
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Domain Name</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Domain Name
+                  </label>
                   <input
                     type="text"
                     value={config.domain}
@@ -148,7 +158,9 @@ echo "------------------------------------------------"
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Admin Email (SSL)</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Admin Email (SSL)
+                  </label>
                   <input
                     type="email"
                     value={config.email}
@@ -159,7 +171,9 @@ echo "------------------------------------------------"
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Repository URL</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Repository URL
+                  </label>
                   <input
                     type="text"
                     value={config.repoUrl}
@@ -170,7 +184,9 @@ echo "------------------------------------------------"
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">Postgres Password</label>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Postgres Password
+                    </label>
                     <input
                       type="password"
                       value={config.postgresPassword}
@@ -179,7 +195,9 @@ echo "------------------------------------------------"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">Grafana Password</label>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Grafana Password
+                    </label>
                     <input
                       type="password"
                       value={config.grafanaPassword}
@@ -191,7 +209,9 @@ echo "------------------------------------------------"
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">GitHub Client ID</label>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      GitHub Client ID
+                    </label>
                     <input
                       type="text"
                       value={config.githubClientId}
@@ -200,11 +220,38 @@ echo "------------------------------------------------"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-1">GitHub Client Secret</label>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      GitHub Client Secret
+                    </label>
                     <input
                       type="password"
                       value={config.githubClientSecret}
                       onChange={(e) => setConfig({ ...config, githubClientSecret: e.target.value })}
+                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Encryption Key (32 char hex)
+                    </label>
+                    <input
+                      type="text"
+                      value={config.encryptionKey}
+                      onChange={(e) => setConfig({ ...config, encryptionKey: e.target.value })}
+                      className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400 mb-1">
+                      Encryption Salt (hex)
+                    </label>
+                    <input
+                      type="text"
+                      value={config.encryptionSalt}
+                      onChange={(e) => setConfig({ ...config, encryptionSalt: e.target.value })}
                       className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                     />
                   </div>
@@ -219,7 +266,11 @@ echo "------------------------------------------------"
                 <ol className="list-decimal list-inside text-sm text-slate-400 space-y-2">
                   <li>Provision a generic Linux VPS (Ubuntu 22.04 recommended).</li>
                   <li>Ensure ports 80 and 443 are open.</li>
-                  <li>Setup DNS A records for <code>{config.domain}</code>, <code>api.{config.domain}</code>, and <code>monitor.{config.domain}</code> pointing to the VPS IP.</li>
+                  <li>
+                    Setup DNS A records for <code>{config.domain}</code>,{' '}
+                    <code>api.{config.domain}</code>, and <code>monitor.{config.domain}</code>{' '}
+                    pointing to the VPS IP.
+                  </li>
                   <li>SSH into your VPS and run the generated script.</li>
                 </ol>
               </div>

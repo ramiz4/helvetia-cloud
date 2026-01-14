@@ -40,6 +40,7 @@ RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Copy built artifacts
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
+COPY --from=builder /app/packages/database/generated-client ./packages/database/generated-client
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
 

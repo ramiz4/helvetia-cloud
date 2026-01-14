@@ -33,12 +33,14 @@ COPY packages/shared/package.json ./packages/shared/package.json
 COPY apps/api/package.json ./apps/api/package.json
 
 # Install only production dependencies
-# We skip the "prepare" scripts to avoid rebuilding packages
+# Plus we need prisma CLI for migrations even in prod
 ENV CI=true
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts && \
+  npm install -g prisma@6.2.1
 
 # Copy built artifacts
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
+COPY --from=builder /app/packages/database/generated-client ./packages/database/generated-client
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 

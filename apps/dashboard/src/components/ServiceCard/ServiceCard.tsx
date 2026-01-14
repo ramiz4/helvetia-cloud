@@ -1,5 +1,6 @@
 'use client';
 
+import { PLATFORM_DOMAIN } from '@/lib/env';
 import type { Service } from '@/types/service';
 import {
   Check,
@@ -71,8 +72,8 @@ export function ServiceCard({
 
   const serviceUrl =
     service.projectName && service.environmentName
-      ? `http://${service.username}.${service.projectName}.${service.environmentName}.${service.name}.localhost`
-      : `http://${service.name}.localhost`;
+      ? `http://${service.username}.${service.projectName}.${service.environmentName}.${service.name}.${PLATFORM_DOMAIN}`
+      : `http://${service.name}.${PLATFORM_DOMAIN}`;
 
   return (
     <div className="group relative p-8 rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 hover:border-indigo-500/30 transition-all duration-700 shadow-2xl hover:shadow-indigo-500/10 flex flex-col h-full overflow-hidden">

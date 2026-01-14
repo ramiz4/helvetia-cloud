@@ -1,7 +1,17 @@
 'use client';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { Activity, BarChart3, Flag, Lock, Server, Settings, Shield, Users, Zap } from 'lucide-react';
+import {
+  Activity,
+  BarChart3,
+  Flag,
+  Lock,
+  Server,
+  Settings,
+  Shield,
+  Users,
+  Zap,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
