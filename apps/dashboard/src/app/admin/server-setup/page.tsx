@@ -16,7 +16,8 @@ export default function ServerSetupPage() {
     cookieSecret: 'generate_another_secure_random_string',
     encryptionKey: 'provide_32_char_hex_key',
     encryptionSalt: 'provide_64_char_hex_salt',
-    repoUrl: 'https://github.com/ramizloki/helvetia-cloud.git',
+    repoUrl: 'https://github.com/ramiz4/helvetia-cloud.git',
+    branch: 'feature/deployment-setup',
   });
 
   const [copied, setCopied] = useState(false);
@@ -62,11 +63,13 @@ cd $INSTALL_DIR
 
 # 4. Clone Repository
 if [ -d ".git" ]; then
-    echo "🔄 Repository exists. Pulling latest changes..."
-    git pull
+    echo "🔄 Repository exists. Pulling latest changes from ${config.branch}..."
+    git fetch origin ${config.branch}
+    git checkout ${config.branch}
+    git pull origin ${config.branch}
 else
-    echo "⬇️ Cloning repository..."
-    git clone ${config.repoUrl} .
+    echo "⬇️ Cloning repository (branch: ${config.branch})..."
+    git clone -b ${config.branch} ${config.repoUrl} .
 fi
 
 # 5. Create .env file
@@ -178,6 +181,18 @@ echo "------------------------------------------------"
                     type="text"
                     value={config.repoUrl}
                     onChange={(e) => setConfig({ ...config, repoUrl: e.target.value })}
+                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Repository Branch
+                  </label>
+                  <input
+                    type="text"
+                    value={config.branch}
+                    onChange={(e) => setConfig({ ...config, branch: e.target.value })}
                     className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                   />
                 </div>

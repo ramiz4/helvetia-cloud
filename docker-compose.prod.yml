@@ -99,6 +99,8 @@ services:
       DOCKER_HOST: tcp://docker-socket-proxy:2375
       API_URL: http://api:3001
       DASHBOARD_URL: https://${DOMAIN_NAME}
+      HELVETIA_ADMIN: ${HELVETIA_ADMIN}
+      HELVETIA_ADMIN_PASSWORD: ${HELVETIA_ADMIN_PASSWORD}
     depends_on:
       - postgres
       - redis
