@@ -121,6 +121,9 @@ ACME_EMAIL=${config.email}
 POSTGRES_PASSWORD=${escapeEnv(config.postgresPassword)}
 POSTGRES_USER=helvetia
 POSTGRES_DB=helvetia
+DATABASE_URL=${escapeEnv(
+    `postgresql://helvetia:${config.postgresPassword}@postgres:5432/helvetia?schema=public`,
+  )}
 GRAFANA_PASSWORD=${escapeEnv(config.grafanaPassword)}
 GITHUB_CLIENT_ID=${config.githubClientId}
 GITHUB_CLIENT_SECRET=${escapeEnv(config.githubClientSecret)}
@@ -167,7 +170,7 @@ echo "------------------------------------------------"
 export const generateRandomString = (length: number, hex = false) => {
   const chars = hex
     ? '0123456789abcdef'
-    : 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    : 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!^*()-_=+';
   const array = new Uint8Array(length);
   if (typeof window !== 'undefined') {
     window.crypto.getRandomValues(array);
