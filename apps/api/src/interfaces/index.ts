@@ -28,6 +28,7 @@ export {
 } from './IRefreshTokenRepository';
 export {
   IServiceRepository,
+  RepoUrlCondition,
   Service,
   ServiceCreateInput,
   ServiceUpdateInput,

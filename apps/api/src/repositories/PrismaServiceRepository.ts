@@ -1,6 +1,12 @@
 import { Prisma, PrismaClient } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { IServiceRepository, Service, ServiceCreateInput, ServiceUpdateInput } from '../interfaces';
+import {
+  IServiceRepository,
+  type RepoUrlCondition,
+  Service,
+  ServiceCreateInput,
+  ServiceUpdateInput,
+} from '../interfaces';
 
 /**
  * Prisma implementation of IServiceRepository
@@ -125,15 +131,15 @@ export class PrismaServiceRepository implements IServiceRepository {
 
   async findByIdAndUserIdWithEnvironment(id: string, userId: string): Promise<Service | null> {
     return this.prisma.service.findFirst({
-      where: { id, userId },
+      where: { id, userId, deletedAt: null },
       include: { environment: { include: { project: true } } },
     });
   }
 
-  async findBaseServiceByRepoUrl(repoUrlCondition: unknown): Promise<Service | null> {
+  async findBaseServiceByRepoUrl(repoUrlCondition: RepoUrlCondition): Promise<Service | null> {
     return this.prisma.service.findFirst({
       where: {
-        ...(repoUrlCondition as object),
+        ...repoUrlCondition,
         isPreview: false,
         deletedAt: null,
       },
@@ -142,22 +148,25 @@ export class PrismaServiceRepository implements IServiceRepository {
 
   async findPreviewByPrNumberAndRepoUrl(
     prNumber: number,
-    repoUrlCondition: unknown,
+    repoUrlCondition: RepoUrlCondition,
   ): Promise<Service | null> {
     return this.prisma.service.findFirst({
       where: {
         prNumber,
-        ...(repoUrlCondition as object),
+        ...repoUrlCondition,
         isPreview: true,
         deletedAt: null,
       },
     });
   }
 
-  async findByRepoUrlAndBranch(repoUrlCondition: unknown, branch: string): Promise<Service[]> {
+  async findByRepoUrlAndBranch(
+    repoUrlCondition: RepoUrlCondition,
+    branch: string,
+  ): Promise<Service[]> {
     return this.prisma.service.findMany({
       where: {
-        ...(repoUrlCondition as object),
+        ...repoUrlCondition,
         branch,
         isPreview: false,
         deletedAt: null,
