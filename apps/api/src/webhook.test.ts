@@ -54,6 +54,8 @@ vi.mock('database', () => {
         findMany: vi.fn(),
         findFirst: vi.fn(),
         findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
         upsert: vi.fn(),
         delete: vi.fn(),
       },
@@ -74,6 +76,9 @@ vi.mock('database', () => {
       },
     },
     PrismaClient: vi.fn(),
+    Prisma: {
+      JsonNull: 'JsonNull',
+    },
   };
 });
 
@@ -320,8 +325,10 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
         branch: 'feature-branch',
       };
 
-      mockPrisma.service.findFirst.mockResolvedValue(mockBaseService);
-      mockPrisma.service.upsert.mockResolvedValue(mockPreviewService);
+      mockPrisma.service.findFirst
+        .mockResolvedValueOnce(mockBaseService) // for findBaseServiceByRepoUrl
+        .mockResolvedValueOnce(null); // for existingService (findByNameAndEnvironment)
+      mockPrisma.service.create.mockResolvedValue(mockPreviewService);
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.deployment.create.mockResolvedValue({ id: 'deployment-1' });
 
@@ -387,8 +394,10 @@ describe('GitHub Webhook - Repo URL Normalization', () => {
         envVars: {},
       };
 
-      mockPrisma.service.findFirst.mockResolvedValue(mockBaseService);
-      mockPrisma.service.upsert.mockResolvedValue({ id: 'service-2' });
+      mockPrisma.service.findFirst
+        .mockResolvedValueOnce(mockBaseService) // for findBaseServiceByRepoUrl
+        .mockResolvedValueOnce(null); // for existingService (findByNameAndEnvironment)
+      mockPrisma.service.create.mockResolvedValue({ id: 'service-2', name: 'test-service-pr-123' });
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.deployment.create.mockResolvedValue({ id: 'deployment-1' });
 
