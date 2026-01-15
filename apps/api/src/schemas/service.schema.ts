@@ -162,5 +162,16 @@ export const ServiceUpdateSchema = z.object({
   environmentId: z.string().uuid('Invalid environment ID').optional(),
 });
 
+/**
+ * Validation schema for toggling service delete protection
+ */
+export const ProtectionToggleSchema = z.object({
+  deleteProtected: z.boolean({
+    required_error: 'deleteProtected field is required',
+    invalid_type_error: 'deleteProtected must be a boolean',
+  }),
+});
+
 export type ServiceCreateInput = z.infer<typeof ServiceCreateSchema>;
 export type ServiceUpdateInput = z.infer<typeof ServiceUpdateSchema>;
+export type ProtectionToggleInput = z.infer<typeof ProtectionToggleSchema>;

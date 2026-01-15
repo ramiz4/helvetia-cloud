@@ -343,4 +343,185 @@ describe('ServiceController', () => {
       expect(mockContainerOrchestrator.listContainers).toHaveBeenCalled();
     });
   });
+
+  describe('toggleProtection', () => {
+    beforeEach(() => {
+      mockRequest.params = { id: 'service-1' };
+      mockRequest.body = { deleteProtected: true };
+    });
+
+    it('should successfully toggle protection with valid boolean true', async () => {
+      vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
+      vi.mocked(mockServiceRepo.update).mockResolvedValue({
+        ...mockService,
+        deleteProtected: true,
+      });
+
+      const result = await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(result).toEqual({
+        success: true,
+        service: { ...mockService, deleteProtected: true },
+      });
+      expect(mockServiceRepo.update).toHaveBeenCalledWith('service-1', { deleteProtected: true });
+    });
+
+    it('should successfully toggle protection with valid boolean false', async () => {
+      mockRequest.body = { deleteProtected: false };
+      vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
+      vi.mocked(mockServiceRepo.update).mockResolvedValue({
+        ...mockService,
+        deleteProtected: false,
+      });
+
+      const result = await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(result).toEqual({
+        success: true,
+        service: { ...mockService, deleteProtected: false },
+      });
+      expect(mockServiceRepo.update).toHaveBeenCalledWith('service-1', { deleteProtected: false });
+    });
+
+    it('should return 400 when deleteProtected is missing', async () => {
+      mockRequest.body = {};
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation failed',
+          details: expect.objectContaining({
+            fieldErrors: expect.objectContaining({
+              deleteProtected: expect.arrayContaining([
+                expect.stringContaining('expected boolean'),
+              ]),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should return 400 when deleteProtected is a string', async () => {
+      mockRequest.body = { deleteProtected: 'true' };
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation failed',
+          details: expect.objectContaining({
+            fieldErrors: expect.objectContaining({
+              deleteProtected: expect.arrayContaining([
+                expect.stringContaining('expected boolean'),
+              ]),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should return 400 when deleteProtected is a number', async () => {
+      mockRequest.body = { deleteProtected: 1 };
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation failed',
+          details: expect.objectContaining({
+            fieldErrors: expect.objectContaining({
+              deleteProtected: expect.arrayContaining([
+                expect.stringContaining('expected boolean'),
+              ]),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should return 400 when deleteProtected is null', async () => {
+      mockRequest.body = { deleteProtected: null };
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation failed',
+          details: expect.objectContaining({
+            fieldErrors: expect.objectContaining({
+              deleteProtected: expect.arrayContaining([
+                expect.stringContaining('expected boolean'),
+              ]),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should return 400 when deleteProtected is undefined', async () => {
+      mockRequest.body = { deleteProtected: undefined };
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation failed',
+        }),
+      );
+    });
+
+    it('should return 401 when user is not authenticated', async () => {
+      mockRequest.user = undefined;
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(401);
+      expect(mockReply.send).toHaveBeenCalledWith({ error: 'User not authenticated' });
+    });
+
+    it('should return 404 when service does not exist', async () => {
+      vi.mocked(mockServiceRepo.findById).mockResolvedValue(null);
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(404);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        error: 'Service not found or unauthorized',
+      });
+    });
+
+    it('should return 404 when service belongs to another user', async () => {
+      vi.mocked(mockServiceRepo.findById).mockResolvedValue({
+        ...mockService,
+        userId: 'different-user',
+      });
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(404);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        error: 'Service not found or unauthorized',
+      });
+    });
+
+    it('should return 404 when service is soft-deleted', async () => {
+      vi.mocked(mockServiceRepo.findById).mockResolvedValue({
+        ...mockService,
+        deletedAt: new Date(),
+      });
+
+      await controller.toggleProtection(mockRequest as any, mockReply as any);
+
+      expect(mockReply.status).toHaveBeenCalledWith(404);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        error: 'Service not found or unauthorized',
+      });
+    });
+  });
 });
