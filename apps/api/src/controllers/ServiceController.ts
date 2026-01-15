@@ -21,6 +21,13 @@ import { determineServiceStatus } from '../utils/helpers/status.helper';
 import { validateToken } from '../utils/tokenValidation';
 
 /**
+ * Type alias for container orchestrator with Docker instance access
+ */
+type IContainerOrchestratorWithDocker = IContainerOrchestrator & {
+  getDockerInstance: () => Docker;
+};
+
+/**
  * ServiceController
  * Handles all service-related HTTP endpoints
  * Thin controller layer that delegates to repositories and utility functions
@@ -37,6 +44,17 @@ export class ServiceController {
     @inject(Symbol.for('IContainerOrchestrator'))
     private containerOrchestrator: IContainerOrchestrator,
   ) {}
+
+  /**
+   * Get Docker instance from container orchestrator or return undefined
+   * This is needed for metrics collection which requires direct Docker API access
+   */
+  private getDockerInstance(): Docker | undefined {
+    if ('getDockerInstance' in this.containerOrchestrator) {
+      return (this.containerOrchestrator as IContainerOrchestratorWithDocker).getDockerInstance();
+    }
+    return undefined;
+  }
 
   /**
    * GET /services
@@ -511,18 +529,17 @@ export class ServiceController {
 
           // Get the underlying Docker instance for metrics collection
           // getServiceMetrics still needs direct Docker access for stats API
-          const docker =
-            'getDockerInstance' in this.containerOrchestrator
-              ? (
-                  this.containerOrchestrator as IContainerOrchestrator & {
-                    getDockerInstance: () => Docker;
-                  }
-                ).getDockerInstance()
-              : undefined;
+          const docker = this.getDockerInstance();
+
+          // Fetch containers once and pass to all metrics calls for better performance
+          let containerList;
+          if (docker) {
+            containerList = await docker.listContainers({ all: true });
+          }
 
           const metricsPromises = services.map(async (s) => ({
             id: s.id,
-            metrics: await getServiceMetrics(s.id, docker, undefined, s),
+            metrics: await getServiceMetrics(s.id, docker, containerList, s),
           }));
 
           const results = await Promise.all(metricsPromises);

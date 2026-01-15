@@ -17,6 +17,13 @@ import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { validateToken } from '../utils/tokenValidation';
 
 /**
+ * Type alias for container orchestrator with Docker instance access
+ */
+type IContainerOrchestratorWithDocker = IContainerOrchestrator & {
+  getDockerInstance: () => Docker;
+};
+
+/**
  * DeploymentController
  * Handles all deployment-related HTTP endpoints
  * Thin controller layer that delegates to DeploymentOrchestratorService and repositories
@@ -33,6 +40,18 @@ export class DeploymentController {
     @inject(Symbol.for('IContainerOrchestrator'))
     private containerOrchestrator: IContainerOrchestrator,
   ) {}
+
+  /**
+   * Get Docker instance from container orchestrator or create a new one
+   * This is needed for operations that require direct Docker API access
+   */
+  private async getDockerInstance(): Promise<Docker> {
+    if ('getDockerInstance' in this.containerOrchestrator) {
+      return (this.containerOrchestrator as IContainerOrchestratorWithDocker).getDockerInstance();
+    }
+    const DockerLib = (await import('dockerode')).default;
+    return new DockerLib();
+  }
 
   /**
    * POST /services/:id/deploy
@@ -102,14 +121,7 @@ export class DeploymentController {
     }
 
     // Get underlying Docker instance for container management operations
-    const docker =
-      'getDockerInstance' in this.containerOrchestrator
-        ? (
-            this.containerOrchestrator as IContainerOrchestrator & {
-              getDockerInstance: () => Docker;
-            }
-          ).getDockerInstance()
-        : (await import('dockerode')).default && new (await import('dockerode')).default();
+    const docker = await this.getDockerInstance();
 
     try {
       // Find existing containers for this service
@@ -234,14 +246,7 @@ export class DeploymentController {
     }
 
     // Get underlying Docker instance for container management operations
-    const docker =
-      'getDockerInstance' in this.containerOrchestrator
-        ? (
-            this.containerOrchestrator as IContainerOrchestrator & {
-              getDockerInstance: () => Docker;
-            }
-          ).getDockerInstance()
-        : (await import('dockerode')).default && new (await import('dockerode')).default();
+    const docker = await this.getDockerInstance();
 
     try {
       // Find existing containers for this service
