@@ -158,7 +158,10 @@ export interface IServiceRepository {
   /**
    * Find preview service by PR number and repo URL
    */
-  findPreviewByPrNumberAndRepoUrl(prNumber: number, repoUrlCondition: unknown): Promise<Service | null>;
+  findPreviewByPrNumberAndRepoUrl(
+    prNumber: number,
+    repoUrlCondition: unknown,
+  ): Promise<Service | null>;
 
   /**
    * Find services by repo URL and branch (for webhooks)
