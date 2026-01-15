@@ -61,6 +61,7 @@ describe('ServiceController', () => {
   let mockRequest: any;
   let mockReply: any;
   let mockServiceManagement: any;
+  let mockContainerOrchestrator: any;
 
   const mockService = {
     id: 'service-1',
@@ -127,6 +128,37 @@ describe('ServiceController', () => {
       isServiceNameAvailable: vi.fn(),
     };
 
+    mockContainerOrchestrator = {
+      listContainers: vi.fn().mockResolvedValue([
+        {
+          id: 'container-1',
+          name: 'test-container',
+          state: 'running',
+          status: 'Up 5 minutes',
+          image: 'test:latest',
+          labels: { 'helvetia.serviceId': 'service-1' },
+        },
+      ]),
+      getContainer: vi.fn().mockResolvedValue({
+        inspect: vi.fn().mockResolvedValue({
+          State: {
+            Running: true,
+            Health: { Status: 'healthy' },
+            StartedAt: '2024-01-01T00:00:00Z',
+            ExitCode: 0,
+          },
+        }),
+      }),
+      inspectContainer: vi.fn().mockResolvedValue({
+        State: {
+          Running: true,
+          Health: { Status: 'healthy' },
+          StartedAt: '2024-01-01T00:00:00Z',
+          ExitCode: 0,
+        },
+      }),
+    };
+
     mockRequest = {
       params: {},
       body: {},
@@ -152,6 +184,7 @@ describe('ServiceController', () => {
       mockServiceRepo,
       mockDeploymentRepo,
       mockServiceManagement as any,
+      mockContainerOrchestrator,
     );
   });
 
@@ -260,6 +293,49 @@ describe('ServiceController', () => {
           'Content-Type': 'text/event-stream',
         }),
       );
+    });
+  });
+
+  describe('Container Orchestrator Reuse', () => {
+    it('should reuse injected container orchestrator across multiple calls', async () => {
+      vi.mocked(mockServiceRepo.findByUserId).mockResolvedValue([mockService]);
+      vi.mocked(mockDeploymentRepo.findByServiceId).mockResolvedValue([mockDeployment]);
+
+      // Call getAllServices multiple times
+      await controller.getAllServices(mockRequest as any);
+      await controller.getAllServices(mockRequest as any);
+      await controller.getAllServices(mockRequest as any);
+
+      // Verify that the same orchestrator instance was used
+      // (listContainers should be called 3 times on the same instance)
+      expect(mockContainerOrchestrator.listContainers).toHaveBeenCalledTimes(3);
+    });
+
+    it('should use container orchestrator in getServiceById', async () => {
+      mockRequest.params = { id: 'service-1' };
+      vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
+      vi.mocked(mockDeploymentRepo.findByServiceId).mockResolvedValue([mockDeployment]);
+
+      await controller.getServiceById(mockRequest as any, mockReply as any);
+
+      // Verify container orchestrator was used instead of creating new Docker instance
+      expect(mockContainerOrchestrator.listContainers).toHaveBeenCalled();
+    });
+
+    it('should use container orchestrator in updateService', async () => {
+      mockRequest.params = { id: 'service-1' };
+      mockRequest.body = { name: 'updated-service' };
+      vi.mocked(mockServiceRepo.findById).mockResolvedValue(mockService);
+      vi.mocked(mockServiceRepo.update).mockResolvedValue({
+        ...mockService,
+        name: 'updated-service',
+      });
+      vi.mocked(mockDeploymentRepo.findByServiceId).mockResolvedValue([mockDeployment]);
+
+      await controller.updateService(mockRequest as any, mockReply as any);
+
+      // Verify container orchestrator was used
+      expect(mockContainerOrchestrator.listContainers).toHaveBeenCalled();
     });
   });
 });

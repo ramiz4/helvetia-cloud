@@ -1,4 +1,5 @@
 import { prisma } from 'database';
+import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
@@ -503,8 +504,6 @@ export class ServiceController {
             return;
           }
 
-          const containers = await this.containerOrchestrator.listContainers({ all: true });
-
           const services = await prisma.service.findMany({
             where: { userId: user.id, deletedAt: null },
             select: { id: true, name: true, type: true, status: true },
@@ -514,7 +513,11 @@ export class ServiceController {
           // getServiceMetrics still needs direct Docker access for stats API
           const docker =
             'getDockerInstance' in this.containerOrchestrator
-              ? (this.containerOrchestrator as any).getDockerInstance()
+              ? (
+                  this.containerOrchestrator as IContainerOrchestrator & {
+                    getDockerInstance: () => Docker;
+                  }
+                ).getDockerInstance()
               : undefined;
 
           const metricsPromises = services.map(async (s) => ({

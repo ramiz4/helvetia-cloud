@@ -66,6 +66,7 @@ describe('DeploymentController', () => {
   let mockDeploymentService: DeploymentOrchestratorService;
   let mockServiceRepo: IServiceRepository;
   let mockDeploymentRepo: IDeploymentRepository;
+  let mockContainerOrchestrator: any;
   let mockRequest: Partial<FastifyRequest>;
   let mockReply: Partial<FastifyReply>;
 
@@ -139,10 +140,47 @@ describe('DeploymentController', () => {
       getDeploymentCount: vi.fn(),
     } as any;
 
+    mockContainerOrchestrator = {
+      listContainers: vi.fn().mockResolvedValue([
+        {
+          id: 'container-1',
+          name: 'test-container',
+          state: 'running',
+          status: 'Up 5 minutes',
+          image: 'test:latest',
+          labels: { 'helvetia.serviceId': 'service-1' },
+        },
+      ]),
+      getContainer: vi.fn().mockReturnValue({
+        inspect: vi.fn().mockResolvedValue({
+          Config: {
+            Image: 'test-image:latest',
+          },
+        }),
+        stop: vi.fn().mockResolvedValue(undefined),
+        remove: vi.fn().mockResolvedValue(undefined),
+      }),
+      getDockerInstance: vi.fn().mockReturnValue({
+        getContainer: vi.fn().mockReturnValue({
+          inspect: vi.fn().mockResolvedValue({
+            Config: {
+              Image: 'test-image:latest',
+            },
+          }),
+          stop: vi.fn().mockResolvedValue(undefined),
+          remove: vi.fn().mockResolvedValue(undefined),
+        }),
+        createContainer: vi.fn().mockResolvedValue({
+          start: vi.fn().mockResolvedValue(undefined),
+        }),
+      }),
+    };
+
     controller = new DeploymentController(
       mockDeploymentService,
       mockServiceRepo,
       mockDeploymentRepo,
+      mockContainerOrchestrator,
     );
 
     mockRequest = {

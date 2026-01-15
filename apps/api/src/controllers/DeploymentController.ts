@@ -1,5 +1,6 @@
 import '../types/fastify';
 
+import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { withStatusLock } from 'shared';
 import { inject, injectable } from 'tsyringe';
@@ -103,8 +104,12 @@ export class DeploymentController {
     // Get underlying Docker instance for container management operations
     const docker =
       'getDockerInstance' in this.containerOrchestrator
-        ? (this.containerOrchestrator as any).getDockerInstance()
-        : (await import('dockerode')).default && new ((await import('dockerode')).default)();
+        ? (
+            this.containerOrchestrator as IContainerOrchestrator & {
+              getDockerInstance: () => Docker;
+            }
+          ).getDockerInstance()
+        : (await import('dockerode')).default && new (await import('dockerode')).default();
 
     try {
       // Find existing containers for this service
@@ -231,8 +236,12 @@ export class DeploymentController {
     // Get underlying Docker instance for container management operations
     const docker =
       'getDockerInstance' in this.containerOrchestrator
-        ? (this.containerOrchestrator as any).getDockerInstance()
-        : (await import('dockerode')).default && new ((await import('dockerode')).default)();
+        ? (
+            this.containerOrchestrator as IContainerOrchestrator & {
+              getDockerInstance: () => Docker;
+            }
+          ).getDockerInstance()
+        : (await import('dockerode')).default && new (await import('dockerode')).default();
 
     try {
       // Find existing containers for this service
