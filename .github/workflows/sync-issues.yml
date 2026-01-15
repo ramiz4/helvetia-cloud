@@ -14,8 +14,8 @@ jobs:
     # Only run if not triggered by the bot itself (to prevent infinite loops)
     if: github.actor != 'github-actions[bot]'
     permissions:
-      contents: write  # To commit updated github_issues.json
-      issues: write    # To create/update issues
+      contents: write # To commit updated github_issues.json
+      issues: write # To create/update issues
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
 
       # Note: pnpm and dependencies are not required as the sync script
       # only uses Node.js built-in modules (fs, path, child_process)
-      
+
       - name: Sync issues to GitHub
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
