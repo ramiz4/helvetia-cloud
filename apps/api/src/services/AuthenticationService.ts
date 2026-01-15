@@ -110,12 +110,50 @@ export class AuthenticationService {
       },
     );
 
-    // TODO: The organization creation automatically creates a personal organization for GitHub authenticated users, but this happens on every GitHub authentication (not just first-time). This could potentially create multiple personal organizations if the check fails or if the user's organizations are not properly loaded. Consider adding a transaction or more robust duplicate prevention.
-    // Check if user has organizations, if not create a personal one
-    const userOrgs = await this.organizationService.getUserOrganizations(user.id);
-    if (userOrgs.length === 0) {
-      await this.organizationService.createOrganization(`${user.username}'s Personal`, user.id);
-    }
+    // Ensure user has a personal organization within a transaction to prevent race conditions
+    // This handles concurrent authentication requests safely
+    const { prisma } = await import('database');
+    await prisma.$transaction(async (tx: typeof prisma) => {
+      // Check if user has any organizations within the transaction
+      const existingOrgs = await tx.organization.findMany({
+        where: {
+          members: {
+            some: {
+              userId: user.id,
+            },
+          },
+        },
+      });
+
+      // Only create if no organizations exist
+      if (existingOrgs.length === 0) {
+        // Generate slug for personal organization
+        const slug = `${user.username.toLowerCase().replace(/[^\w-]/g, '-')}-personal`;
+
+        // Check if slug exists and generate unique one if needed
+        const existingSlug = await tx.organization.findUnique({
+          where: { slug },
+        });
+
+        const finalSlug = existingSlug
+          ? `${slug}-${Math.random().toString(36).substring(2, 7)}`
+          : slug;
+
+        // Create organization with member in a single operation
+        await tx.organization.create({
+          data: {
+            name: `${user.username}'s Personal`,
+            slug: finalSlug,
+            members: {
+              create: {
+                userId: user.id,
+                role: 'OWNER' as Role,
+              },
+            },
+          },
+        });
+      }
+    });
 
     // Generate JWT access token (short-lived)
     const jwtToken = jwtSign({ id: user.id, username: user.username, role: user.role });

@@ -10,6 +10,29 @@ import { AuthenticationService } from './AuthenticationService';
 import { OrganizationService } from './OrganizationService';
 
 vi.mock('axios');
+vi.mock('database', async () => {
+  const actual = await vi.importActual('database');
+  return {
+    ...actual,
+    prisma: {
+      $transaction: vi.fn(async (callback) => {
+        // Mock transaction context
+        const mockTx = {
+          organization: {
+            findMany: vi.fn().mockResolvedValue([]),
+            findUnique: vi.fn().mockResolvedValue(null),
+            create: vi.fn().mockResolvedValue({
+              id: 'org-1',
+              name: 'Personal Org',
+              slug: 'personal-org',
+            }),
+          },
+        };
+        return callback(mockTx);
+      }),
+    },
+  };
+});
 vi.mock('../utils/crypto', () => ({
   encrypt: vi.fn((token: string) => `encrypted_${token}`),
   decrypt: vi.fn((token: string) => token.replace('encrypted_', '')),
