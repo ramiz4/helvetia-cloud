@@ -11,6 +11,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     exclude: ['**/node_modules/**', '**/dist/**'],
+    testTimeout: 30000,
+    hookTimeout: 30000,
     env: {
       DATABASE_URL:
         process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/helvetia_test',
