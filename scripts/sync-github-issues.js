@@ -27,7 +27,9 @@ const { spawnSync } = require('child_process');
 
 /**
  * Get the GitHub token from environment variables.
- * gh CLI automatically uses GH_TOKEN or GITHUB_TOKEN if set.
+ * The gh CLI automatically uses GH_TOKEN or GITHUB_TOKEN if set in the environment.
+ * This function is used to detect which authentication method is being used.
+ * @see https://cli.github.com/manual/gh_help_environment
  */
 function getGitHubToken() {
   return process.env.GH_TOKEN || process.env.GITHUB_TOKEN || null;
@@ -324,8 +326,16 @@ async function main() {
 
     if (token) {
       log.info('Using token from GH_TOKEN or GITHUB_TOKEN environment variable.');
+      // Validate token works by checking auth status
+      // gh CLI automatically uses GH_TOKEN/GITHUB_TOKEN when set
+      try {
+        gh(['auth', 'status']);
+      } catch {
+        log.error('Token validation failed. Please check your GH_TOKEN or GITHUB_TOKEN is valid.');
+        process.exit(1);
+      }
     } else {
-      // Fallback to checking gh auth status
+      // Fallback to checking gh auth status for interactive login
       try {
         gh(['auth', 'status']);
         log.info('Using existing gh CLI authentication.');
