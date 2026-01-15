@@ -408,7 +408,7 @@
     "title": "[HIGH] Insecure Password Hashing Using SHA-256 Without Salt",
     "labels": ["P1", "security", "bug"],
     "body": "The admin user password hashing uses SHA-256 without salt, which is cryptographically weak and vulnerable to rainbow table attacks.\n\n**Locations:**\n- `apps/api/src/services/InitializationService.ts:111-113`\n- `apps/api/src/services/AuthenticationService.ts:40`\n\n**Current Code:**\n\n```typescript\nprivate hashPassword(password: string): string {\n  // TODO: In a real production app, use bcrypt or argon2 with a proper salt\n  return crypto.createHash('sha256').update(password).digest('hex');\n}\n```\n\n**Security Impact:**\n\n- Passwords vulnerable to rainbow table attacks\n- No salt means identical passwords have identical hashes\n- SHA-256 is too fast for password hashing (allows brute-force attacks)\n- Violates OWASP password storage guidelines\n\n**Recommended Fix:**\n\n```typescript\nimport bcrypt from 'bcrypt';\n\nconst SALT_ROUNDS = 12;\n\nasync hashPassword(password: string): Promise<string> {\n  return bcrypt.hash(password, SALT_ROUNDS);\n}\n\nasync verifyPassword(password: string, hash: string): Promise<boolean> {\n  return bcrypt.compare(password, hash);\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Install bcrypt or argon2 dependency\n- [ ] Implement proper password hashing with salt\n- [ ] Update InitializationService to use secure hashing\n- [ ] Update AuthenticationService to use secure verification\n- [ ] Create migration path for existing passwords\n- [ ] Add tests for password hashing\n- [ ] Document password requirements",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 183,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/183"
@@ -417,7 +417,7 @@
     "title": "[HIGH] Duplicate Docker Client Instantiation on Every Request",
     "labels": ["P1", "performance", "bug"],
     "body": "Docker client is instantiated inside controller methods on every request, creating performance overhead and potential resource leaks.\n\n**Locations:**\n- `apps/api/src/controllers/ServiceController.ts:62-64, 102-104, 272-274, 386-387`\n- `apps/api/src/controllers/DeploymentController.ts:100-101, 225-226`\n\n**Current Code:**\n\n```typescript\nasync getAllServices(request: FastifyRequest) {\n  // ...\n  const Docker = (await import('dockerode')).default;\n  const docker = new Docker(); // Created on every request!\n  // ...\n}\n```\n\n**Performance Impact:**\n\n- Unnecessary dynamic imports on every request\n- Creates new Docker client connections repeatedly\n- Memory overhead from multiple client instances\n- Potential connection pool exhaustion\n\n**Recommended Fix:**\n\n```typescript\n// Inject Docker client via DI container\n@injectable()\nexport class ServiceController {\n  constructor(\n    @inject(Symbol.for('IContainerOrchestrator'))\n    private containerOrchestrator: IContainerOrchestrator,\n    // ...\n  ) {}\n\n  async getAllServices(request: FastifyRequest) {\n    const containers = await this.containerOrchestrator.listContainers({ all: true });\n    // ...\n  }\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Remove dynamic Docker imports from controllers\n- [ ] Use injected IContainerOrchestrator throughout controllers\n- [ ] Ensure Docker client is singleton in DI container\n- [ ] Add tests to verify Docker client reuse\n- [ ] Measure performance improvement",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 184,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/184"
@@ -426,7 +426,7 @@
     "title": "[MEDIUM] Direct Prisma Imports in Controllers Bypass DI",
     "labels": ["P2", "architecture", "refactoring"],
     "body": "Several controllers import Prisma directly instead of using injected repositories, breaking dependency injection principles and making testing difficult.\n\n**Locations:**\n- `apps/api/src/controllers/ServiceController.ts:380-381, 419-420, 516-519`\n- `apps/api/src/controllers/DeploymentController.ts:84-85, 219-220`\n- `apps/api/src/controllers/AuthController.ts:235-238`\n\n**Current Code:**\n\n```typescript\nasync getServiceHealth(request: FastifyRequest, reply: FastifyReply) {\n  // ...\n  const { prisma } = await import('database');\n  const service = await prisma.service.findFirst({\n    where: { id, userId: user.id, deletedAt: null },\n  });\n  // ...\n}\n```\n\n**Issues:**\n\n- Breaks dependency injection pattern\n- Makes unit testing difficult (can't mock Prisma)\n- Inconsistent with the rest of the codebase\n- Dynamic imports add unnecessary overhead\n\n**Recommended Fix:**\n\n```typescript\nasync getServiceHealth(request: FastifyRequest, reply: FastifyReply) {\n  // ...\n  const service = await this.serviceRepository.findById(id);\n  if (!service || service.userId !== user.id || service.deletedAt) {\n    return reply.status(404).send({ error: 'Service not found' });\n  }\n  // ...\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Remove all direct Prisma imports from controllers\n- [ ] Use injected repositories consistently\n- [ ] Add missing repository methods if needed\n- [ ] Update unit tests to use mocked repositories\n- [ ] Document DI pattern in codebase guidelines",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 185,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/185"
