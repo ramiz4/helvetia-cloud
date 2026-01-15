@@ -34,7 +34,7 @@ describeIf('AuthenticationService - Concurrent Organization Creation', () => {
     userRepo = new PrismaUserRepository(prisma);
     orgRepo = new PrismaOrganizationRepository(prisma);
     orgService = new OrganizationService(orgRepo);
-    authService = new AuthenticationService(userRepo, orgService);
+    authService = new AuthenticationService(userRepo, orgService, prisma);
 
     // Clean up any existing test data
     await prisma.organizationMember.deleteMany({
@@ -62,10 +62,18 @@ describeIf('AuthenticationService - Concurrent Organization Creation', () => {
   });
 
   it('should handle concurrent authentication requests without creating duplicate organizations', async () => {
-    // Mock GitHub OAuth responses
-    vi.mocked(axios.post).mockResolvedValue({
-      data: { access_token: 'test_github_token', error: null },
-    });
+    // Mock GitHub OAuth responses with different tokens for each request
+    vi.mocked(axios.post)
+      .mockResolvedValueOnce({
+        data: { access_token: 'test_github_token_1', error: null },
+      })
+      .mockResolvedValueOnce({
+        data: { access_token: 'test_github_token_2', error: null },
+      })
+      .mockResolvedValueOnce({
+        data: { access_token: 'test_github_token_3', error: null },
+      });
+
     vi.mocked(axios.get).mockResolvedValue({
       data: {
         id: parseInt(testGithubId, 10),

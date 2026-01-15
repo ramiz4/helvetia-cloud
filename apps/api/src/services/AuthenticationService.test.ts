@@ -56,6 +56,7 @@ describe('AuthenticationService', () => {
   let service: AuthenticationService;
   let mockUserRepo: IUserRepository;
   let mockOrgService: OrganizationService;
+  let mockPrisma: any;
 
   const mockUser = {
     id: 'user-1',
@@ -90,7 +91,29 @@ describe('AuthenticationService', () => {
       createOrganization: vi.fn().mockResolvedValue({ id: 'org-1' }),
     } as any;
 
-    service = new AuthenticationService(mockUserRepo, mockOrgService);
+    // Mock PrismaClient
+    mockPrisma = {
+      $transaction: vi.fn(async (callback) => {
+        const mockTx = {
+          organization: {
+            findMany: vi.fn().mockResolvedValue([]),
+            findUnique: vi.fn().mockResolvedValue(null),
+            create: vi.fn().mockResolvedValue({
+              id: 'org-1',
+              name: 'Personal Org',
+              slug: 'personal-org',
+            }),
+          },
+        };
+        return callback(mockTx);
+      }),
+      refreshToken: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
+    };
+
+    service = new AuthenticationService(mockUserRepo, mockOrgService, mockPrisma);
     vi.clearAllMocks();
   });
 

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import crypto from 'crypto';
-import { Role } from 'database';
+import { Prisma, PrismaClient, Role } from 'database';
 import { inject, injectable } from 'tsyringe';
+import { TOKENS } from '../di/tokens';
 import type { AuthResponseDto, GitHubUserDto } from '../dto';
 import { UnauthorizedError } from '../errors';
 import type { IUserRepository } from '../interfaces';
@@ -21,6 +22,8 @@ export class AuthenticationService {
     private userRepository: IUserRepository,
     @inject(Symbol.for('OrganizationService'))
     private organizationService: OrganizationService,
+    @inject(TOKENS.PrismaClient)
+    private prisma: PrismaClient,
   ) {}
 
   /**
@@ -112,8 +115,7 @@ export class AuthenticationService {
 
     // Ensure user has a personal organization within a transaction to prevent race conditions
     // This handles concurrent authentication requests safely
-    const { prisma } = await import('database');
-    await prisma.$transaction(async (tx: typeof prisma) => {
+    await this.prisma.$transaction(async (tx) => {
       // Check if user has any organizations within the transaction
       const existingOrgs = await tx.organization.findMany({
         where: {
@@ -130,26 +132,50 @@ export class AuthenticationService {
         // Generate slug for personal organization
         const slug = `${user.username.toLowerCase().replace(/[^\w-]/g, '-')}-personal`;
 
-        // Check if slug exists and generate unique one if needed
-        const existingSlug = await tx.organization.findUnique({
-          where: { slug },
-        });
+        // Use a retry loop to handle potential slug collisions
+        let retries = 3;
+        let created = false;
 
-        const finalSlug = existingSlug ? `${slug}-${crypto.randomUUID().substring(0, 7)}` : slug;
+        while (!created && retries > 0) {
+          try {
+            // Check if slug exists and generate unique one if needed
+            const existingSlug = await tx.organization.findUnique({
+              where: { slug },
+            });
 
-        // Create organization with member in a single operation
-        await tx.organization.create({
-          data: {
-            name: `${user.username}'s Personal`,
-            slug: finalSlug,
-            members: {
-              create: {
-                userId: user.id,
-                role: 'OWNER' as Role,
+            const finalSlug = existingSlug
+              ? `${slug}-${crypto.randomUUID().substring(0, 7)}`
+              : slug;
+
+            // Create organization with member in a single operation
+            await tx.organization.create({
+              data: {
+                name: `${user.username}'s Personal`,
+                slug: finalSlug,
+                members: {
+                  create: {
+                    userId: user.id,
+                    role: Role.OWNER,
+                  },
+                },
               },
-            },
-          },
-        });
+            });
+
+            created = true;
+          } catch (error) {
+            // Handle unique constraint violation on slug
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+              retries--;
+              if (retries === 0) {
+                throw new Error('Failed to create organization due to slug collision');
+              }
+              // Retry with a new UUID
+              continue;
+            }
+            // Re-throw other errors
+            throw error;
+          }
+        }
       }
     });
 
@@ -185,12 +211,8 @@ export class AuthenticationService {
       throw new UnauthorizedError('Refresh token is required');
     }
 
-    // For now, we'll implement a basic version
-    // In a full implementation, you'd inject Redis and use the utility function
-    const { prisma } = await import('database');
-
     // Find the refresh token in database
-    const refreshTokenRecord = await prisma.refreshToken.findUnique({
+    const refreshTokenRecord = await this.prisma.refreshToken.findUnique({
       where: { token: refreshToken },
       include: { user: true },
     });
@@ -218,7 +240,7 @@ export class AuthenticationService {
     const newRefreshToken = await createRefreshToken(user.id);
 
     // Mark old refresh token as revoked
-    await prisma.refreshToken.update({
+    await this.prisma.refreshToken.update({
       where: { id: refreshTokenRecord.id },
       data: { revoked: true },
     });
