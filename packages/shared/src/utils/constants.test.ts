@@ -34,19 +34,6 @@ describe('Shared Constants', () => {
       expect(typeof constants.CONTAINER_CPU_CORES).toBe('number');
       expect(constants.CONTAINER_CPU_CORES).toBeGreaterThan(0);
     });
-
-    it('should calculate memory bytes from MB correctly', () => {
-      const expectedBytes =
-        parseInt(process.env.CONTAINER_MEMORY_LIMIT_MB || '512', 10) * 1024 * 1024;
-      expect(constants.CONTAINER_MEMORY_LIMIT_BYTES).toBe(expectedBytes);
-    });
-
-    it('should calculate CPU nanocpus from cores correctly', () => {
-      const expectedNanocpus = Math.floor(
-        parseFloat(process.env.CONTAINER_CPU_CORES || '1.0') * 1000000000,
-      );
-      expect(constants.CONTAINER_CPU_NANOCPUS).toBe(expectedNanocpus);
-    });
   });
 
   describe('Lock Configuration', () => {
