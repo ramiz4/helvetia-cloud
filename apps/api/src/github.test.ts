@@ -55,6 +55,21 @@ vi.mock('bullmq', () => {
 
 vi.mock('database', () => ({
   prisma: {
+    $transaction: vi.fn(async (callback) => {
+      // Mock transaction - just call the callback with the same mock prisma
+      const mockTx = {
+        organization: {
+          findMany: vi.fn().mockResolvedValue([]),
+          findUnique: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue({
+            id: 'org-id',
+            name: 'Personal Org',
+            slug: 'personal-org',
+          }),
+        },
+      };
+      return callback(mockTx);
+    }),
     user: {
       findUnique: vi.fn(),
       upsert: vi.fn(),
