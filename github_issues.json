@@ -1,12 +1,7 @@
 [
   {
     "title": "[CRITICAL] Hardcoded Cryptographic Salt in Encryption",
-    "labels": [
-      "P0",
-      "security",
-      "critical",
-      "bug"
-    ],
+    "labels": ["P0", "security", "critical", "bug"],
     "body": "The encryption module uses a hardcoded salt value `'salt'` for key derivation, which completely defeats the purpose of encryption and makes GitHub access tokens vulnerable to decryption.\n\n**Location:**\n`apps/api/src/utils/crypto.ts:8`\n\n**Current Code:**\n\n```typescript\nconst ENCRYPTION_KEY = crypto.scryptSync(KEY, 'salt', 32);\n```\n\n**Security Impact:**\n\n- GitHub access tokens are vulnerable to rainbow table attacks\n- If database is compromised, tokens can be easily decrypted\n- Violates cryptographic best practices\n\n**Recommended Fix:**\n\n```typescript\nconst SALT = process.env.ENCRYPTION_SALT || crypto.randomBytes(32).toString('hex');\nconst ENCRYPTION_KEY = crypto.scryptSync(KEY, SALT, 32);\n```\n\n**Better Solution:**\nUse a proper key management service (AWS KMS, HashiCorp Vault) or at minimum, store a secure random salt in environment variables.\n\n**Acceptance Criteria:**\n\n- [ ] Remove hardcoded salt\n- [ ] Generate unique salt per installation\n- [ ] Store salt securely in environment variables\n- [ ] Update .env.example with ENCRYPTION_SALT\n- [ ] Document migration path for existing encrypted data\n- [ ] Add tests for encryption/decryption",
     "number": 56,
     "state": "CLOSED",
@@ -15,12 +10,7 @@
   },
   {
     "title": "[CRITICAL] Missing Rate Limiting Implementation",
-    "labels": [
-      "P0",
-      "security",
-      "critical",
-      "enhancement"
-    ],
+    "labels": ["P0", "security", "critical", "enhancement"],
     "body": "Despite having rate limiting configuration in environment variables, no rate limiting is actually implemented. Critical endpoints are vulnerable to brute-force and DoS attacks.\n\n**Vulnerable Endpoints:**\n\n- `/auth/github` - OAuth callback (brute force risk)\n- `/services/:id/deploy` - Resource-intensive operations (DoS risk)\n- `/webhooks/github` - External webhook (abuse risk)\n- All authenticated endpoints\n\n**Impact:**\n\n- Brute-force attacks on authentication\n- DoS through excessive deployment requests\n- Webhook spam overwhelming the system\n- Resource exhaustion\n\n**Recommended Implementation:**\n\n```typescript\nimport rateLimit from '@fastify/rate-limit';\n\n// Global rate limiting\nfastify.register(rateLimit, {\n  max: parseInt(process.env.RATE_LIMIT_MAX || '100'),\n  timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',\n  redis: redisConnection,\n  keyGenerator: (request) => request.ip,\n});\n\n// Stricter limit for auth routes\nfastify.register(\n  rateLimit,\n  {\n    max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10'),\n    timeWindow: process.env.AUTH_RATE_LIMIT_WINDOW || '1 minute',\n    redis: redisConnection,\n  },\n  { prefix: '/auth' },\n);\n```\n\n**Acceptance Criteria:**\n\n- [ ] Install @fastify/rate-limit dependency\n- [ ] Implement global rate limiting\n- [ ] Implement stricter limits for authentication endpoints\n- [ ] Implement limits for deployment endpoints\n- [ ] Implement limits for WebSocket/SSE connections\n- [ ] Exclude /health endpoint from rate limiting\n- [ ] Add rate limit headers in responses\n- [ ] Add tests for rate limiting\n- [ ] Document rate limits in API docs",
     "number": 58,
     "state": "CLOSED",
@@ -29,12 +19,7 @@
   },
   {
     "title": "[CRITICAL] GitHub Webhook Authentication Missing",
-    "labels": [
-      "P0",
-      "security",
-      "critical",
-      "bug"
-    ],
+    "labels": ["P0", "security", "critical", "bug"],
     "body": "GitHub webhooks endpoint (`/webhooks/github`) processes requests without verifying the signature. Anyone can trigger deployments by sending POST requests to this endpoint.\n\n**Location:**\n`apps/api/src/server.ts:979-1152`\n\n**Current Code:**\n\n```typescript\nfastify.post('/webhooks/github', async (request) => {\n  const payload = request.body as any;\n  // No signature verification!\n```\n\n**Security Impact:**\n\n- Unauthorized deployments can be triggered\n- Malicious actors can cause resource exhaustion\n- Preview environments can be created/destroyed without authorization\n- Potential for code injection through malicious payloads\n\n**Recommended Fix:**\n\n```typescript\nimport crypto from 'crypto';\n\nfunction verifyGitHubSignature(payload: string, signature: string, secret: string): boolean {\n  const hmac = crypto.createHmac('sha256', secret);\n  const digest = 'sha256=' + hmac.update(payload).digest('hex');\n  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));\n}\n\nfastify.post('/webhooks/github', async (request, reply) => {\n  const signature = request.headers['x-hub-signature-256'] as string;\n\n  if (!signature) {\n    return reply.status(401).send({ error: 'Missing signature' });\n  }\n\n  const rawBody = JSON.stringify(request.body);\n\n  if (!verifyGitHubSignature(rawBody, signature, process.env.GITHUB_WEBHOOK_SECRET!)) {\n    return reply.status(401).send({ error: 'Invalid signature' });\n  }\n\n  // ... process webhook\n});\n```\n\n**Acceptance Criteria:**\n\n- [ ] Add GITHUB_WEBHOOK_SECRET to environment variables\n- [ ] Implement signature verification function\n- [ ] Add signature verification to webhook endpoint\n- [ ] Return 401 for missing or invalid signatures\n- [ ] Log suspicious requests\n- [ ] Add tests for signature verification\n- [ ] Update documentation with webhook setup instructions\n- [ ] Update .env.example",
     "number": 59,
     "state": "CLOSED",
@@ -43,12 +28,7 @@
   },
   {
     "title": "[CRITICAL] Insecure CORS Configuration Allows Origin Reflection",
-    "labels": [
-      "P0",
-      "security",
-      "critical",
-      "bug"
-    ],
+    "labels": ["P0", "security", "critical", "bug"],
     "body": "SSE endpoints reflect the request origin back in `Access-Control-Allow-Origin` header with credentials enabled, effectively bypassing CORS protection.\n\n**Locations:**\n\n- `apps/api/src/server.ts:654-661` (metrics stream)\n- `apps/api/src/server.ts:1199-1206` (logs stream)\n\n**Vulnerable Code:**\n\n```typescript\n'Access-Control-Allow-Origin': request.headers.origin || '*',\n'Access-Control-Allow-Credentials': 'true',\n```\n\n**Security Impact:**\n\n- Cross-origin attacks possible\n- Session hijacking risk\n- CSRF vulnerabilities\n- Sensitive data exposure to malicious origins\n\n**Recommended Fix:**\n\n```typescript\nconst allowedOrigins = (\n  process.env.ALLOWED_ORIGINS ||\n  process.env.APP_BASE_URL ||\n  'http://localhost:3000'\n)\n  .split(',')\n  .map((o) => o.trim());\n\nfastify.register(cors, {\n  origin: (origin, cb) => {\n    if (!origin || allowedOrigins.includes(origin)) {\n      cb(null, true);\n    } else {\n      cb(new Error('Not allowed by CORS'), false);\n    }\n  },\n  credentials: true,\n  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],\n});\n\n// For SSE endpoints\nreply.raw.writeHead(200, {\n  'Content-Type': 'text/event-stream',\n  'Cache-Control': 'no-cache',\n  Connection: 'keep-alive',\n  'X-Accel-Buffering': 'no',\n  'Access-Control-Allow-Origin': allowedOrigins.includes(request.headers.origin || '')\n    ? request.headers.origin\n    : allowedOrigins[0],\n  'Access-Control-Allow-Credentials': 'true',\n});\n```\n\n**Acceptance Criteria:**\n\n- [ ] Add ALLOWED_ORIGINS environment variable\n- [ ] Implement strict origin validation\n- [ ] Fix CORS configuration in server setup\n- [ ] Fix CORS headers in SSE endpoints\n- [ ] Remove wildcard origin fallback\n- [ ] Add tests for CORS validation\n- [ ] Document CORS configuration\n- [ ] Update .env.example",
     "number": 60,
     "state": "CLOSED",
@@ -57,12 +37,7 @@
   },
   {
     "title": "[CRITICAL] Host Filesystem Exposure via Docker Volume Mount",
-    "labels": [
-      "P0",
-      "security",
-      "critical",
-      "bug"
-    ],
+    "labels": ["P0", "security", "critical", "bug"],
     "body": "Worker mounts the entire `/Users` directory into builder containers, exposing all user data on macOS. This is extremely dangerous.\n\n**Location:**\n`apps/worker/src/worker.ts:104, 216`\n\n**Vulnerable Code:**\n\n```typescript\nBinds: ['/var/run/docker.sock:/var/run/docker.sock', '/Users:/Users'],\n```\n\n**Security Impact:**\n\n- Container can access all user data on macOS\n- Host filesystem can be modified by container\n- Privilege escalation possible\n- Violates principle of least privilege\n- Data breach risk\n\n**Recommended Fix:**\n\n```typescript\n// Only mount specific workspace directory, read-only\nconst workDir = process.env.WORKSPACE_DIR || '/tmp/helvetia-workspaces';\n\n// Ensure directory exists\nawait fs.promises.mkdir(workDir, { recursive: true });\n\nBinds: [\n  '/var/run/docker.sock:/var/run/docker.sock',\n  `${workDir}:/workspaces:ro`, // Read-only mount\n],\n```\n\n**Additional Security:**\n\n- Use temporary directories that are cleaned up\n- Never mount root directories\n- Use SELinux/AppArmor labels\n- Consider using Docker volumes instead of bind mounts\n\n**Acceptance Criteria:**\n\n- [ ] Remove /Users mount completely\n- [ ] Create dedicated workspace directory\n- [ ] Mount workspace as read-only\n- [ ] Add WORKSPACE_DIR environment variable\n- [ ] Implement workspace cleanup\n- [ ] Add documentation warning about production usage\n- [ ] Add tests to verify mount configuration\n- [ ] Update .env.example",
     "number": 61,
     "state": "CLOSED",
@@ -71,11 +46,7 @@
   },
   {
     "title": "[HIGH] SQL Injection Risk with Prisma String Operations",
-    "labels": [
-      "P1",
-      "security",
-      "bug"
-    ],
+    "labels": ["P1", "security", "bug"],
     "body": "Using `contains` with unsanitized user input in Prisma queries could be vulnerable to SQL injection or at minimum, unexpected behavior.\n\n**Location:**\nMultiple locations in `apps/api/src/server.ts`\n\n**Example:**\n\n```typescript\nwhere: {\n  repoUrl: {\n    contains: repoUrl;\n  }\n}\n```\n\n**Recommended Fix:**\n\n```typescript\nconst sanitizedRepoUrl = repoUrl.trim().replace(/\\.git$/, '');\nwhere: {\n  OR: [{ repoUrl: sanitizedRepoUrl }, { repoUrl: `${sanitizedRepoUrl}.git` }];\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Audit all Prisma queries using user input\n- [ ] Sanitize repo URLs before querying\n- [ ] Use exact matches where possible\n- [ ] Add input validation tests\n- [ ] Document safe query patterns",
     "number": 66,
     "state": "CLOSED",
@@ -84,11 +55,7 @@
   },
   {
     "title": "[HIGH] Missing Comprehensive Input Validation",
-    "labels": [
-      "P1",
-      "security",
-      "enhancement"
-    ],
+    "labels": ["P1", "security", "enhancement"],
     "body": "Service creation and update endpoints lack comprehensive input validation, allowing potentially malicious or malformed data.\n\n**Location:**\n`apps/api/src/server.ts:500-597`\n\n**Missing Validations:**\n\n- Service name format (could contain special characters)\n- URL validation for repoUrl\n- Command injection prevention for buildCommand/startCommand\n- Size limits for envVars\n- Branch name validation\n\n**Recommended Implementation:**\nUse Zod for schema validation:\n\n```typescript\nimport { z } from 'zod';\n\nconst ServiceCreateSchema = z.object({\n  name: z\n    .string()\n    .min(3)\n    .max(63)\n    .regex(/^[a-z0-9-]+$/),\n  repoUrl: z.url().optional(),\n  branch: z\n    .string()\n    .min(1)\n    .max(255)\n    .regex(/^[a-zA-Z0-9-_./]+$/),\n  buildCommand: z.string().max(1000).optional(),\n  startCommand: z.string().max(1000).optional(),\n  port: z.number().int().min(1).max(65535),\n  envVars: z.record(z.string()).optional(),\n  customDomain: z.string().max(255).optional(),\n  type: z.enum(['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE']),\n  staticOutputDir: z.string().max(255).optional(),\n});\n```\n\n**Acceptance Criteria:**\n\n- [ ] Install zod dependency\n- [ ] Create validation schemas for all endpoints\n- [ ] Implement request validation middleware\n- [ ] Return detailed validation errors\n- [ ] Add tests for validation\n- [ ] Document API request/response schemas",
     "number": 67,
     "state": "CLOSED",
@@ -97,11 +64,7 @@
   },
   {
     "title": "[HIGH] SSE Connection Token Expiration Not Handled",
-    "labels": [
-      "P1",
-      "security",
-      "bug"
-    ],
+    "labels": ["P1", "security", "bug"],
     "body": "Long-lived SSE connections don't re-validate JWT tokens, potentially allowing access after token expiration.\n\n**Locations:**\n\n- `apps/api/src/server.ts:650-705` (metrics)\n- `apps/api/src/server.ts:1184-1230` (logs)\n\n**Recommended Fix:**\nImplement periodic token validation in SSE streams.\n\n**Acceptance Criteria:**\n\n- [ ] Add periodic token validation (every 5 minutes)\n- [ ] Close connection on token expiration\n- [ ] Implement graceful reconnection on client side\n- [ ] Add tests for token expiration handling\n- [ ] Document SSE connection lifecycle",
     "number": 68,
     "state": "CLOSED",
@@ -110,11 +73,7 @@
   },
   {
     "title": "[HIGH] Incomplete Error Handling in Worker Deployment",
-    "labels": [
-      "P1",
-      "bug",
-      "reliability"
-    ],
+    "labels": ["P1", "bug", "reliability"],
     "body": "Worker's catch block doesn't handle partial failures properly. Resources may not be cleaned up correctly on deployment failure.\n\n**Location:**\n`apps/worker/src/worker.ts:435-445`\n\n**Issues:**\n\n- Builder container might not be cleaned up\n- Old containers might not be restarted on rollback\n- No rollback mechanism for failed deployments\n\n**Acceptance Criteria:**\n\n- [ ] Implement comprehensive cleanup in catch block\n- [ ] Add rollback to previous container on failure\n- [ ] Ensure builder container always cleaned up\n- [ ] Log detailed error information\n- [ ] Add tests for failure scenarios\n- [ ] Update deployment status correctly on all paths",
     "number": 70,
     "state": "CLOSED",
@@ -123,11 +82,7 @@
   },
   {
     "title": "[HIGH] Race Condition in Service Status Updates",
-    "labels": [
-      "P1",
-      "bug",
-      "concurrency"
-    ],
+    "labels": ["P1", "bug", "concurrency"],
     "body": "Service status is updated from multiple places without synchronization, leading to race conditions and stale data.\n\n**Locations:**\n\n- API sets status to DEPLOYING when queuing\n- Worker sets status after deployment\n- Docker status checked asynchronously\n\n**Recommended Solution:**\nImplement Redis-based distributed locks using Redlock.\n\n**Acceptance Criteria:**\n\n- [ ] Install redlock dependency\n- [ ] Implement distributed locking for status updates\n- [ ] Create status reconciliation service\n- [ ] Add tests for concurrent updates\n- [ ] Document status lifecycle",
     "number": 71,
     "state": "CLOSED",
@@ -136,11 +91,7 @@
   },
   {
     "title": "[HIGH] Docker Socket Security Risk",
-    "labels": [
-      "P1",
-      "security",
-      "architecture"
-    ],
+    "labels": ["P1", "security", "architecture"],
     "body": "Direct Docker socket access in both API and Worker provides root-level access to host system.\n\n**Impact:**\n\n- Container escape vulnerabilities\n- Host system compromise potential\n- Privilege escalation risks\n\n**Recommended Solutions:**\n\n1. Run Docker daemon in rootless mode\n2. Implement Docker socket proxy with ACLs\n3. Consider migrating to Kubernetes\n\n**Acceptance Criteria:**\n\n- [ ] Document security implications\n- [ ] Implement Docker socket proxy\n- [ ] Add SELinux/AppArmor policies\n- [ ] Create security hardening guide\n- [ ] Consider Kubernetes migration path",
     "number": 72,
     "state": "CLOSED",
@@ -149,11 +100,7 @@
   },
   {
     "title": "[HIGH] Memory Leak Risk in SSE Connections",
-    "labels": [
-      "P1",
-      "bug",
-      "performance"
-    ],
+    "labels": ["P1", "bug", "performance"],
     "body": "SSE connection intervals may not be properly cleaned up on errors, leading to memory leaks.\n\n**Location:**\n`apps/api/src/server.ts:650-705`\n\n**Recommended Fix:**\nAdd comprehensive error handling and cleanup.\n\n**Acceptance Criteria:**\n\n- [ ] Add error handling in interval callbacks\n- [ ] Ensure cleanup on all error paths\n- [ ] Add connection state tracking\n- [ ] Implement connection timeout\n- [ ] Add tests for error scenarios\n- [ ] Monitor memory usage",
     "number": 73,
     "state": "CLOSED",
@@ -162,11 +109,7 @@
   },
   {
     "title": "[HIGH] Unrestricted Service Deletion Risk",
-    "labels": [
-      "P1",
-      "bug",
-      "data-loss"
-    ],
+    "labels": ["P1", "bug", "data-loss"],
     "body": "Service deletion is permanent and irreversible without safety mechanisms.\n\n**Recommended Implementation:**\nImplement soft deletion with retention period.\n\n**Acceptance Criteria:**\n\n- [ ] Add deletedAt field to Service model\n- [ ] Implement soft deletion\n- [ ] Add delete protection flag\n- [ ] Schedule cleanup after retention period\n- [ ] Add recovery mechanism\n- [ ] Require re-authentication for deletion\n- [ ] Add tests for deletion flow",
     "number": 74,
     "state": "CLOSED",
@@ -175,11 +118,7 @@
   },
   {
     "title": "[MEDIUM] Missing Dockerfile Generation Validation",
-    "labels": [
-      "P2",
-      "enhancement",
-      "reliability"
-    ],
+    "labels": ["P2", "enhancement", "reliability"],
     "body": "Generated Dockerfiles aren't validated before build, leading to hard-to-debug failures.\n\n**Location:**\n`apps/worker/src/worker.ts:225-310`\n\n**Acceptance Criteria:**\n\n- [ ] Add Dockerfile syntax validation\n- [ ] Implement dry-run before build\n- [ ] Validate environment variable format\n- [ ] Add better error messages\n- [ ] Add tests for various scenarios",
     "number": 75,
     "state": "CLOSED",
@@ -188,11 +127,7 @@
   },
   {
     "title": "[MEDIUM] Hardcoded Magic Numbers Throughout Codebase",
-    "labels": [
-      "P2",
-      "refactoring",
-      "maintainability"
-    ],
+    "labels": ["P2", "refactoring", "maintainability"],
     "body": "Magic numbers scattered throughout code reduce maintainability.\n\n**Examples:**\n\n- `512 * 1024 * 1024` (Memory limit)\n- `1000000000` (CPU limit)\n- `5000` (Metrics interval)\n\n**Acceptance Criteria:**\n\n- [ ] Create constants configuration file\n- [ ] Extract all magic numbers\n- [ ] Make limits configurable via env vars\n- [ ] Update documentation\n- [ ] Add tests with different configurations",
     "number": 76,
     "state": "CLOSED",
@@ -201,11 +136,7 @@
   },
   {
     "title": "[MEDIUM] Missing Request/Response Logging",
-    "labels": [
-      "P2",
-      "observability",
-      "enhancement"
-    ],
+    "labels": ["P2", "observability", "enhancement"],
     "body": "No structured logging for requests and responses, making debugging difficult.\n\n**Acceptance Criteria:**\n\n- [ ] Implement request logging hook\n- [ ] Implement response logging hook\n- [ ] Add structured logging with context\n- [ ] Configure log levels per environment\n- [ ] Add request ID correlation\n- [ ] Document logging format",
     "number": 77,
     "state": "CLOSED",
@@ -214,11 +145,7 @@
   },
   {
     "title": "[MEDIUM] No Health Check Endpoint for Worker",
-    "labels": [
-      "P2",
-      "observability",
-      "enhancement"
-    ],
+    "labels": ["P2", "observability", "enhancement"],
     "body": "Worker service lacks health check endpoint for monitoring.\n\n**Acceptance Criteria:**\n\n- [ ] Add HTTP health endpoint\n- [ ] Include queue stats\n- [ ] Include Redis connection status\n- [ ] Include uptime information\n- [ ] Document health check format\n- [ ] Add monitoring setup guide",
     "number": 78,
     "state": "CLOSED",
@@ -227,11 +154,7 @@
   },
   {
     "title": "[MEDIUM] Incomplete Test Coverage",
-    "labels": [
-      "P2",
-      "testing",
-      "quality"
-    ],
+    "labels": ["P2", "testing", "quality"],
     "body": "Test suite exists but critical paths aren't fully covered.\n\n**Missing Tests:**\n\n- Integration tests for deployment flow\n- Webhook processing tests\n- SSE streaming tests\n- Worker deployment tests (currently failing)\n\n**Acceptance Criteria:**\n\n- [ ] Fix failing worker tests\n- [ ] Add integration tests\n- [ ] Achieve 80% code coverage minimum\n- [ ] Add E2E tests for critical flows\n- [ ] Set up test containers for integration tests\n- [ ] Add coverage reporting to CI",
     "number": 79,
     "state": "CLOSED",
@@ -240,11 +163,7 @@
   },
   {
     "title": "[MEDIUM] Environment Variable Management Needs Improvement",
-    "labels": [
-      "P2",
-      "enhancement",
-      "configuration"
-    ],
+    "labels": ["P2", "enhancement", "configuration"],
     "body": "No validation for required environment variables, leading to potential runtime errors.\n\n**Acceptance Criteria:**\n\n- [ ] Install zod for validation\n- [ ] Create environment schema\n- [ ] Validate on startup\n- [ ] Provide clear error messages\n- [ ] Add type safety for env vars\n- [ ] Update documentation",
     "number": 80,
     "state": "CLOSED",
@@ -253,11 +172,7 @@
   },
   {
     "title": "[MEDIUM] No Database Migration Strategy",
-    "labels": [
-      "P2",
-      "database",
-      "deployment"
-    ],
+    "labels": ["P2", "database", "deployment"],
     "body": "Using `db:push` instead of migrations is dangerous for production.\n\n**Issues:**\n\n- No migration history\n- Can cause data loss\n- Can't rollback changes\n- No team collaboration on schema changes\n\n**Acceptance Criteria:**\n\n- [ ] Switch to Prisma Migrate\n- [ ] Create initial migration\n- [ ] Update deployment scripts\n- [ ] Document migration workflow\n- [ ] Add rollback procedures\n- [ ] Update CI/CD pipeline",
     "number": 81,
     "state": "CLOSED",
@@ -266,11 +181,7 @@
   },
   {
     "title": "[MEDIUM] Frontend State Management Issues",
-    "labels": [
-      "P2",
-      "frontend",
-      "performance"
-    ],
+    "labels": ["P2", "frontend", "performance"],
     "body": "Dashboard has performance issues and state management anti-patterns.\n\n**Issues:**\n\n- Services fetched on every re-render\n- No caching mechanism\n- Large component needs splitting\n- Optimistic updates without proper rollback\n\n**Acceptance Criteria:**\n\n- [ ] Install React Query or SWR\n- [ ] Implement data caching\n- [ ] Split large components\n- [ ] Add error boundaries\n- [ ] Implement proper loading states\n- [ ] Add tests for state management",
     "number": 82,
     "state": "CLOSED",
@@ -279,11 +190,7 @@
   },
   {
     "title": "[MEDIUM] Docker Image Cleanup Missing",
-    "labels": [
-      "P2",
-      "infrastructure",
-      "resource-management"
-    ],
+    "labels": ["P2", "infrastructure", "resource-management"],
     "body": "No cleanup for dangling, failed, or old Docker images, leading to disk space issues.\n\n**Acceptance Criteria:**\n\n- [ ] Implement periodic cleanup job\n- [ ] Remove dangling images\n- [ ] Remove old image versions\n- [ ] Add retention policy\n- [ ] Monitor disk usage\n- [ ] Add configuration options",
     "number": 83,
     "state": "CLOSED",
@@ -292,11 +199,7 @@
   },
   {
     "title": "[MEDIUM] Missing Prometheus Metrics",
-    "labels": [
-      "P2",
-      "observability",
-      "monitoring"
-    ],
+    "labels": ["P2", "observability", "monitoring"],
     "body": "No metrics exported for system monitoring.\n\n**Needed Metrics:**\n\n- Request rates and latencies\n- Error rates\n- Deployment success/failure rates\n- Queue depths\n- Resource usage\n\n**Acceptance Criteria:**\n\n- [ ] Install prom-client\n- [ ] Add /metrics endpoint\n- [ ] Implement custom metrics\n- [ ] Add Grafana dashboard\n- [ ] Document metrics\n- [ ] Set up alerting",
     "number": 84,
     "state": "CLOSED",
@@ -305,11 +208,7 @@
   },
   {
     "title": "[MEDIUM] Session Management Needs Refresh Tokens",
-    "labels": [
-      "P2",
-      "security",
-      "enhancement"
-    ],
+    "labels": ["P2", "security", "enhancement"],
     "body": "JWT tokens have 7-day expiration with no refresh mechanism.\n\n**Acceptance Criteria:**\n\n- [ ] Implement refresh token flow\n- [ ] Use short-lived access tokens (15 min)\n- [ ] Implement token rotation\n- [ ] Add token revocation list in Redis\n- [ ] Update frontend to handle refresh\n- [ ] Add tests for token lifecycle",
     "number": 69,
     "state": "CLOSED",
@@ -318,11 +217,7 @@
   },
   {
     "title": "[MEDIUM] No Request Size Limits",
-    "labels": [
-      "P2",
-      "security",
-      "performance"
-    ],
+    "labels": ["P2", "security", "performance"],
     "body": "Missing request body size limits could allow DoS attacks.\n\n**Acceptance Criteria:**\n\n- [ ] Add body size limit to Fastify config\n- [ ] Configure appropriate limits (10MB default)\n- [ ] Add limits per endpoint type\n- [ ] Document size limits\n- [ ] Add tests for size validation\n- [ ] Return appropriate error messages",
     "number": 85,
     "state": "CLOSED",
@@ -331,11 +226,7 @@
   },
   {
     "title": "[LOW] Excessive TypeScript `any` Usage",
-    "labels": [
-      "P3",
-      "refactoring",
-      "type-safety"
-    ],
+    "labels": ["P3", "refactoring", "type-safety"],
     "body": "Extensive use of `any` type reduces type safety benefits.\n\n**Acceptance Criteria:**\n\n- [ ] Add Fastify type augmentation\n- [ ] Create proper request/response types\n- [ ] Remove `as any` casts\n- [ ] Enable stricter TypeScript checks\n- [ ] Document type patterns",
     "number": 93,
     "state": "CLOSED",
@@ -344,11 +235,7 @@
   },
   {
     "title": "[LOW] Inconsistent Error Messages",
-    "labels": [
-      "P3",
-      "ux",
-      "enhancement"
-    ],
+    "labels": ["P3", "ux", "enhancement"],
     "body": "Error messages aren't user-friendly or consistent.\n\n**Acceptance Criteria:**\n\n- [ ] Create error response standard\n- [ ] Add error codes\n- [ ] Make messages user-friendly\n- [ ] Add i18n support for errors\n- [ ] Document error codes\n- [ ] Update frontend error handling",
     "number": 87,
     "state": "CLOSED",
@@ -357,11 +244,7 @@
   },
   {
     "title": "[LOW] Missing API Versioning",
-    "labels": [
-      "P3",
-      "api",
-      "architecture"
-    ],
+    "labels": ["P3", "api", "architecture"],
     "body": "No API versioning strategy makes future changes risky.\n\n**Acceptance Criteria:**\n\n- [ ] Add version prefix (/api/v1)\n- [ ] Document versioning strategy\n- [ ] Plan v2 transition path\n- [ ] Update frontend API calls\n- [ ] Add version negotiation",
     "number": 88,
     "state": "CLOSED",
@@ -370,11 +253,7 @@
   },
   {
     "title": "[LOW] No Request ID Tracing",
-    "labels": [
-      "P3",
-      "observability",
-      "enhancement"
-    ],
+    "labels": ["P3", "observability", "enhancement"],
     "body": "Missing correlation IDs makes request tracing difficult.\n\n**Acceptance Criteria:**\n\n- [ ] Add request ID generation\n- [ ] Propagate IDs across services\n- [ ] Include in all log entries\n- [ ] Return in response headers\n- [ ] Document tracing setup",
     "number": 89,
     "state": "CLOSED",
@@ -383,11 +262,7 @@
   },
   {
     "title": "[LOW] Lack of Feature Flags",
-    "labels": [
-      "P3",
-      "deployment",
-      "enhancement"
-    ],
+    "labels": ["P3", "deployment", "enhancement"],
     "body": "No way to enable/disable features without deployment.\n\n**Acceptance Criteria:**\n\n- [ ] Choose feature flag service\n- [ ] Implement feature flag checks\n- [ ] Add admin UI for flags\n- [ ] Document feature flag usage\n- [ ] Add A/B testing capability",
     "number": 90,
     "state": "CLOSED",
@@ -396,11 +271,7 @@
   },
   {
     "title": "[LOW] No Graceful Shutdown",
-    "labels": [
-      "P3",
-      "reliability",
-      "enhancement"
-    ],
+    "labels": ["P3", "reliability", "enhancement"],
     "body": "Services don't handle SIGTERM/SIGINT gracefully.\n\n**Acceptance Criteria:**\n\n- [ ] Implement graceful shutdown\n- [ ] Wait for in-flight requests\n- [ ] Close connections properly\n- [ ] Update deployment docs\n- [ ] Add tests for shutdown",
     "number": 91,
     "state": "CLOSED",
@@ -409,12 +280,7 @@
   },
   {
     "title": "[LOW] Dashboard Accessibility Issues",
-    "labels": [
-      "P3",
-      "accessibility",
-      "a11y",
-      "frontend"
-    ],
+    "labels": ["P3", "accessibility", "a11y", "frontend"],
     "body": "Several accessibility improvements needed for WCAG compliance.\n\n**Issues:**\n\n- Missing ARIA labels\n- Insufficient color contrast\n- No keyboard navigation hints\n- Modal focus trap not complete\n\n**Acceptance Criteria:**\n\n- [ ] Run axe-core audit\n- [ ] Fix all critical a11y issues\n- [ ] Add ARIA labels\n- [ ] Improve color contrast\n- [ ] Implement proper focus management\n- [ ] Add keyboard navigation\n- [ ] Test with screen readers",
     "number": 92,
     "state": "CLOSED",
@@ -423,11 +289,7 @@
   },
   {
     "title": "[HIGH] Implement Dependency Injection & Core Interfaces",
-    "labels": [
-      "P1",
-      "refactoring",
-      "architecture"
-    ],
+    "labels": ["P1", "refactoring", "architecture"],
     "body": "Introduce dependency injection to decouple components and enable testability.\n\n**Current Issue:**\n- Direct instantiation of Docker, Redis, Prisma throughout codebase\n- Cannot mock dependencies for testing\n- Cannot swap implementations\n\n**Tasks:**\n\n- [ ] Set up DI framework (TSyringe or InversifyJS)\n- [ ] Define core interface contracts (IServiceRepository, IDeploymentRepository, IUserRepository, IContainerOrchestrator, IDeploymentQueue, ILogger, ICache)\n- [ ] Create base error hierarchy (AppError, ValidationError, NotFoundError)\n- [ ] Set up DI container configuration\n\n**Note:** This issue defines interface contracts only. Implementations are handled by other issues (#95 for repositories, #97 for container orchestrator).\n\n**Benefits:**\n- Better testability\n- Loose coupling\n- Easier to swap implementations",
     "number": 125,
     "state": "CLOSED",
@@ -436,11 +298,7 @@
   },
   {
     "title": "[HIGH] Extract Repository Pattern for Data Access",
-    "labels": [
-      "P1",
-      "refactoring",
-      "database"
-    ],
+    "labels": ["P1", "refactoring", "database"],
     "body": "Implement repository pattern for data access using interfaces from #94.\n\n**Current Issue:**\n- Prisma queries scattered throughout route handlers\n- Business logic mixed with data access\n- Hard to test and maintain\n\n**Tasks:**\n\n- [ ] Implement Prisma-based repositories (ServiceRepository, DeploymentRepository, UserRepository) using interfaces from #94\n- [ ] Replace direct Prisma calls with repository methods\n- [ ] Add repository unit tests\n- [ ] Register repositories in DI container\n\n**Dependencies:** Requires #94 (interface definitions)\n\n**Benefits:**\n- Clean separation of data access\n- Easier to test business logic\n- Can swap database implementations",
     "number": 126,
     "state": "CLOSED",
@@ -449,11 +307,7 @@
   },
   {
     "title": "[HIGH] Create Service Layer for Business Logic",
-    "labels": [
-      "P1",
-      "refactoring",
-      "architecture"
-    ],
+    "labels": ["P1", "refactoring", "architecture"],
     "body": "Extract business logic from route handlers into dedicated service classes.\n\n**Current Issue:**\n- Business logic embedded in route handlers\n- No reusability across endpoints\n- Difficult to test in isolation\n\n**Tasks:**\n\n- [ ] Create application services (ServiceManagementService, DeploymentOrchestrator, AuthenticationService)\n- [ ] Extract business logic from route handlers into services\n- [ ] Define DTOs and validation schemas\n- [ ] Add comprehensive service tests\n- [ ] Register services in DI container\n\n**Note:** Complete this before #98 (route refactoring). #98 will then handle the remaining route/controller structure.\n\n**Dependencies:** Works best after #94 (DI setup) and #95 (repositories)\n\n**Benefits:**\n- Testable business logic\n- Reusable across different interfaces\n- Clear separation of concerns",
     "number": 127,
     "state": "CLOSED",
@@ -462,11 +316,7 @@
   },
   {
     "title": "[MEDIUM] Abstract Container Orchestration Logic",
-    "labels": [
-      "P2",
-      "refactoring",
-      "infrastructure"
-    ],
+    "labels": ["P2", "refactoring", "infrastructure"],
     "body": "Implement container orchestration abstraction using interface from #94.\n\n**Current Issue:**\n- Container management duplicated in API and Worker\n- Direct Docker API calls throughout\n- Cannot easily test container logic\n\n**Tasks:**\n\n- [ ] Implement DockerContainerOrchestrator using IContainerOrchestrator interface from #94\n- [ ] Extract container utilities (VolumeManager, NetworkManager, HealthChecker)\n- [ ] Replace direct Docker calls with orchestrator\n- [ ] Add integration tests\n- [ ] Register orchestrator in DI container\n\n**Note:** Package migration to shared location is handled by #101.\n\n**Dependencies:** Requires #94 (interface definition). Can work in parallel with #95, #96, #98.\n\n**Benefits:**\n- DRY - single container implementation\n- Can work in parallel with route refactoring\n- Easier to test",
     "number": 128,
     "state": "CLOSED",
@@ -475,11 +325,7 @@
   },
   {
     "title": "[MEDIUM] Refactor API Routes into Controllers",
-    "labels": [
-      "P2",
-      "refactoring",
-      "api"
-    ],
+    "labels": ["P2", "refactoring", "api"],
     "body": "Split monolithic server.ts into focused controllers and route files after business logic extraction.\n\n**Current Issue:**\n- Single file handles all routes, auth, remaining logic\n- Hard to navigate and maintain\n- High risk of merge conflicts\n\n**Tasks:**\n\n- [ ] Create thin controller classes (ServiceController, DeploymentController, AuthController, WebhookController) that call services from #96\n- [ ] Extract route definitions to separate files\n- [ ] Implement middleware (auth, validation, error handling)\n- [ ] Refactor SSE/WebSocket handlers\n\n**Dependencies:** Should be done after #96 (service layer) to avoid refactoring business logic twice.\n\n**Benefits:**\n- Smaller, focused files\n- Reduced merge conflicts\n- Easier to navigate codebase",
     "number": 129,
     "state": "CLOSED",
@@ -488,11 +334,7 @@
   },
   {
     "title": "[MEDIUM] Implement Strategy Pattern for Deployment Types",
-    "labels": [
-      "P2",
-      "refactoring",
-      "worker"
-    ],
+    "labels": ["P2", "refactoring", "worker"],
     "body": "Use Strategy Pattern to handle different service deployment types.\n\n**Current Issue:**\n- Hardcoded if/else checks for service types\n- Adding new types requires modifying existing code\n- Violates Open/Closed Principle\n\n**Tasks:**\n\n- [ ] Create IDeploymentStrategy interface\n- [ ] Implement strategies (DockerDeploymentStrategy, StaticDeploymentStrategy, DatabaseDeploymentStrategy, ComposeDeploymentStrategy)\n- [ ] Update worker to use strategy pattern\n- [ ] Extract builders (DockerfileBuilder, ComposeFileBuilder)\n- [ ] Add strategy tests\n\n**Note:** Can work independently from API refactoring (#96, #98) since it focuses on worker.\n\n**Benefits:**\n- Easy to add new service types\n- Better code organization\n- Can work independently from API refactoring",
     "number": 130,
     "state": "CLOSED",
@@ -501,12 +343,7 @@
   },
   {
     "title": "[MEDIUM] Improve TypeScript Type Safety",
-    "labels": [
-      "P2",
-      "refactoring",
-      "type-safety",
-      "duplicate"
-    ],
+    "labels": ["P2", "refactoring", "type-safety", "duplicate"],
     "body": "**Note:** This issue duplicates #93. Please use #93 for all TypeScript type safety improvements.\n\n**Closing Reason:** Issue #93 already tracks the same work:\n- Remove `any` types\n- Add Fastify type augmentation\n- Create proper request/response types\n- Remove `as any` casts\n- Enable stricter TypeScript checks\n\nTo avoid splitting work across multiple issues, all TypeScript type safety improvements are consolidated in #93.",
     "number": 131,
     "state": "CLOSED",
@@ -515,11 +352,7 @@
   },
   {
     "title": "[LOW] Create Shared Package for Common Logic",
-    "labels": [
-      "P3",
-      "refactoring",
-      "architecture"
-    ],
+    "labels": ["P3", "refactoring", "architecture"],
     "body": "Extract duplicated logic into shared package used by API and Worker.\n\n**Current Issue:**\n- Container logic duplicated\n- Status determination repeated\n- Utilities not shared\n\n**Tasks:**\n\n- [ ] Create packages/shared structure\n- [ ] Move container orchestrator and utilities from #97 to shared package\n- [ ] Move status lock logic\n- [ ] Move log scrubber\n- [ ] Update imports in API and Worker\n- [ ] Update package.json dependencies\n\n**Note:** This handles the shared package migration for code from other refactoring issues (especially #97).\n\n**Dependencies:** Best done after #97 (container abstraction) is complete.\n\n**Benefits:**\n- DRY principle\n- Consistent behavior\n- Easier to maintain",
     "number": 132,
     "state": "CLOSED",
@@ -528,12 +361,7 @@
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate Service Routes to ServiceController",
-    "labels": [
-      "P2",
-      "refactoring",
-      "api",
-      "di-migration"
-    ],
+    "labels": ["P2", "refactoring", "api", "di-migration"],
     "body": "Migrate service-related routes from `server.ts` to `ServiceController` and `service.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `GET /services`\n- `POST /services` (creation)\n- `GET /services/:id`\n- `PATCH /services/:id`\n- `DELETE /services/:id`\n- `GET /services/:id/health`\n- `GET /services/:id/metrics`\n- `GET /services/metrics/stream` (SSE)\n\n**Tasks:**\n- [ ] Implement `ServiceController` using injected repositories and services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/service.routes.ts` and register it in `index.ts`\n- [ ] Ensure all middleware (auth, validation) is correctly applied\n- [ ] Add unit tests for `ServiceController`",
     "synced": true,
     "number": 146,
@@ -542,12 +370,7 @@
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate Deployment Routes to DeploymentController",
-    "labels": [
-      "P2",
-      "refactoring",
-      "api",
-      "di-migration"
-    ],
+    "labels": ["P2", "refactoring", "api", "di-migration"],
     "body": "Migrate deployment-related routes from `server.ts` to `DeploymentController` and `deployment.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `POST /services/:id/deploy`\n- `POST /services/:id/restart`\n- `GET /services/:id/deployments`\n- `GET /deployments/:id/logs`\n- `GET /deployments/:id/logs/stream` (SSE)\n\n**Tasks:**\n- [ ] Implement `DeploymentController` using injected repositories and services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/deployment.routes.ts` and register it in `index.ts`\n- [ ] Ensure all middleware (auth, validation) is correctly applied\n- [ ] Add unit tests for `DeploymentController`",
     "synced": true,
     "number": 147,
@@ -556,12 +379,7 @@
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate GitHub Proxy Routes to GitHubController",
-    "labels": [
-      "P2",
-      "refactoring",
-      "api",
-      "di-migration"
-    ],
+    "labels": ["P2", "refactoring", "api", "di-migration"],
     "body": "Migrate GitHub proxy routes from `server.ts` to `GitHubController` and `github.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `GET /github/orgs`\n- `GET /github/repos`\n- `GET /github/repos/:owner/:name/branches`\n\n**Tasks:**\n- [ ] Implement `GitHubController` using injected services\n- [ ] Move route logic from `server.ts` to controller methods\n- [ ] Create `apps/api/src/routes/github.routes.ts` and register it in `index.ts`\n- [ ] Ensure GitHub API error handling is preserved\n- [ ] Add unit tests for `GitHubController`",
     "synced": true,
     "number": 148,
@@ -570,12 +388,7 @@
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate Webhook Routes to WebhookController",
-    "labels": [
-      "P2",
-      "refactoring",
-      "api",
-      "di-migration"
-    ],
+    "labels": ["P2", "refactoring", "api", "di-migration"],
     "body": "Migrate GitHub webhook routes from `server.ts` to `WebhookController` and `webhook.routes.ts` as part of Phase 4 of the DI migration.\n\n**Routes to migrate:**\n- `POST /webhooks/github`\n\n**Tasks:**\n- [ ] Implement `WebhookController` and move signature verification logic\n- [ ] Move PR and Push event handling logic to controller methods\n- [ ] Create `apps/api/src/routes/webhook.routes.ts` and register it in `index.ts`\n- [ ] Ensure raw body parsing for signature verification is correctly handled in the new structure\n- [ ] Add unit tests for `WebhookController`",
     "synced": true,
     "number": 149,
@@ -584,12 +397,7 @@
   },
   {
     "title": "[MEDIUM] Standardize Zod Error Handling with z.treeifyError()",
-    "labels": [
-      "P2",
-      "refactoring",
-      "api",
-      "dx"
-    ],
+    "labels": ["P2", "refactoring", "api", "dx"],
     "body": "Currently, controllers manually map ZodError issues into a flat array. We should migrate all controllers to use `z.treeifyError()` (formerly `error.flatten()`) for consistent, structured error responses that match the request body shape.\n\n**Benefits:**\n- zero boilerplate in error handlers\n- structured nested errors for complex forms\n- easier for frontend to map errors to specific fields\n\n**Tasks:**\n- [ ] Update `ServiceController.ts` to use `z.treeifyError()`\n- [ ] Update `FeatureFlagController.ts` to use `z.treeifyError()`\n- [ ] Audit and update any other controllers using Zod validation\n- [ ] Update Dashboard error handling to support the tree-like structure",
     "number": 167,
     "state": "CLOSED",
@@ -598,50 +406,34 @@
   },
   {
     "title": "[HIGH] Insecure Password Hashing Using SHA-256 Without Salt",
-    "labels": [
-      "P1",
-      "security",
-      "bug"
-    ],
+    "labels": ["P1", "security", "bug"],
     "body": "The admin user password hashing uses SHA-256 without salt, which is cryptographically weak and vulnerable to rainbow table attacks.\n\n**Locations:**\n- `apps/api/src/services/InitializationService.ts:111-113`\n- `apps/api/src/services/AuthenticationService.ts:40`\n\n**Current Code:**\n\n```typescript\nprivate hashPassword(password: string): string {\n  // TODO: In a real production app, use bcrypt or argon2 with a proper salt\n  return crypto.createHash('sha256').update(password).digest('hex');\n}\n```\n\n**Security Impact:**\n\n- Passwords vulnerable to rainbow table attacks\n- No salt means identical passwords have identical hashes\n- SHA-256 is too fast for password hashing (allows brute-force attacks)\n- Violates OWASP password storage guidelines\n\n**Recommended Fix:**\n\n```typescript\nimport bcrypt from 'bcrypt';\n\nconst SALT_ROUNDS = 12;\n\nasync hashPassword(password: string): Promise<string> {\n  return bcrypt.hash(password, SALT_ROUNDS);\n}\n\nasync verifyPassword(password: string, hash: string): Promise<boolean> {\n  return bcrypt.compare(password, hash);\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Install bcrypt or argon2 dependency\n- [ ] Implement proper password hashing with salt\n- [ ] Update InitializationService to use secure hashing\n- [ ] Update AuthenticationService to use secure verification\n- [ ] Create migration path for existing passwords\n- [ ] Add tests for password hashing\n- [ ] Document password requirements",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 183,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/183"
   },
   {
     "title": "[HIGH] Duplicate Docker Client Instantiation on Every Request",
-    "labels": [
-      "P1",
-      "performance",
-      "bug"
-    ],
+    "labels": ["P1", "performance", "bug"],
     "body": "Docker client is instantiated inside controller methods on every request, creating performance overhead and potential resource leaks.\n\n**Locations:**\n- `apps/api/src/controllers/ServiceController.ts:62-64, 102-104, 272-274, 386-387`\n- `apps/api/src/controllers/DeploymentController.ts:100-101, 225-226`\n\n**Current Code:**\n\n```typescript\nasync getAllServices(request: FastifyRequest) {\n  // ...\n  const Docker = (await import('dockerode')).default;\n  const docker = new Docker(); // Created on every request!\n  // ...\n}\n```\n\n**Performance Impact:**\n\n- Unnecessary dynamic imports on every request\n- Creates new Docker client connections repeatedly\n- Memory overhead from multiple client instances\n- Potential connection pool exhaustion\n\n**Recommended Fix:**\n\n```typescript\n// Inject Docker client via DI container\n@injectable()\nexport class ServiceController {\n  constructor(\n    @inject(Symbol.for('IContainerOrchestrator'))\n    private containerOrchestrator: IContainerOrchestrator,\n    // ...\n  ) {}\n\n  async getAllServices(request: FastifyRequest) {\n    const containers = await this.containerOrchestrator.listContainers({ all: true });\n    // ...\n  }\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Remove dynamic Docker imports from controllers\n- [ ] Use injected IContainerOrchestrator throughout controllers\n- [ ] Ensure Docker client is singleton in DI container\n- [ ] Add tests to verify Docker client reuse\n- [ ] Measure performance improvement",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 184,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/184"
   },
   {
     "title": "[MEDIUM] Direct Prisma Imports in Controllers Bypass DI",
-    "labels": [
-      "P2",
-      "architecture",
-      "refactoring"
-    ],
+    "labels": ["P2", "architecture", "refactoring"],
     "body": "Several controllers import Prisma directly instead of using injected repositories, breaking dependency injection principles and making testing difficult.\n\n**Locations:**\n- `apps/api/src/controllers/ServiceController.ts:380-381, 419-420, 516-519`\n- `apps/api/src/controllers/DeploymentController.ts:84-85, 219-220`\n- `apps/api/src/controllers/AuthController.ts:235-238`\n\n**Current Code:**\n\n```typescript\nasync getServiceHealth(request: FastifyRequest, reply: FastifyReply) {\n  // ...\n  const { prisma } = await import('database');\n  const service = await prisma.service.findFirst({\n    where: { id, userId: user.id, deletedAt: null },\n  });\n  // ...\n}\n```\n\n**Issues:**\n\n- Breaks dependency injection pattern\n- Makes unit testing difficult (can't mock Prisma)\n- Inconsistent with the rest of the codebase\n- Dynamic imports add unnecessary overhead\n\n**Recommended Fix:**\n\n```typescript\nasync getServiceHealth(request: FastifyRequest, reply: FastifyReply) {\n  // ...\n  const service = await this.serviceRepository.findById(id);\n  if (!service || service.userId !== user.id || service.deletedAt) {\n    return reply.status(404).send({ error: 'Service not found' });\n  }\n  // ...\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Remove all direct Prisma imports from controllers\n- [ ] Use injected repositories consistently\n- [ ] Add missing repository methods if needed\n- [ ] Update unit tests to use mocked repositories\n- [ ] Document DI pattern in codebase guidelines",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 185,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/185"
   },
   {
     "title": "[MEDIUM] Missing Input Validation for Protection Toggle Endpoint",
-    "labels": [
-      "P2",
-      "security",
-      "bug"
-    ],
+    "labels": ["P2", "security", "bug"],
     "body": "The protection toggle endpoint manually validates the `deleteProtected` field without using Zod schema validation, inconsistent with other endpoints.\n\n**Location:**\n`apps/api/src/controllers/ServiceController.ts:352-355`\n\n**Current Code:**\n\n```typescript\nconst { deleteProtected } = request.body as { deleteProtected?: boolean };\n\nif (typeof deleteProtected !== 'boolean') {\n  return reply.status(400).send({ error: 'deleteProtected must be a boolean' });\n}\n```\n\n**Issues:**\n\n- Manual type assertion bypasses type safety\n- Inconsistent with Zod validation used elsewhere\n- Error format differs from other validation errors\n- Missing comprehensive input sanitization\n\n**Recommended Fix:**\n\n```typescript\nconst ProtectionToggleSchema = z.object({\n  deleteProtected: z.boolean(),\n});\n\nasync toggleProtection(request: FastifyRequest, reply: FastifyReply) {\n  let validatedData;\n  try {\n    validatedData = ProtectionToggleSchema.parse(request.body);\n  } catch (error) {\n    if (error instanceof ZodError) {\n      return reply.status(400).send({\n        error: 'Validation failed',\n        details: formatZodError(error),\n      });\n    }\n    throw error;\n  }\n  // ...\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Create Zod schema for protection toggle\n- [ ] Use consistent validation pattern with other endpoints\n- [ ] Return consistent error format\n- [ ] Add tests for validation edge cases",
     "state": "OPEN",
     "synced": true,
@@ -650,11 +442,7 @@
   },
   {
     "title": "[MEDIUM] Potential Race Condition in Organization Creation During GitHub Auth",
-    "labels": [
-      "P2",
-      "bug",
-      "concurrency"
-    ],
+    "labels": ["P2", "bug", "concurrency"],
     "body": "During GitHub authentication, personal organization creation happens without proper concurrency control, potentially creating duplicate organizations.\n\n**Location:**\n`apps/api/src/services/AuthenticationService.ts:99-104`\n\n**Current Code:**\n\n```typescript\n// Check if user has organizations, if not create a personal one\nconst userOrgs = await this.organizationService.getUserOrganizations(user.id);\nif (userOrgs.length === 0) {\n  await this.organizationService.createOrganization(`${user.username}'s Personal`, user.id);\n}\n```\n\n**Issues:**\n\n- Time-of-check to time-of-use (TOCTOU) vulnerability\n- Concurrent auth requests could create multiple organizations\n- No transaction wrapping the check-and-create operation\n- TODO comment in code acknowledges this issue\n\n**Recommended Fix:**\n\n```typescript\n// Use transaction with upsert pattern\nawait prisma.$transaction(async (tx) => {\n  const existingOrg = await tx.organization.findFirst({\n    where: {\n      members: {\n        some: { userId: user.id, role: Role.OWNER }\n      }\n    }\n  });\n  \n  if (!existingOrg) {\n    await this.organizationService.createOrganization(\n      `${user.username}'s Personal`,\n      user.id,\n      tx\n    );\n  }\n});\n```\n\n**Acceptance Criteria:**\n\n- [ ] Wrap organization check-and-create in transaction\n- [ ] Use database constraints to prevent duplicates\n- [ ] Add unique constraint for user's personal organization\n- [ ] Add tests for concurrent authentication scenarios\n- [ ] Remove TODO comment after fixing",
     "state": "OPEN",
     "synced": true,
@@ -663,11 +451,7 @@
   },
   {
     "title": "[MEDIUM] SSE Connection Cleanup May Leave Redis Subscriptions",
-    "labels": [
-      "P2",
-      "bug",
-      "reliability"
-    ],
+    "labels": ["P2", "bug", "reliability"],
     "body": "In the deployment logs SSE endpoint, Redis subscription cleanup uses a shared connection for both subscribe and unsubscribe, which may not properly clean up subscriptions.\n\n**Location:**\n`apps/api/src/controllers/DeploymentController.ts:361-398`\n\n**Current Code:**\n\n```typescript\nconst subConnection = request.server.redis;\nconst channel = `deployment-logs:${id}`;\n\n// ...\n\nconst cleanup = async () => {\n  // ...\n  if (isSubscribed) {\n    try {\n      subConnection.removeListener('message', onMessage);\n      await subConnection.unsubscribe(channel);\n      isSubscribed = false;\n    } catch (err) {\n      console.error(`Error unsubscribing from channel ${channel}:`, err);\n    }\n  }\n};\n```\n\n**Issues:**\n\n- Using shared Redis connection for pub/sub can cause issues\n- Redis pub/sub requires dedicated connections\n- Subscription may not be properly cleaned up on connection errors\n- Could lead to memory leaks in Redis\n\n**Recommended Fix:**\n\n```typescript\n// Create dedicated subscriber connection\nconst subConnection = request.server.redis.duplicate();\n\nconst cleanup = async () => {\n  // ...\n  try {\n    await subConnection.unsubscribe(channel);\n    await subConnection.quit(); // Close dedicated connection\n  } catch (err) {\n    console.error(`Error cleaning up Redis subscription:`, err);\n  }\n};\n```\n\n**Acceptance Criteria:**\n\n- [ ] Use dedicated Redis connections for pub/sub\n- [ ] Properly close dedicated connections on cleanup\n- [ ] Add connection health monitoring\n- [ ] Add tests for subscription cleanup\n- [ ] Document Redis pub/sub pattern",
     "state": "OPEN",
     "synced": true,
@@ -676,11 +460,7 @@
   },
   {
     "title": "[MEDIUM] Feature Flag Client Makes Individual API Calls for Each Flag",
-    "labels": [
-      "P2",
-      "performance",
-      "frontend"
-    ],
+    "labels": ["P2", "performance", "frontend"],
     "body": "The FeatureFlagClient's `checkMultiple` method makes separate API calls for each feature flag instead of batching them into a single request.\n\n**Location:**\n`apps/dashboard/src/lib/featureFlags.ts:44-54`\n\n**Current Code:**\n\n```typescript\nstatic async checkMultiple(keys: string[], userId?: string): Promise<Record<string, boolean>> {\n  const results: Record<string, boolean> = {};\n\n  await Promise.all(\n    keys.map(async (key) => {\n      results[key] = await this.isEnabled(key, userId);\n    }),\n  );\n\n  return results;\n}\n```\n\n**Performance Impact:**\n\n- N API calls for N feature flags\n- Increased latency for feature flag checks\n- Higher server load\n- Potential rate limiting issues\n\n**Recommended Fix:**\n\n```typescript\n// Backend: Add bulk check endpoint\n// POST /feature-flags/check-bulk\n// Body: { keys: string[], userId?: string }\n\n// Frontend:\nstatic async checkMultiple(keys: string[], userId?: string): Promise<Record<string, boolean>> {\n  try {\n    const response = await fetch(`${API_BASE_URL}/feature-flags/check-bulk`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ keys, userId }),\n    });\n    \n    if (!response.ok) {\n      return Object.fromEntries(keys.map(k => [k, false]));\n    }\n    \n    return response.json();\n  } catch (error) {\n    return Object.fromEntries(keys.map(k => [k, false]));\n  }\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Add bulk feature flag check endpoint to API\n- [ ] Update FeatureFlagClient to use bulk endpoint\n- [ ] Add caching for feature flag results\n- [ ] Add tests for bulk check functionality\n- [ ] Document API endpoint",
     "state": "OPEN",
     "synced": true,
@@ -689,11 +469,7 @@
   },
   {
     "title": "[MEDIUM] Error Boundary Does Not Report Errors to Monitoring Service",
-    "labels": [
-      "P2",
-      "observability",
-      "frontend"
-    ],
+    "labels": ["P2", "observability", "frontend"],
     "body": "The React ErrorBoundary only logs errors to console without reporting to any error monitoring service (e.g., Sentry).\n\n**Location:**\n`apps/dashboard/src/components/ErrorBoundary.tsx:26-28`\n\n**Current Code:**\n\n```typescript\ncomponentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {\n  console.error('ErrorBoundary caught an error:', error, errorInfo);\n}\n```\n\n**Issues:**\n\n- Production errors are not tracked\n- No visibility into client-side failures\n- Cannot correlate frontend errors with backend issues\n- Missing error context (user, route, etc.)\n\n**Recommended Fix:**\n\n```typescript\nimport * as Sentry from '@sentry/nextjs';\n\ncomponentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {\n  console.error('ErrorBoundary caught an error:', error, errorInfo);\n  \n  // Report to error monitoring\n  Sentry.captureException(error, {\n    contexts: {\n      react: {\n        componentStack: errorInfo.componentStack,\n      },\n    },\n  });\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Choose and integrate error monitoring service (Sentry recommended)\n- [ ] Update ErrorBoundary to report errors\n- [ ] Add user context to error reports\n- [ ] Add route/page context to error reports\n- [ ] Document error monitoring setup\n- [ ] Add source maps for better stack traces",
     "state": "OPEN",
     "synced": true,
@@ -702,11 +478,7 @@
   },
   {
     "title": "[MEDIUM] Webhook Controller Uses Direct Prisma Import Instead of Repositories",
-    "labels": [
-      "P2",
-      "architecture",
-      "refactoring"
-    ],
+    "labels": ["P2", "architecture", "refactoring"],
     "body": "The WebhookController imports Prisma directly in several places instead of using injected repositories, creating inconsistency with the DI pattern.\n\n**Location:**\n`apps/api/src/controllers/WebhookController.ts:321-364, 374-379, 422-429`\n\n**Current Code:**\n\n```typescript\nasync handlePullRequestEvent(...) {\n  // ...\n  const { prisma } = await import('database');\n  const baseService = await prisma.service.findFirst({\n    where: { ... },\n  });\n  // ...\n  const service = await prisma.service.upsert({ ... });\n}\n```\n\n**Issues:**\n\n- Inconsistent with DI pattern used elsewhere\n- Dynamic imports add overhead\n- Makes testing difficult\n- Cannot easily mock database in tests\n\n**Recommended Fix:**\n\nUse the injected `IServiceRepository` throughout the controller:\n\n```typescript\nasync handlePullRequestEvent(...) {\n  const baseService = await this.serviceRepository.findByRepoAndBranch(\n    repoUrl,\n    { isPreview: false, deletedAt: null }\n  );\n  // ...\n  const service = await this.serviceRepository.upsertPreview(...);\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Remove direct Prisma imports from WebhookController\n- [ ] Add necessary methods to IServiceRepository interface\n- [ ] Implement new repository methods\n- [ ] Update tests to use mocked repositories\n- [ ] Follow consistent DI pattern",
     "state": "OPEN",
     "synced": true,
@@ -715,11 +487,7 @@
   },
   {
     "title": "[LOW] Duplicate Constants Definition Between API and Worker",
-    "labels": [
-      "P3",
-      "refactoring",
-      "maintainability"
-    ],
+    "labels": ["P3", "refactoring", "maintainability"],
     "body": "Container resource limit constants are duplicated between API and Worker services, violating DRY principles.\n\n**Locations:**\n- `apps/api/src/config/constants.ts:7-14`\n- `apps/worker/src/config/constants.ts:7-14`\n\n**Current Code (both files):**\n\n```typescript\nexport const CONTAINER_MEMORY_LIMIT_MB = parseInt(\n  process.env.CONTAINER_MEMORY_LIMIT_MB || '512',\n  10,\n);\nexport const CONTAINER_MEMORY_LIMIT_BYTES = CONTAINER_MEMORY_LIMIT_MB * 1024 * 1024;\n\nexport const CONTAINER_CPU_CORES = parseFloat(process.env.CONTAINER_CPU_CORES || '1.0');\nexport const CONTAINER_CPU_NANOCPUS = Math.floor(CONTAINER_CPU_CORES * 1000000000);\n```\n\n**Issues:**\n\n- Same constants defined in two places\n- Changes must be made in both files\n- Risk of configuration drift\n- Harder to maintain\n\n**Recommended Fix:**\n\nMove shared constants to the `packages/shared` package:\n\n```typescript\n// packages/shared/src/config/constants.ts\nexport const CONTAINER_MEMORY_LIMIT_MB = parseInt(\n  process.env.CONTAINER_MEMORY_LIMIT_MB || '512',\n  10,\n);\n// ...\n\n// apps/api/src/config/constants.ts\nexport { CONTAINER_MEMORY_LIMIT_MB, CONTAINER_CPU_NANOCPUS } from 'shared';\n// ... API-specific constants\n```\n\n**Acceptance Criteria:**\n\n- [ ] Create shared constants file in packages/shared\n- [ ] Move common constants to shared package\n- [ ] Update imports in API and Worker\n- [ ] Remove duplicate definitions\n- [ ] Add tests for shared constants",
     "state": "OPEN",
     "synced": true,
@@ -728,11 +496,7 @@
   },
   {
     "title": "[LOW] Missing Error Handling for Config Parsing in Constants",
-    "labels": [
-      "P3",
-      "reliability",
-      "enhancement"
-    ],
+    "labels": ["P3", "reliability", "enhancement"],
     "body": "Environment variable parsing in constants files doesn't handle invalid values gracefully, potentially causing silent failures or NaN values.\n\n**Locations:**\n- `apps/api/src/config/constants.ts`\n- `apps/worker/src/config/constants.ts`\n\n**Current Code:**\n\n```typescript\nexport const CONTAINER_MEMORY_LIMIT_MB = parseInt(\n  process.env.CONTAINER_MEMORY_LIMIT_MB || '512',\n  10,\n);\nexport const CONTAINER_CPU_CORES = parseFloat(process.env.CONTAINER_CPU_CORES || '1.0');\n```\n\n**Issues:**\n\n- Invalid string values result in NaN\n- No validation of reasonable ranges\n- Silent failures could cause unexpected behavior\n- No logging of configuration issues\n\n**Recommended Fix:**\n\n```typescript\nfunction parseIntEnv(name: string, defaultValue: number, min?: number, max?: number): number {\n  const raw = process.env[name];\n  if (!raw) return defaultValue;\n  \n  const parsed = parseInt(raw, 10);\n  if (isNaN(parsed)) {\n    console.warn(`Invalid ${name} value '${raw}', using default ${defaultValue}`);\n    return defaultValue;\n  }\n  \n  if (min !== undefined && parsed < min) {\n    console.warn(`${name} value ${parsed} below minimum ${min}, using ${min}`);\n    return min;\n  }\n  \n  if (max !== undefined && parsed > max) {\n    console.warn(`${name} value ${parsed} above maximum ${max}, using ${max}`);\n    return max;\n  }\n  \n  return parsed;\n}\n\nexport const CONTAINER_MEMORY_LIMIT_MB = parseIntEnv(\n  'CONTAINER_MEMORY_LIMIT_MB',\n  512,\n  64,    // Minimum 64MB\n  8192   // Maximum 8GB\n);\n```\n\n**Acceptance Criteria:**\n\n- [ ] Create safe parsing utility functions\n- [ ] Add range validation for numeric configs\n- [ ] Log warnings for invalid/out-of-range values\n- [ ] Add tests for edge cases\n- [ ] Document valid configuration ranges",
     "state": "OPEN",
     "synced": true,
@@ -741,11 +505,7 @@
   },
   {
     "title": "[LOW] Hardcoded Platform Domain in Multiple Locations",
-    "labels": [
-      "P3",
-      "maintainability",
-      "refactoring"
-    ],
+    "labels": ["P3", "maintainability", "refactoring"],
     "body": "The platform domain `helvetia.cloud` is hardcoded in multiple places instead of being centrally configured.\n\n**Locations:**\n- `apps/api/src/controllers/DeploymentController.ts:139-140`\n- Various Traefik label configurations\n\n**Current Code:**\n\n```typescript\nconst traefikRule = service.customDomain\n  ? `Host(\\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\\`) || ...`\n  : `Host(\\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\\`) || ...`;\n```\n\n**Issues:**\n\n- Domain string repeated with same fallback pattern\n- Risk of inconsistent domain usage\n- Harder to rebrand or deploy to different domains\n- Should be a centralized constant\n\n**Recommended Fix:**\n\n```typescript\n// packages/shared/src/config/constants.ts\nexport const PLATFORM_DOMAIN = process.env.PLATFORM_DOMAIN || 'helvetia.cloud';\n\n// apps/api/src/controllers/DeploymentController.ts\nimport { PLATFORM_DOMAIN } from 'shared';\n\nconst traefikRule = service.customDomain\n  ? `Host(\\`${service.name}.${PLATFORM_DOMAIN}\\`) || ...`\n  : `Host(\\`${service.name}.${PLATFORM_DOMAIN}\\`) || ...`;\n```\n\n**Acceptance Criteria:**\n\n- [ ] Create PLATFORM_DOMAIN constant in shared package\n- [ ] Replace all hardcoded domain references\n- [ ] Document domain configuration\n- [ ] Add validation for domain format",
     "state": "OPEN",
     "synced": true,
@@ -754,11 +514,7 @@
   },
   {
     "title": "[LOW] useFeatureFlag Hook Missing Dependency in useEffect",
-    "labels": [
-      "P3",
-      "frontend",
-      "bug"
-    ],
+    "labels": ["P3", "frontend", "bug"],
     "body": "The `useFeatureFlag` hook's useEffect may have stale closure issues due to missing dependencies in the dependency array.\n\n**Location:**\n`apps/dashboard/src/lib/featureFlags.ts:68-79`\n\n**Current Code:**\n\n```typescript\nexport function useFeatureFlag(\n  key: string,\n  userId?: string,\n  options: { enabled?: boolean } = { enabled: true },\n) {\n  const [enabled, setEnabled] = React.useState<boolean>(false);\n  const [loading, setLoading] = React.useState<boolean>(true);\n\n  React.useEffect(() => {\n    if (!options.enabled) {\n      setEnabled(false);\n      setLoading(false);\n      return;\n    }\n\n    setLoading(true);\n    FeatureFlagClient.isEnabled(key, userId)\n      .then(setEnabled)\n      .finally(() => setLoading(false));\n  }, [key, userId, options.enabled]);\n\n  return { enabled, loading };\n}\n```\n\n**Issues:**\n\n- `options.enabled` should be extracted before the effect\n- Default parameter creates new object on each render\n- Could cause unnecessary re-renders\n\n**Recommended Fix:**\n\n```typescript\nexport function useFeatureFlag(\n  key: string,\n  userId?: string,\n  options?: { enabled?: boolean },\n) {\n  const isEnabled = options?.enabled ?? true;\n  const [enabled, setEnabled] = React.useState<boolean>(false);\n  const [loading, setLoading] = React.useState<boolean>(true);\n\n  React.useEffect(() => {\n    if (!isEnabled) {\n      setEnabled(false);\n      setLoading(false);\n      return;\n    }\n\n    setLoading(true);\n    FeatureFlagClient.isEnabled(key, userId)\n      .then(setEnabled)\n      .finally(() => setLoading(false));\n  }, [key, userId, isEnabled]);\n\n  return { enabled, loading };\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Fix options parameter handling\n- [ ] Extract enabled flag before useEffect\n- [ ] Ensure stable dependencies\n- [ ] Add tests for hook behavior",
     "state": "OPEN",
     "synced": true,
@@ -767,11 +523,7 @@
   },
   {
     "title": "[LOW] Services Hook Returns Status String Instead of Proper Enum Type",
-    "labels": [
-      "P3",
-      "type-safety",
-      "frontend"
-    ],
+    "labels": ["P3", "type-safety", "frontend"],
     "body": "The `createUpdateServiceMetrics` function casts metrics status to `ServiceStatus` without proper type checking, potentially allowing invalid status values.\n\n**Location:**\n`apps/dashboard/src/hooks/useServices.ts:279-296`\n\n**Current Code:**\n\n```typescript\nexport function createUpdateServiceMetrics(queryClient: ReturnType<typeof useQueryClient>) {\n  return (updates: Array<{ id: string; metrics: Service['metrics']; status?: ServiceStatus }>) => {\n    queryClient.setQueryData<Service[]>(serviceKeys.lists(), (old) =>\n      old\n        ? old.map((service) => {\n            const update = updates.find((u) => u.id === service.id);\n            if (update && update.metrics) {\n              return {\n                ...service,\n                metrics: update.metrics,\n                status: (update.metrics.status as ServiceStatus) || service.status,\n              };\n            }\n            return service;\n          })\n        : old,\n    );\n  };\n}\n```\n\n**Issues:**\n\n- Unsafe type assertion `as ServiceStatus`\n- Could result in invalid status values in state\n- No runtime validation of status values\n\n**Recommended Fix:**\n\n```typescript\nconst VALID_STATUSES: ServiceStatus[] = ['IDLE', 'DEPLOYING', 'RUNNING', 'STOPPED', 'FAILED'];\n\nfunction isValidStatus(status: unknown): status is ServiceStatus {\n  return typeof status === 'string' && VALID_STATUSES.includes(status as ServiceStatus);\n}\n\nexport function createUpdateServiceMetrics(queryClient: ReturnType<typeof useQueryClient>) {\n  return (updates: Array<{ id: string; metrics: Service['metrics']; status?: ServiceStatus }>) => {\n    queryClient.setQueryData<Service[]>(serviceKeys.lists(), (old) =>\n      old?.map((service) => {\n        const update = updates.find((u) => u.id === service.id);\n        if (update?.metrics) {\n          const newStatus = update.metrics.status;\n          return {\n            ...service,\n            metrics: update.metrics,\n            status: isValidStatus(newStatus) ? newStatus : service.status,\n          };\n        }\n        return service;\n      }) ?? old,\n    );\n  };\n}\n```\n\n**Acceptance Criteria:**\n\n- [ ] Add runtime status validation\n- [ ] Create type guard for ServiceStatus\n- [ ] Remove unsafe type assertions\n- [ ] Add tests for status updates",
     "state": "OPEN",
     "synced": true,
