@@ -9,9 +9,10 @@ This document covers Server-Sent Events (SSE) implementation for real-time updat
 ## Table of Contents
 
 1. [SSE Connection Lifecycle](#sse-connection-lifecycle)
-2. [Memory Leak Prevention](#memory-leak-prevention)
-3. [Service Status Lifecycle](#service-status-lifecycle)
-4. [Testing and Monitoring](#testing-and-monitoring)
+2. [Redis Pub/Sub Pattern](#redis-pubsub-pattern)
+3. [Memory Leak Prevention](#memory-leak-prevention)
+4. [Service Status Lifecycle](#service-status-lifecycle)
+5. [Testing and Monitoring](#testing-and-monitoring)
 
 ---
 
@@ -133,6 +134,136 @@ Connections can be terminated in several ways:
 
 ---
 
+## Redis Pub/Sub Pattern
+
+### Overview
+
+The deployment logs streaming endpoint uses Redis pub/sub to receive real-time logs from the worker service. Proper connection management is critical to prevent memory leaks and subscription issues.
+
+### Best Practices for Redis Pub/Sub
+
+#### 1. Use Dedicated Connections
+
+Redis pub/sub requires dedicated connections because:
+
+- A connection in subscribe mode cannot execute other commands
+- Sharing connections can cause subscription management issues
+- Proper cleanup requires closing the dedicated connection
+
+**Implementation:**
+
+```typescript
+// Create dedicated subscriber connection using duplicate()
+const subConnection = request.server.redis.duplicate();
+const channel = `deployment-logs:${id}`;
+
+// Track connection health
+let connectionHealthy = true;
+subConnection.on('error', (err) => {
+  connectionHealthy = false;
+  console.error(`Redis subscription connection error:`, err);
+});
+```
+
+#### 2. Proper Cleanup Pattern
+
+Always clean up both the subscription and the dedicated connection:
+
+```typescript
+const cleanup = async () => {
+  // Unsubscribe from channel
+  if (isSubscribed) {
+    try {
+      subConnection.removeListener('message', onMessage);
+      await subConnection.unsubscribe(channel);
+      isSubscribed = false;
+    } catch (err) {
+      console.error(`Error unsubscribing:`, err);
+    }
+  }
+
+  // Close the dedicated connection
+  try {
+    await subConnection.quit();
+  } catch (err) {
+    console.error(`Error closing Redis connection:`, err);
+  }
+};
+```
+
+#### 3. Connection Health Monitoring
+
+Monitor connection health to detect issues early:
+
+```typescript
+let connectionHealthy = true;
+
+subConnection.on('error', (err) => {
+  connectionHealthy = false;
+  console.error(`Redis connection error:`, err);
+});
+
+// Include health status in cleanup logs
+console.log(`Connection cleaned up. Health: ${connectionHealthy}`);
+```
+
+#### 4. Channel Naming Convention
+
+Use consistent channel naming patterns:
+
+- Deployment logs: `deployment-logs:${deploymentId}`
+- Status updates: `status:${serviceId}`
+
+### Publishing Pattern (Worker)
+
+The worker service publishes logs to Redis:
+
+```typescript
+import { Redis } from 'ioredis';
+
+// Use the main Redis connection for publishing
+const redis = new Redis(process.env.REDIS_URL);
+
+// Publish logs to channel
+await redis.publish(`deployment-logs:${deploymentId}`, logMessage);
+```
+
+### Subscribing Pattern (API)
+
+The API subscribes to channels using dedicated connections:
+
+```typescript
+// Create dedicated connection for subscribing
+const subConnection = fastify.redis.duplicate();
+const channel = `deployment-logs:${deploymentId}`;
+
+// Subscribe to channel
+await subConnection.subscribe(channel);
+
+// Handle messages
+subConnection.on('message', (chan, message) => {
+  if (chan === channel) {
+    // Process message
+    reply.raw.write(`data: ${message}\n\n`);
+  }
+});
+
+// Clean up on disconnect
+request.raw.on('close', async () => {
+  await subConnection.unsubscribe(channel);
+  await subConnection.quit();
+});
+```
+
+### Common Pitfalls to Avoid
+
+1. **Sharing connections** - Never use the main Redis connection for pub/sub
+2. **Missing cleanup** - Always close dedicated connections with `quit()`
+3. **Ignoring errors** - Monitor connection errors and reconnect if needed
+4. **Memory leaks** - Ensure cleanup runs on all disconnect scenarios
+
+---
+
 ## Memory Leak Prevention
 
 ### Issue
@@ -150,6 +281,7 @@ SSE connection intervals were not properly cleaned up on errors, leading to pote
 2. **Logs Stream** (`/deployments/:id/logs/stream`):
    - Token validation interval created at line 1549 was only cleared on token expiration
    - Redis subscription could leak if cleanup failed
+   - Shared Redis connection for pub/sub could cause subscription management issues
    - No timeout mechanism
    - Limited error handling in write operations
 
@@ -183,10 +315,22 @@ const cleanup = async () => {
     timeoutHandle = null;
   }
 
-  // Unsubscribe from Redis
-  if (subscriber) {
-    await subscriber.unsubscribe();
-    await subscriber.quit();
+  // Unsubscribe from Redis and close dedicated connection
+  if (isSubscribed) {
+    try {
+      subConnection.removeListener('message', onMessage);
+      await subConnection.unsubscribe(channel);
+      isSubscribed = false;
+    } catch (err) {
+      console.error(`Error unsubscribing from channel ${channel}:`, err);
+    }
+  }
+
+  // Close the dedicated Redis connection
+  try {
+    await subConnection.quit();
+  } catch (err) {
+    console.error(`Error closing Redis connection:`, err);
   }
 
   // Close response stream

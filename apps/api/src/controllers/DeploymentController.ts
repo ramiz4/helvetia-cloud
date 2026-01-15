@@ -375,9 +375,17 @@ export class DeploymentController {
     let timeoutHandle: NodeJS.Timeout | null = null;
     let isSubscribed = false;
 
-    // Get Redis connection from fastify instance
-    const subConnection = request.server.redis;
+    // Create dedicated Redis connection for pub/sub to ensure proper cleanup
+    // Using shared connections for pub/sub can cause issues with subscription management
+    const subConnection = request.server.redis.duplicate();
     const channel = `deployment-logs:${id}`;
+
+    // Track connection health
+    let connectionHealthy = true;
+    subConnection.on('error', (err) => {
+      connectionHealthy = false;
+      console.error(`Redis subscription connection error for deployment ${id}:`, err);
+    });
 
     // Cleanup function to ensure all resources are freed
     const cleanup = async () => {
@@ -395,7 +403,7 @@ export class DeploymentController {
         timeoutHandle = null;
       }
 
-      // Clean up Redis subscription
+      // Clean up Redis subscription and dedicated connection
       if (isSubscribed) {
         try {
           subConnection.removeListener('message', onMessage);
@@ -406,12 +414,20 @@ export class DeploymentController {
         }
       }
 
+      // Close the dedicated Redis connection
+      try {
+        await subConnection.quit();
+      } catch (err) {
+        console.error(`Error closing Redis connection for deployment ${id}:`, err);
+      }
+
       console.log(
         `SSE logs connection cleaned up for deployment ${id}. ` +
           `Duration: ${Date.now() - connectionState.startTime}ms, ` +
           `Messages: ${connectionState.messagesReceived}, ` +
           `Validations: ${connectionState.validationAttempts}, ` +
-          `Errors: ${connectionState.errorCount}`,
+          `Errors: ${connectionState.errorCount}, ` +
+          `Connection healthy: ${connectionHealthy}`,
       );
     };
 
