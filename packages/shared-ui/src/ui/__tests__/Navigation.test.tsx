@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { LanguageContextType, useLanguage } from '../../config/LanguageContext';
 import Navigation, { NavLink } from '../Navigation';
-import { useLanguage } from '../../config/LanguageContext';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -32,12 +32,12 @@ const mockT = {
     openMenu: 'Open',
     closeMenu: 'Close',
     mobileMenu: 'Mobile',
-    logout: 'Logout'
+    logout: 'Logout',
   },
   common: {
     freePlan: 'Free',
-    personalAccount: 'Personal'
-  }
+    personalAccount: 'Personal',
+  },
 };
 
 const mockLinks: NavLink[] = [
@@ -48,7 +48,7 @@ const mockLinks: NavLink[] = [
 describe('Navigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useLanguage).mockReturnValue({ t: mockT } as any);
+    vi.mocked(useLanguage).mockReturnValue({ t: mockT } as LanguageContextType);
   });
 
   const defaultProps = {
@@ -82,7 +82,7 @@ describe('Navigation', () => {
   it('filters hidden links', () => {
     const linksWithHidden = [
       ...mockLinks,
-      { label: 'Hidden', href: '/hidden', icon: () => <div />, show: false }
+      { label: 'Hidden', href: '/hidden', icon: () => <div />, show: false },
     ];
     render(<Navigation {...defaultProps} links={linksWithHidden} isLoggedIn={true} />);
 

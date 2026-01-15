@@ -2,13 +2,10 @@
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Flag, LayoutDashboard, Server } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import { Navigation, NavLink, useLanguage } from 'shared-ui';
+import { Navigation, NavLink } from 'shared-ui';
 
 export default function AdminNavigation() {
   const { user, isAdmin, loading, logout } = useAdminAuth();
-  const pathname = usePathname();
-  const { t } = useLanguage();
 
   if (loading || !isAdmin || !user) {
     return null;

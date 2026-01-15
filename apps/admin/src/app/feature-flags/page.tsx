@@ -46,7 +46,7 @@ interface CreateFlagData {
 }
 
 export default function FeatureFlagsAdminPage() {
-  const { isAdmin, loading: authLoading, logout } = useAdminAuth();
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);

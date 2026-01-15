@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useLanguage } from '../../config/LanguageContext';
+import { LanguageContextType, useLanguage } from '../../config/LanguageContext';
 import UserMenu from '../UserMenu';
 
 // Mock language
@@ -14,7 +14,13 @@ vi.mock('../../config/LanguageContext', async () => {
 
 // Mock next/image
 vi.mock('next/image', () => ({
-  default: ({ fill, ...props }: any) => <img {...props} data-fill={fill?.toString()} />,
+  default: ({
+    fill,
+    ...props
+  }: {
+    fill: string;
+    props: React.ImgHTMLAttributes<HTMLImageElement>;
+  }) => <img {...props} data-fill={fill?.toString()} />,
 }));
 
 const mockT = {
@@ -36,11 +42,11 @@ const mockUser = {
 describe('UserMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useLanguage).mockReturnValue({ t: mockT } as any);
+    vi.mocked(useLanguage).mockReturnValue({ t: mockT } as LanguageContextType);
   });
 
   it('renders user information correctly', () => {
-    render(<UserMenu user={mockUser} onLogout={() => { }} />);
+    render(<UserMenu user={mockUser} onLogout={() => {}} />);
 
     expect(screen.getByText('testuser')).toBeDefined();
     expect(screen.getByText('Free Plan')).toBeDefined();
@@ -49,13 +55,13 @@ describe('UserMenu', () => {
   });
 
   it('renders custom plan label', () => {
-    render(<UserMenu user={mockUser} onLogout={() => { }} planLabel="Administrator" />);
+    render(<UserMenu user={mockUser} onLogout={() => {}} planLabel="Administrator" />);
     expect(screen.getByText('Administrator')).toBeDefined();
     expect(screen.queryByText('Free Plan')).toBeNull();
   });
 
   it('renders fallback icon when no avatar url', () => {
-    render(<UserMenu user={{ username: 'noavatar' }} onLogout={() => { }} />);
+    render(<UserMenu user={{ username: 'noavatar' }} onLogout={() => {}} />);
 
     expect(screen.getByText('noavatar')).toBeDefined();
     const images = screen.queryAllByRole('img');
@@ -63,7 +69,7 @@ describe('UserMenu', () => {
   });
 
   it('toggles menu visibility', () => {
-    render(<UserMenu user={mockUser} onLogout={() => { }} />);
+    render(<UserMenu user={mockUser} onLogout={() => {}} />);
 
     expect(screen.queryByRole('menu')).toBeNull();
 
@@ -76,9 +82,9 @@ describe('UserMenu', () => {
 
   it('renders children', () => {
     render(
-      <UserMenu user={mockUser} onLogout={() => { }}>
+      <UserMenu user={mockUser} onLogout={() => {}}>
         <div data-testid="child">Custom Child</div>
-      </UserMenu>
+      </UserMenu>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
@@ -89,7 +95,7 @@ describe('UserMenu', () => {
     render(
       <div>
         <div data-testid="outside">Outside</div>
-        <UserMenu user={mockUser} onLogout={() => { }} />
+        <UserMenu user={mockUser} onLogout={() => {}} />
       </div>,
     );
 
@@ -101,7 +107,7 @@ describe('UserMenu', () => {
   });
 
   it('closes when pressing Escape', () => {
-    render(<UserMenu user={mockUser} onLogout={() => { }} />);
+    render(<UserMenu user={mockUser} onLogout={() => {}} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
     expect(screen.getByRole('menu')).toBeDefined();

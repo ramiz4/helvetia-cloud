@@ -48,7 +48,7 @@ describe('Accessibility Tests', () => {
         username: 'testuser',
         avatarUrl: 'https://example.com/avatar.jpg',
       };
-      const mockLogout = () => { };
+      const mockLogout = () => {};
 
       const { container } = renderWithProviders(<UserMenu user={mockUser} onLogout={mockLogout} />);
       const results = await axe(container);

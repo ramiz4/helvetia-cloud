@@ -1,6 +1,5 @@
 'use client';
 
-import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Server } from 'lucide-react';
 import { ConfigurationForm } from './components/ConfigurationForm';
 import { ScriptViewer } from './components/ScriptViewer';
@@ -20,7 +19,6 @@ export default function ServerSetupPage() {
     handleCopy,
     currentScript,
   } = useServerSetup();
-  const { logout } = useAdminAuth();
 
   return (
     <div className="min-h-screen bg-slate-950 py-8 animate-fade-in text-slate-200">
