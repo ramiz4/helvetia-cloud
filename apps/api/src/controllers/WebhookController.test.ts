@@ -19,7 +19,7 @@ describe('WebhookController', () => {
       delete: vi.fn(),
       findBaseServiceByRepoUrl: vi.fn(),
       findPreviewByPrNumberAndRepoUrl: vi.fn(),
-      findByRepoUrlAndBranch: vi.fn(),
+      findByRepoUrlAndBranch: vi.fn().mockResolvedValue([]),
       findByNameAndEnvironment: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
