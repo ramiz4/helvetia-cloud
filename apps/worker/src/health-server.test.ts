@@ -57,7 +57,7 @@ const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 // Import after mocks are set up
-const { healthServer, startHealthServer, stopHealthServer } = await import('./health-server');
+const { healthServer, startHealthServer } = await import('./health-server');
 
 describe('Worker Health Check', () => {
   beforeEach(() => {
