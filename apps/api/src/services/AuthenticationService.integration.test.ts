@@ -68,7 +68,7 @@ describeIf('AuthenticationService - Concurrent Organization Creation', () => {
     });
     vi.mocked(axios.get).mockResolvedValue({
       data: {
-        id: parseInt(testGithubId),
+        id: parseInt(testGithubId, 10),
         login: 'concurrent-test-user',
         avatar_url: 'https://avatar.url',
       },
@@ -143,7 +143,7 @@ describeIf('AuthenticationService - Concurrent Organization Creation', () => {
     });
     vi.mocked(axios.get).mockResolvedValue({
       data: {
-        id: parseInt(testGithubId2),
+        id: parseInt(testGithubId2, 10),
         login: 'existing-org-user',
         avatar_url: 'https://avatar.url',
       },

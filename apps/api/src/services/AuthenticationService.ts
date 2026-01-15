@@ -135,9 +135,7 @@ export class AuthenticationService {
           where: { slug },
         });
 
-        const finalSlug = existingSlug
-          ? `${slug}-${Math.random().toString(36).substring(2, 7)}`
-          : slug;
+        const finalSlug = existingSlug ? `${slug}-${crypto.randomUUID().substring(0, 7)}` : slug;
 
         // Create organization with member in a single operation
         await tx.organization.create({
