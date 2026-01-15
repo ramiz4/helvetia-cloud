@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!isAdmin) return null;
+  if (!isAdmin || !user) return null;
 
   const adminCards = [
     {

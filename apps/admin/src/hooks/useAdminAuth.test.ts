@@ -59,7 +59,7 @@ describe('useAdminAuth', () => {
   });
 
   it('should redirect non-admin users to /', async () => {
-    const regularUser = { username: 'user', role: Role.USER };
+    const regularUser = { username: 'user', role: Role.MEMBER };
     localStorage.setItem('user', JSON.stringify(regularUser));
 
     renderHook(() => useAdminAuth());
@@ -112,7 +112,7 @@ describe('useAdminAuth', () => {
   });
 
   it('should not set user state for non-admin users', async () => {
-    const regularUser = { username: 'user', role: Role.USER };
+    const regularUser = { username: 'user', role: Role.MEMBER };
     localStorage.setItem('user', JSON.stringify(regularUser));
 
     const { result } = renderHook(() => useAdminAuth());
@@ -150,7 +150,7 @@ describe('useAdminAuth', () => {
   });
 
   it('should only call router.push once for non-admin users', async () => {
-    const regularUser = { username: 'user', role: Role.USER };
+    const regularUser = { username: 'user', role: Role.MEMBER };
     localStorage.setItem('user', JSON.stringify(regularUser));
 
     renderHook(() => useAdminAuth());
@@ -162,15 +162,10 @@ describe('useAdminAuth', () => {
   });
 
   it('should complete loading state even when redirecting', async () => {
-    renderHook(() => useAdminAuth());
+    const { result } = renderHook(() => useAdminAuth());
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalled();
-    });
-
-    // Check that loading completes after redirect
-    const { result } = renderHook(() => useAdminAuth());
-    await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
   });

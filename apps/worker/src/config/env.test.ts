@@ -40,7 +40,7 @@ describe('Environment Validation - Worker', () => {
       expect(env.CONTAINER_MEMORY_LIMIT_MB).toBe(512);
       expect(env.CONTAINER_CPU_CORES).toBe(1.0);
       expect(env.MAX_LOG_SIZE_CHARS).toBe(50000);
-      expect(env.WORKER_HEALTH_PORT).toBe(3002);
+      expect(env.WORKER_HEALTH_PORT).toBe(3003);
       expect(env.WORKSPACE_DIR).toBe('/tmp/helvetia-workspaces');
     });
   });

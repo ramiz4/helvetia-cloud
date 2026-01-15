@@ -212,17 +212,16 @@ describe('AdminDashboard', () => {
     expect(screen.getByText('View Documentation')).toBeInTheDocument();
   });
 
-  it('should not render dashboard content when user is null', () => {
+  it('should render nothing when user is null even if isAdmin is true', () => {
     mockUseAdminAuth.mockReturnValue({
       isAdmin: true,
       loading: false,
       user: null,
     });
 
-    render(<AdminDashboard />);
+    const { container } = render(<AdminDashboard />);
 
-    // Should still render dashboard but without username
-    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
+    expect(container.firstChild).toBeNull();
   });
 
   it('should apply correct CSS classes for glassmorphic design', () => {
