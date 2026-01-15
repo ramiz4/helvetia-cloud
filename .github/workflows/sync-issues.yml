@@ -27,10 +27,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Setup GitHub CLI
-        uses: cli/cli-action@v1
-
-      # Note: pnpm and dependencies are not required as the sync script
+      # Note: GitHub CLI (gh) is pre-installed on all GitHub-hosted runners
+      # No additional setup is required. The script uses GH_TOKEN environment
+      # variable which is set in the next step.
+      # pnpm and dependencies are not required as the sync script
       # only uses Node.js built-in modules (fs, path, child_process)
 
       - name: Sync issues to GitHub
