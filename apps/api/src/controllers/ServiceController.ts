@@ -11,7 +11,11 @@ import type {
   IServiceManagementService,
   IServiceRepository,
 } from '../interfaces';
-import { ServiceCreateSchema, ServiceUpdateSchema } from '../schemas/service.schema';
+import {
+  ProtectionToggleSchema,
+  ServiceCreateSchema,
+  ServiceUpdateSchema,
+} from '../schemas/service.schema';
 import '../types/fastify';
 import { formatZodError } from '../utils/errorFormatting';
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
@@ -364,11 +368,22 @@ export class ServiceController {
     if (!user) {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
-    const { deleteProtected } = request.body as { deleteProtected?: boolean };
 
-    if (typeof deleteProtected !== 'boolean') {
-      return reply.status(400).send({ error: 'deleteProtected must be a boolean' });
+    // Validate and parse request body
+    let validatedData;
+    try {
+      validatedData = ProtectionToggleSchema.parse(request.body);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return reply.status(400).send({
+          error: 'Validation failed',
+          details: formatZodError(error),
+        });
+      }
+      throw error;
     }
+
+    const { deleteProtected } = validatedData;
 
     const service = await this.serviceRepository.findById(id);
 
