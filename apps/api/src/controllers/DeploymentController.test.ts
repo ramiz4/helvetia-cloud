@@ -119,6 +119,11 @@ describe('DeploymentController', () => {
       findAll: vi.fn(),
       findByNameAndEnvironment: vi.fn(),
       findByEnvironmentId: vi.fn(),
+      findByIdAndUserId: vi.fn(),
+      findByIdAndUserIdWithEnvironment: vi.fn(),
+      findBaseServiceByRepoUrl: vi.fn(),
+      findPreviewByPrNumberAndRepoUrl: vi.fn(),
+      findByRepoUrlAndBranch: vi.fn(),
     };
 
     mockDeploymentRepo = {
@@ -324,8 +329,9 @@ describe('DeploymentController', () => {
     it('should successfully restart a service', async () => {
       mockRequest.params = { id: 'service-1' };
 
-      const { prisma } = await import('database');
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockService as any);
+      vi.mocked(mockServiceRepo.findByIdAndUserIdWithEnvironment).mockResolvedValue(
+        mockService as any,
+      );
 
       const result = await controller.restartService(mockRequest as any, mockReply as any);
 
@@ -336,8 +342,7 @@ describe('DeploymentController', () => {
     it('should return 404 when service not found', async () => {
       mockRequest.params = { id: 'service-1' };
 
-      const { prisma } = await import('database');
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(null);
+      vi.mocked(mockServiceRepo.findByIdAndUserIdWithEnvironment).mockResolvedValue(null);
 
       await controller.restartService(mockRequest as any, mockReply as any);
 
@@ -348,8 +353,7 @@ describe('DeploymentController', () => {
     it('should return 400 for COMPOSE services', async () => {
       mockRequest.params = { id: 'service-1' };
 
-      const { prisma } = await import('database');
-      vi.mocked(prisma.service.findFirst).mockResolvedValue({
+      vi.mocked(mockServiceRepo.findByIdAndUserIdWithEnvironment).mockResolvedValue({
         ...mockService,
         type: 'COMPOSE',
       } as any);
