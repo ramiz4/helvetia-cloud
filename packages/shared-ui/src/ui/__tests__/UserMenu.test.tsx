@@ -1,25 +1,26 @@
-import { OrganizationContextType, useOrganizationContext } from '@/lib/OrganizationContext';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { LanguageContextType, useLanguage } from 'shared-ui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import UserMenu from './UserMenu';
+import { LanguageContextType, useLanguage } from '../../config/LanguageContext';
+import UserMenu from '../UserMenu';
 
 // Mock language
-vi.mock('shared-ui', async () => {
-  const actual = await vi.importActual('shared-ui');
+vi.mock('../../config/LanguageContext', async () => {
+  const actual = await vi.importActual('../../config/LanguageContext');
   return {
     ...actual,
     useLanguage: vi.fn(),
   };
 });
 
-vi.mock('@/lib/OrganizationContext', () => ({
-  useOrganizationContext: vi.fn(),
-}));
-
 // Mock next/image
 vi.mock('next/image', () => ({
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
+  default: ({
+    fill,
+    ...props
+  }: {
+    fill: string;
+    props: React.ImgHTMLAttributes<HTMLImageElement>;
+  }) => <img {...props} data-fill={fill?.toString()} />,
 }));
 
 const mockT = {
@@ -30,12 +31,6 @@ const mockT = {
   nav: {
     settings: 'Settings',
     logout: 'Log Out',
-  },
-  userMenu: {
-    billing: 'Billing',
-    pro: 'PRO',
-    security: 'Security',
-    support: 'Support',
   },
 };
 
@@ -48,18 +43,6 @@ describe('UserMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useLanguage).mockReturnValue({ t: mockT } as LanguageContextType);
-    vi.mocked(useOrganizationContext).mockReturnValue({
-      currentOrganization: {
-        id: 'org1',
-        name: 'Org 1',
-        slug: '',
-        createdAt: '',
-        updatedAt: '',
-      },
-      setCurrentOrganization: vi.fn(),
-      organizations: [],
-      isLoading: false,
-    } as OrganizationContextType);
   });
 
   it('renders user information correctly', () => {
@@ -71,14 +54,16 @@ describe('UserMenu', () => {
     expect(avatar).toHaveProperty('src', 'https://example.com/avatar.png');
   });
 
+  it('renders custom plan label', () => {
+    render(<UserMenu user={mockUser} onLogout={() => {}} planLabel="Administrator" />);
+    expect(screen.getByText('Administrator')).toBeDefined();
+    expect(screen.queryByText('Free Plan')).toBeNull();
+  });
+
   it('renders fallback icon when no avatar url', () => {
     render(<UserMenu user={{ username: 'noavatar' }} onLogout={() => {}} />);
 
-    // Check if the user icon container exists (can check by SVG presence or logic)
-    // The fallback is a User icon from lucide-react.
-    // We can just query by text 'noavatar' first.
     expect(screen.getByText('noavatar')).toBeDefined();
-    // Verify no image tag
     const images = screen.queryAllByRole('img');
     expect(images.length).toBe(0);
   });
@@ -86,17 +71,24 @@ describe('UserMenu', () => {
   it('toggles menu visibility', () => {
     render(<UserMenu user={mockUser} onLogout={() => {}} />);
 
-    // Menu should be closed initially
     expect(screen.queryByRole('menu')).toBeNull();
 
-    // Click to open
     fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
     expect(screen.getByRole('menu')).toBeDefined();
-    expect(screen.getByText('Settings')).toBeDefined();
 
-    // Click to close
     fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
     expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('renders children', () => {
+    render(
+      <UserMenu user={mockUser} onLogout={() => {}}>
+        <div data-testid="child">Custom Child</div>
+      </UserMenu>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
+    expect(screen.getByTestId('child')).toBeDefined();
   });
 
   it('closes when clicking outside', async () => {
@@ -107,11 +99,9 @@ describe('UserMenu', () => {
       </div>,
     );
 
-    // Open menu
     fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
     expect(screen.getByRole('menu')).toBeDefined();
 
-    // Click outside
     fireEvent.mouseDown(screen.getByTestId('outside'));
     expect(screen.queryByRole('menu')).toBeNull();
   });
@@ -119,11 +109,9 @@ describe('UserMenu', () => {
   it('closes when pressing Escape', () => {
     render(<UserMenu user={mockUser} onLogout={() => {}} />);
 
-    // Open menu
     fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
     expect(screen.getByRole('menu')).toBeDefined();
 
-    // Press Escape
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('menu')).toBeNull();
   });
@@ -132,10 +120,8 @@ describe('UserMenu', () => {
     const onLogout = vi.fn();
     render(<UserMenu user={mockUser} onLogout={onLogout} />);
 
-    // Open menu
     fireEvent.click(screen.getByRole('button', { name: 'testuser user menu' }));
 
-    // Click logout
     fireEvent.click(screen.getByText('Log Out'));
 
     expect(onLogout).toHaveBeenCalledTimes(1);

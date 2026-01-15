@@ -1,20 +1,9 @@
 'use client';
 
-import { useOrganizationContext } from '@/lib/OrganizationContext';
-import {
-  Building2,
-  ChevronDown,
-  CreditCard,
-  HelpCircle,
-  LogOut,
-  Settings,
-  Shield,
-  User,
-} from 'lucide-react';
+import { ChevronDown, LogOut, User } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { useLanguage } from 'shared-ui';
+import { useLanguage } from '../config/LanguageContext';
 
 interface UserMenuProps {
   user: {
@@ -22,13 +11,14 @@ interface UserMenuProps {
     avatarUrl?: string;
   };
   onLogout: () => void;
+  children?: React.ReactNode;
+  planLabel?: string;
 }
 
-export default function UserMenu({ user, onLogout }: UserMenuProps) {
+export default function UserMenu({ user, onLogout, children, planLabel }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
-  const { currentOrganization } = useOrganizationContext();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,7 +70,7 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             {user.username}
           </div>
           <div className="text-[10px] text-white/40 mt-1 uppercase tracking-wider font-bold flex items-center gap-1">
-            {t.common.freePlan}
+            {planLabel || t.common.freePlan}
           </div>
         </div>
         <ChevronDown
@@ -104,68 +94,7 @@ export default function UserMenu({ user, onLogout }: UserMenuProps) {
             </div>
           </div>
 
-          <Link
-            href="/settings"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 text-[13px] font-medium transition-all group/item"
-            role="menuitem"
-          >
-            <Settings
-              size={16}
-              className="text-slate-400 group-hover/item:text-indigo-400 transition-colors"
-            />
-            <span>{t.nav.settings}</span>
-          </Link>
-
-          {currentOrganization && (
-            <Link
-              href={`/organizations/${currentOrganization.id}/settings`}
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 text-[13px] font-medium transition-all group/item"
-              role="menuitem"
-            >
-              <Building2
-                size={16}
-                className="text-slate-400 group-hover/item:text-indigo-400 transition-colors"
-              />
-              <span>Organization Settings</span>
-            </Link>
-          )}
-
-          <button
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item"
-            disabled
-            aria-disabled="true"
-            role="menuitem"
-          >
-            <CreditCard size={16} />
-            <span>{t.userMenu.billing}</span>
-            <span className="ml-auto text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 bg-white/5 rounded">
-              {t.userMenu.pro}
-            </span>
-          </button>
-
-          <button
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item"
-            disabled
-            aria-disabled="true"
-            role="menuitem"
-          >
-            <Shield size={16} />
-            <span>{t.userMenu.security}</span>
-          </button>
-
-          <div className="h-px bg-white/10 my-1.5 mx-1" role="separator"></div>
-
-          <button
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 text-[13px] font-medium w-full text-left cursor-not-allowed group/item"
-            disabled
-            aria-disabled="true"
-            role="menuitem"
-          >
-            <HelpCircle size={16} />
-            <span>{t.userMenu.support}</span>
-          </button>
+          {children}
 
           <div className="h-px bg-white/10 my-1.5 mx-1" role="separator"></div>
 

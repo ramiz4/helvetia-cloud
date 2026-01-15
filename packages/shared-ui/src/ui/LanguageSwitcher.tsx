@@ -2,7 +2,8 @@
 
 import { ChevronDown, Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useLanguage, type Language } from 'shared-ui';
+import { useLanguage } from '../config/LanguageContext';
+import { type Language } from '../config/translations';
 
 interface LanguageSwitcherProps {
   variant?: 'dropdown' | 'minimal';

@@ -2,12 +2,10 @@
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import {
-  ArrowLeft,
   CheckCircle2,
   Edit,
   Flag,
   Loader2,
-  LogOut,
   Plus,
   Power,
   Target,
@@ -16,7 +14,6 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL, ConfirmationModal, fetchWithAuth } from 'shared-ui';
@@ -49,7 +46,7 @@ interface CreateFlagData {
 }
 
 export default function FeatureFlagsAdminPage() {
-  const { isAdmin, loading: authLoading, logout } = useAdminAuth();
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -198,25 +195,6 @@ export default function FeatureFlagsAdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-6 animate-fade-in text-slate-200">
-      {/* Header Navigation */}
-      <div className="flex items-center justify-between mb-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft size={20} />
-          <span>Back to Dashboard</span>
-        </Link>
-
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all text-sm font-bold group"
-        >
-          <LogOut size={16} className="group-hover:rotate-12 transition-transform" />
-          <span>Logout</span>
-        </button>
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between mb-12">
         <div>
