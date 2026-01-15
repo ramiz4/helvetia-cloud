@@ -83,6 +83,22 @@ export class FeatureFlagService {
   }
 
   /**
+   * Check multiple feature flags at once
+   * More efficient than checking one by one
+   */
+  async checkMultiple(keys: string[], userId?: string): Promise<Record<string, boolean>> {
+    const results: Record<string, boolean> = {};
+
+    await Promise.all(
+      keys.map(async (key) => {
+        results[key] = await this.featureFlagRepository.isEnabled(key, userId);
+      }),
+    );
+
+    return results;
+  }
+
+  /**
    * Toggle a feature flag on/off
    */
   async toggleFlag(id: string): Promise<FeatureFlag> {

@@ -3,6 +3,7 @@ import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
 import { TOKENS } from '../di/tokens';
 import {
+  CheckBulkFlagSchema,
   CheckFlagSchema,
   CreateFlagSchema,
   UpdateFlagSchema,
@@ -166,6 +167,32 @@ export class FeatureFlagController {
 
       request.log.error(error, 'Failed to check feature flag');
       return reply.code(500).send({ success: false, error: 'Failed to check feature flag' });
+    }
+  }
+
+  /**
+   * Check multiple feature flags at once (bulk check)
+   */
+  async checkBulkFlags(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const validatedData = CheckBulkFlagSchema.parse(request.body);
+      const results = await this.featureFlagService.checkMultiple(
+        validatedData.keys,
+        validatedData.userId,
+      );
+
+      return reply.send({ success: true, data: results });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return reply.code(400).send({
+          success: false,
+          error: 'Validation failed',
+          details: formatZodError(error),
+        });
+      }
+
+      request.log.error(error, 'Failed to check feature flags');
+      return reply.code(500).send({ success: false, error: 'Failed to check feature flags' });
     }
   }
 }

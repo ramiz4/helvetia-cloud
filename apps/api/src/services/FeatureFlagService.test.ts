@@ -190,6 +190,48 @@ describe('FeatureFlagService', () => {
     });
   });
 
+  describe('checkMultiple', () => {
+    it('should check multiple flags at once', async () => {
+      vi.mocked(mockRepository.isEnabled)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      const result = await service.checkMultiple(['flag1', 'flag2', 'flag3']);
+
+      expect(result).toEqual({
+        flag1: true,
+        flag2: false,
+        flag3: true,
+      });
+      expect(mockRepository.isEnabled).toHaveBeenCalledTimes(3);
+    });
+
+    it('should check multiple flags for specific user', async () => {
+      vi.mocked(mockRepository.isEnabled).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+      const result = await service.checkMultiple(['flag1', 'flag2'], 'user-123');
+
+      expect(result).toEqual({
+        flag1: true,
+        flag2: false,
+      });
+      expect(mockRepository.isEnabled).toHaveBeenCalledWith('flag1', 'user-123');
+      expect(mockRepository.isEnabled).toHaveBeenCalledWith('flag2', 'user-123');
+    });
+
+    it('should return false for all non-existent flags', async () => {
+      vi.mocked(mockRepository.isEnabled).mockResolvedValue(false);
+
+      const result = await service.checkMultiple(['nonexistent1', 'nonexistent2']);
+
+      expect(result).toEqual({
+        nonexistent1: false,
+        nonexistent2: false,
+      });
+    });
+  });
+
   describe('toggleFlag', () => {
     it('should toggle flag from enabled to disabled', async () => {
       vi.mocked(mockRepository.findById).mockResolvedValue(mockFlag);

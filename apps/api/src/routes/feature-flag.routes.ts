@@ -73,4 +73,18 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
       return controller.checkFlag(request, reply);
     },
   );
+
+  /**
+   * Check multiple feature flags at once (bulk check)
+   * Public endpoint, but rate limited
+   */
+  fastify.post(
+    '/feature-flags/check-bulk',
+    {
+      config: { rateLimit: featureFlagCheckRateLimitConfig },
+    },
+    async (request, reply) => {
+      return controller.checkBulkFlags(request, reply);
+    },
+  );
 };

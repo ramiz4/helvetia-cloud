@@ -32,6 +32,7 @@ describe('FeatureFlagController', () => {
       toggleFlag: vi.fn(),
       deleteFlag: vi.fn(),
       isEnabled: vi.fn(),
+      checkMultiple: vi.fn(),
     };
 
     controller = new FeatureFlagController(mockFeatureFlagService as FeatureFlagService);
@@ -244,6 +245,68 @@ describe('FeatureFlagController', () => {
           success: false,
           error: 'Validation failed',
         }),
+      );
+    });
+  });
+
+  describe('checkBulkFlags', () => {
+    it('should check multiple flags at once', async () => {
+      mockRequest.body = { keys: ['flag1', 'flag2', 'flag3'], userId: 'user-1' };
+      vi.mocked(mockFeatureFlagService.checkMultiple).mockResolvedValue({
+        flag1: true,
+        flag2: false,
+        flag3: true,
+      });
+
+      await controller.checkBulkFlags(mockRequest as FastifyRequest, mockReply as FastifyReply);
+
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          flag1: true,
+          flag2: false,
+          flag3: true,
+        },
+      });
+      expect(mockFeatureFlagService.checkMultiple).toHaveBeenCalledWith(
+        ['flag1', 'flag2', 'flag3'],
+        'user-1',
+      );
+    });
+
+    it('should return 400 on invalid bulk check request', async () => {
+      mockRequest.body = { keys: [] }; // Empty array is invalid
+
+      await controller.checkBulkFlags(mockRequest as FastifyRequest, mockReply as FastifyReply);
+
+      expect(mockReply.code).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: 'Validation failed',
+        }),
+      );
+    });
+
+    it('should handle bulk check without userId', async () => {
+      mockRequest.body = { keys: ['flag1', 'flag2'] };
+      vi.mocked(mockFeatureFlagService.checkMultiple).mockResolvedValue({
+        flag1: true,
+        flag2: false,
+      });
+
+      await controller.checkBulkFlags(mockRequest as FastifyRequest, mockReply as FastifyReply);
+
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          flag1: true,
+          flag2: false,
+        },
+      });
+      expect(mockFeatureFlagService.checkMultiple).toHaveBeenCalledWith(
+        ['flag1', 'flag2'],
+        undefined,
       );
     });
   });
