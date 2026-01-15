@@ -47,7 +47,7 @@ healthServer.get('/health', async (_request: FastifyRequest, reply: FastifyReply
   try {
     // Initialize Redis connection if needed
     if (!redisConnection) {
-      redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+      redisConnection = new IORedis(env.REDIS_URL, {
         maxRetriesPerRequest: null,
         lazyConnect: true,
       });
