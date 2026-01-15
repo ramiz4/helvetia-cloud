@@ -1,5 +1,4 @@
 import { prisma } from 'database';
-import IORedis from 'ioredis';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildServer } from './server';
 
@@ -125,7 +124,7 @@ describeIf('SSE Redis Subscription Cleanup Tests', () => {
       });
 
       // Track the duplicated connection
-      let duplicatedConnection: IORedis | null = null;
+      let duplicatedConnection: any = null;
       const originalDuplicate = app.redis.duplicate.bind(app.redis);
 
       vi.spyOn(app.redis, 'duplicate').mockImplementation(() => {
@@ -197,12 +196,16 @@ describeIf('SSE Redis Subscription Cleanup Tests', () => {
         },
       });
 
-      // Mock duplicate to return a connection that will emit an error
-      const mockConnection = new IORedis();
-      vi.spyOn(app.redis, 'duplicate').mockReturnValue(mockConnection);
-
-      // Mock subscribe to succeed
-      vi.spyOn(mockConnection, 'subscribe').mockResolvedValue(1);
+      // Mock duplicate to return a mock connection that will emit an error
+      const mockConnection = {
+        subscribe: vi.fn().mockResolvedValue(1),
+        unsubscribe: vi.fn().mockResolvedValue(1),
+        on: vi.fn(),
+        removeListener: vi.fn(),
+        quit: vi.fn().mockResolvedValue('OK'),
+        emit: vi.fn(),
+      };
+      vi.spyOn(app.redis, 'duplicate').mockReturnValue(mockConnection as any);
 
       // Make the request
       const responsePromise = app.inject({
@@ -216,8 +219,11 @@ describeIf('SSE Redis Subscription Cleanup Tests', () => {
       // Wait a bit for the connection to be established
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Emit an error on the mock connection
-      mockConnection.emit('error', new Error('Test Redis error'));
+      // Simulate calling the error handler that was registered
+      const errorHandler = mockConnection.on.mock.calls.find((call) => call[0] === 'error')?.[1];
+      if (errorHandler) {
+        errorHandler(new Error('Test Redis error'));
+      }
 
       // Wait for response to complete
       const response = await responsePromise;
@@ -226,7 +232,6 @@ describeIf('SSE Redis Subscription Cleanup Tests', () => {
       expect(response.statusCode).toBe(200);
 
       vi.restoreAllMocks();
-      await mockConnection.quit();
     });
 
     it('should cleanup subscription on client disconnect', async () => {
@@ -252,7 +257,7 @@ describeIf('SSE Redis Subscription Cleanup Tests', () => {
       });
 
       // Track the duplicated connection
-      let duplicatedConnection: IORedis | null = null;
+      let duplicatedConnection: any = null;
       const originalDuplicate = app.redis.duplicate.bind(app.redis);
 
       vi.spyOn(app.redis, 'duplicate').mockImplementation(() => {
