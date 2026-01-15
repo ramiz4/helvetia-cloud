@@ -1,9 +1,11 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { Role } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnauthorizedError } from '../errors';
 import type { IUserRepository } from '../interfaces';
+import * as passwordUtils from '../utils/password';
 import { AuthenticationService } from './AuthenticationService';
 import { OrganizationService } from './OrganizationService';
 
@@ -20,6 +22,11 @@ vi.mock('../utils/refreshToken', () => ({
     }
     return null;
   }),
+}));
+vi.mock('../utils/password', () => ({
+  hashPassword: vi.fn(async (password: string) => `bcrypt_hashed_${password}`),
+  verifyPassword: vi.fn(),
+  isLegacyHash: vi.fn((hash: string) => /^[a-f0-9]{64}$/i.test(hash)),
 }));
 
 describe('AuthenticationService', () => {
@@ -62,6 +69,144 @@ describe('AuthenticationService', () => {
 
     service = new AuthenticationService(mockUserRepo, mockOrgService);
     vi.clearAllMocks();
+  });
+
+  describe('authenticateLocal', () => {
+    it('should authenticate user with correct password using bcrypt', async () => {
+      const mockJwtSign = vi.fn((payload: any) => `jwt_${payload.id}`);
+      const bcryptHash = '$2b$12$someHashValue';
+
+      const adminUser = {
+        ...mockUser,
+        username: 'admin',
+        password: bcryptHash,
+        role: Role.ADMIN,
+      };
+
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(adminUser);
+      vi.mocked(passwordUtils.verifyPassword).mockResolvedValue(true);
+
+      const result = await service.authenticateLocal('admin', 'correctPassword', mockJwtSign);
+
+      expect(result).toEqual({
+        user: {
+          id: 'user-1',
+          username: 'admin',
+          avatarUrl: 'https://avatar.url',
+          githubId: '123456',
+          role: Role.ADMIN,
+        },
+        accessToken: 'jwt_user-1',
+        refreshToken: 'refresh_token_user-1',
+      });
+
+      expect(mockUserRepo.findByUsername).toHaveBeenCalledWith('admin');
+      expect(passwordUtils.verifyPassword).toHaveBeenCalledWith('correctPassword', bcryptHash);
+      expect(mockUserRepo.update).not.toHaveBeenCalled(); // No migration needed
+    });
+
+    it('should reject authentication with incorrect password', async () => {
+      const mockJwtSign = vi.fn();
+      const bcryptHash = '$2b$12$someHashValue';
+
+      const adminUser = {
+        ...mockUser,
+        username: 'admin',
+        password: bcryptHash,
+      };
+
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(adminUser);
+      vi.mocked(passwordUtils.verifyPassword).mockResolvedValue(false);
+
+      await expect(
+        service.authenticateLocal('admin', 'wrongPassword', mockJwtSign),
+      ).rejects.toThrow(UnauthorizedError);
+    });
+
+    it('should reject authentication if user does not exist', async () => {
+      const mockJwtSign = vi.fn();
+
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(null);
+
+      await expect(
+        service.authenticateLocal('nonexistent', 'password', mockJwtSign),
+      ).rejects.toThrow(UnauthorizedError);
+    });
+
+    it('should reject authentication if user has no password', async () => {
+      const mockJwtSign = vi.fn();
+
+      const userWithoutPassword = {
+        ...mockUser,
+        password: null,
+      };
+
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(userWithoutPassword);
+
+      await expect(service.authenticateLocal('user', 'password', mockJwtSign)).rejects.toThrow(
+        UnauthorizedError,
+      );
+    });
+
+    it('should migrate legacy SHA-256 hash to bcrypt on successful login', async () => {
+      const mockJwtSign = vi.fn((payload: any) => `jwt_${payload.id}`);
+      const password = 'password123';
+      const legacyHash = crypto.createHash('sha256').update(password).digest('hex');
+
+      const adminUser = {
+        ...mockUser,
+        id: 'admin-1',
+        username: 'admin',
+        password: legacyHash,
+        role: Role.ADMIN,
+      };
+
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(adminUser);
+      vi.mocked(mockUserRepo.update).mockResolvedValue(adminUser);
+
+      const result = await service.authenticateLocal('admin', password, mockJwtSign);
+
+      // Should successfully authenticate
+      expect(result).toEqual({
+        user: {
+          id: 'admin-1',
+          username: 'admin',
+          avatarUrl: 'https://avatar.url',
+          githubId: '123456',
+          role: Role.ADMIN,
+        },
+        accessToken: 'jwt_admin-1',
+        refreshToken: 'refresh_token_admin-1',
+      });
+
+      // Should migrate password to bcrypt
+      expect(passwordUtils.hashPassword).toHaveBeenCalledWith(password);
+      expect(mockUserRepo.update).toHaveBeenCalledWith('admin-1', {
+        password: 'bcrypt_hashed_password123',
+      });
+    });
+
+    it('should reject legacy hash with incorrect password', async () => {
+      const mockJwtSign = vi.fn();
+      const correctPassword = 'password123';
+      const wrongPassword = 'wrongpassword';
+      const legacyHash = crypto.createHash('sha256').update(correctPassword).digest('hex');
+
+      const adminUser = {
+        ...mockUser,
+        username: 'admin',
+        password: legacyHash,
+      };
+
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(adminUser);
+
+      await expect(service.authenticateLocal('admin', wrongPassword, mockJwtSign)).rejects.toThrow(
+        UnauthorizedError,
+      );
+
+      // Should not attempt migration
+      expect(mockUserRepo.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('authenticateWithGitHub', () => {

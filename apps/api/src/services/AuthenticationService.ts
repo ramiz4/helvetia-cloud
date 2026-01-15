@@ -6,6 +6,7 @@ import type { AuthResponseDto, GitHubUserDto } from '../dto';
 import { UnauthorizedError } from '../errors';
 import type { IUserRepository } from '../interfaces';
 import { decrypt, encrypt } from '../utils/crypto';
+import { hashPassword, isLegacyHash, verifyPassword } from '../utils/password';
 import { createRefreshToken } from '../utils/refreshToken';
 import { OrganizationService } from './OrganizationService';
 
@@ -36,10 +37,23 @@ export class AuthenticationService {
       throw new UnauthorizedError('Invalid username or password');
     }
 
-    // TODO: The password hashing uses SHA-256 without salt, which is the same weak implementation used in InitializationService. This creates a security vulnerability. Passwords should be hashed using bcrypt, scrypt, or argon2 with proper salting.
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-    if (user.password !== hashedPassword) {
-      throw new UnauthorizedError('Invalid username or password');
+    // Check if this is a legacy SHA-256 hash
+    if (isLegacyHash(user.password)) {
+      // Verify using legacy SHA-256 method
+      const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+      if (user.password !== hashedPassword) {
+        throw new UnauthorizedError('Invalid username or password');
+      }
+
+      // Migrate to bcrypt on successful login
+      const newHash = await hashPassword(password);
+      await this.userRepository.update(user.id, { password: newHash });
+    } else {
+      // Use bcrypt verification for new hashes
+      const isValid = await verifyPassword(password, user.password);
+      if (!isValid) {
+        throw new UnauthorizedError('Invalid username or password');
+      }
     }
 
     // Generate JWT access token

@@ -1,9 +1,9 @@
-import crypto from 'crypto';
 import { Role } from 'database';
 import { inject, injectable } from 'tsyringe';
 import { env } from '../config/env';
 import { TOKENS } from '../di/tokens';
 import type { IFeatureFlagRepository, IUserRepository } from '../interfaces';
+import { hashPassword, isLegacyHash } from '../utils/password';
 
 @injectable()
 export class InitializationService {
@@ -40,14 +40,19 @@ export class InitializationService {
 
       const existingAdmin = await this.userRepository.findByGithubId(adminGithubId);
 
-      const hashedPassword = this.hashPassword(adminPassword);
+      const hashedPassword = await hashPassword(adminPassword);
 
       if (existingAdmin) {
-        // Update password and roles if they changed
+        // Check if password needs migration from legacy SHA-256 to bcrypt
+        const needsPasswordMigration =
+          existingAdmin.password && isLegacyHash(existingAdmin.password);
+
+        // Update password and roles if they changed or need migration
         if (
           existingAdmin.username !== adminUsername ||
           existingAdmin.password !== hashedPassword ||
-          existingAdmin.role !== Role.ADMIN
+          existingAdmin.role !== Role.ADMIN ||
+          needsPasswordMigration
         ) {
           await this.userRepository.update(existingAdmin.id, {
             username: adminUsername,
@@ -103,13 +108,5 @@ export class InitializationService {
         console.error(`Failed to seed feature flag '${flag.key}':`, error);
       }
     }
-  }
-
-  /**
-   * Simple password hashing using Node.js crypto
-   */
-  private hashPassword(password: string): string {
-    // TODO: In a real production app, use bcrypt or argon2 with a proper salt
-    return crypto.createHash('sha256').update(password).digest('hex');
   }
 }

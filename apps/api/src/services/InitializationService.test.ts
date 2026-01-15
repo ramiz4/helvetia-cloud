@@ -4,6 +4,7 @@ import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from '../config/env';
 import type { IFeatureFlagRepository, IUserRepository } from '../interfaces';
+import * as passwordUtils from '../utils/password';
 import { InitializationService } from './InitializationService';
 
 vi.mock('../config/env', () => ({
@@ -11,6 +12,12 @@ vi.mock('../config/env', () => ({
     HELVETIA_ADMIN: 'admin',
     HELVETIA_ADMIN_PASSWORD: 'password123',
   },
+}));
+
+vi.mock('../utils/password', () => ({
+  hashPassword: vi.fn(async (password: string) => `bcrypt_hashed_${password}`),
+  isLegacyHash: vi.fn((hash: string) => /^[a-f0-9]{64}$/i.test(hash)),
+  verifyPassword: vi.fn(),
 }));
 
 describe('InitializationService', () => {
@@ -43,23 +50,18 @@ describe('InitializationService', () => {
 
       await service.initialize();
 
-      const expectedHashedPassword = crypto
-        .createHash('sha256')
-        .update('password123')
-        .digest('hex');
-
       expect(mockUserRepo.findByGithubId).toHaveBeenCalledWith('local-admin');
       expect(mockUserRepo.upsert).toHaveBeenCalledWith(
         { githubId: 'local-admin' },
         {
           githubId: 'local-admin',
           username: 'admin',
-          password: expectedHashedPassword,
+          password: 'bcrypt_hashed_password123',
           role: Role.ADMIN,
         },
         {
           username: 'admin',
-          password: expectedHashedPassword,
+          password: 'bcrypt_hashed_password123',
           role: Role.ADMIN,
         },
       );
@@ -86,28 +88,19 @@ describe('InitializationService', () => {
 
       await service.initialize();
 
-      const expectedHashedPassword = crypto
-        .createHash('sha256')
-        .update('password123')
-        .digest('hex');
-
       expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
         username: 'admin',
-        password: expectedHashedPassword,
+        password: 'bcrypt_hashed_password123',
         role: Role.ADMIN,
       });
     });
 
     it('should not update admin user if details are same', async () => {
-      const expectedHashedPassword = crypto
-        .createHash('sha256')
-        .update('password123')
-        .digest('hex');
       const existingAdmin = {
         id: 'user-1',
         githubId: 'local-admin',
         username: 'admin',
-        password: expectedHashedPassword,
+        password: 'bcrypt_hashed_password123',
         role: Role.ADMIN,
       };
       vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(existingAdmin as any);
@@ -151,27 +144,50 @@ describe('InitializationService', () => {
         expect.any(Error),
       );
     });
+
+    it('should migrate legacy SHA-256 hash to bcrypt on initialization', async () => {
+      // SHA-256 hash of 'password123'
+      const legacyHash = crypto.createHash('sha256').update('password123').digest('hex');
+
+      const existingAdmin = {
+        id: 'user-1',
+        githubId: 'local-admin',
+        username: 'admin',
+        password: legacyHash,
+        role: Role.ADMIN,
+      };
+      vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(existingAdmin as any);
+      vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue({} as any);
+
+      await service.initialize();
+
+      // Should update with new bcrypt hash
+      expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
+        username: 'admin',
+        password: 'bcrypt_hashed_password123',
+        role: Role.ADMIN,
+      });
+    });
   });
 
   describe('password hashing', () => {
-    it('should hash password correctly using SHA256', async () => {
-      // Since hashPassword is private, we test it through the initialize method
-      // which uses it to set the password in the repository call
+    it('should use bcrypt for password hashing', async () => {
       vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(null);
       vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue({} as any);
 
       const password = 'my-secret-password';
-      const expectedHash = crypto.createHash('sha256').update(password).digest('hex');
-
       const originalPassword = env.HELVETIA_ADMIN_PASSWORD;
       (env as any).HELVETIA_ADMIN_PASSWORD = password;
 
       await service.initialize();
 
+      // Verify hashPassword was called with the correct password
+      expect(passwordUtils.hashPassword).toHaveBeenCalledWith(password);
+
       expect(mockUserRepo.upsert).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ password: expectedHash }),
-        expect.objectContaining({ password: expectedHash }),
+        expect.objectContaining({ password: `bcrypt_hashed_${password}` }),
+        expect.objectContaining({ password: `bcrypt_hashed_${password}` }),
       );
 
       (env as any).HELVETIA_ADMIN_PASSWORD = originalPassword;
