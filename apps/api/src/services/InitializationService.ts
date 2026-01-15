@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { Role } from 'database';
 import { inject, injectable } from 'tsyringe';
 import { env } from '../config/env';
@@ -109,14 +108,5 @@ export class InitializationService {
         console.error(`Failed to seed feature flag '${flag.key}':`, error);
       }
     }
-  }
-
-  /**
-   * Legacy SHA-256 password hashing (deprecated)
-   * Only kept for reference and migration purposes
-   * @deprecated Use hashPassword from utils/password.ts instead
-   */
-  private legacyHashPassword(password: string): string {
-    return crypto.createHash('sha256').update(password).digest('hex');
   }
 }
