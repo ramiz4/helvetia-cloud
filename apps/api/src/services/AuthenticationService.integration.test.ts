@@ -26,7 +26,7 @@ describeIf('AuthenticationService - Concurrent Organization Creation', () => {
   let orgRepo: PrismaOrganizationRepository;
   let orgService: OrganizationService;
 
-  const testGithubId = 'test-concurrent-user-12345';
+  const testGithubId = '123456789';
   const mockJwtSign = vi.fn((payload: any) => `jwt_${payload.id}`);
 
   beforeAll(async () => {
@@ -132,7 +132,7 @@ describeIf('AuthenticationService - Concurrent Organization Creation', () => {
   });
 
   it('should not create organization if user already has one from a previous login', async () => {
-    const testGithubId2 = 'test-existing-org-user-67890';
+    const testGithubId2 = '987654321';
 
     // Clean up first
     await prisma.organizationMember.deleteMany({

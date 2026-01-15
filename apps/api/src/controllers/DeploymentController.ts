@@ -212,7 +212,7 @@ export class DeploymentController {
 
       // Stop and remove old containers
       for (const old of serviceContainers) {
-        const container = docker.getContainer(old.Id);
+        const container = docker.getContainer(old.id);
         await container.stop().catch(() => {});
         await container.remove().catch(() => {});
       }

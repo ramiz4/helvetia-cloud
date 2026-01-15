@@ -115,69 +115,94 @@ export class AuthenticationService {
 
     // Ensure user has a personal organization within a transaction to prevent race conditions
     // This handles concurrent authentication requests safely
-    await this.prisma.$transaction(async (tx) => {
-      // Check if user has any organizations within the transaction
-      const existingOrgs = await tx.organization.findMany({
-        where: {
-          members: {
-            some: {
-              userId: user.id,
-            },
-          },
-        },
-      });
+    let retries = 3;
+    let created = false;
 
-      // Only create if no organizations exist
-      if (existingOrgs.length === 0) {
-        // Generate slug for personal organization
-        const slug = `${user.username.toLowerCase().replace(/[^\w-]/g, '-')}-personal`;
+    while (!created && retries > 0) {
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          // Lock the user row to prevent concurrent organization creation for the same user
+          await tx.$executeRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;
 
-        // Use a retry loop to handle potential slug collisions
-        let retries = 3;
-        let created = false;
-
-        while (!created && retries > 0) {
-          try {
-            // Check if slug exists and generate unique one if needed
-            const existingSlug = await tx.organization.findUnique({
-              where: { slug },
-            });
-
-            const finalSlug = existingSlug
-              ? `${slug}-${crypto.randomUUID().substring(0, 7)}`
-              : slug;
-
-            // Create organization with member in a single operation
-            await tx.organization.create({
-              data: {
-                name: `${user.username}'s Personal`,
-                slug: finalSlug,
-                members: {
-                  create: {
-                    userId: user.id,
-                    role: Role.OWNER,
-                  },
+          // Check if user has any organizations within the transaction
+          const existingOrgs = await tx.organization.findMany({
+            where: {
+              members: {
+                some: {
+                  userId: user.id,
                 },
               },
+            },
+          });
+
+          // Only create if no organizations exist
+          if (existingOrgs.length === 0) {
+            // Generate deterministic slug for personal organization
+            const slugBase = `${user.username.toLowerCase().replace(/[^\w-]/g, '-')}-personal`;
+
+            // Check if this specific slug already exists
+            const existingOrgWithSlug = await tx.organization.findUnique({
+              where: { slug: slugBase },
+              include: { members: true },
             });
 
-            created = true;
-          } catch (error) {
-            // Handle unique constraint violation on slug
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-              retries--;
-              if (retries === 0) {
-                throw new Error('Failed to create organization due to slug collision');
+            if (existingOrgWithSlug) {
+              // If it exists, check if user is already a member (should have been caught by findMany,
+              // but good for extra safety and handling visibility gaps)
+              const isMember = existingOrgWithSlug.members.some((m) => m.userId === user.id);
+              if (isMember) {
+                return;
               }
-              // Retry with a new UUID
-              continue;
+
+              // Slug is taken by someone else, generate a unique one
+              const finalSlug = `${slugBase}-${crypto.randomUUID().substring(0, 7)}`;
+              await tx.organization.create({
+                data: {
+                  name: `${user.username}'s Personal`,
+                  slug: finalSlug,
+                  members: {
+                    create: {
+                      userId: user.id,
+                      role: Role.OWNER,
+                    },
+                  },
+                },
+              });
+            } else {
+              // Not taken, try to create with base slug
+              // This might still fail with P2002 if another request creates it concurrently
+              await tx.organization.create({
+                data: {
+                  name: `${user.username}'s Personal`,
+                  slug: slugBase,
+                  members: {
+                    create: {
+                      userId: user.id,
+                      role: Role.OWNER,
+                    },
+                  },
+                },
+              });
             }
-            // Re-throw other errors
-            throw error;
           }
+        });
+        created = true;
+      } catch (error) {
+        // Handle unique constraint violation on slug
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          retries--;
+          if (retries === 0) {
+            throw new Error(
+              'Failed to create organization due to slug collision after multiple retries',
+            );
+          }
+          // The transaction was aborted, so we retry the whole transaction from the start
+          continue;
         }
+        // Re-throw other errors
+        throw error;
       }
-    });
+    }
 
     // Generate JWT access token (short-lived)
     const jwtToken = jwtSign({ id: user.id, username: user.username, role: user.role });

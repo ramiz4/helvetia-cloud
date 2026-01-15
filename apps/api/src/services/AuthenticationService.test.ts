@@ -18,6 +18,7 @@ vi.mock('database', async () => {
       $transaction: vi.fn(async (callback) => {
         // Mock transaction context
         const mockTx = {
+          $executeRaw: vi.fn().mockResolvedValue(0),
           organization: {
             findMany: vi.fn().mockResolvedValue([]),
             findUnique: vi.fn().mockResolvedValue(null),
@@ -93,8 +94,10 @@ describe('AuthenticationService', () => {
 
     // Mock PrismaClient
     mockPrisma = {
+      $executeRaw: vi.fn().mockResolvedValue(0),
       $transaction: vi.fn(async (callback) => {
         const mockTx = {
+          $executeRaw: vi.fn().mockResolvedValue(0),
           organization: {
             findMany: vi.fn().mockResolvedValue([]),
             findUnique: vi.fn().mockResolvedValue(null),
