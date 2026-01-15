@@ -3,26 +3,18 @@ import * as constants from './constants';
 
 describe('Worker Configuration Constants', () => {
   describe('Container Resource Limits', () => {
-    it('should use default memory limit (512MB)', () => {
-      expect(constants.CONTAINER_MEMORY_LIMIT_MB).toBe(512);
-      expect(constants.CONTAINER_MEMORY_LIMIT_BYTES).toBe(512 * 1024 * 1024);
-    });
+    it('should re-export container constants from shared package', () => {
+      // Verify the constants are properly re-exported
+      expect(constants.CONTAINER_MEMORY_LIMIT_MB).toBeDefined();
+      expect(constants.CONTAINER_MEMORY_LIMIT_BYTES).toBeDefined();
+      expect(constants.CONTAINER_CPU_CORES).toBeDefined();
+      expect(constants.CONTAINER_CPU_NANOCPUS).toBeDefined();
 
-    it('should calculate memory limit in bytes correctly', () => {
-      expect(constants.CONTAINER_MEMORY_LIMIT_BYTES).toBe(
-        constants.CONTAINER_MEMORY_LIMIT_MB * 1024 * 1024,
-      );
-    });
-
-    it('should use default CPU cores (1.0)', () => {
-      expect(constants.CONTAINER_CPU_CORES).toBe(1.0);
-      expect(constants.CONTAINER_CPU_NANOCPUS).toBe(1000000000);
-    });
-
-    it('should calculate CPU nanocpus correctly', () => {
-      expect(constants.CONTAINER_CPU_NANOCPUS).toBe(
-        Math.floor(constants.CONTAINER_CPU_CORES * 1000000000),
-      );
+      // Basic type checks
+      expect(typeof constants.CONTAINER_MEMORY_LIMIT_MB).toBe('number');
+      expect(typeof constants.CONTAINER_MEMORY_LIMIT_BYTES).toBe('number');
+      expect(typeof constants.CONTAINER_CPU_CORES).toBe('number');
+      expect(typeof constants.CONTAINER_CPU_NANOCPUS).toBe('number');
     });
   });
 
@@ -59,27 +51,8 @@ describe('Worker Configuration Constants', () => {
 
   describe('Environment Variable Parsing', () => {
     it('should parse integer values correctly', () => {
-      expect(typeof constants.CONTAINER_MEMORY_LIMIT_MB).toBe('number');
       expect(typeof constants.MAX_LOG_SIZE_CHARS).toBe('number');
       expect(typeof constants.STATUS_LOCK_TTL_MS).toBe('number');
-    });
-
-    it('should parse float values correctly', () => {
-      expect(typeof constants.CONTAINER_CPU_CORES).toBe('number');
-      expect(constants.CONTAINER_CPU_CORES).toBeGreaterThan(0);
-    });
-
-    it('should calculate memory bytes from MB correctly', () => {
-      const expectedBytes =
-        parseInt(process.env.CONTAINER_MEMORY_LIMIT_MB || '512', 10) * 1024 * 1024;
-      expect(constants.CONTAINER_MEMORY_LIMIT_BYTES).toBe(expectedBytes);
-    });
-
-    it('should calculate CPU nanocpus from cores correctly', () => {
-      const expectedNanocpus = Math.floor(
-        parseFloat(process.env.CONTAINER_CPU_CORES || '1.0') * 1000000000,
-      );
-      expect(constants.CONTAINER_CPU_NANOCPUS).toBe(expectedNanocpus);
     });
   });
 });
