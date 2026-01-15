@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { LanguageProvider } from 'shared-ui';
+import AdminNavigation from '../components/AdminNavigation';
 import './tailwind.css';
 
 export const metadata: Metadata = {
@@ -31,7 +32,8 @@ export default function RootLayout({
           Skip to main content
         </a>
         <LanguageProvider>
-          <main id="main-content" className="min-h-screen">
+          <AdminNavigation />
+          <main id="main-content" className="min-h-screen pt-[70px]">
             {children}
           </main>
           <Toaster

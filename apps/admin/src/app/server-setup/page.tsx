@@ -1,8 +1,7 @@
 'use client';
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { ArrowLeft, LogOut, Server } from 'lucide-react';
-import Link from 'next/link';
+import { Server } from 'lucide-react';
 import { ConfigurationForm } from './components/ConfigurationForm';
 import { ScriptViewer } from './components/ScriptViewer';
 import { useServerSetup } from './hooks/useServerSetup';
@@ -28,24 +27,6 @@ export default function ServerSetupPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Back to Dashboard</span>
-            </Link>
-
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all text-sm font-bold group"
-            >
-              <LogOut size={16} className="group-hover:rotate-12 transition-transform" />
-              <span>Logout</span>
-            </button>
-          </div>
-
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-[24px] bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shadow-inner">
               <Server size={32} />

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source '../../../../packages/shared-ui/src';
 
 /* Accessibility: Screen reader only utility */
 .sr-only {

@@ -5,6 +5,10 @@
 
 // UI Components
 export { ConfirmationModal } from './ui/ConfirmationModal';
+export { default as LanguageSwitcher } from './ui/LanguageSwitcher';
+export { default as Navigation } from './ui/Navigation';
+export type { NavLink } from './ui/Navigation';
+export { default as UserMenu } from './ui/UserMenu';
 
 // Configuration & Environment
 export {
