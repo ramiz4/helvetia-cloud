@@ -25,6 +25,7 @@ export function useServerSetup() {
   });
 
   const [activeTab, setActiveTab] = useState<'prepare' | 'setup'>('prepare');
+  const [importMode, setImportMode] = useState<'fields' | 'bulk'>('fields');
   const [copied, setCopied] = useState(false);
 
   const updateConfig = (updates: Partial<SetupConfig>) => {
@@ -33,6 +34,37 @@ export function useServerSetup() {
 
   const handleGenerate = (key: keyof SetupConfig, length = 32, hex = false) => {
     updateConfig({ [key]: generateRandomString(length, hex) });
+  };
+
+  const handleBulkImport = (text: string) => {
+    const lines = text.split('\n');
+    const newConfig: Partial<SetupConfig> = {};
+
+    const mapping: Record<string, keyof SetupConfig> = {
+      DOMAIN_NAME: 'domain',
+      ACME_EMAIL: 'email',
+      POSTGRES_PASSWORD: 'postgresPassword',
+      GRAFANA_PASSWORD: 'grafanaPassword',
+      GITHUB_CLIENT_ID: 'githubClientId',
+      GITHUB_CLIENT_SECRET: 'githubClientSecret',
+      JWT_SECRET: 'jwtSecret',
+      COOKIE_SECRET: 'cookieSecret',
+      ENCRYPTION_KEY: 'encryptionKey',
+      ENCRYPTION_SALT: 'encryptionSalt',
+      HELVETIA_ADMIN: 'helvetiaAdmin',
+      HELVETIA_ADMIN_PASSWORD: 'helvetiaAdminPassword',
+    };
+
+    lines.forEach((line) => {
+      const [key, ...valueParts] = line.split('=');
+      const value = valueParts.join('=').trim();
+      const configKey = mapping[key.trim()];
+      if (configKey && value) {
+        newConfig[configKey] = value;
+      }
+    });
+
+    updateConfig(newConfig);
   };
 
   const handleCopy = () => {
@@ -50,6 +82,9 @@ export function useServerSetup() {
     updateConfig,
     activeTab,
     setActiveTab,
+    importMode,
+    setImportMode,
+    handleBulkImport,
     copied,
     handleGenerate,
     handleCopy,

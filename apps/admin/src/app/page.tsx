@@ -6,6 +6,7 @@ import {
   BarChart3,
   Flag,
   Lock,
+  LogOut,
   Server,
   Settings,
   Shield,
@@ -15,7 +16,7 @@ import {
 import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const { isAdmin, loading, user } = useAdminAuth();
+  const { isAdmin, loading, user, logout } = useAdminAuth();
 
   if (loading) {
     return (
@@ -103,6 +104,13 @@ export default function AdminDashboard() {
                 Welcome back, {user?.username}
               </p>
             </div>
+            <button
+              onClick={logout}
+              className="ml-auto flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white hover:border-red-500/50 hover:bg-red-500/10 transition-all font-bold group"
+            >
+              <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
+              <span>Logout</span>
+            </button>
           </div>
 
           {/* Warning Banner */}
