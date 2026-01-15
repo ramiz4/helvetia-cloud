@@ -4,6 +4,7 @@ const config: Config = {
   content: [
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    // Scan shared-ui (e.g. shared Navigation component) so its Tailwind classes are included in the dashboard CSS bundle.
     '../../packages/shared-ui/src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
