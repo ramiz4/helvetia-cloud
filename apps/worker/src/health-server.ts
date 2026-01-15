@@ -150,6 +150,13 @@ healthServer.get('/metrics/json', async (_request, reply) => {
 });
 
 /**
+ * Type guard to check if an error has a code property (NodeJS error)
+ */
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error;
+}
+
+/**
  * Start the health check server
  */
 export async function startHealthServer() {
@@ -160,7 +167,7 @@ export async function startHealthServer() {
     console.error(`Failed to start health check server on port ${env.WORKER_HEALTH_PORT}:`, err);
     // If it's a port conflict, we should probably warn but NOT crash the entire worker
     // since the deployments are more important than the health check port in local dev.
-    if (err instanceof Error && (err as any).code === 'EADDRINUSE') {
+    if (isNodeError(err) && err.code === 'EADDRINUSE') {
       console.warn(
         `⚠️  WARNING: Port ${env.WORKER_HEALTH_PORT} is already in use. Health check server will be disabled.`,
       );
