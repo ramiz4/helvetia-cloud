@@ -88,7 +88,7 @@ export class InitializationService {
         key: 'show-deployments',
         name: 'Show Deployments',
         description: 'Enable the deployments view in the dashboard',
-        enabled: true,
+        enabled: false,
       },
     ];
 

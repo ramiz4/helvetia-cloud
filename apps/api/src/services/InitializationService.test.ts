@@ -37,7 +37,7 @@ describe('InitializationService', () => {
   });
 
   describe('initialize', () => {
-    it('should create admin user if it does not exist', async () => {
+    it('should seed default data and create admin user if it does not exist', async () => {
       vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(null);
       vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue(null);
 
@@ -69,7 +69,7 @@ describe('InitializationService', () => {
         key: 'show-deployments',
         name: 'Show Deployments',
         description: 'Enable the deployments view in the dashboard',
-        enabled: true,
+        enabled: false,
       });
     });
 
