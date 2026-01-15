@@ -1,31 +1,19 @@
 import { Queue } from 'bullmq';
-import dotenv from 'dotenv';
-import Fastify from 'fastify';
+import Fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
-import path from 'path';
+import { env } from './config/env';
 import { workerMetricsService } from './services/metrics.service';
-
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
-
-const WORKER_HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || '3002', 10);
 
 // Track worker start time for uptime calculation
 const workerStartTime = Date.now();
 
-// Redis connection for health checks
-const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-  lazyConnect: true, // Don't connect immediately
-});
-
-// Queue for checking stats
-const deploymentQueue = new Queue('deployments', {
-  connection: redisConnection,
-});
+// Redis connection for health checks (lazy initialized)
+let redisConnection: IORedis | null = null;
+let deploymentQueue: Queue | null = null;
 
 // Create Fastify instance for health checks
 export const healthServer = Fastify({
-  logger: false, // Disable logging for health checks to reduce noise
+  logger: false,
 });
 
 /**
@@ -55,9 +43,17 @@ export const healthServer = Fastify({
  *   timestamp: string         // ISO 8601 timestamp
  * }
  */
-healthServer.get('/health', async (_request, reply) => {
+healthServer.get('/health', async (_request: FastifyRequest, reply: FastifyReply) => {
   try {
-    // Check Redis connection status
+    // Initialize Redis connection if needed
+    if (!redisConnection) {
+      redisConnection = new IORedis(env.REDIS_URL, {
+        maxRetriesPerRequest: null,
+        lazyConnect: true,
+      });
+      deploymentQueue = new Queue('deployments', { connection: redisConnection });
+    }
+
     const redisStatus = redisConnection.status;
     const isRedisConnected = redisStatus === 'ready' || redisStatus === 'connect';
 
@@ -72,7 +68,7 @@ healthServer.get('/health', async (_request, reply) => {
 
     try {
       // Only fetch queue stats if Redis is connected
-      if (isRedisConnected) {
+      if (isRedisConnected && deploymentQueue) {
         const [waiting, active, completed, failed] = await Promise.all([
           deploymentQueue.getWaitingCount(),
           deploymentQueue.getActiveCount(),
@@ -154,20 +150,29 @@ healthServer.get('/metrics/json', async (_request, reply) => {
 });
 
 /**
+ * Type guard to check if an error has a code property (NodeJS error)
+ */
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error;
+}
+
+/**
  * Start the health check server
  */
 export async function startHealthServer() {
   try {
-    // Connect to Redis if not already connecting/connected
-    if (redisConnection.status === 'wait') {
-      await redisConnection.connect();
-      console.log('Redis connected for health checks');
-    }
-
-    await healthServer.listen({ port: WORKER_HEALTH_PORT, host: '0.0.0.0' });
-    console.log(`Worker health check server listening on port ${WORKER_HEALTH_PORT}`);
+    await healthServer.listen({ port: env.WORKER_HEALTH_PORT, host: '0.0.0.0' });
+    console.log(`Worker health check server listening on port ${env.WORKER_HEALTH_PORT}`);
   } catch (err) {
-    console.error('Failed to start health check server:', err);
+    console.error(`Failed to start health check server on port ${env.WORKER_HEALTH_PORT}:`, err);
+    // If it's a port conflict, we should probably warn but NOT crash the entire worker
+    // since the deployments are more important than the health check port in local dev.
+    if (isNodeError(err) && err.code === 'EADDRINUSE') {
+      console.warn(
+        `⚠️  WARNING: Port ${env.WORKER_HEALTH_PORT} is already in use. Health check server will be disabled.`,
+      );
+      return;
+    }
     process.exit(1);
   }
 }
@@ -178,7 +183,9 @@ export async function startHealthServer() {
 export async function stopHealthServer() {
   try {
     await healthServer.close();
-    await redisConnection.quit();
+    if (redisConnection) {
+      await redisConnection.quit();
+    }
     console.log('Health check server stopped');
   } catch (err) {
     console.error('Error stopping health check server:', err);
