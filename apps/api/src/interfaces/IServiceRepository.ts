@@ -137,4 +137,31 @@ export interface IServiceRepository {
    * Find services by environment ID
    */
   findByEnvironmentId(environmentId: string): Promise<Service[]>;
+
+  /**
+   * Find a service by ID and user ID (for ownership validation)
+   * Only returns non-deleted services
+   */
+  findByIdAndUserId(id: string, userId: string): Promise<Service | null>;
+
+  /**
+   * Find a service by ID and user ID (including environment)
+   * Only returns non-deleted services
+   */
+  findByIdAndUserIdWithEnvironment(id: string, userId: string): Promise<Service | null>;
+
+  /**
+   * Find base service by repo URL (non-preview)
+   */
+  findBaseServiceByRepoUrl(repoUrlCondition: unknown): Promise<Service | null>;
+
+  /**
+   * Find preview service by PR number and repo URL
+   */
+  findPreviewByPrNumberAndRepoUrl(prNumber: number, repoUrlCondition: unknown): Promise<Service | null>;
+
+  /**
+   * Find services by repo URL and branch (for webhooks)
+   */
+  findByRepoUrlAndBranch(repoUrlCondition: unknown, branch: string): Promise<Service[]>;
 }

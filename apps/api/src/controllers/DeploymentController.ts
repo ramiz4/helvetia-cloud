@@ -104,11 +104,7 @@ export class DeploymentController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    const { prisma } = await import('database');
-    const service = await prisma.service.findFirst({
-      where: { id, userId: user.id },
-      include: { environment: { include: { project: true } } },
-    });
+    const service = await this.serviceRepository.findByIdAndUserIdWithEnvironment(id, user.id);
     if (!service) {
       return reply.status(404).send({ error: 'Service not found' });
     }
@@ -239,8 +235,7 @@ export class DeploymentController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    const { prisma } = await import('database');
-    const service = await prisma.service.findFirst({ where: { id, userId: user.id } });
+    const service = await this.serviceRepository.findByIdAndUserId(id, user.id);
     if (!service) {
       return reply.status(404).send({ error: 'Service not found' });
     }

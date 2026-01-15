@@ -318,14 +318,9 @@ export class WebhookController {
 
       if (['opened', 'synchronize'].includes(action)) {
         // Find the base service for this repo (the one that isn't a preview)
-        const { prisma } = await import('database');
-        const baseService = await prisma.service.findFirst({
-          where: {
-            ...getRepoUrlMatchCondition(repoUrl),
-            isPreview: false,
-            deletedAt: null,
-          },
-        });
+        const baseService = await this.serviceRepository.findBaseServiceByRepoUrl(
+          getRepoUrlMatchCondition(repoUrl),
+        );
 
         if (!baseService) {
           console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
@@ -334,19 +329,23 @@ export class WebhookController {
 
         const previewName = `${baseService.name}-pr-${prNumber}`;
 
-        // Upsert the preview service
-        const service = await prisma.service.upsert({
-          where: {
-            environmentId_name: {
-              name: previewName,
-              environmentId: baseService.environmentId || '',
-            },
-          },
-          update: {
+        // Check if preview service exists
+        const existingService = await this.serviceRepository.findByNameAndEnvironment(
+          previewName,
+          baseService.environmentId || '',
+          baseService.userId,
+        );
+
+        let service;
+        if (existingService) {
+          // Update existing preview service
+          service = await this.serviceRepository.update(existingService.id, {
             branch: headBranch,
             status: 'IDLE',
-          },
-          create: {
+          });
+        } else {
+          // Create new preview service
+          service = await this.serviceRepository.create({
             name: previewName,
             repoUrl: baseService.repoUrl,
             branch: headBranch,
@@ -360,8 +359,8 @@ export class WebhookController {
             environmentId: baseService.environmentId,
             isPreview: true,
             prNumber: prNumber,
-          },
-        });
+          });
+        }
 
         console.log(`Triggering preview deployment for ${service.name}`);
 
@@ -371,15 +370,10 @@ export class WebhookController {
       }
 
       if (action === 'closed') {
-        const { prisma } = await import('database');
-        const previewService = await prisma.service.findFirst({
-          where: {
-            prNumber: prNumber,
-            ...getRepoUrlMatchCondition(repoUrl),
-            isPreview: true,
-            deletedAt: null,
-          },
-        });
+        const previewService = await this.serviceRepository.findPreviewByPrNumberAndRepoUrl(
+          prNumber,
+          getRepoUrlMatchCondition(repoUrl),
+        );
 
         if (previewService) {
           console.log(`Cleaning up preview environment for PR #${prNumber}`);
@@ -419,15 +413,10 @@ export class WebhookController {
     console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
 
     // Find service(s) matching this repo and branch
-    const { prisma } = await import('database');
-    const services = await prisma.service.findMany({
-      where: {
-        ...getRepoUrlMatchCondition(repoUrl),
-        branch,
-        isPreview: false, // Only trigger non-preview services for push events
-        deletedAt: null,
-      },
-    });
+    const services = await this.serviceRepository.findByRepoUrlAndBranch(
+      getRepoUrlMatchCondition(repoUrl),
+      branch,
+    );
 
     if (services.length === 0) {
       console.log(`No service found for ${repoUrl} on branch ${branch}`);

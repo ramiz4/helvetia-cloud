@@ -116,4 +116,52 @@ export class PrismaServiceRepository implements IServiceRepository {
       orderBy: { createdAt: 'asc' },
     });
   }
+
+  async findByIdAndUserId(id: string, userId: string): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: { id, userId, deletedAt: null },
+    });
+  }
+
+  async findByIdAndUserIdWithEnvironment(id: string, userId: string): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: { id, userId },
+      include: { environment: { include: { project: true } } },
+    });
+  }
+
+  async findBaseServiceByRepoUrl(repoUrlCondition: unknown): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: {
+        ...(repoUrlCondition as object),
+        isPreview: false,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async findPreviewByPrNumberAndRepoUrl(
+    prNumber: number,
+    repoUrlCondition: unknown,
+  ): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: {
+        prNumber,
+        ...(repoUrlCondition as object),
+        isPreview: true,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async findByRepoUrlAndBranch(repoUrlCondition: unknown, branch: string): Promise<Service[]> {
+    return this.prisma.service.findMany({
+      where: {
+        ...(repoUrlCondition as object),
+        branch,
+        isPreview: false,
+        deletedAt: null,
+      },
+    });
+  }
 }
