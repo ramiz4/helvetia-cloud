@@ -1,6 +1,12 @@
 import type { Environment } from './IProjectRepository';
 
 /**
+ * Repository URL condition type for flexible matching
+ * Supports both exact match and OR conditions for .git suffix handling
+ */
+export type RepoUrlCondition = { repoUrl: string | null } | { OR: Array<{ repoUrl: string }> };
+
+/**
  * Service model type (matches Prisma schema)
  */
 export interface Service {
@@ -137,4 +143,34 @@ export interface IServiceRepository {
    * Find services by environment ID
    */
   findByEnvironmentId(environmentId: string): Promise<Service[]>;
+
+  /**
+   * Find a service by ID and user ID (for ownership validation)
+   * Only returns non-deleted services
+   */
+  findByIdAndUserId(id: string, userId: string): Promise<Service | null>;
+
+  /**
+   * Find a service by ID and user ID (including environment)
+   * Only returns non-deleted services
+   */
+  findByIdAndUserIdWithEnvironment(id: string, userId: string): Promise<Service | null>;
+
+  /**
+   * Find base service by repo URL (non-preview)
+   */
+  findBaseServiceByRepoUrl(repoUrlCondition: RepoUrlCondition): Promise<Service | null>;
+
+  /**
+   * Find preview service by PR number and repo URL
+   */
+  findPreviewByPrNumberAndRepoUrl(
+    prNumber: number,
+    repoUrlCondition: RepoUrlCondition,
+  ): Promise<Service | null>;
+
+  /**
+   * Find services by repo URL and branch (for webhooks)
+   */
+  findByRepoUrlAndBranch(repoUrlCondition: RepoUrlCondition, branch: string): Promise<Service[]>;
 }

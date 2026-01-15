@@ -1,4 +1,3 @@
-import { prisma } from 'database';
 import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
@@ -393,10 +392,7 @@ export class ServiceController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    const { prisma } = await import('database');
-    const service = await prisma.service.findFirst({
-      where: { id, userId: user.id, deletedAt: null },
-    });
+    const service = await this.serviceRepository.findByIdAndUserId(id, user.id);
     if (!service) return reply.status(404).send({ error: 'Service not found' });
 
     const containers = await this.containerOrchestrator.listContainers({ all: true });
@@ -429,10 +425,7 @@ export class ServiceController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    const { prisma } = await import('database');
-    const service = await prisma.service.findFirst({
-      where: { id, userId: user.id, deletedAt: null },
-    });
+    const service = await this.serviceRepository.findByIdAndUserId(id, user.id);
     if (!service) return reply.status(404).send({ error: 'Service not found' });
 
     return getServiceMetrics(id, undefined, undefined, service);
@@ -522,10 +515,7 @@ export class ServiceController {
             return;
           }
 
-          const services = await prisma.service.findMany({
-            where: { userId: user.id, deletedAt: null },
-            select: { id: true, name: true, type: true, status: true },
-          });
+          const services = await this.serviceRepository.findByUserId(user.id);
 
           // Get the underlying Docker instance for metrics collection
           // getServiceMetrics still needs direct Docker access for stats API

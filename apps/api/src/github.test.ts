@@ -60,8 +60,11 @@ vi.mock('database', () => ({
       upsert: vi.fn(),
     },
     service: {
+      findMany: vi.fn(),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
       upsert: vi.fn(),
       delete: vi.fn(),
       deleteMany: vi.fn(),
@@ -93,6 +96,9 @@ vi.mock('database', () => ({
     },
   },
   PrismaClient: vi.fn(),
+  Prisma: {
+    JsonNull: 'JsonNull',
+  },
   Role: {
     OWNER: 'OWNER',
     ADMIN: 'ADMIN',
@@ -426,12 +432,16 @@ describe('GitHub Integration', () => {
         envVars: { KEY: 'VALUE' },
       };
 
-      vi.mocked(prisma.service.findFirst).mockResolvedValue(mockBaseService as never);
+      vi.mocked(prisma.service.findFirst)
+        .mockResolvedValueOnce(mockBaseService as never) // for findBaseServiceByRepoUrl
+        .mockResolvedValueOnce(null as never); // for existingService (findByNameAndEnvironment)
+
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: 'user-uuid',
         githubAccessToken: 'mock-token',
       } as never);
-      vi.mocked(prisma.service.upsert).mockResolvedValue({
+
+      vi.mocked(prisma.service.create).mockResolvedValue({
         id: 'preview-service-id',
         name: 'base-service-pr-123',
         repoUrl: mockBaseService.repoUrl,

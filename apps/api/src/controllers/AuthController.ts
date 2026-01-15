@@ -1,6 +1,5 @@
 import '../types/fastify';
 
-import { prisma } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import type { IUserRepository } from '../interfaces';
@@ -232,10 +231,7 @@ export class AuthController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { githubAccessToken: null },
-    });
+    await this.userRepository.update(user.id, { githubAccessToken: null });
 
     return { success: true };
   }

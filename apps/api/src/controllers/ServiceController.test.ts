@@ -108,6 +108,11 @@ describe('ServiceController', () => {
       delete: vi.fn(),
       findByStatus: vi.fn(),
       findAll: vi.fn(),
+      findByIdAndUserId: vi.fn(),
+      findByIdAndUserIdWithEnvironment: vi.fn(),
+      findBaseServiceByRepoUrl: vi.fn(),
+      findPreviewByPrNumberAndRepoUrl: vi.fn(),
+      findByRepoUrlAndBranch: vi.fn(),
     };
 
     mockDeploymentRepo = {

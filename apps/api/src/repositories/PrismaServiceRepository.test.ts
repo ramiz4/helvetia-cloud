@@ -187,31 +187,290 @@ describe('PrismaServiceRepository', () => {
     });
   });
 
-  describe('findAll', () => {
-    it('should find all services', async () => {
+  describe('findByEnvironmentId', () => {
+    it('should find services by environment id', async () => {
       vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
 
-      const result = await repository.findAll();
+      const result = await repository.findByEnvironmentId('env-1');
 
       expect(result).toEqual([mockService]);
       expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
-        where: { deletedAt: null },
-        take: undefined,
-        skip: undefined,
+        where: { environmentId: 'env-1', deletedAt: null },
         orderBy: { createdAt: 'asc' },
       });
     });
+  });
 
-    it('should support pagination', async () => {
+  describe('findByIdAndUserId', () => {
+    it('should find service by id and user id', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(mockService as any);
+
+      const result = await repository.findByIdAndUserId('service-1', 'user-1');
+
+      expect(result).toEqual(mockService);
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: { id: 'service-1', userId: 'user-1', deletedAt: null },
+      });
+    });
+
+    it('should return null when service not found', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      const result = await repository.findByIdAndUserId('service-1', 'user-2');
+
+      expect(result).toBeNull();
+    });
+
+    it('should exclude soft-deleted services', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      await repository.findByIdAndUserId('service-1', 'user-1');
+
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: { id: 'service-1', userId: 'user-1', deletedAt: null },
+      });
+    });
+  });
+
+  describe('findByIdAndUserIdWithEnvironment', () => {
+    it('should find service with environment by id and user id', async () => {
+      const serviceWithEnv = {
+        ...mockService,
+        environment: {
+          id: 'env-1',
+          name: 'production',
+          project: { id: 'proj-1', name: 'My Project' },
+        },
+      };
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(serviceWithEnv as any);
+
+      const result = await repository.findByIdAndUserIdWithEnvironment('service-1', 'user-1');
+
+      expect(result).toEqual(serviceWithEnv);
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: { id: 'service-1', userId: 'user-1', deletedAt: null },
+        include: { environment: { include: { project: true } } },
+      });
+    });
+
+    it('should return null when service not found', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      const result = await repository.findByIdAndUserIdWithEnvironment('service-1', 'user-2');
+
+      expect(result).toBeNull();
+    });
+
+    it('should exclude soft-deleted services', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      await repository.findByIdAndUserIdWithEnvironment('service-1', 'user-1');
+
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: { id: 'service-1', userId: 'user-1', deletedAt: null },
+        include: { environment: { include: { project: true } } },
+      });
+    });
+  });
+
+  describe('findBaseServiceByRepoUrl', () => {
+    it('should find base service with exact repo URL', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(mockService as any);
+
+      const condition = { repoUrl: 'https://github.com/test/repo' };
+      const result = await repository.findBaseServiceByRepoUrl(condition);
+
+      expect(result).toEqual(mockService);
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: {
+          repoUrl: 'https://github.com/test/repo',
+          isPreview: false,
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should find base service with OR condition for .git suffix', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(mockService as any);
+
+      const condition = {
+        OR: [
+          { repoUrl: 'https://github.com/test/repo' },
+          { repoUrl: 'https://github.com/test/repo.git' },
+        ],
+      };
+      const result = await repository.findBaseServiceByRepoUrl(condition);
+
+      expect(result).toEqual(mockService);
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { repoUrl: 'https://github.com/test/repo' },
+            { repoUrl: 'https://github.com/test/repo.git' },
+          ],
+          isPreview: false,
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should return null when base service not found', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      const result = await repository.findBaseServiceByRepoUrl({ repoUrl: null });
+
+      expect(result).toBeNull();
+    });
+
+    it('should exclude preview services and soft-deleted services', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      await repository.findBaseServiceByRepoUrl({ repoUrl: 'https://github.com/test/repo' });
+
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: {
+          repoUrl: 'https://github.com/test/repo',
+          isPreview: false,
+          deletedAt: null,
+        },
+      });
+    });
+  });
+
+  describe('findPreviewByPrNumberAndRepoUrl', () => {
+    it('should find preview service by PR number and repo URL', async () => {
+      const previewService = { ...mockService, isPreview: true, prNumber: 42 };
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(previewService as any);
+
+      const condition = { repoUrl: 'https://github.com/test/repo' };
+      const result = await repository.findPreviewByPrNumberAndRepoUrl(42, condition);
+
+      expect(result).toEqual(previewService);
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: {
+          prNumber: 42,
+          repoUrl: 'https://github.com/test/repo',
+          isPreview: true,
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should find preview service with OR condition for .git suffix', async () => {
+      const previewService = { ...mockService, isPreview: true, prNumber: 42 };
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(previewService as any);
+
+      const condition = {
+        OR: [
+          { repoUrl: 'https://github.com/test/repo' },
+          { repoUrl: 'https://github.com/test/repo.git' },
+        ],
+      };
+      const result = await repository.findPreviewByPrNumberAndRepoUrl(42, condition);
+
+      expect(result).toEqual(previewService);
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: {
+          prNumber: 42,
+          OR: [
+            { repoUrl: 'https://github.com/test/repo' },
+            { repoUrl: 'https://github.com/test/repo.git' },
+          ],
+          isPreview: true,
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should return null when preview service not found', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      const result = await repository.findPreviewByPrNumberAndRepoUrl(42, { repoUrl: null });
+
+      expect(result).toBeNull();
+    });
+
+    it('should only return preview services', async () => {
+      vi.mocked(mockPrisma.service.findFirst).mockResolvedValue(null);
+
+      await repository.findPreviewByPrNumberAndRepoUrl(42, {
+        repoUrl: 'https://github.com/test/repo',
+      });
+
+      expect(mockPrisma.service.findFirst).toHaveBeenCalledWith({
+        where: {
+          prNumber: 42,
+          repoUrl: 'https://github.com/test/repo',
+          isPreview: true,
+          deletedAt: null,
+        },
+      });
+    });
+  });
+
+  describe('findByRepoUrlAndBranch', () => {
+    it('should find services by repo URL and branch', async () => {
       vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
 
-      await repository.findAll({ take: 20, skip: 10 });
+      const condition = { repoUrl: 'https://github.com/test/repo' };
+      const result = await repository.findByRepoUrlAndBranch(condition, 'main');
+
+      expect(result).toEqual([mockService]);
+      expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
+        where: {
+          repoUrl: 'https://github.com/test/repo',
+          branch: 'main',
+          isPreview: false,
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should find services with OR condition for .git suffix', async () => {
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([mockService] as any);
+
+      const condition = {
+        OR: [
+          { repoUrl: 'https://github.com/test/repo' },
+          { repoUrl: 'https://github.com/test/repo.git' },
+        ],
+      };
+      const result = await repository.findByRepoUrlAndBranch(condition, 'develop');
+
+      expect(result).toEqual([mockService]);
+      expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { repoUrl: 'https://github.com/test/repo' },
+            { repoUrl: 'https://github.com/test/repo.git' },
+          ],
+          branch: 'develop',
+          isPreview: false,
+          deletedAt: null,
+        },
+      });
+    });
+
+    it('should return empty array when no services found', async () => {
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([]);
+
+      const result = await repository.findByRepoUrlAndBranch({ repoUrl: null }, 'main');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should exclude preview services and soft-deleted services', async () => {
+      vi.mocked(mockPrisma.service.findMany).mockResolvedValue([]);
+
+      await repository.findByRepoUrlAndBranch({ repoUrl: 'https://github.com/test/repo' }, 'main');
 
       expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
-        where: { deletedAt: null },
-        take: 20,
-        skip: 10,
-        orderBy: { createdAt: 'asc' },
+        where: {
+          repoUrl: 'https://github.com/test/repo',
+          branch: 'main',
+          isPreview: false,
+          deletedAt: null,
+        },
       });
     });
   });

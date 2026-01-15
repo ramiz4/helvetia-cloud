@@ -210,6 +210,84 @@ Run tests:
 pnpm --filter api test src/errors/ src/di/
 ```
 
+## Best Practices
+
+### ✅ DO: Use Injected Repositories
+
+Always use injected repositories in controllers instead of direct Prisma imports:
+
+```typescript
+// ✅ GOOD: Using injected repository
+@injectable()
+export class ServiceController {
+  constructor(
+    @inject(Symbol.for('IServiceRepository'))
+    private serviceRepository: IServiceRepository,
+  ) {}
+
+  async getService(request: FastifyRequest, reply: FastifyReply) {
+    const service = await this.serviceRepository.findByIdAndUserId(id, user.id);
+    if (!service) {
+      return reply.status(404).send({ error: 'Service not found' });
+    }
+    return service;
+  }
+}
+```
+
+### ❌ DON'T: Direct Prisma Imports
+
+Avoid direct Prisma imports in controllers as they break the DI pattern and make testing difficult:
+
+```typescript
+// ❌ BAD: Direct Prisma import (static)
+import { prisma } from 'database';
+
+// ❌ BAD: Dynamic Prisma import
+async getService(request: FastifyRequest, reply: FastifyReply) {
+  const { prisma } = await import('database');
+  const service = await prisma.service.findFirst({
+    where: { id, userId: user.id },
+  });
+}
+```
+
+### Why Repositories?
+
+1. **Testability**: Easy to mock in unit tests
+2. **Consistency**: All controllers follow the same pattern
+3. **Flexibility**: Can swap implementations without changing controllers
+4. **Type Safety**: Interface contracts ensure correct usage
+5. **Performance**: No dynamic imports overhead
+
+### Adding New Repository Methods
+
+If you need a query not available in the repository:
+
+1. Add the method to the interface (`src/interfaces/IServiceRepository.ts`)
+2. Implement in the repository (`src/repositories/PrismaServiceRepository.ts`)
+3. Add tests for the new method
+4. Use the new method in your controller
+
+Example:
+
+```typescript
+// 1. Add to interface
+export interface IServiceRepository {
+  findByIdAndUserId(id: string, userId: string): Promise<Service | null>;
+}
+
+// 2. Implement in repository
+async findByIdAndUserId(id: string, userId: string): Promise<Service | null> {
+  return this.prisma.service.findFirst({
+    where: { id, userId, deletedAt: null },
+  });
+}
+
+// 3. Use in controller
+const service = await this.serviceRepository.findByIdAndUserId(id, user.id);
+```
+
 ## Questions?
 
 - See [apps/api/src/di/README.md](../../src/di/README.md) for detailed usage guide

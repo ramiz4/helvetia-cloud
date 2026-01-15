@@ -1,6 +1,12 @@
 import { Prisma, PrismaClient } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { IServiceRepository, Service, ServiceCreateInput, ServiceUpdateInput } from '../interfaces';
+import {
+  IServiceRepository,
+  type RepoUrlCondition,
+  Service,
+  ServiceCreateInput,
+  ServiceUpdateInput,
+} from '../interfaces';
 
 /**
  * Prisma implementation of IServiceRepository
@@ -114,6 +120,57 @@ export class PrismaServiceRepository implements IServiceRepository {
     return this.prisma.service.findMany({
       where: { environmentId, deletedAt: null },
       orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async findByIdAndUserId(id: string, userId: string): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: { id, userId, deletedAt: null },
+    });
+  }
+
+  async findByIdAndUserIdWithEnvironment(id: string, userId: string): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: { id, userId, deletedAt: null },
+      include: { environment: { include: { project: true } } },
+    });
+  }
+
+  async findBaseServiceByRepoUrl(repoUrlCondition: RepoUrlCondition): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: {
+        ...repoUrlCondition,
+        isPreview: false,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async findPreviewByPrNumberAndRepoUrl(
+    prNumber: number,
+    repoUrlCondition: RepoUrlCondition,
+  ): Promise<Service | null> {
+    return this.prisma.service.findFirst({
+      where: {
+        prNumber,
+        ...repoUrlCondition,
+        isPreview: true,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async findByRepoUrlAndBranch(
+    repoUrlCondition: RepoUrlCondition,
+    branch: string,
+  ): Promise<Service[]> {
+    return this.prisma.service.findMany({
+      where: {
+        ...repoUrlCondition,
+        branch,
+        isPreview: false,
+        deletedAt: null,
+      },
     });
   }
 }
