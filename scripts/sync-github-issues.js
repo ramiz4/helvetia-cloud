@@ -326,20 +326,18 @@ async function main() {
 
     if (token) {
       log.info('Using token from GH_TOKEN or GITHUB_TOKEN environment variable.');
-      // Validate token works by checking auth status
-      // gh CLI automatically uses GH_TOKEN/GITHUB_TOKEN when set
-      try {
-        gh(['auth', 'status']);
-      } catch {
-        log.error('Token validation failed. Please check your GH_TOKEN or GITHUB_TOKEN is valid.');
-        process.exit(1);
-      }
-    } else {
-      // Fallback to checking gh auth status for interactive login
-      try {
-        gh(['auth', 'status']);
+    }
+
+    // Validate authentication works (gh CLI uses GH_TOKEN/GITHUB_TOKEN automatically)
+    try {
+      gh(['auth', 'status']);
+      if (!token) {
         log.info('Using existing gh CLI authentication.');
-      } catch {
+      }
+    } catch {
+      if (token) {
+        log.error('Token validation failed. Please check your GH_TOKEN or GITHUB_TOKEN is valid.');
+      } else {
         log.error('GitHub CLI not authenticated.');
         log.error('');
         log.error('Please authenticate using one of the following methods:');
@@ -348,8 +346,8 @@ async function main() {
         log.error('     node scripts/sync-github-issues.js');
         log.error('');
         log.error('  2. Or run "gh auth login" to authenticate interactively.');
-        process.exit(1);
       }
+      process.exit(1);
     }
 
     const issues = Parser.parse();
