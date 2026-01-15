@@ -1,8 +1,10 @@
+import type { ContainerStatus } from '../../interfaces';
+
 /**
  * Helper to determine service status based on database state and container state
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function determineServiceStatus(service: any, containers: any[]): string {
+export function determineServiceStatus(service: any, containers: ContainerStatus[]): string {
   // If the service itself is marked as DEPLOYING in the database, respect that first
   if (service.status === 'DEPLOYING') {
     return 'DEPLOYING';
@@ -10,8 +12,8 @@ export function determineServiceStatus(service: any, containers: any[]): string 
 
   const serviceContainers = containers.filter(
     (c) =>
-      c.Labels['helvetia.serviceId'] === service.id ||
-      (service.type === 'COMPOSE' && c.Labels['com.docker.compose.project'] === service.name),
+      c.labels['helvetia.serviceId'] === service.id ||
+      (service.type === 'COMPOSE' && c.labels['com.docker.compose.project'] === service.name),
   );
   const latestDeployment = service.deployments[0];
 
@@ -21,16 +23,16 @@ export function determineServiceStatus(service: any, containers: any[]): string 
   }
 
   if (serviceContainers.length > 0) {
-    if (serviceContainers.some((c) => c.State === 'running')) {
+    if (serviceContainers.some((c) => c.state === 'running')) {
       return 'RUNNING';
     }
-    if (serviceContainers.some((c) => c.State === 'restarting')) {
+    if (serviceContainers.some((c) => c.state === 'restarting')) {
       return 'CRASHING';
     }
-    if (serviceContainers.every((c) => ['exited', 'dead', 'created'].includes(c.State))) {
+    if (serviceContainers.every((c) => ['exited', 'dead', 'created'].includes(c.state))) {
       return 'STOPPED';
     }
-    return serviceContainers[0].State.toUpperCase();
+    return serviceContainers[0].state.toUpperCase();
   }
 
   if (latestDeployment) {

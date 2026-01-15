@@ -6,6 +6,7 @@ import { inject, injectable } from 'tsyringe';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 import { ForbiddenError, NotFoundError } from '../errors';
 import type {
+  IContainerOrchestrator,
   IDeploymentOrchestratorService,
   IDeploymentRepository,
   IServiceRepository,
@@ -28,6 +29,8 @@ export class DeploymentController {
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
     private deploymentRepository: IDeploymentRepository,
+    @inject(Symbol.for('IContainerOrchestrator'))
+    private containerOrchestrator: IContainerOrchestrator,
   ) {}
 
   /**
@@ -97,13 +100,16 @@ export class DeploymentController {
       });
     }
 
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
+    // Get underlying Docker instance for container management operations
+    const docker =
+      'getDockerInstance' in this.containerOrchestrator
+        ? (this.containerOrchestrator as any).getDockerInstance()
+        : (await import('dockerode')).default && new ((await import('dockerode')).default)();
 
     try {
       // Find existing containers for this service
-      const containers = await docker.listContainers({ all: true });
-      const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+      const containers = await this.containerOrchestrator.listContainers({ all: true });
+      const serviceContainers = containers.filter((c) => c.labels['helvetia.serviceId'] === id);
 
       if (serviceContainers.length === 0) {
         return reply
@@ -112,7 +118,7 @@ export class DeploymentController {
       }
 
       // Get the image tag from the first container
-      const existingContainer = docker.getContainer(serviceContainers[0].Id);
+      const existingContainer = docker.getContainer(serviceContainers[0].id);
       const containerInfo = await existingContainer.inspect();
       const imageTag = containerInfo.Config.Image;
 
@@ -222,13 +228,16 @@ export class DeploymentController {
       return reply.status(404).send({ error: 'Service not found' });
     }
 
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
+    // Get underlying Docker instance for container management operations
+    const docker =
+      'getDockerInstance' in this.containerOrchestrator
+        ? (this.containerOrchestrator as any).getDockerInstance()
+        : (await import('dockerode')).default && new ((await import('dockerode')).default)();
 
     try {
       // Find existing containers for this service
-      const containers = await docker.listContainers({ all: true });
-      const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+      const containers = await this.containerOrchestrator.listContainers({ all: true });
+      const serviceContainers = containers.filter((c) => c.labels['helvetia.serviceId'] === id);
 
       if (serviceContainers.length === 0) {
         return reply.status(400).send({ error: 'Service is not running' });
@@ -236,8 +245,8 @@ export class DeploymentController {
 
       await Promise.all(
         serviceContainers.map(async (c) => {
-          const container = docker.getContainer(c.Id);
-          if (c.State === 'running') {
+          const container = docker.getContainer(c.id);
+          if (c.state === 'running') {
             await container.stop();
           }
         }),
