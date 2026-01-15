@@ -374,10 +374,25 @@ export class DeploymentController {
     let tokenValidationInterval: NodeJS.Timeout | null = null;
     let timeoutHandle: NodeJS.Timeout | null = null;
     let isSubscribed = false;
+    let subConnection: ReturnType<typeof request.server.redis.duplicate> | null = null;
 
-    // Get Redis connection from fastify instance
-    const subConnection = request.server.redis;
+    // Create dedicated Redis connection for pub/sub to ensure proper cleanup
+    // Using shared connections for pub/sub can cause issues with subscription management
+    try {
+      subConnection = request.server.redis.duplicate();
+    } catch (err) {
+      console.error(`Error creating dedicated Redis connection for deployment ${id}:`, err);
+      return reply.status(500).send({ error: 'Failed to establish log stream' });
+    }
+
     const channel = `deployment-logs:${id}`;
+
+    // Track connection health
+    let connectionHealthy = true;
+    subConnection.on('error', (err) => {
+      connectionHealthy = false;
+      console.error(`Redis subscription connection error for deployment ${id}:`, err);
+    });
 
     // Cleanup function to ensure all resources are freed
     const cleanup = async () => {
@@ -395,14 +410,18 @@ export class DeploymentController {
         timeoutHandle = null;
       }
 
-      // Clean up Redis subscription
-      if (isSubscribed) {
+      // Clean up Redis subscription and dedicated connection
+      if (subConnection) {
         try {
-          subConnection.removeListener('message', onMessage);
-          await subConnection.unsubscribe(channel);
-          isSubscribed = false;
+          if (isSubscribed) {
+            subConnection.removeListener('message', onMessage);
+            await subConnection.unsubscribe(channel);
+            isSubscribed = false;
+          }
+          // Always quit the connection if it was created
+          await subConnection.quit();
         } catch (err) {
-          console.error(`Error unsubscribing from channel ${channel}:`, err);
+          console.error(`Error cleaning up Redis subscription for deployment ${id}:`, err);
         }
       }
 
@@ -411,7 +430,8 @@ export class DeploymentController {
           `Duration: ${Date.now() - connectionState.startTime}ms, ` +
           `Messages: ${connectionState.messagesReceived}, ` +
           `Validations: ${connectionState.validationAttempts}, ` +
-          `Errors: ${connectionState.errorCount}`,
+          `Errors: ${connectionState.errorCount}, ` +
+          `Connection healthy: ${connectionHealthy}`,
       );
     };
 

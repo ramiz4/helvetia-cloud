@@ -199,6 +199,14 @@ describe('DeploymentController', () => {
           unsubscribe: vi.fn().mockResolvedValue(undefined),
           on: vi.fn(),
           removeListener: vi.fn(),
+          quit: vi.fn().mockResolvedValue('OK'),
+          duplicate: vi.fn().mockReturnValue({
+            subscribe: vi.fn().mockResolvedValue(undefined),
+            unsubscribe: vi.fn().mockResolvedValue(undefined),
+            on: vi.fn(),
+            removeListener: vi.fn(),
+            quit: vi.fn().mockResolvedValue('OK'),
+          }),
         },
       },
       raw: {
