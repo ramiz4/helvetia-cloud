@@ -395,7 +395,7 @@ describe('ServiceController', () => {
           details: expect.objectContaining({
             fieldErrors: expect.objectContaining({
               deleteProtected: expect.arrayContaining([
-                expect.stringContaining('expected boolean'),
+                expect.stringContaining('deleteProtected must be a boolean'),
               ]),
             }),
           }),
@@ -415,7 +415,7 @@ describe('ServiceController', () => {
           details: expect.objectContaining({
             fieldErrors: expect.objectContaining({
               deleteProtected: expect.arrayContaining([
-                expect.stringContaining('expected boolean'),
+                expect.stringContaining('deleteProtected must be a boolean'),
               ]),
             }),
           }),
@@ -435,7 +435,7 @@ describe('ServiceController', () => {
           details: expect.objectContaining({
             fieldErrors: expect.objectContaining({
               deleteProtected: expect.arrayContaining([
-                expect.stringContaining('expected boolean'),
+                expect.stringContaining('deleteProtected must be a boolean'),
               ]),
             }),
           }),
@@ -455,7 +455,7 @@ describe('ServiceController', () => {
           details: expect.objectContaining({
             fieldErrors: expect.objectContaining({
               deleteProtected: expect.arrayContaining([
-                expect.stringContaining('expected boolean'),
+                expect.stringContaining('deleteProtected must be a boolean'),
               ]),
             }),
           }),

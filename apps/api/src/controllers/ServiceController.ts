@@ -537,7 +537,7 @@ export class ServiceController {
           const docker = this.getDockerInstance();
 
           // Fetch containers once and pass to all metrics calls for better performance
-          let containerList;
+          let containerList: Docker.ContainerInfo[];
           if (docker) {
             containerList = await docker.listContainers({ all: true });
           }

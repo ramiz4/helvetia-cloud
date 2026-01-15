@@ -1,7 +1,8 @@
 import axios from 'axios';
 import crypto from 'crypto';
-import { Role } from 'database';
+import { Prisma, PrismaClient, Role } from 'database';
 import { inject, injectable } from 'tsyringe';
+import { TOKENS } from '../di/tokens';
 import type { AuthResponseDto, GitHubUserDto } from '../dto';
 import { UnauthorizedError } from '../errors';
 import type { IUserRepository } from '../interfaces';
@@ -21,6 +22,8 @@ export class AuthenticationService {
     private userRepository: IUserRepository,
     @inject(Symbol.for('OrganizationService'))
     private organizationService: OrganizationService,
+    @inject(TOKENS.PrismaClient)
+    private prisma: PrismaClient,
   ) {}
 
   /**
@@ -110,11 +113,95 @@ export class AuthenticationService {
       },
     );
 
-    // TODO: The organization creation automatically creates a personal organization for GitHub authenticated users, but this happens on every GitHub authentication (not just first-time). This could potentially create multiple personal organizations if the check fails or if the user's organizations are not properly loaded. Consider adding a transaction or more robust duplicate prevention.
-    // Check if user has organizations, if not create a personal one
-    const userOrgs = await this.organizationService.getUserOrganizations(user.id);
-    if (userOrgs.length === 0) {
-      await this.organizationService.createOrganization(`${user.username}'s Personal`, user.id);
+    // Ensure user has a personal organization within a transaction to prevent race conditions
+    // This handles concurrent authentication requests safely
+    let retries = 3;
+    let created = false;
+
+    while (!created && retries > 0) {
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          // Lock the user row to prevent concurrent organization creation for the same user
+          await tx.$executeRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;
+
+          // Check if user has any organizations within the transaction
+          const existingOrgs = await tx.organization.findMany({
+            where: {
+              members: {
+                some: {
+                  userId: user.id,
+                },
+              },
+            },
+          });
+
+          // Only create if no organizations exist
+          if (existingOrgs.length === 0) {
+            // Generate deterministic slug for personal organization
+            const slugBase = `${user.username.toLowerCase().replace(/[^\w-]/g, '-')}-personal`;
+
+            // Check if this specific slug already exists
+            const existingOrgWithSlug = await tx.organization.findUnique({
+              where: { slug: slugBase },
+              include: { members: true },
+            });
+
+            if (existingOrgWithSlug) {
+              // If it exists, check if user is already a member (should have been caught by findMany,
+              // but good for extra safety and handling visibility gaps)
+              const isMember = existingOrgWithSlug.members.some((m) => m.userId === user.id);
+              if (isMember) {
+                return;
+              }
+
+              // Slug is taken by someone else, generate a unique one
+              const finalSlug = `${slugBase}-${crypto.randomUUID().substring(0, 7)}`;
+              await tx.organization.create({
+                data: {
+                  name: `${user.username}'s Personal`,
+                  slug: finalSlug,
+                  members: {
+                    create: {
+                      userId: user.id,
+                      role: Role.OWNER,
+                    },
+                  },
+                },
+              });
+            } else {
+              // Not taken, try to create with base slug
+              // This might still fail with P2002 if another request creates it concurrently
+              await tx.organization.create({
+                data: {
+                  name: `${user.username}'s Personal`,
+                  slug: slugBase,
+                  members: {
+                    create: {
+                      userId: user.id,
+                      role: Role.OWNER,
+                    },
+                  },
+                },
+              });
+            }
+          }
+        });
+        created = true;
+      } catch (error) {
+        // Handle unique constraint violation on slug
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          retries--;
+          if (retries === 0) {
+            throw new Error(
+              'Failed to create organization due to slug collision after multiple retries',
+            );
+          }
+          // The transaction was aborted, so we retry the whole transaction from the start
+          continue;
+        }
+        // Re-throw other errors
+        throw error;
+      }
     }
 
     // Generate JWT access token (short-lived)
@@ -149,12 +236,8 @@ export class AuthenticationService {
       throw new UnauthorizedError('Refresh token is required');
     }
 
-    // For now, we'll implement a basic version
-    // In a full implementation, you'd inject Redis and use the utility function
-    const { prisma } = await import('database');
-
     // Find the refresh token in database
-    const refreshTokenRecord = await prisma.refreshToken.findUnique({
+    const refreshTokenRecord = await this.prisma.refreshToken.findUnique({
       where: { token: refreshToken },
       include: { user: true },
     });
@@ -182,7 +265,7 @@ export class AuthenticationService {
     const newRefreshToken = await createRefreshToken(user.id);
 
     // Mark old refresh token as revoked
-    await prisma.refreshToken.update({
+    await this.prisma.refreshToken.update({
       where: { id: refreshTokenRecord.id },
       data: { revoked: true },
     });

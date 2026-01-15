@@ -71,6 +71,23 @@ vi.mock('database', () => {
       VIEWER: 'VIEWER',
     },
     prisma: {
+      $executeRaw: vi.fn().mockResolvedValue(0),
+      $transaction: vi.fn(async (callback) => {
+        // Mock transaction - just call the callback with the same mock prisma
+        const mockTx = {
+          $executeRaw: vi.fn().mockResolvedValue(0),
+          organization: {
+            findMany: vi.fn().mockResolvedValue([]),
+            findUnique: vi.fn().mockResolvedValue(null),
+            create: vi.fn().mockResolvedValue({
+              id: 'org-id',
+              name: 'Personal Org',
+              slug: 'personal-org',
+            }),
+          },
+        };
+        return callback(mockTx);
+      }),
       service: {
         findMany: vi.fn(),
         findUnique: vi.fn(),

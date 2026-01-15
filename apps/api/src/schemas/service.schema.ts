@@ -167,8 +167,7 @@ export const ServiceUpdateSchema = z.object({
  */
 export const ProtectionToggleSchema = z.object({
   deleteProtected: z.boolean({
-    required_error: 'deleteProtected field is required',
-    invalid_type_error: 'deleteProtected must be a boolean',
+    message: 'deleteProtected must be a boolean',
   }),
 });
 

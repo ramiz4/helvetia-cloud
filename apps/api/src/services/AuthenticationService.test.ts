@@ -10,6 +10,30 @@ import { AuthenticationService } from './AuthenticationService';
 import { OrganizationService } from './OrganizationService';
 
 vi.mock('axios');
+vi.mock('database', async () => {
+  const actual = await vi.importActual('database');
+  return {
+    ...actual,
+    prisma: {
+      $transaction: vi.fn(async (callback) => {
+        // Mock transaction context
+        const mockTx = {
+          $executeRaw: vi.fn().mockResolvedValue(0),
+          organization: {
+            findMany: vi.fn().mockResolvedValue([]),
+            findUnique: vi.fn().mockResolvedValue(null),
+            create: vi.fn().mockResolvedValue({
+              id: 'org-1',
+              name: 'Personal Org',
+              slug: 'personal-org',
+            }),
+          },
+        };
+        return callback(mockTx);
+      }),
+    },
+  };
+});
 vi.mock('../utils/crypto', () => ({
   encrypt: vi.fn((token: string) => `encrypted_${token}`),
   decrypt: vi.fn((token: string) => token.replace('encrypted_', '')),
@@ -33,6 +57,7 @@ describe('AuthenticationService', () => {
   let service: AuthenticationService;
   let mockUserRepo: IUserRepository;
   let mockOrgService: OrganizationService;
+  let mockPrisma: any;
 
   const mockUser = {
     id: 'user-1',
@@ -67,7 +92,31 @@ describe('AuthenticationService', () => {
       createOrganization: vi.fn().mockResolvedValue({ id: 'org-1' }),
     } as any;
 
-    service = new AuthenticationService(mockUserRepo, mockOrgService);
+    // Mock PrismaClient
+    mockPrisma = {
+      $executeRaw: vi.fn().mockResolvedValue(0),
+      $transaction: vi.fn(async (callback) => {
+        const mockTx = {
+          $executeRaw: vi.fn().mockResolvedValue(0),
+          organization: {
+            findMany: vi.fn().mockResolvedValue([]),
+            findUnique: vi.fn().mockResolvedValue(null),
+            create: vi.fn().mockResolvedValue({
+              id: 'org-1',
+              name: 'Personal Org',
+              slug: 'personal-org',
+            }),
+          },
+        };
+        return callback(mockTx);
+      }),
+      refreshToken: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
+    };
+
+    service = new AuthenticationService(mockUserRepo, mockOrgService, mockPrisma);
     vi.clearAllMocks();
   });
 
