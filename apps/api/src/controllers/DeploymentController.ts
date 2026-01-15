@@ -1,11 +1,13 @@
 import '../types/fastify';
 
+import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { withStatusLock } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 import { ForbiddenError, NotFoundError } from '../errors';
 import type {
+  IContainerOrchestrator,
   IDeploymentOrchestratorService,
   IDeploymentRepository,
   IServiceRepository,
@@ -13,6 +15,13 @@ import type {
 import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { validateToken } from '../utils/tokenValidation';
+
+/**
+ * Type alias for container orchestrator with Docker instance access
+ */
+type IContainerOrchestratorWithDocker = IContainerOrchestrator & {
+  getDockerInstance: () => Docker;
+};
 
 /**
  * DeploymentController
@@ -28,7 +37,21 @@ export class DeploymentController {
     private serviceRepository: IServiceRepository,
     @inject(Symbol.for('IDeploymentRepository'))
     private deploymentRepository: IDeploymentRepository,
+    @inject(Symbol.for('IContainerOrchestrator'))
+    private containerOrchestrator: IContainerOrchestrator,
   ) {}
+
+  /**
+   * Get Docker instance from container orchestrator or create a new one
+   * This is needed for operations that require direct Docker API access
+   */
+  private async getDockerInstance(): Promise<Docker> {
+    if ('getDockerInstance' in this.containerOrchestrator) {
+      return (this.containerOrchestrator as IContainerOrchestratorWithDocker).getDockerInstance();
+    }
+    const DockerLib = (await import('dockerode')).default;
+    return new DockerLib();
+  }
 
   /**
    * POST /services/:id/deploy
@@ -97,13 +120,13 @@ export class DeploymentController {
       });
     }
 
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
+    // Get underlying Docker instance for container management operations
+    const docker = await this.getDockerInstance();
 
     try {
       // Find existing containers for this service
-      const containers = await docker.listContainers({ all: true });
-      const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+      const containers = await this.containerOrchestrator.listContainers({ all: true });
+      const serviceContainers = containers.filter((c) => c.labels['helvetia.serviceId'] === id);
 
       if (serviceContainers.length === 0) {
         return reply
@@ -112,7 +135,7 @@ export class DeploymentController {
       }
 
       // Get the image tag from the first container
-      const existingContainer = docker.getContainer(serviceContainers[0].Id);
+      const existingContainer = docker.getContainer(serviceContainers[0].id);
       const containerInfo = await existingContainer.inspect();
       const imageTag = containerInfo.Config.Image;
 
@@ -222,13 +245,13 @@ export class DeploymentController {
       return reply.status(404).send({ error: 'Service not found' });
     }
 
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
+    // Get underlying Docker instance for container management operations
+    const docker = await this.getDockerInstance();
 
     try {
       // Find existing containers for this service
-      const containers = await docker.listContainers({ all: true });
-      const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+      const containers = await this.containerOrchestrator.listContainers({ all: true });
+      const serviceContainers = containers.filter((c) => c.labels['helvetia.serviceId'] === id);
 
       if (serviceContainers.length === 0) {
         return reply.status(400).send({ error: 'Service is not running' });
@@ -236,8 +259,8 @@ export class DeploymentController {
 
       await Promise.all(
         serviceContainers.map(async (c) => {
-          const container = docker.getContainer(c.Id);
-          if (c.State === 'running') {
+          const container = docker.getContainer(c.id);
+          if (c.state === 'running') {
             await container.stop();
           }
         }),

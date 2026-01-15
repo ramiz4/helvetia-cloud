@@ -1,4 +1,5 @@
 import { prisma } from 'database';
+import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
@@ -6,6 +7,7 @@ import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/con
 import { ForbiddenError, NotFoundError } from '../errors';
 import { getServiceMetrics } from '../handlers/metrics.handler';
 import type {
+  IContainerOrchestrator,
   IDeploymentRepository,
   IServiceManagementService,
   IServiceRepository,
@@ -17,6 +19,13 @@ import { getSafeOrigin } from '../utils/helpers/cors.helper';
 import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
 import { determineServiceStatus } from '../utils/helpers/status.helper';
 import { validateToken } from '../utils/tokenValidation';
+
+/**
+ * Type alias for container orchestrator with Docker instance access
+ */
+type IContainerOrchestratorWithDocker = IContainerOrchestrator & {
+  getDockerInstance: () => Docker;
+};
 
 /**
  * ServiceController
@@ -32,7 +41,20 @@ export class ServiceController {
     private deploymentRepository: IDeploymentRepository,
     @inject(Symbol.for('ServiceManagementService'))
     private serviceManagement: IServiceManagementService,
+    @inject(Symbol.for('IContainerOrchestrator'))
+    private containerOrchestrator: IContainerOrchestrator,
   ) {}
+
+  /**
+   * Get Docker instance from container orchestrator or return undefined
+   * This is needed for metrics collection which requires direct Docker API access
+   */
+  private getDockerInstance(): Docker | undefined {
+    if ('getDockerInstance' in this.containerOrchestrator) {
+      return (this.containerOrchestrator as IContainerOrchestratorWithDocker).getDockerInstance();
+    }
+    return undefined;
+  }
 
   /**
    * GET /services
@@ -59,15 +81,13 @@ export class ServiceController {
     );
 
     // Enrich services with actual Docker container status
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
-    const containers = await docker.listContainers({ all: true });
+    const containers = await this.containerOrchestrator.listContainers({ all: true });
 
     return servicesWithDeployments.map((service) => {
       const serviceContainers = containers.filter(
-        (c) => c.Labels['helvetia.serviceId'] === service.id,
+        (c) => c.labels['helvetia.serviceId'] === service.id,
       );
-      const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+      const containerName = serviceContainers[0]?.name;
 
       return {
         ...service,
@@ -99,14 +119,12 @@ export class ServiceController {
     const deployments = await this.deploymentRepository.findByServiceId(service.id, { take: 1 });
 
     // Enrich service with actual Docker container status
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
-    const containers = await docker.listContainers({ all: true });
+    const containers = await this.containerOrchestrator.listContainers({ all: true });
 
     const serviceContainers = containers.filter(
-      (c) => c.Labels['helvetia.serviceId'] === service.id,
+      (c) => c.labels['helvetia.serviceId'] === service.id,
     );
-    const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+    const containerName = serviceContainers[0]?.name;
 
     return {
       ...service,
@@ -269,12 +287,10 @@ export class ServiceController {
     const deployments = await this.deploymentRepository.findByServiceId(id, { take: 1 });
 
     // Enrich with actual Docker container status
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
-    const containers = await docker.listContainers({ all: true });
+    const containers = await this.containerOrchestrator.listContainers({ all: true });
 
-    const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
-    const containerName = serviceContainers[0]?.Names?.[0]?.replace(/^\//, '');
+    const serviceContainers = containers.filter((c) => c.labels['helvetia.serviceId'] === id);
+    const containerName = serviceContainers[0]?.name;
 
     return {
       ...fullService,
@@ -383,19 +399,16 @@ export class ServiceController {
     });
     if (!service) return reply.status(404).send({ error: 'Service not found' });
 
-    const Docker = (await import('dockerode')).default;
-    const docker = new Docker();
-
-    const containers = await docker.listContainers({ all: true });
-    const serviceContainers = containers.filter((c) => c.Labels['helvetia.serviceId'] === id);
+    const containers = await this.containerOrchestrator.listContainers({ all: true });
+    const serviceContainers = containers.filter((c) => c.labels['helvetia.serviceId'] === id);
 
     if (serviceContainers.length === 0) {
       return { status: 'NOT_RUNNING' };
     }
 
     const containerInfo = serviceContainers[0]; // Take the latest one
-    const container = docker.getContainer(containerInfo.Id);
-    const data = await container.inspect();
+    const container = await this.containerOrchestrator.getContainer(containerInfo.id);
+    const data = await this.containerOrchestrator.inspectContainer(container);
 
     return {
       status: data.State.Running ? 'RUNNING' : 'STOPPED',
@@ -509,18 +522,24 @@ export class ServiceController {
             return;
           }
 
-          const Docker = (await import('dockerode')).default;
-          const docker = new Docker();
-          const containers = await docker.listContainers({ all: true });
-
           const services = await prisma.service.findMany({
             where: { userId: user.id, deletedAt: null },
             select: { id: true, name: true, type: true, status: true },
           });
 
+          // Get the underlying Docker instance for metrics collection
+          // getServiceMetrics still needs direct Docker access for stats API
+          const docker = this.getDockerInstance();
+
+          // Fetch containers once and pass to all metrics calls for better performance
+          let containerList;
+          if (docker) {
+            containerList = await docker.listContainers({ all: true });
+          }
+
           const metricsPromises = services.map(async (s) => ({
             id: s.id,
-            metrics: await getServiceMetrics(s.id, docker, containers, s),
+            metrics: await getServiceMetrics(s.id, docker, containerList, s),
           }));
 
           const results = await Promise.all(metricsPromises);

@@ -43,10 +43,10 @@ export class DockerContainerOrchestrator implements IContainerOrchestrator {
 
     return containers.map((container) => ({
       id: container.Id,
-      name: container.Names[0]?.replace(/^\//, '') || '',
-      state: container.State,
-      status: container.Status,
-      image: container.Image,
+      name: container.Names?.[0]?.replace(/^\//, '') || '',
+      state: container.State || 'unknown',
+      status: container.Status || '',
+      image: container.Image || '',
       labels: container.Labels || {},
     }));
   }
