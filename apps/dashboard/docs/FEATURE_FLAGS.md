@@ -131,6 +131,40 @@ Content-Type: application/json
 
 **Note:** This endpoint is public (no authentication required) for easy client-side checks.
 
+### Check Multiple Flags (Bulk Check)
+
+```http
+POST /api/v1/feature-flags/check-bulk
+Content-Type: application/json
+
+{
+  "keys": ["feature_1", "feature_2", "feature_3"],
+  "userId": "user-123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "feature_1": true,
+    "feature_2": false,
+    "feature_3": true
+  }
+}
+```
+
+**Features:**
+
+- Check up to 50 feature flags in a single request
+- More efficient than individual checks for multiple flags
+- Public endpoint (no authentication required)
+- Reduces network overhead and API calls
+
+**Note:** This is the recommended way to check multiple flags at once, especially on application initialization.
+
 ## A/B Testing with Segments
 
 Feature flags support two types of segments for A/B testing:
@@ -222,7 +256,7 @@ import { FeatureFlagClient } from '@/lib/featureFlags';
 // Check single flag
 const enabled = await FeatureFlagClient.isEnabled('new_feature', userId);
 
-// Check multiple flags
+// Check multiple flags (uses bulk endpoint)
 const flags = await FeatureFlagClient.checkMultiple(
   ['feature_1', 'feature_2', 'feature_3'],
   userId,
@@ -231,7 +265,20 @@ const flags = await FeatureFlagClient.checkMultiple(
 if (flags.feature_1) {
   // Feature 1 code
 }
+
+// Clear cache if needed (useful for testing)
+FeatureFlagClient.clearCache();
 ```
+
+**Caching:**
+
+The FeatureFlagClient includes an in-memory cache with a 5-minute TTL (Time To Live). This means:
+
+- Flag checks are cached for 5 minutes to reduce API calls
+- Subsequent checks for the same flag return cached values
+- Cache is keyed by flag key and user ID
+- `checkMultiple()` intelligently fetches only uncached flags
+- Call `clearCache()` to force fresh checks (useful in tests)
 
 ## Admin UI
 
@@ -293,9 +340,23 @@ if (enabled) {
 
 ### 5. Performance
 
-- Feature flag checks are fast (cached in memory where possible)
-- The `/check` endpoint is optimized for client-side checks
+- Feature flag checks are cached in-memory with a 5-minute TTL
+- The `/check-bulk` endpoint efficiently checks multiple flags in one request
+- Use `checkMultiple()` for checking multiple flags instead of individual calls
 - Consider checking flags once at app initialization rather than per request
+- The system uses deterministic hashing for percentage rollouts, ensuring consistent results
+
+**Performance Tips:**
+
+```typescript
+// ❌ Bad: Multiple API calls
+const flag1 = await FeatureFlagClient.isEnabled('feature_1');
+const flag2 = await FeatureFlagClient.isEnabled('feature_2');
+const flag3 = await FeatureFlagClient.isEnabled('feature_3');
+
+// ✅ Good: Single API call with caching
+const flags = await FeatureFlagClient.checkMultiple(['feature_1', 'feature_2', 'feature_3']);
+```
 
 ## Database Schema
 
@@ -405,7 +466,8 @@ To enable feature flags in an existing deployment:
 
 Potential improvements for the feature flag system:
 
-- [ ] Caching layer for faster checks
+- [x] ~~Caching layer for faster checks~~ (Implemented: 5-minute in-memory cache)
+- [x] ~~Bulk check endpoint~~ (Implemented: `/check-bulk` endpoint)
 - [ ] Analytics/metrics for flag usage
 - [ ] Time-based flag scheduling
 - [ ] Environment-specific flags (dev/staging/prod)
