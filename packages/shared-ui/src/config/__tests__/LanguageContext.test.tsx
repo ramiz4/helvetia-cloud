@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { LanguageProvider, useLanguage } from '../LanguageContext';
 
@@ -15,38 +15,44 @@ function TestComponent() {
 }
 
 describe('LanguageContext', () => {
-  it('should provide default language as English', () => {
+  it('should provide default language as English', async () => {
     render(
       <LanguageProvider>
         <TestComponent />
       </LanguageProvider>,
     );
 
-    expect(screen.getByTestId('current-language')).toHaveTextContent('en');
+    // Use findBy to wait for the component to mount (as it initially returns null)
+    const element = await screen.findByTestId('current-language');
+    expect(element.textContent).toBe('en');
   });
 
-  it('should provide translations object', () => {
+  it('should provide translations object', async () => {
     render(
       <LanguageProvider>
         <TestComponent />
       </LanguageProvider>,
     );
 
-    const translation = screen.getByTestId('translation');
+    const translation = await screen.findByTestId('translation');
     expect(translation).toBeDefined();
   });
 
-  it('should allow language switching', () => {
+  it('should allow language switching', async () => {
     render(
       <LanguageProvider>
         <TestComponent />
       </LanguageProvider>,
     );
 
-    const button = screen.getByText('Switch to German');
-    button.click();
+    // Wait for mount
+    const button = await screen.findByText('Switch to German');
 
-    // Language should be updated (though in jsdom localStorage might not persist)
-    expect(screen.getByTestId('current-language')).toBeDefined();
+    // fireEvent wraps the action in act()
+    fireEvent.click(button);
+
+    // Language should be updated
+    const element = screen.getByTestId('current-language');
+    expect(element.textContent).toBe('de');
   });
 });

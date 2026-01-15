@@ -49,7 +49,7 @@ const envSchema = z.object({
     ),
   WORKER_HEALTH_PORT: z
     .string()
-    .default('3002')
+    .default('3003')
     .pipe(
       z
         .string()

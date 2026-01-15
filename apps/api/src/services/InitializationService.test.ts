@@ -3,7 +3,7 @@ import { Role } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from '../config/env';
-import type { IUserRepository } from '../interfaces';
+import type { IFeatureFlagRepository, IUserRepository } from '../interfaces';
 import { InitializationService } from './InitializationService';
 
 vi.mock('../config/env', () => ({
@@ -16,6 +16,7 @@ vi.mock('../config/env', () => ({
 describe('InitializationService', () => {
   let service: InitializationService;
   let mockUserRepo: IUserRepository;
+  let mockFeatureFlagRepo: IFeatureFlagRepository;
 
   beforeEach(() => {
     mockUserRepo = {
@@ -24,7 +25,12 @@ describe('InitializationService', () => {
       update: vi.fn(),
     } as any;
 
-    service = new InitializationService(mockUserRepo);
+    mockFeatureFlagRepo = {
+      findByKey: vi.fn(),
+      create: vi.fn(),
+    } as any;
+
+    service = new InitializationService(mockUserRepo, mockFeatureFlagRepo);
     vi.clearAllMocks();
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -33,6 +39,7 @@ describe('InitializationService', () => {
   describe('initialize', () => {
     it('should create admin user if it does not exist', async () => {
       vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(null);
+      vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue(null);
 
       await service.initialize();
 
@@ -56,6 +63,14 @@ describe('InitializationService', () => {
           role: Role.ADMIN,
         },
       );
+
+      expect(mockFeatureFlagRepo.findByKey).toHaveBeenCalledWith('show-deployments');
+      expect(mockFeatureFlagRepo.create).toHaveBeenCalledWith({
+        key: 'show-deployments',
+        name: 'Show Deployments',
+        description: 'Enable the deployments view in the dashboard',
+        enabled: true,
+      });
     });
 
     it('should update admin user if details changed', async () => {
@@ -67,6 +82,7 @@ describe('InitializationService', () => {
         role: Role.MEMBER,
       };
       vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(existingAdmin as any);
+      vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue({} as any);
 
       await service.initialize();
 
@@ -95,6 +111,7 @@ describe('InitializationService', () => {
         role: Role.ADMIN,
       };
       vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(existingAdmin as any);
+      vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue({} as any);
 
       await service.initialize();
 
@@ -125,6 +142,7 @@ describe('InitializationService', () => {
 
     it('should handle errors gracefully during initialization', async () => {
       vi.mocked(mockUserRepo.findByGithubId).mockRejectedValue(new Error('DB Error'));
+      vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue({} as any);
 
       await service.initialize();
 
@@ -140,6 +158,7 @@ describe('InitializationService', () => {
       // Since hashPassword is private, we test it through the initialize method
       // which uses it to set the password in the repository call
       vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(null);
+      vi.mocked(mockFeatureFlagRepo.findByKey).mockResolvedValue({} as any);
 
       const password = 'my-secret-password';
       const expectedHash = crypto.createHash('sha256').update(password).digest('hex');

@@ -10,7 +10,7 @@ The worker service exposes an HTTP health check endpoint for monitoring and oper
 GET /health
 ```
 
-**Port:** 3002 (default, configurable via `WORKER_HEALTH_PORT`)
+**Port:** 3003 (default, configurable via `WORKER_HEALTH_PORT`)
 
 ## Response Format
 
@@ -99,14 +99,14 @@ The worker is considered **unhealthy** when:
 
 | Variable             | Default                  | Description                           |
 | -------------------- | ------------------------ | ------------------------------------- |
-| `WORKER_HEALTH_PORT` | `3002`                   | Port for the health check HTTP server |
+| `WORKER_HEALTH_PORT` | `3003`                   | Port for the health check HTTP server |
 | `REDIS_URL`          | `redis://localhost:6379` | Redis connection URL                  |
 
 ### Example Configuration
 
 ```bash
 # .env
-WORKER_HEALTH_PORT=3002
+WORKER_HEALTH_PORT=3003
 REDIS_URL=redis://localhost:6379
 ```
 
@@ -116,10 +116,10 @@ REDIS_URL=redis://localhost:6379
 
 ```bash
 # Check worker health
-curl http://localhost:3002/health
+curl http://localhost:3003/health
 
 # Check with verbose output
-curl -v http://localhost:3002/health
+curl -v http://localhost:3003/health
 ```
 
 ### Docker Health Check
@@ -131,7 +131,7 @@ services:
   worker:
     image: worker:latest
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3002/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:3003/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -152,7 +152,7 @@ spec:
       livenessProbe:
         httpGet:
           path: /health
-          port: 3002
+          port: 3003
         initialDelaySeconds: 30
         periodSeconds: 10
         timeoutSeconds: 5
@@ -160,7 +160,7 @@ spec:
       readinessProbe:
         httpGet:
           path: /health
-          port: 3002
+          port: 3003
         initialDelaySeconds: 10
         periodSeconds: 5
         timeoutSeconds: 3
@@ -176,7 +176,7 @@ scrape_configs:
   - job_name: 'worker-health'
     metrics_path: '/health'
     static_configs:
-      - targets: ['localhost:3002']
+      - targets: ['localhost:3003']
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
@@ -189,7 +189,7 @@ import axios from 'axios';
 
 async function checkWorkerHealth() {
   try {
-    const response = await axios.get('http://localhost:3002/health');
+    const response = await axios.get('http://localhost:3003/health');
 
     if (response.data.status === 'healthy') {
       console.log('Worker is healthy');
@@ -218,7 +218,7 @@ http:
     worker:
       loadBalancer:
         servers:
-          - url: 'http://worker:3002'
+          - url: 'http://worker:3003'
         healthCheck:
           path: '/health'
           interval: '30s'
@@ -229,7 +229,7 @@ http:
 
 ```nginx
 upstream worker_backend {
-    server worker:3002 max_fails=3 fail_timeout=30s;
+    server worker:3003 max_fails=3 fail_timeout=30s;
 
     # Health check configuration
     check interval=30000 rise=2 fall=3 timeout=10000 type=http;
@@ -278,7 +278,7 @@ upstream worker_backend {
 **Solutions:**
 
 - Verify worker service is running
-- Check that port 3002 (or configured port) is accessible
+- Check that port 3003 (or configured port) is accessible
 - Ensure firewall rules allow traffic on the health check port
 - Check worker logs for startup errors
 

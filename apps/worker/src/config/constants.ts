@@ -22,7 +22,7 @@ export const LOCK_RETRY_DELAY_MS = parseInt(process.env.LOCK_RETRY_DELAY_MS || '
 export const LOCK_RETRY_JITTER_MS = parseInt(process.env.LOCK_RETRY_JITTER_MS || '100', 10);
 
 // Health Check Server
-export const WORKER_HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || '3002', 10);
+export const WORKER_HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || '3003', 10);
 
 // Docker Image Cleanup Configuration
 export const IMAGE_RETENTION_DAYS = parseInt(process.env.IMAGE_RETENTION_DAYS || '7', 10);

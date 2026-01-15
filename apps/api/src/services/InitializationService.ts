@@ -3,13 +3,15 @@ import { Role } from 'database';
 import { inject, injectable } from 'tsyringe';
 import { env } from '../config/env';
 import { TOKENS } from '../di/tokens';
-import type { IUserRepository } from '../interfaces';
+import type { IFeatureFlagRepository, IUserRepository } from '../interfaces';
 
 @injectable()
 export class InitializationService {
   constructor(
     @inject(TOKENS.UserRepository)
     private userRepository: IUserRepository,
+    @inject(TOKENS.FeatureFlagRepository)
+    private featureFlagRepository: IFeatureFlagRepository,
   ) {}
 
   /**
@@ -17,6 +19,7 @@ export class InitializationService {
    */
   async initialize(): Promise<void> {
     await this.initializeAdminUser();
+    await this.initializeFeatureFlags();
   }
 
   /**
@@ -73,6 +76,32 @@ export class InitializationService {
       }
     } catch (error) {
       console.error('Failed to initialize admin user:', error);
+    }
+  }
+
+  /**
+   * Initialize default feature flags
+   */
+  private async initializeFeatureFlags(): Promise<void> {
+    const defaultFlags = [
+      {
+        key: 'show-deployments',
+        name: 'Show Deployments',
+        description: 'Enable the deployments view in the dashboard',
+        enabled: true,
+      },
+    ];
+
+    for (const flag of defaultFlags) {
+      try {
+        const existing = await this.featureFlagRepository.findByKey(flag.key);
+        if (!existing) {
+          await this.featureFlagRepository.create(flag);
+          console.log(`Feature flag '${flag.key}' seeded successfully.`);
+        }
+      } catch (error) {
+        console.error(`Failed to seed feature flag '${flag.key}':`, error);
+      }
     }
   }
 

@@ -26,10 +26,10 @@ services:
       context: .
       dockerfile: apps/worker/Dockerfile.dev
     environment:
-      - WORKER_HEALTH_PORT=3002
+      - WORKER_HEALTH_PORT=3003
       - REDIS_URL=redis://redis:6379
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3002/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:3003/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -59,7 +59,7 @@ docker-compose ps
 docker-compose logs worker
 
 # Manually test health endpoint
-curl http://localhost:3002/health
+curl http://localhost:3003/health
 ```
 
 ---
@@ -91,11 +91,11 @@ spec:
         - name: worker
           image: helvetia-worker:latest
           ports:
-            - containerPort: 3002
+            - containerPort: 3003
               name: health
           env:
             - name: WORKER_HEALTH_PORT
-              value: '3002'
+              value: '3003'
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
@@ -145,7 +145,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 3002
+    - port: 3003
       targetPort: health
       protocol: TCP
       name: health
@@ -166,7 +166,7 @@ kubectl describe pod <pod-name>
 kubectl logs -f <pod-name>
 
 # Execute health check manually
-kubectl exec <pod-name> -- curl localhost:3002/health
+kubectl exec <pod-name> -- curl localhost:3003/health
 ```
 
 ---
@@ -208,7 +208,7 @@ global:
 scrape_configs:
   - job_name: 'worker-health'
     static_configs:
-      - targets: ['worker:3002']
+      - targets: ['worker:3003']
         labels:
           service: 'helvetia-worker'
           environment: 'production'
@@ -284,7 +284,7 @@ Example Grafana JSON:
 1. Sign up at [uptimerobot.com](https://uptimerobot.com)
 2. Add new monitor:
    - **Monitor Type:** HTTP(s)
-   - **URL:** `http://your-worker-url:3002/health`
+   - **URL:** `http://your-worker-url:3003/health`
    - **Monitoring Interval:** 5 minutes
    - **Monitor Timeout:** 30 seconds
 3. Configure alerts (email, SMS, Slack, etc.)
@@ -294,7 +294,7 @@ Example Grafana JSON:
 1. Log in to [Pingdom](https://www.pingdom.com)
 2. Create new check:
    - **Check Type:** HTTP
-   - **URL:** `http://your-worker-url:3002/health`
+   - **URL:** `http://your-worker-url:3003/health`
    - **Check Interval:** 1 minute
 3. Set up alert contacts and policies
 
@@ -302,7 +302,7 @@ Example Grafana JSON:
 
 1. Go to [betteruptime.com](https://betteruptime.com)
 2. Add monitor:
-   - **URL:** `http://your-worker-url:3002/health`
+   - **URL:** `http://your-worker-url:3003/health`
    - **Expected Status Code:** 200
    - **Response Time Warning:** 2000ms
 3. Configure on-call schedule and escalation
@@ -319,7 +319,7 @@ Example Grafana JSON:
 # worker-monitor.sh
 # Simple health check script for cron or systemd timer
 
-WORKER_URL="http://localhost:3002/health"
+WORKER_URL="http://localhost:3003/health"
 LOG_FILE="/var/log/worker-health.log"
 ALERT_EMAIL="admin@example.com"
 
@@ -363,7 +363,7 @@ import requests
 import logging
 from datetime import datetime
 
-WORKER_URL = "http://localhost:3002/health"
+WORKER_URL = "http://localhost:3003/health"
 LOG_FILE = "/var/log/worker-health.log"
 
 logging.basicConfig(
@@ -411,7 +411,7 @@ if __name__ == "__main__":
 const axios = require('axios');
 const fs = require('fs').promises;
 
-const WORKER_URL = 'http://localhost:3002/health';
+const WORKER_URL = 'http://localhost:3003/health';
 const LOG_FILE = '/var/log/worker-health.log';
 
 async function checkHealth() {
