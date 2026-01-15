@@ -4,11 +4,15 @@
 /**
  * GITHUB ISSUE SYNCHRONIZER
  *
- * A consolidated, production-grade script to synchronize findings from GITHUB_ISSUES.md
+ * A consolidated, production-grade script to synchronize findings from github_issues.json
  * to GitHub using the 'gh' CLI.
  *
+ * Authentication:
+ * - Set GH_TOKEN or GITHUB_TOKEN environment variable, OR
+ * - Run 'gh auth login' to authenticate interactively
+ *
  * Workflow:
- * 1. Parse GITHUB_ISSUES.md into structured data.
+ * 1. Parse github_issues.json into structured data.
  * 2. Setup/Sync necessary labels in the repository.
  * 3. Fetch existing issues to avoid duplicates.
  * 4. Create missing issues with full traceability.
@@ -18,6 +22,16 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+
+// --- Authentication ---
+
+/**
+ * Get the GitHub token from environment variables.
+ * gh CLI automatically uses GH_TOKEN or GITHUB_TOKEN if set.
+ */
+function getGitHubToken() {
+  return process.env.GH_TOKEN || process.env.GITHUB_TOKEN || null;
+}
 
 // --- Configuration & Constants ---
 
@@ -305,12 +319,27 @@ const Synchronizer = {
 
 async function main() {
   try {
-    // Preliminary check for GH CLI
-    try {
-      gh(['auth', 'status']);
-    } catch {
-      log.error('GitHub CLI not authenticated. Please run "gh auth login" first.');
-      process.exit(1);
+    // Check for token-based authentication first
+    const token = getGitHubToken();
+
+    if (token) {
+      log.info('Using token from GH_TOKEN or GITHUB_TOKEN environment variable.');
+    } else {
+      // Fallback to checking gh auth status
+      try {
+        gh(['auth', 'status']);
+        log.info('Using existing gh CLI authentication.');
+      } catch {
+        log.error('GitHub CLI not authenticated.');
+        log.error('');
+        log.error('Please authenticate using one of the following methods:');
+        log.error('  1. Set GH_TOKEN or GITHUB_TOKEN environment variable:');
+        log.error('     export GH_TOKEN=ghp_your_token_here');
+        log.error('     node scripts/sync-github-issues.js');
+        log.error('');
+        log.error('  2. Or run "gh auth login" to authenticate interactively.');
+        process.exit(1);
+      }
     }
 
     const issues = Parser.parse();
