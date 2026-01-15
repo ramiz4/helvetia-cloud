@@ -1,10 +1,9 @@
 import { render } from '@testing-library/react';
-import { LanguageProvider } from 'shared-ui';
+import { LanguageProvider, UserMenu } from 'shared-ui';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import CookieBanner from '../components/CookieBanner';
 import Navigation from '../components/Navigation';
-import UserMenu from '../components/UserMenu';
 
 vi.mock('../lib/OrganizationContext', () => ({
   useOrganizationContext: () => ({
@@ -49,7 +48,7 @@ describe('Accessibility Tests', () => {
         username: 'testuser',
         avatarUrl: 'https://example.com/avatar.jpg',
       };
-      const mockLogout = () => {};
+      const mockLogout = () => { };
 
       const { container } = renderWithProviders(<UserMenu user={mockUser} onLogout={mockLogout} />);
       const results = await axe(container);
