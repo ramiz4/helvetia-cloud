@@ -52,11 +52,11 @@ export default function ThemeSwitcher({ variant = 'default' }: ThemeSwitcherProp
     } else if (event.key === 'ArrowDown') {
       event.preventDefault();
       setIsOpen(true);
-      // Focus first option
-      setTimeout(() => {
+      // Focus first option after the next paint
+      requestAnimationFrame(() => {
         const firstOption = dropdownRef.current?.querySelector('button');
         firstOption?.focus();
-      }, 0);
+      });
     }
   };
 
