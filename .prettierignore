@@ -1,0 +1,2 @@
+# Ignore the issues data file as it is managed by a script
+github_issues.json
