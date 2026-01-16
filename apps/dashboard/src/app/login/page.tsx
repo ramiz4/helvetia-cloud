@@ -48,7 +48,7 @@ function LoginContent() {
       {/* Skip to main content for accessibility */}
       <a
         href="#login-form"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-500 focus:text-white focus:rounded-lg"
+        className="fixed left-4 top-4 z-50 -translate-y-20 transform bg-indigo-500 text-white px-4 py-2 rounded-lg focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
       >
         Skip to login form
       </a>
