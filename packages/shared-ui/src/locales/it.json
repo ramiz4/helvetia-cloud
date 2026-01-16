@@ -95,6 +95,12 @@
     "closeMenu": "Chiudi menu di navigazione",
     "mobileMenu": "Navigazione mobile"
   },
+  "theme": {
+    "light": "Chiaro",
+    "dark": "Scuro",
+    "system": "Sistema",
+    "switchTheme": "Cambia tema"
+  },
   "login": {
     "backToHome": "Torna alla home",
     "swissCloudSecurity": "Sicurezza Cloud Svizzera",

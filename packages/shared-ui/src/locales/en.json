@@ -94,6 +94,12 @@
     "closeMenu": "Close navigation menu",
     "mobileMenu": "Mobile navigation"
   },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "switchTheme": "Switch theme"
+  },
   "login": {
     "backToHome": "Back to home",
     "swissCloudSecurity": "Swiss Cloud Security",
