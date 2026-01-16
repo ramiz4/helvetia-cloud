@@ -4,6 +4,7 @@ import type { Queue } from 'bullmq';
 import crypto from 'crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
+import { TOKENS } from '../di/tokens';
 import type {
   IDeploymentRepository,
   ILogger,
@@ -68,7 +69,7 @@ export class WebhookController {
     private deploymentRepository: IDeploymentRepository,
     @inject(Symbol.for('IUserRepository'))
     private userRepository: IUserRepository,
-    @inject(Symbol.for('IDeploymentQueue'))
+    @inject(TOKENS.DeploymentQueue)
     private deploymentQueue: Queue,
     @inject(Symbol.for('ILogger'))
     private logger: ILogger,

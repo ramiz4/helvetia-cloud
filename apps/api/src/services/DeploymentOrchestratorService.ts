@@ -32,7 +32,7 @@ export class DeploymentOrchestratorService implements IDeploymentOrchestratorSer
     private projectRepository: IProjectRepository,
     @inject(TOKENS.OrganizationRepository)
     private organizationRepository: IOrganizationRepository,
-    @inject(Symbol.for('IDeploymentQueue'))
+    @inject(TOKENS.DeploymentQueue)
     private deploymentQueue: Queue,
   ) {}
 

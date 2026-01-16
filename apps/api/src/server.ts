@@ -19,6 +19,7 @@ import {
   LOG_RESPONSES,
 } from './config/constants';
 import { initializeContainer, registerInstance } from './di';
+import { TOKENS } from './di/tokens';
 import { UnauthorizedError } from './errors';
 import { metricsService } from './services/metrics.service';
 import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
@@ -54,7 +55,7 @@ const deploymentQueue = new Queue('deployments', {
   },
 });
 
-registerInstance(Symbol.for('IDeploymentQueue'), deploymentQueue);
+registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
 
 /**
  * Fastify Application Instance
