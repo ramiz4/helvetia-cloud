@@ -50,19 +50,19 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           201: {
             description: 'Deployment started',
-            $ref: '#/components/schemas/Deployment',
+            type: 'object',
           },
           400: {
             description: 'Bad request',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -108,11 +108,11 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -157,11 +157,11 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -216,16 +216,16 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'List of deployments',
             type: 'array',
             items: {
-              $ref: '#/components/schemas/Deployment',
+              type: 'object',
             },
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -271,11 +271,11 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Deployment not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -316,11 +316,11 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Deployment not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },

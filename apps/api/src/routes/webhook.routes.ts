@@ -172,15 +172,15 @@ All webhook requests are verified using HMAC SHA-256 signature in the \`X-Hub-Si
             },
             400: {
               description: 'Bad request - invalid payload or signature',
-              $ref: '#/components/schemas/Error',
+              type: 'object',
             },
             401: {
               description: 'Unauthorized - invalid signature',
-              $ref: '#/components/schemas/Error',
+              type: 'object',
             },
             404: {
               description: 'Service not found for repository',
-              $ref: '#/components/schemas/Error',
+              type: 'object',
             },
           },
           security: [], // Public endpoint (verified via signature)

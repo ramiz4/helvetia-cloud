@@ -53,17 +53,17 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
                 description: 'Refresh token (expires in 7 days)',
               },
               user: {
-                $ref: '#/components/schemas/User',
+                type: 'object',
               },
             },
           },
           400: {
             description: 'Bad request - invalid code',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized - GitHub authentication failed',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
         security: [], // Public endpoint
@@ -117,17 +117,17 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
                 description: 'Refresh token (expires in 7 days)',
               },
               user: {
-                $ref: '#/components/schemas/User',
+                type: 'object',
               },
             },
           },
           400: {
             description: 'Bad request - missing fields',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized - invalid credentials',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
         security: [], // Public endpoint
@@ -170,7 +170,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized - invalid or expired refresh token',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
         security: [], // Public endpoint
@@ -223,11 +223,11 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           200: {
             description: 'User information',
-            $ref: '#/components/schemas/User',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized - missing or invalid token',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -259,7 +259,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },

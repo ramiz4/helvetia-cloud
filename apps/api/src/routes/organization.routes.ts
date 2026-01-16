@@ -36,19 +36,19 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           201: {
             description: 'Organization created successfully',
-            $ref: '#/components/schemas/Organization',
+            type: 'object',
           },
           400: {
             description: 'Bad request - validation error',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           409: {
             description: 'Conflict - organization slug already exists',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -68,12 +68,12 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'List of organizations',
             type: 'array',
             items: {
-              $ref: '#/components/schemas/Organization',
+              type: 'object',
             },
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -103,7 +103,7 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           200: {
             description: 'Organization details',
             allOf: [
-              { $ref: '#/components/schemas/Organization' },
+              { type: 'object' },
               {
                 type: 'object',
                 properties: {
@@ -126,7 +126,7 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
                           example: 'MEMBER',
                         },
                         user: {
-                          $ref: '#/components/schemas/User',
+                          type: 'object',
                         },
                       },
                     },
@@ -137,15 +137,15 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden - not a member',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Organization not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -213,15 +213,15 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden - insufficient permissions',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Organization or user not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -277,15 +277,15 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden - insufficient permissions',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Member not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -329,15 +329,15 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden - insufficient permissions or cannot remove last owner',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Member not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },

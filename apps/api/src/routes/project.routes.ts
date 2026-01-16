@@ -18,12 +18,12 @@ export async function projectRoutes(fastify: FastifyInstance) {
             description: 'List of projects',
             type: 'array',
             items: {
-              $ref: '#/components/schemas/Project',
+              type: 'object',
             },
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -52,15 +52,15 @@ export async function projectRoutes(fastify: FastifyInstance) {
         response: {
           200: {
             description: 'Project details',
-            $ref: '#/components/schemas/Project',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Project not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -91,15 +91,15 @@ export async function projectRoutes(fastify: FastifyInstance) {
         response: {
           201: {
             description: 'Project created successfully',
-            $ref: '#/components/schemas/Project',
+            type: 'object',
           },
           400: {
             description: 'Bad request - validation error',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -138,11 +138,11 @@ export async function projectRoutes(fastify: FastifyInstance) {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Project not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -206,11 +206,11 @@ export async function projectRoutes(fastify: FastifyInstance) {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Project not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },

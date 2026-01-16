@@ -31,12 +31,12 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'List of services',
             type: 'array',
             items: {
-              $ref: '#/components/schemas/Service',
+              type: 'object',
             },
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -71,19 +71,19 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           200: {
             description: 'Service details',
-            $ref: '#/components/schemas/Service',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden - service belongs to another user',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -193,19 +193,19 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           201: {
             description: 'Service created successfully',
-            $ref: '#/components/schemas/Service',
+            type: 'object',
           },
           400: {
             description: 'Bad request - validation error',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           409: {
             description: 'Conflict - service name already exists',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -312,23 +312,23 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           200: {
             description: 'Service updated successfully',
-            $ref: '#/components/schemas/Service',
+            type: 'object',
           },
           400: {
             description: 'Bad request - validation error',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -373,15 +373,15 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden - service is protected',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -416,15 +416,15 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           200: {
             description: 'Service recovered successfully',
-            $ref: '#/components/schemas/Service',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -470,19 +470,19 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           200: {
             description: 'Protection updated successfully',
-            $ref: '#/components/schemas/Service',
+            type: 'object',
           },
           400: {
             description: 'Bad request',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -533,11 +533,11 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -598,11 +598,11 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Service not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -632,7 +632,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },

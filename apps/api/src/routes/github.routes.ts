@@ -55,7 +55,7 @@ export const githubRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized - GitHub token missing or invalid',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -133,7 +133,7 @@ export const githubRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -204,11 +204,11 @@ export const githubRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Repository not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -273,7 +273,7 @@ export const githubRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },

@@ -62,11 +62,11 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden - admin access required',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -129,15 +129,15 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Feature flag not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -210,19 +210,19 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           400: {
             description: 'Bad request',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           409: {
             description: 'Conflict - feature flag already exists',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -301,19 +301,19 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           400: {
             description: 'Bad request',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Feature flag not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -362,15 +362,15 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Feature flag not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -415,15 +415,15 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           403: {
             description: 'Forbidden',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Feature flag not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
       },
@@ -474,11 +474,11 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           400: {
             description: 'Bad request',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
           404: {
             description: 'Feature flag not found',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
         security: [], // Public endpoint
@@ -531,7 +531,7 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           },
           400: {
             description: 'Bad request',
-            $ref: '#/components/schemas/Error',
+            type: 'object',
           },
         },
         security: [], // Public endpoint

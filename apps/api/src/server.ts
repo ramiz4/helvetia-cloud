@@ -66,6 +66,7 @@ registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
  * - Structured logging via pino (shared logger)
  * - Raw body parsing for webhook verification
  * - Request ID generation for tracing
+ * - AJV schema validator with OpenAPI keywords support
  */
 export const fastify = Fastify({
   logger: isTestEnv ? false : logger,
@@ -77,6 +78,13 @@ export const fastify = Fastify({
   },
   // Disable automatic request logging (we'll do it manually for more control)
   disableRequestLogging: !LOG_REQUESTS && !LOG_RESPONSES,
+  // Configure AJV to allow OpenAPI keywords like 'example'
+  ajv: {
+    customOptions: {
+      strict: false, // Disable strict mode to allow OpenAPI keywords
+      keywords: ['example'], // Explicitly allow 'example' keyword
+    },
+  },
 });
 
 // Store redis connection on fastify instance for route access
