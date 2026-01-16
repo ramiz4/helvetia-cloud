@@ -52,7 +52,6 @@ export function reportError(
   error: Error,
   context?: {
     componentStack?: string;
-    errorInfo?: React.ErrorInfo;
     tags?: Record<string, string>;
     extra?: Record<string, unknown>;
   },

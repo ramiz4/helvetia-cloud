@@ -31,7 +31,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     // Report to error monitoring service
     reportError(error, {
       componentStack: errorInfo.componentStack,
-      errorInfo,
       tags: {
         errorBoundary: 'true',
       },
