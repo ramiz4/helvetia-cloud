@@ -1,4 +1,11 @@
-export type ServiceStatus = 'RUNNING' | 'DEPLOYING' | 'FAILED' | 'NOT_RUNNING' | 'STOPPED';
+export type ServiceStatus =
+  | 'IDLE'
+  | 'RUNNING'
+  | 'DEPLOYING'
+  | 'FAILED'
+  | 'NOT_RUNNING'
+  | 'STOPPED'
+  | 'CRASHING';
 export type ServiceType = 'DOCKER' | 'STATIC' | 'COMPOSE';
 
 export interface ServiceMetric {

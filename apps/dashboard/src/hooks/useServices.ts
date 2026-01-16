@@ -275,23 +275,42 @@ export function useStopService() {
   });
 }
 
+// Valid ServiceStatus values for runtime validation (must stay in sync with backend)
+const VALID_STATUSES: readonly ServiceStatus[] = [
+  'IDLE',
+  'RUNNING',
+  'DEPLOYING',
+  'FAILED',
+  'NOT_RUNNING',
+  'STOPPED',
+  'CRASHING',
+] as const;
+
+/**
+ * Type guard to check if a value is a valid ServiceStatus
+ */
+function isValidStatus(status: unknown): status is ServiceStatus {
+  return typeof status === 'string' && VALID_STATUSES.includes(status as ServiceStatus);
+}
+
 // Utility: Create service metrics updater (for real-time updates)
 export function createUpdateServiceMetrics(queryClient: ReturnType<typeof useQueryClient>) {
   return (updates: Array<{ id: string; metrics: Service['metrics']; status?: ServiceStatus }>) => {
-    queryClient.setQueryData<Service[]>(serviceKeys.lists(), (old) =>
-      old
-        ? old.map((service) => {
-            const update = updates.find((u) => u.id === service.id);
-            if (update && update.metrics) {
-              return {
-                ...service,
-                metrics: update.metrics,
-                status: (update.metrics.status as ServiceStatus) || service.status,
-              };
-            }
-            return service;
-          })
-        : old,
+    queryClient.setQueryData<Service[]>(
+      serviceKeys.lists(),
+      (old) =>
+        old?.map((service) => {
+          const update = updates.find((u) => u.id === service.id);
+          if (update?.metrics) {
+            const newStatus = update.metrics.status;
+            return {
+              ...service,
+              metrics: update.metrics,
+              status: isValidStatus(newStatus) ? newStatus : service.status,
+            };
+          }
+          return service;
+        }) ?? old,
     );
   };
 }
