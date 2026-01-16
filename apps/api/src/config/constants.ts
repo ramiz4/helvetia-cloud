@@ -3,15 +3,13 @@
  * These can be overridden via environment variables
  */
 
-// Container Resource Limits
-export const CONTAINER_MEMORY_LIMIT_MB = parseInt(
-  process.env.CONTAINER_MEMORY_LIMIT_MB || '512',
-  10,
-);
-export const CONTAINER_MEMORY_LIMIT_BYTES = CONTAINER_MEMORY_LIMIT_MB * 1024 * 1024;
-
-export const CONTAINER_CPU_CORES = parseFloat(process.env.CONTAINER_CPU_CORES || '1.0');
-export const CONTAINER_CPU_NANOCPUS = Math.floor(CONTAINER_CPU_CORES * 1000000000);
+// Container Resource Limits (re-exported from shared package)
+export {
+  CONTAINER_CPU_CORES,
+  CONTAINER_CPU_NANOCPUS,
+  CONTAINER_MEMORY_LIMIT_BYTES,
+  CONTAINER_MEMORY_LIMIT_MB,
+} from 'shared';
 
 // Time Intervals (milliseconds)
 export const METRICS_UPDATE_INTERVAL_MS = parseInt(

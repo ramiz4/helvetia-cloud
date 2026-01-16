@@ -16,4 +16,12 @@ export {
 export { createScrubber } from './logs';
 
 // Constants
-export { LOCK_RETRY_DELAY_MS, LOCK_RETRY_JITTER_MS, STATUS_LOCK_TTL_MS } from './constants';
+export {
+  CONTAINER_CPU_CORES,
+  CONTAINER_CPU_NANOCPUS,
+  CONTAINER_MEMORY_LIMIT_BYTES,
+  CONTAINER_MEMORY_LIMIT_MB,
+  LOCK_RETRY_DELAY_MS,
+  LOCK_RETRY_JITTER_MS,
+  STATUS_LOCK_TTL_MS,
+} from './constants';
