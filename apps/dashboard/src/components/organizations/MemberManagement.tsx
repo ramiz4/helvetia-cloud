@@ -183,9 +183,6 @@ export default function MemberManagement({ organization }: MemberManagementProps
                       <option value="MEMBER">Member</option>
                       <option value="VIEWER">Viewer</option>
                     </select>
-                      <option value="MEMBER">Member</option>
-                      <option value="VIEWER">Viewer</option>
-                    </select>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-400">
                     {new Date(member.createdAt).toLocaleDateString()}
