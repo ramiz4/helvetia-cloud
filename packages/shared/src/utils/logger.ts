@@ -1,7 +1,7 @@
 import pino from 'pino';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
-const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST;
+const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 
 export const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
