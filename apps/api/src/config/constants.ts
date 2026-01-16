@@ -71,9 +71,9 @@ export const LOCK_RETRY_JITTER_MS = parseIntEnv('LOCK_RETRY_JITTER_MS', 100, { m
 export const BODY_LIMIT_GLOBAL =
   parseIntEnv('BODY_LIMIT_GLOBAL_MB', 10, { min: 1, max: 100 }) * 1024 * 1024;
 
-// Standard body limit: 0.1 MB - 10 MB
+// Standard body limit: 1 MB - 10 MB
 export const BODY_LIMIT_STANDARD =
-  parseIntEnv('BODY_LIMIT_STANDARD_MB', 1, { min: 0.1, max: 10 }) * 1024 * 1024;
+  parseIntEnv('BODY_LIMIT_STANDARD_MB', 1, { min: 1, max: 10 }) * 1024 * 1024;
 
 // Small body limit: 10 KB - 1024 KB (1 MB)
 export const BODY_LIMIT_SMALL =

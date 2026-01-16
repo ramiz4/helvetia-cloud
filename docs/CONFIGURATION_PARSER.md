@@ -137,7 +137,7 @@ const cpuCores = parseFloatEnv('CONTAINER_CPU_CORES', 1.0, { min: 0.1, max: 8.0 
 
 - **BODY_LIMIT_STANDARD**
   - Default: `1` MB
-  - Range: `0.1` MB - `10` MB
+  - Range: `1` MB - `10` MB
   - Description: Maximum request body size for standard endpoints
 
 - **BODY_LIMIT_SMALL**
