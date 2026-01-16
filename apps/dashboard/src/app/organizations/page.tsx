@@ -22,7 +22,13 @@ export default function OrganizationsPage() {
       setNewOrgName('');
       setIsCreating(false);
     } catch (error) {
-      toast.error((error as Error).message || 'Failed to create organization');
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : typeof error === 'string' && error
+            ? error
+            : 'Failed to create organization';
+      toast.error(message);
     }
   };
 

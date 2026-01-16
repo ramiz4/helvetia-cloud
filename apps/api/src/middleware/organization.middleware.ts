@@ -2,13 +2,13 @@ import type { Role } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { resolve, TOKENS } from '../di';
-import { ForbiddenError } from '../errors';
+import { ForbiddenError, ValidationError } from '../errors';
 import type { OrganizationService } from '../services/OrganizationService';
 
 /**
  * Get role hierarchy dynamically to avoid top-level imports
  */
-function getRoleHierarchy(): Record<Role, number> {
+function getRoleHierarchy(): Record<string, number> {
   // Import Role enum dynamically
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Role } = require('database');
@@ -34,7 +34,7 @@ export const requireOrganizationRole = (allowedRoles: Role[]) => {
     const parseResult = paramsSchema.safeParse(request.params);
 
     if (!parseResult.success) {
-      throw new ForbiddenError('Invalid organization ID');
+      throw new ValidationError('Invalid organization ID');
     }
 
     const { id: organizationId } = parseResult.data;
@@ -63,7 +63,7 @@ export const requireOrganizationPermission = (minimumRole: Role) => {
     const parseResult = paramsSchema.safeParse(request.params);
 
     if (!parseResult.success) {
-      throw new ForbiddenError('Invalid organization ID');
+      throw new ValidationError('Invalid organization ID');
     }
 
     const { id: organizationId } = parseResult.data;

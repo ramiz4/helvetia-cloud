@@ -25,7 +25,22 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
   );
   fastify.delete(
     '/organizations/:id/members/:userId',
-    { preHandler: [requireOrganizationPermission(Role.ADMIN)] },
+    {
+      preHandler: [
+        async (req, reply) => {
+          const currentUserId = req.user?.id;
+          const targetUserId = (req.params as { userId: string }).userId;
+
+          // Allow members to remove themselves without requiring ADMIN
+          if (currentUserId && targetUserId && String(currentUserId) === String(targetUserId)) {
+            return;
+          }
+
+          // For removing other members, enforce ADMIN permission
+          return requireOrganizationPermission(Role.ADMIN)(req, reply);
+        },
+      ],
+    },
     (req, reply) => controller.removeMember(req, reply),
   );
 };
