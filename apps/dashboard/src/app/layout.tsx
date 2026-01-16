@@ -53,13 +53,10 @@ export default function RootLayout({
               <Toaster
                 position="bottom-right"
                 toastOptions={{
-                  style: {
-                    background: 'rgba(15, 23, 42, 0.8)',
-                    color: '#f8fafc',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '1rem',
-                  },
+                  className:
+                    'bg-slate-50/90 text-slate-900 dark:bg-slate-900/90 dark:text-slate-50 ' +
+                    'backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 ' +
+                    'rounded-2xl',
                   success: {
                     iconTheme: {
                       primary: '#10b981',
