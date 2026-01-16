@@ -35,6 +35,7 @@ describe('ServiceManagementService', () => {
     prNumber: null,
     deletedAt: null,
     deleteProtected: false,
+    volumes: [],
   };
 
   beforeEach(() => {
@@ -50,6 +51,11 @@ describe('ServiceManagementService', () => {
       delete: vi.fn(),
       findByStatus: vi.fn(),
       findAll: vi.fn(),
+      findByIdAndUserId: vi.fn(),
+      findByIdAndUserIdWithEnvironment: vi.fn(),
+      findBaseServiceByRepoUrl: vi.fn(),
+      findPreviewByPrNumberAndRepoUrl: vi.fn(),
+      findByRepoUrlAndBranch: vi.fn(),
     };
 
     mockDeploymentRepo = {
@@ -90,11 +96,19 @@ describe('ServiceManagementService', () => {
       getMember: vi.fn(),
     };
 
+    const mockLogger = {
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    };
+
     service = new ServiceManagementService(
       mockServiceRepo,
       mockDeploymentRepo,
       mockContainerOrchestrator,
       mockOrganizationRepo,
+      mockLogger as any,
     );
   });
 

@@ -10,160 +10,63 @@ import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
+import { logger } from 'shared';
 import {
   BODY_LIMIT_GLOBAL,
   BODY_LIMIT_SMALL,
   BODY_LIMIT_STANDARD,
-  LOG_LEVEL,
-  LOG_REDACT_PATHS,
   LOG_REQUESTS,
   LOG_RESPONSES,
 } from './config/constants';
-import { initializeContainer, registerInstance, resolve, TOKENS } from './di';
+import { initializeContainer, registerInstance } from './di';
+import { TOKENS } from './di/tokens';
 import { UnauthorizedError } from './errors';
-import type { IDeploymentRepository, IServiceRepository } from './interfaces';
 import { metricsService } from './services/metrics.service';
 import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
-const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Initialize DI container
 initializeContainer();
 
-// Resolve repositories
-resolve<IServiceRepository>(TOKENS.ServiceRepository);
-resolve<IDeploymentRepository>(TOKENS.DeploymentRepository);
-
-// Redis connection initialized after dotenv.config()
+// Create Redis connection
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
+  retryStrategy: (times) => Math.min(times * 50, 2000),
 });
 
-const deploymentQueue = new Queue(isTestEnv ? 'deployments-test' : 'deployments', {
+// Register Redis connection in DI if not already registered (useful for testing)
+try {
+  registerInstance(TOKENS.Redis, redisConnection);
+} catch {
+  // Already registered
+}
+
+// Set up deployment queue
+const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 1000,
+    },
+    removeOnComplete: true,
+  },
 });
 
-// Register deployment queue in DI container after creation
 registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
 
 /**
- * Body Size Limits Configuration
+ * Fastify Application Instance
  *
- * Request body size limits protect against DoS attacks by preventing
- * attackers from sending extremely large payloads that could exhaust
- * server resources (memory, CPU, network bandwidth).
- *
- * Limits:
- * - Global: 10MB - Maximum size for any request body
- * - Standard: 1MB - For endpoints handling moderate data (webhooks, logs)
- * - Small: 100KB - For simple requests (auth, service configs)
- *
- * Routes with specific limits:
- * - POST/PATCH /services: 100KB (service configuration)
- * - POST /auth/github: 100KB (authentication)
- * - POST /webhooks/github: 1MB (GitHub webhook payloads)
- *
- * Error Response (413 Payload Too Large):
- * {
- *   "statusCode": 413,
- *   "error": "Payload Too Large",
- *   "message": "Request body exceeds the maximum allowed size of XMB"
- * }
- *
- * Configuration via environment variables:
- * - BODY_LIMIT_GLOBAL_MB: Maximum size for any request body (default: 10MB)
- * - BODY_LIMIT_STANDARD_MB: For endpoints handling moderate data (default: 1MB)
- * - BODY_LIMIT_SMALL_KB: For simple requests (default: 100KB)
- */
-
-// Body size limits are imported from config/constants.ts
-
-/**
- * Logger Configuration
- *
- * Fastify uses Pino for logging with the following features:
- * - Automatic request ID generation for correlation
- * - Structured JSON logging in production
- * - Pretty printing in development
- * - Configurable log levels per environment
- * - Sensitive data redaction
- *
- * Log Levels (in order of verbosity):
- * - fatal: Application crash (level 60)
- * - error: Errors that need attention (level 50)
- * - warn: Warning conditions (level 40)
- * - info: General informational messages (level 30) - default
- * - debug: Debug messages (level 20)
- * - trace: Very detailed debug messages (level 10)
- *
- * Request/Response Logging:
- * - Each request is assigned a unique request ID (reqId)
- * - Request logging includes: method, url, query params, user ID, IP
- * - Response logging includes: statusCode, responseTime (ms), request ID
- * - Sensitive headers (Authorization, Cookie) are automatically redacted
- *
- * Environment Variables:
- * - LOG_LEVEL: Set log level (default: 'info')
- * - LOG_REQUESTS: Enable request logging (default: true)
- * - LOG_RESPONSES: Enable response logging (default: true)
+ * Configured with:
+ * - Structured logging via pino (shared logger)
+ * - Raw body parsing for webhook verification
+ * - Request ID generation for tracing
  */
 export const fastify = Fastify({
-  logger: isTestEnv
-    ? false
-    : {
-        level: LOG_LEVEL,
-        // Use pretty printing in development, JSON in production
-        transport: isDevelopment
-          ? {
-              target: 'pino-pretty',
-              options: {
-                translateTime: 'HH:MM:ss Z',
-                ignore: 'pid,hostname',
-                colorize: true,
-                singleLine: false,
-              },
-            }
-          : undefined,
-        // Redact sensitive information
-        redact: {
-          paths: LOG_REDACT_PATHS,
-          remove: true,
-        },
-        // Serialize errors properly
-        serializers: {
-          req(request) {
-            return {
-              method: request.method,
-              url: request.url,
-              path: request.routeOptions?.url,
-              params: request.params,
-              query: request.query,
-              headers: {
-                host: request.headers.host,
-                'user-agent': request.headers['user-agent'],
-                'content-type': request.headers['content-type'],
-              },
-              remoteAddress: request.ip,
-              userId: request.user?.id,
-            };
-          },
-          res(reply) {
-            return {
-              statusCode: reply.statusCode,
-            };
-          },
-          err(error: Error & { code?: string; statusCode?: number }) {
-            return {
-              type: error.name,
-              message: error.message,
-              stack: error.stack || '',
-              code: error.code,
-              statusCode: error.statusCode,
-            };
-          },
-        },
-      },
+  logger: isTestEnv ? false : logger,
   bodyLimit: BODY_LIMIT_GLOBAL,
   // Generate unique request IDs for correlation
   genReqId: (req) => {
@@ -187,66 +90,8 @@ export {
   isOriginAllowed,
 };
 
-// Collect queue metrics periodically (every 30 seconds)
-if (!isTestEnv) {
-  setInterval(async () => {
-    try {
-      const [waiting, active, completed, failed] = await Promise.all([
-        deploymentQueue.getWaitingCount(),
-        deploymentQueue.getActiveCount(),
-        deploymentQueue.getCompletedCount(),
-        deploymentQueue.getFailedCount(),
-      ]);
-      metricsService.updateQueueDepth('deployments', waiting, active, completed, failed);
-    } catch (error) {
-      fastify.log.error(error, 'Failed to collect queue metrics');
-    }
-  }, 30000);
-}
-
-/**
- * Request Logging Hook
- *
- * Logs incoming requests with structured context including:
- * - Request ID for correlation across logs
- * - HTTP method and URL
- * - User ID (if authenticated)
- * - Client IP address
- * - Query parameters and route path
- *
- * This hook runs before request processing begins.
- */
-if (LOG_REQUESTS && !isTestEnv) {
-  fastify.addHook('onRequest', async (request, _reply) => {
-    const user = request.user;
-    request.log.info(
-      {
-        reqId: request.id,
-        method: request.method,
-        url: request.url,
-        path: request.routeOptions?.url,
-        query: request.query,
-        userId: user?.id,
-        ip: request.ip,
-        userAgent: request.headers['user-agent'],
-      },
-      `Incoming request: ${request.method} ${request.url}`,
-    );
-  });
-}
-
-/**
- * Response Logging Hook
- *
- * Logs outgoing responses with structured context including:
- * - Request ID for correlation
- * - HTTP status code
- * - Response time in milliseconds
- * - Error information (if applicable)
- *
- * This hook runs after the response is sent to the client.
- */
-if (LOG_RESPONSES && !isTestEnv) {
+// Register plugins
+if (LOG_REQUESTS || LOG_RESPONSES) {
   fastify.addHook('onResponse', async (request, reply) => {
     const responseTime = reply.elapsedTime.toFixed(2);
     const level = reply.statusCode >= 500 ? 'error' : reply.statusCode >= 400 ? 'warn' : 'info';
@@ -421,15 +266,3 @@ fastify.register(v1Routes, { prefix: '/api/v1' });
 export async function buildServer() {
   return fastify;
 }
-
-// Removed auto-start for testing
-// const start = async () => {
-//   try {
-//     await fastify.listen({ port: 3001, host: '0.0.0.0' });
-//   } catch (err) {
-//     fastify.log.error(err);
-//     process.exit(1);
-//   }
-// };
-//
-// start();

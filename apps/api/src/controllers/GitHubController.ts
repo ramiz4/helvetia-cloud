@@ -56,7 +56,10 @@ export class GitHubController {
       }
 
       const orgs = await this.githubService.getUserOrganizations(accessToken);
-      console.log(`Fetched ${orgs.length} organizations for user ${user.id}`);
+      request.log.info(
+        { userId: user.id, orgCount: orgs.length },
+        'Fetched organizations from GitHub',
+      );
       return orgs;
     } catch (error: unknown) {
       const err = error as GitHubApiError;
@@ -64,7 +67,7 @@ export class GitHubController {
       const data = err.data || err.response?.data || {};
       const message = err.message || 'Failed to fetch GitHub organizations';
 
-      console.error('GitHub Orgs API error:', message);
+      request.log.error({ err: error, userId: user.id }, 'GitHub Orgs API error');
 
       if (status !== 500) {
         return reply.status(status).send(data);
@@ -116,7 +119,7 @@ export class GitHubController {
       const data = err.data || err.response?.data || {};
       const message = err.message || 'Failed to fetch GitHub repositories';
 
-      console.error('GitHub Repos API error:', message);
+      request.log.error({ err: error, userId: user.id, org }, 'GitHub Repos API error');
 
       if (status !== 500) {
         return reply.status(status).send(data);
@@ -160,7 +163,7 @@ export class GitHubController {
         return reply.status(400).send({ error: message });
       }
 
-      console.error('GitHub API error:', message);
+      request.log.error({ err: error, userId: user.id, owner, name }, 'GitHub API error');
 
       if (status !== 500) {
         return reply.status(status).send(data);
@@ -199,7 +202,7 @@ export class GitHubController {
       const data = err.data || err.response?.data || {};
       const message = err.message || 'Failed to fetch container images';
 
-      console.error('GitHub Packages API error:', message);
+      request.log.error({ err: error, userId: user.id, org }, 'GitHub Packages API error');
 
       if (status !== 500) {
         return reply.status(status).send(data);

@@ -94,9 +94,9 @@ export async function removeDanglingImages(docker: Docker): Promise<{
       }
     }
   } catch (error) {
-    const errorMsg = `Failed to list dangling images: ${error instanceof Error ? error.message : String(error)}`;
-    console.error(errorMsg);
-    errors.push(errorMsg);
+    const errorMsg = 'Failed to list dangling images';
+    logger.error({ err: error }, errorMsg);
+    errors.push(`${errorMsg}: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   return { count, bytesFreed, errors };
@@ -233,9 +233,9 @@ export async function removeOldImages(docker: Docker): Promise<{
       }
     }
   } catch (error) {
-    const errorMsg = `Failed to cleanup old images: ${error instanceof Error ? error.message : String(error)}`;
-    console.error(errorMsg);
-    errors.push(errorMsg);
+    const errorMsg = 'Failed to cleanup old images';
+    logger.error({ err: error }, errorMsg);
+    errors.push(`${errorMsg}: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   return { count, bytesFreed, errors };

@@ -4,7 +4,13 @@ import type { Queue } from 'bullmq';
 import crypto from 'crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import type { IDeploymentRepository, IServiceRepository, IUserRepository } from '../interfaces';
+import { TOKENS } from '../di/tokens';
+import type {
+  IDeploymentRepository,
+  ILogger,
+  IServiceRepository,
+  IUserRepository,
+} from '../interfaces';
 import { getRepoUrlMatchCondition } from '../utils/repoUrl';
 
 interface PullRequestEvent {
@@ -57,14 +63,16 @@ interface ServiceData {
 @injectable()
 export class WebhookController {
   constructor(
-    @inject(Symbol.for('IServiceRepository'))
+    @inject(TOKENS.ServiceRepository)
     private serviceRepository: IServiceRepository,
-    @inject(Symbol.for('IDeploymentRepository'))
+    @inject(TOKENS.DeploymentRepository)
     private deploymentRepository: IDeploymentRepository,
-    @inject(Symbol.for('IUserRepository'))
+    @inject(TOKENS.UserRepository)
     private userRepository: IUserRepository,
-    @inject(Symbol.for('IDeploymentQueue'))
+    @inject(TOKENS.DeploymentQueue)
     private deploymentQueue: Queue,
+    @inject(TOKENS.Logger)
+    private logger: ILogger,
   ) {}
 
   /**
@@ -91,8 +99,8 @@ export class WebhookController {
       }
       // Use timingSafeEqual to prevent timing attacks
       return crypto.timingSafeEqual(signatureBuffer, digestBuffer);
-    } catch (error) {
-      console.error('Error verifying GitHub signature:', error);
+    } catch {
+      // Caller should log this with request context if possible
       return false;
     }
   }
@@ -163,7 +171,10 @@ export class WebhookController {
 
     for (const containerInfo of serviceContainers) {
       const container = docker.getContainer(containerInfo.Id);
-      console.log(`Stopping and removing container ${containerInfo.Id} for service ${id}`);
+      this.logger.info(
+        { containerId: containerInfo.Id, serviceId: id },
+        'Stopping and removing container for service',
+      );
       await container.stop().catch(() => {});
       await container.remove().catch(() => {});
     }
@@ -175,11 +186,11 @@ export class WebhookController {
       try {
         const volume = docker.getVolume(volumeName);
         await volume.remove();
-        console.log(`Removed volume ${volumeName} for service ${service.name}`);
+        this.logger.info({ volumeName, serviceName: service.name }, 'Removed volume for service');
       } catch (err: unknown) {
         const error = err as Error & { statusCode?: number };
         if (error.statusCode !== 404) {
-          console.error(`Failed to remove volume ${volumeName}:`, err);
+          this.logger.error({ err, volumeName }, 'Failed to remove volume');
         }
       }
     } else if (serviceType === 'COMPOSE') {
@@ -192,10 +203,16 @@ export class WebhookController {
         for (const volumeInfo of projectVolumes) {
           const volume = docker.getVolume(volumeInfo.Name);
           await volume.remove();
-          console.log(`Removed volume ${volumeInfo.Name} for compose project ${service.name}`);
+          this.logger.info(
+            { volumeName: volumeInfo.Name, projectName: service.name },
+            'Removed volume for compose project',
+          );
         }
       } catch (err) {
-        console.error(`Failed to list/remove volumes for compose project ${service.name}:`, err);
+        this.logger.error(
+          { err, projectName: service.name },
+          'Failed to list/remove volumes for compose project',
+        );
       }
     }
 
@@ -210,12 +227,12 @@ export class WebhookController {
       try {
         const image = docker.getImage(tag);
         await image.remove({ force: true });
-        console.log(`Removed image ${tag}`);
+        this.logger.info({ tag }, 'Removed image');
       } catch (err: unknown) {
         const error = err as Error & { statusCode?: number };
         // Don't log error if image doesn't exist
         if (error.statusCode !== 404) {
-          console.error(`Failed to remove image ${tag}:`, err);
+          this.logger.error({ err, tag }, 'Failed to remove image');
         }
       }
     }
@@ -238,15 +255,18 @@ export class WebhookController {
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      console.error('GITHUB_WEBHOOK_SECRET is not configured');
+      this.logger.error('GITHUB_WEBHOOK_SECRET is not configured');
       return reply.status(500).send({ error: 'Webhook secret not configured' });
     }
 
     if (!signature) {
-      console.warn('GitHub webhook received without signature', {
-        ip: request.ip,
-        headers: request.headers,
-      });
+      this.logger.warn(
+        {
+          ip: request.ip,
+          headers: request.headers,
+        },
+        'GitHub webhook received without signature',
+      );
       return reply.status(400).send({ error: 'Missing signature' });
     }
 
@@ -254,15 +274,18 @@ export class WebhookController {
     const rawBody = request.rawBody;
 
     if (!rawBody) {
-      console.warn('GitHub webhook received without raw body');
+      this.logger.warn('GitHub webhook received without raw body');
       return reply.status(400).send({ error: 'Missing raw body' });
     }
 
     if (!this.verifyGitHubSignature(rawBody, signature, webhookSecret)) {
-      console.warn('GitHub webhook signature verification failed', {
-        ip: request.ip,
-        signature: signature.substring(0, 20) + '...',
-      });
+      this.logger.warn(
+        {
+          ip: request.ip,
+          signature: signature.substring(0, 20) + '...',
+        },
+        'GitHub webhook signature verification failed',
+      );
       return reply.status(401).send({ error: 'Invalid signature' });
     }
 
@@ -314,7 +337,7 @@ export class WebhookController {
       const repoUrl = pr.base.repo.html_url;
       const headBranch = pr.head.ref;
 
-      console.log(`Received GitHub PR webhook: PR #${prNumber} ${action} on ${repoUrl}`);
+      this.logger.info({ prNumber, action, repoUrl, requestId }, 'Received GitHub PR webhook');
 
       if (['opened', 'synchronize'].includes(action)) {
         // Find the base service for this repo (the one that isn't a preview)
@@ -323,7 +346,10 @@ export class WebhookController {
         );
 
         if (!baseService) {
-          console.log(`No base service found for ${repoUrl}, skipping preview deployment`);
+          this.logger.info(
+            { repoUrl, requestId },
+            'No base service found for PR webhook, skipping preview deployment',
+          );
           return reply.status(200).send({ skipped: 'No base service found' });
         }
 
@@ -362,7 +388,7 @@ export class WebhookController {
           });
         }
 
-        console.log(`Triggering preview deployment for ${service.name}`);
+        this.logger.info({ serviceName: service.name, requestId }, 'Triggering preview deployment');
 
         await this.createAndQueueDeployment(service, pr.head.sha, requestId);
 
@@ -376,7 +402,7 @@ export class WebhookController {
         );
 
         if (previewService) {
-          console.log(`Cleaning up preview environment for PR #${prNumber}`);
+          this.logger.info({ prNumber, requestId }, 'Cleaning up preview environment for PR');
           await this.deleteService(previewService.id, previewService.userId);
           return reply.status(200).send({ success: true, deletedService: previewService.name });
         }
@@ -386,7 +412,7 @@ export class WebhookController {
       return reply.status(200).send({ skipped: `Action ${action} not handled` });
     } catch (error: unknown) {
       const err = error as Error;
-      console.error('Error handling GitHub PR webhook:', err.message);
+      this.logger.error({ err, requestId }, 'Error handling GitHub PR webhook');
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
         message: err.message,
@@ -410,7 +436,7 @@ export class WebhookController {
     const repoUrl = payload.repository.html_url;
     const branch = payload.ref.replace('refs/heads/', '');
 
-    console.log(`Received GitHub push webhook for ${repoUrl} on branch ${branch}`);
+    this.logger.info({ repoUrl, branch, requestId }, 'Received GitHub push webhook');
 
     // Find service(s) matching this repo and branch
     const services = await this.serviceRepository.findByRepoUrlAndBranch(
@@ -419,19 +445,22 @@ export class WebhookController {
     );
 
     if (services.length === 0) {
-      console.log(`No service found for ${repoUrl} on branch ${branch}`);
+      this.logger.info({ repoUrl, branch, requestId }, 'No service found for push webhook');
       return reply.status(200).send({ skipped: 'No matching service found' });
     }
 
     try {
       for (const service of services) {
-        console.log(`Triggering automated deployment for ${service.name}`);
+        this.logger.info(
+          { serviceName: service.name, requestId },
+          'Triggering automated deployment',
+        );
         await this.createAndQueueDeployment(service, payload.after, requestId);
       }
       return reply.status(200).send({ success: true, servicesTriggered: services.length });
     } catch (error: unknown) {
       const err = error as Error;
-      console.error('Error handling GitHub push webhook:', err.message);
+      this.logger.error({ err, requestId }, 'Error handling GitHub push webhook');
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
         message: err.message,

@@ -1,9 +1,8 @@
 import { Role } from 'database';
-import { logger } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { env } from '../config/env';
 import { TOKENS } from '../di/tokens';
-import type { IFeatureFlagRepository, IUserRepository } from '../interfaces';
+import type { IFeatureFlagRepository, ILogger, IUserRepository } from '../interfaces';
 import { hashPassword, isLegacyHash } from '../utils/password';
 
 @injectable()
@@ -13,6 +12,8 @@ export class InitializationService {
     private userRepository: IUserRepository,
     @inject(TOKENS.FeatureFlagRepository)
     private featureFlagRepository: IFeatureFlagRepository,
+    @inject(TOKENS.Logger)
+    private logger: ILogger,
   ) {}
 
   /**
@@ -60,7 +61,7 @@ export class InitializationService {
             password: hashedPassword,
             role: Role.ADMIN,
           });
-          logger.info(`Admin user '${adminUsername}' updated successfully.`);
+          this.logger.info(`Admin user '${adminUsername}' updated successfully.`);
         }
       } else {
         // Create new admin user
@@ -78,10 +79,10 @@ export class InitializationService {
             role: Role.ADMIN,
           },
         );
-        logger.info(`Admin user '${adminUsername}' created successfully.`);
+        this.logger.info(`Admin user '${adminUsername}' created successfully.`);
       }
     } catch (error) {
-      logger.error({ err: error }, 'Failed to initialize admin user');
+      this.logger.error({ err: error }, 'Failed to initialize admin user');
     }
   }
 
@@ -103,10 +104,13 @@ export class InitializationService {
         const existing = await this.featureFlagRepository.findByKey(flag.key);
         if (!existing) {
           await this.featureFlagRepository.create(flag);
-          logger.info(`Feature flag '${flag.key}' seeded successfully.`);
+          this.logger.info(`Feature flag '${flag.key}' seeded successfully.`);
         }
       } catch (error) {
-        logger.error({ err: error, flag: flag.key }, 'Failed to seed feature flag');
+        this.logger.error(
+          { err: error, flag: flag.key },
+          `Failed to seed feature flag '${flag.key}'`,
+        );
       }
     }
   }

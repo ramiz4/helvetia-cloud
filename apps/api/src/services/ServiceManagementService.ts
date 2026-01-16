@@ -6,6 +6,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
 import type {
   IContainerOrchestrator,
   IDeploymentRepository,
+  ILogger,
   IOrganizationRepository,
   IServiceManagementService,
   IServiceRepository,
@@ -27,6 +28,8 @@ export class ServiceManagementService implements IServiceManagementService {
     private containerOrchestrator: IContainerOrchestrator,
     @inject(TOKENS.OrganizationRepository)
     private organizationRepository: IOrganizationRepository,
+    @inject(TOKENS.Logger)
+    private logger: ILogger,
   ) {}
 
   /**
@@ -173,20 +176,23 @@ export class ServiceManagementService implements IServiceManagementService {
       }
 
       await Promise.all(
-        containersForService.map(async (c) => {
+        containersForService.map(async (containerInfo) => {
           try {
-            const container = await this.containerOrchestrator.getContainer(c.id);
-            if (c.state === 'running' || c.state === 'restarting') {
+            const container = await this.containerOrchestrator.getContainer(containerInfo.id);
+            if (containerInfo.state === 'running' || containerInfo.state === 'restarting') {
               await this.containerOrchestrator.stopContainer(container, 5);
             }
             await this.containerOrchestrator.removeContainer(container, { force: true });
           } catch (err) {
-            console.error(`Failed to remove container ${c.id} for service ${serviceId}:`, err);
+            this.logger.error(
+              { err, containerId: containerInfo.id, serviceId },
+              'Failed to remove container for service',
+            );
           }
         }),
       );
     } catch (err) {
-      console.error(`Error cleaning up resources for service ${serviceId}:`, err);
+      this.logger.error({ err, serviceId }, 'Error cleaning up resources for service');
       // We continue since the DB is already updated
     }
   }

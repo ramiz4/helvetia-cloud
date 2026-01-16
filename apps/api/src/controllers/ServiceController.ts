@@ -467,7 +467,7 @@ export class ServiceController {
         'Access-Control-Allow-Credentials': 'true',
       });
 
-      console.log(`SSE client connected for real-time metrics: ${user.id}`);
+      request.log.info({ userId: user.id }, 'SSE client connected for real-time metrics');
 
       // Track connection state for better observability
       const connectionState = {
@@ -497,11 +497,14 @@ export class ServiceController {
           timeoutHandle = null;
         }
 
-        console.log(
-          `SSE metrics connection cleaned up for user ${user.id}. ` +
-            `Duration: ${Date.now() - connectionState.startTime}ms, ` +
-            `Metrics sent: ${connectionState.metricsCount}, ` +
-            `Errors: ${connectionState.errorCount}`,
+        request.log.info(
+          {
+            userId: user.id,
+            duration: Date.now() - connectionState.startTime,
+            metricsSent: connectionState.metricsCount,
+            errorCount: connectionState.errorCount,
+          },
+          'SSE metrics connection cleaned up',
         );
       };
 
@@ -516,7 +519,7 @@ export class ServiceController {
           // Validate token before sending metrics
           const isValid = await validateToken(request);
           if (!isValid) {
-            console.log(`Token expired for user ${user.id}, closing metrics stream`);
+            request.log.info({ userId: user.id }, 'Token expired, closing metrics stream');
             // Send error event to client
             try {
               reply.raw.write(
@@ -524,7 +527,7 @@ export class ServiceController {
               );
               reply.raw.end();
             } catch (writeErr) {
-              console.error('Error writing token expiration message:', writeErr);
+              request.log.error({ err: writeErr }, 'Error writing token expiration message');
             }
             cleanup();
             return;
@@ -555,23 +558,25 @@ export class ServiceController {
             return;
           }
 
-          // Send it as an SSE event
           reply.raw.write(`data: ${JSON.stringify(results)}\n\n`);
           connectionState.metricsCount++;
         } catch (err) {
           connectionState.errorCount++;
-          console.error(`Error sending metrics via SSE (user ${user.id}):`, err);
+          request.log.error({ err, userId: user.id }, 'Error sending metrics via SSE');
 
           // If too many consecutive errors, close the connection
           if (connectionState.errorCount >= 3) {
-            console.error(`Too many errors for user ${user.id}, closing connection`);
+            request.log.warn(
+              { userId: user.id },
+              'Too many errors for metrics SSE, closing connection',
+            );
             try {
               reply.raw.write(
                 `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
               );
               reply.raw.end();
             } catch (writeErr) {
-              console.error('Error writing error message:', writeErr);
+              request.log.error({ err: writeErr }, 'Error writing error message');
             }
             cleanup();
           }
@@ -598,14 +603,14 @@ export class ServiceController {
       // Implement connection timeout
       timeoutHandle = setTimeout(
         () => {
-          console.log(`SSE metrics connection timeout for user ${user.id}`);
+          request.log.info({ userId: user.id }, 'SSE metrics connection timeout');
           try {
             reply.raw.write(
               `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
             );
             reply.raw.end();
           } catch (err) {
-            console.error('Error writing timeout message:', err);
+            request.log.error({ err }, 'Error writing timeout message');
           }
           cleanup();
         },
@@ -614,24 +619,24 @@ export class ServiceController {
 
       // Clean up on client disconnect
       request.raw.on('close', () => {
-        console.log(`SSE client disconnected from real-time metrics: ${user.id}`);
+        request.log.info({ userId: user.id }, 'SSE client disconnected from real-time metrics');
         cleanup();
       });
 
       // Clean up on error
       request.raw.on('error', (err) => {
-        console.error(`SSE metrics connection error for user ${user.id}:`, err);
+        request.log.error({ err, userId: user.id }, 'SSE metrics connection error');
         cleanup();
       });
 
       reply.raw.on('error', (err) => {
-        console.error(`SSE metrics reply error for user ${user.id}:`, err);
+        request.log.error({ err, userId: user.id }, 'SSE metrics reply error');
         cleanup();
       });
 
       return reply;
     } catch (err) {
-      console.error(`Error initializing SSE metrics stream for user ${user.id}:`, err);
+      request.log.error({ err, userId: user.id }, 'Error initializing SSE metrics stream');
       if (!reply.raw.headersSent) {
         return reply.status(500).send({ error: 'Failed to initialize metrics stream' });
       }

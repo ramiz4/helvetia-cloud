@@ -1,3 +1,4 @@
+import { Role } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,6 +31,8 @@ describe('GitHubController', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     githubAccessToken: 'encrypted-token',
+    role: Role.MEMBER,
+    password: null,
   };
 
   beforeEach(() => {
@@ -38,6 +41,7 @@ describe('GitHubController', () => {
       getUserOrganizations: vi.fn(),
       getRepositories: vi.fn(),
       getRepositoryBranches: vi.fn(),
+      getContainerImages: vi.fn(),
     };
 
     // Mock user repository
@@ -48,6 +52,7 @@ describe('GitHubController', () => {
       update: vi.fn(),
       upsert: vi.fn(),
       delete: vi.fn(),
+      findByUsername: vi.fn(),
     };
 
     // Create controller with mocked dependencies
@@ -58,6 +63,11 @@ describe('GitHubController', () => {
       user: { id: 'user-1', username: 'testuser' },
       query: {},
       params: {},
+      log: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
     } as any;
 
     mockReply = {

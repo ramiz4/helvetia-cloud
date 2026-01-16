@@ -39,12 +39,23 @@ describe('WebhookController', () => {
       add: vi.fn().mockResolvedValue({}),
     };
 
+    const mockLogger = {
+      trace: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      fatal: vi.fn(),
+      child: vi.fn().mockReturnThis(),
+    };
+
     // Create controller instance
     controller = new WebhookController(
       mockServiceRepository,
       mockDeploymentRepository,
       mockUserRepository,
       mockDeploymentQueue,
+      mockLogger,
     );
 
     // Create mock request and reply
@@ -52,6 +63,11 @@ describe('WebhookController', () => {
       headers: {},
       body: {},
       ip: '1.2.3.4',
+      log: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
     };
 
     mockReply = {

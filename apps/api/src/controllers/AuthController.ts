@@ -55,8 +55,7 @@ export class AuthController {
 
       return { user: result.user, token: result.accessToken };
     } catch (err: unknown) {
-      const error = err as Error;
-      console.error('Auth error:', error.message);
+      request.log.error({ err }, 'GitHub authentication failed');
       return reply.status(500).send({ error: 'Authentication failed' });
     }
   }
@@ -95,11 +94,10 @@ export class AuthController {
 
       return { user: result.user, token: result.accessToken };
     } catch (err: unknown) {
-      const error = err as Error;
-      if (error.name === 'UnauthorizedError') {
-        return reply.status(401).send({ error: error.message });
+      if ((err as Error).name === 'UnauthorizedError') {
+        return reply.status(401).send({ error: (err as Error).message });
       }
-      console.error('Local auth error:', error.message);
+      request.log.error({ err }, 'Local authentication failed');
       return reply.status(500).send({ error: 'Authentication failed' });
     }
   }
@@ -152,8 +150,7 @@ export class AuthController {
         message: 'Token refreshed successfully',
       };
     } catch (err: unknown) {
-      const error = err as Error;
-      console.error('Refresh token error:', error.message);
+      request.log.error({ err }, 'Token refresh failed');
       return reply.status(500).send({ error: 'Token refresh failed' });
     }
   }
@@ -192,8 +189,7 @@ export class AuthController {
 
       return { message: 'Logged out successfully' };
     } catch (err: unknown) {
-      const error = err as Error;
-      console.error('Logout error:', error.message);
+      request.log.error({ err }, 'Logout failed');
       return reply.status(500).send({ error: 'Logout failed' });
     }
   }

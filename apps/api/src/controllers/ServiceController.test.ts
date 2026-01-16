@@ -172,6 +172,11 @@ describe('ServiceController', () => {
       raw: {
         on: vi.fn(),
       },
+      log: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
     } as any;
 
     mockReply = {

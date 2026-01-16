@@ -219,7 +219,10 @@ export class DeploymentController {
 
       return { success: true, message: 'Container restarted successfully', containerName };
     } catch (error) {
-      console.error('Restart error:', error);
+      request.log.error(
+        { err: error, serviceId: id, userId: user.id },
+        'Failed to restart container',
+      );
       return reply.status(500).send({ error: 'Failed to restart container' });
     }
   }
@@ -268,7 +271,7 @@ export class DeploymentController {
 
       return { success: true, message: 'Service stopped successfully' };
     } catch (error) {
-      console.error('Stop error:', error);
+      request.log.error({ err: error, serviceId: id, userId: user.id }, 'Failed to stop service');
       return reply.status(500).send({ error: 'Failed to stop service' });
     }
   }
@@ -359,7 +362,7 @@ export class DeploymentController {
       'Access-Control-Allow-Credentials': 'true',
     });
 
-    console.log(`SSE client connected for live logs: ${id}`);
+    request.log.info({ deploymentId: id, userId: user.id }, 'SSE client connected for live logs');
 
     // Track connection state for better observability
     const connectionState = {
@@ -381,7 +384,10 @@ export class DeploymentController {
     try {
       subConnection = request.server.redis.duplicate();
     } catch (err) {
-      console.error(`Error creating dedicated Redis connection for deployment ${id}:`, err);
+      request.log.error(
+        { err, deploymentId: id },
+        'Error creating dedicated Redis connection for deployment logs',
+      );
       return reply.status(500).send({ error: 'Failed to establish log stream' });
     }
 
@@ -391,7 +397,10 @@ export class DeploymentController {
     let connectionHealthy = true;
     subConnection.on('error', (err) => {
       connectionHealthy = false;
-      console.error(`Redis subscription connection error for deployment ${id}:`, err);
+      request.log.error(
+        { err, deploymentId: id },
+        'Redis subscription connection error for deployment logs',
+      );
     });
 
     // Cleanup function to ensure all resources are freed
@@ -425,13 +434,16 @@ export class DeploymentController {
         }
       }
 
-      console.log(
-        `SSE logs connection cleaned up for deployment ${id}. ` +
-          `Duration: ${Date.now() - connectionState.startTime}ms, ` +
-          `Messages: ${connectionState.messagesReceived}, ` +
-          `Validations: ${connectionState.validationAttempts}, ` +
-          `Errors: ${connectionState.errorCount}, ` +
-          `Connection healthy: ${connectionHealthy}`,
+      request.log.info(
+        {
+          deploymentId: id,
+          duration: Date.now() - connectionState.startTime,
+          messagesReceived: connectionState.messagesReceived,
+          validationAttempts: connectionState.validationAttempts,
+          errorCount: connectionState.errorCount,
+          connectionHealthy,
+        },
+        'SSE logs connection cleaned up',
       );
     };
 
@@ -448,11 +460,14 @@ export class DeploymentController {
           connectionState.messagesReceived++;
         } catch (err) {
           connectionState.errorCount++;
-          console.error(`Error writing log message for deployment ${id}:`, err);
+          request.log.error({ err, deploymentId: id }, 'Error writing log message via SSE');
 
           // If write fails, connection is likely broken
           if (connectionState.errorCount >= 3) {
-            console.error(`Too many write errors for deployment ${id}, closing connection`);
+            request.log.warn(
+              { deploymentId: id },
+              'Too many write errors for deployment logs SSE, closing connection',
+            );
             void cleanup();
           }
         }
@@ -470,7 +485,7 @@ export class DeploymentController {
         connectionState.validationAttempts++;
         const isValid = await validateToken(request);
         if (!isValid) {
-          console.log(`Token expired for user ${user.id}, closing logs stream`);
+          request.log.info({ userId: user.id }, 'Token expired, closing logs stream');
           // Send error event to client
           try {
             reply.raw.write(
@@ -478,24 +493,30 @@ export class DeploymentController {
             );
             reply.raw.end();
           } catch (writeErr) {
-            console.error('Error writing token expiration message:', writeErr);
+            request.log.error({ err: writeErr }, 'Error writing token expiration message');
           }
           await cleanup();
         }
       } catch (err) {
         connectionState.errorCount++;
-        console.error(`Error during token validation for deployment ${id}:`, err);
+        request.log.error(
+          { err, deploymentId: id },
+          'Error during token validation for deployment',
+        );
 
         // If validation fails repeatedly, close connection
         if (connectionState.errorCount >= 3) {
-          console.error(`Too many validation errors for deployment ${id}, closing connection`);
+          request.log.warn(
+            { deploymentId: id },
+            'Too many validation errors for deployment logs SSE, closing connection',
+          );
           try {
             reply.raw.write(
               `event: error\ndata: ${JSON.stringify({ error: 'Internal server error', code: 'SERVER_ERROR' })}\n\n`,
             );
             reply.raw.end();
           } catch (writeErr) {
-            console.error('Error writing error message:', writeErr);
+            request.log.error({ err: writeErr }, 'Error writing error message');
           }
           await cleanup();
         }
@@ -508,7 +529,7 @@ export class DeploymentController {
       isSubscribed = true;
       subConnection.on('message', onMessage);
     } catch (err) {
-      console.error(`Error subscribing to channel ${channel}:`, err);
+      request.log.error({ err, channel }, 'Error subscribing to deployment logs channel');
       return reply.status(500).send({ error: 'Failed to establish log stream' });
     }
 
@@ -517,14 +538,14 @@ export class DeploymentController {
     const LOGS_CONNECTION_TIMEOUT_MS = 60 * 60 * 1000;
     timeoutHandle = setTimeout(
       async () => {
-        console.log(`SSE logs connection timeout for deployment ${id}`);
+        request.log.info({ deploymentId: id }, 'SSE logs connection timeout');
         try {
           reply.raw.write(
             `event: error\ndata: ${JSON.stringify({ error: 'Connection timeout', code: 'TIMEOUT' })}\n\n`,
           );
           reply.raw.end();
         } catch (err) {
-          console.error('Error writing timeout message:', err);
+          request.log.error({ err }, 'Error writing timeout message');
         }
         await cleanup();
       },
@@ -533,18 +554,18 @@ export class DeploymentController {
 
     // Clean up on client disconnect
     request.raw.on('close', async () => {
-      console.log(`SSE client disconnected from live logs: ${id}`);
+      request.log.info({ deploymentId: id }, 'SSE client disconnected from live logs');
       await cleanup();
     });
 
     // Clean up on error
     request.raw.on('error', async (err) => {
-      console.error(`SSE logs connection error for deployment ${id}:`, err);
+      request.log.error({ err, deploymentId: id }, 'SSE logs connection error');
       await cleanup();
     });
 
     reply.raw.on('error', async (err) => {
-      console.error(`SSE logs reply error for deployment ${id}:`, err);
+      request.log.error({ err, deploymentId: id }, 'SSE logs reply error');
       await cleanup();
     });
 

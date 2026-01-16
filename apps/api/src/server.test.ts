@@ -118,6 +118,26 @@ vi.mock('dockerode', () => {
   };
 });
 
+vi.mock('shared', async () => {
+  const actual = await vi.importActual('shared');
+  const mockLogger = {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    fatal: vi.fn(),
+    trace: vi.fn(),
+    silent: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+    level: 'info',
+  };
+
+  return {
+    ...actual,
+    logger: mockLogger,
+  };
+});
+
 // Mock process.exit
 vi.stubGlobal('process', {
   ...process,
@@ -622,7 +642,10 @@ describe('API Server', () => {
     });
 
     it('should log suspicious requests with missing signature', async () => {
-      const consoleWarnSpy = vi.spyOn(console, 'warn');
+      // Import the mocked logger from shared to spy on it
+      const { logger } = await import('shared');
+      const warnSpy = vi.spyOn(logger, 'warn');
+
       const payload = {
         repository: { html_url: 'https://github.com/test/repo' },
         ref: 'refs/heads/main',
@@ -634,16 +657,21 @@ describe('API Server', () => {
         payload,
       });
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'GitHub webhook received without signature',
+      // The WebhookController receives the mocked logger via DI
+      // and logs warnings through it
+      expect(warnSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           ip: expect.any(String),
         }),
+        'GitHub webhook received without signature',
       );
     });
 
     it('should log suspicious requests with invalid signature', async () => {
-      const consoleWarnSpy = vi.spyOn(console, 'warn');
+      // Import the mocked logger from shared to spy on it
+      const { logger } = await import('shared');
+      const warnSpy = vi.spyOn(logger, 'warn');
+
       const payload = {
         repository: { html_url: 'https://github.com/test/repo' },
         ref: 'refs/heads/main',
@@ -661,12 +689,14 @@ describe('API Server', () => {
         payload: rawBody,
       });
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'GitHub webhook signature verification failed',
+      // The WebhookController receives the mocked logger via DI
+      // and logs warnings through it
+      expect(warnSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           ip: expect.any(String),
           signature: expect.stringContaining('sha256='),
         }),
+        'GitHub webhook signature verification failed',
       );
     });
   });

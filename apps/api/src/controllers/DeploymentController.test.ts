@@ -57,9 +57,19 @@ vi.mock('../utils/tokenValidation', () => ({
   validateToken: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock('../utils/statusLock', () => ({
-  withStatusLock: vi.fn((id, fn) => fn()),
-}));
+vi.mock('shared', async () => {
+  const actual = await vi.importActual('shared');
+  return {
+    ...actual,
+    withStatusLock: vi.fn((id, fn) => fn()),
+    logger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    },
+  };
+});
 
 describe('DeploymentController', () => {
   let controller: DeploymentController;
@@ -102,6 +112,7 @@ describe('DeploymentController', () => {
     prNumber: null,
     deletedAt: null,
     deleteProtected: false,
+    volumes: [],
   };
 
   beforeEach(() => {
@@ -211,6 +222,11 @@ describe('DeploymentController', () => {
       },
       raw: {
         on: vi.fn(),
+      },
+      log: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
       },
     } as any;
 
