@@ -1,2 +1,26 @@
-# Ignore the issues data file as it is managed by a script
+# Issue data managed by sync script
 github_issues.json
+
+# Build and coverage outputs
+dist
+build
+.next
+coverage
+node_modules
+*.tsbuildinfo
+
+# Database and Generated Files
+packages/database/prisma/migrations
+packages/database/generated-client
+
+# Infrastructure and Configuration
+.env*
+letsencrypt
+backups
+monitoring/grafana/data
+monitoring/prometheus/data
+
+# Version Control and IDE
+.git
+.idea
+.vscode
