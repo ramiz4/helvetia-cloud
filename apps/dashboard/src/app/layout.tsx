@@ -29,7 +29,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className="bg-slate-950 dark:bg-slate-950 text-slate-200 dark:text-slate-200 light:bg-slate-50 light:text-slate-900 font-sans antialiased min-h-screen transition-colors duration-300"
+        className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans antialiased min-h-screen transition-colors duration-300"
         suppressHydrationWarning
       >
         <a href="#main-content" className="skip-to-main">
@@ -39,7 +39,7 @@ export default function RootLayout({
           <LanguageProvider>
             <QueryProvider>
               <OrganizationProvider>
-                <div className="flex flex-col min-h-screen bg-slate-950 dark:bg-slate-950 light:bg-slate-50 transition-colors duration-300">
+                <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
                   <Navigation />
                   <main
                     id="main-content"
