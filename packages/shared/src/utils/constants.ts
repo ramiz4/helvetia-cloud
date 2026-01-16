@@ -1,4 +1,4 @@
-import { parseFloatEnv, parseIntEnv } from './configParser';
+import { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser';
 
 /**
  * Container resource limit constants
@@ -55,4 +55,11 @@ export const LOCK_RETRY_JITTER_MS = parseIntEnv(
  * Used for generating service URLs and Traefik routing rules
  * Can be overridden via PLATFORM_DOMAIN environment variable
  */
-export const PLATFORM_DOMAIN = process.env.PLATFORM_DOMAIN || 'helvetia.cloud';
+export const PLATFORM_DOMAIN = parseStringEnv('PLATFORM_DOMAIN', 'helvetia.cloud', {
+  validate: (value) => {
+    // Basic domain validation: should contain at least one dot and valid characters
+    const domainRegex = /^[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
+    return domainRegex.test(value);
+  },
+  errorMessage: 'must be a valid domain name',
+});

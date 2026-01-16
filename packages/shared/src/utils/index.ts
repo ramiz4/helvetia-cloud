@@ -16,7 +16,7 @@ export {
 export { createScrubber } from './logs';
 
 // Config parser utilities
-export { parseFloatEnv, parseIntEnv } from './configParser';
+export { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser';
 
 // Constants
 export {
