@@ -4,7 +4,7 @@ import { CheckCircle2, Lock, Shield, Zap } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
 
@@ -13,7 +13,6 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get('error');
   const error = errorParam === 'code_expired' ? t.login.codeExpired : errorParam;
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleGitHubLogin = () => {
     if (!GITHUB_CLIENT_ID) {
@@ -21,7 +20,6 @@ function LoginContent() {
       return;
     }
 
-    setIsLoading(true);
     const redirectUri = `${window.location.origin}/auth/callback`;
     const githubUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=user,repo,read:org,read:packages`;
 
@@ -30,14 +28,17 @@ function LoginContent() {
 
   const benefits = [
     {
+      id: 'deploy-git',
       icon: <Zap size={18} className="text-indigo-400" />,
       text: t.login.benefit1,
     },
     {
+      id: 'hosted-switzerland',
       icon: <Shield size={18} className="text-emerald-400" />,
       text: t.login.benefit2,
     },
     {
+      id: 'enterprise-security',
       icon: <Lock size={18} className="text-blue-400" />,
       text: t.login.benefit3,
     },
@@ -121,9 +122,9 @@ function LoginContent() {
 
             {/* Key benefits */}
             <div className="mb-8 space-y-3" role="list" aria-label="Platform benefits">
-              {benefits.map((benefit, index) => (
+              {benefits.map((benefit) => (
                 <div
-                  key={index}
+                  key={benefit.id}
                   className="flex items-start gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/[0.07] transition-colors"
                   role="listitem"
                 >
@@ -161,28 +162,15 @@ function LoginContent() {
             <div className="space-y-4">
               <button
                 onClick={handleGitHubLogin}
-                disabled={isLoading}
-                className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[24px] font-bold bg-white text-slate-950 hover:bg-slate-50 disabled:bg-slate-200 disabled:cursor-not-allowed transition-all hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.2)] active:scale-95 group/btn overflow-hidden relative focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
+                className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[24px] font-bold bg-white text-slate-950 hover:bg-slate-50 transition-all hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.2)] active:scale-95 group/btn overflow-hidden relative focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
                 aria-label="Sign in with GitHub"
               >
-                {isLoading ? (
-                  <>
-                    <div
-                      className="w-6 h-6 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"
-                      aria-hidden="true"
-                    />
-                    <span className="text-xl">{t.login.authenticating}</span>
-                  </>
-                ) : (
-                  <>
-                    <GithubIcon size={24} aria-hidden="true" />
-                    <span className="text-xl">{t.login.continueWithGithub}</span>
-                    <div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
-                      aria-hidden="true"
-                    />
-                  </>
-                )}
+                <GithubIcon size={24} aria-hidden="true" />
+                <span className="text-xl">{t.login.continueWithGithub}</span>
+                <div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
+                  aria-hidden="true"
+                />
               </button>
 
               {/* Organization access help */}

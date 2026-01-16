@@ -138,23 +138,6 @@ describe('LoginPage', () => {
     });
   });
 
-  it('displays loading state when authenticating', async () => {
-    const user = userEvent.setup();
-    renderLoginPage();
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /sign in with github/i })).toBeInTheDocument();
-    });
-
-    const loginButton = screen.getByRole('button', { name: /sign in with github/i });
-    await user.click(loginButton);
-
-    // Button should show loading state
-    await waitFor(() => {
-      expect(screen.getByText(/authenticating with github/i)).toBeInTheDocument();
-    });
-  });
-
   it('displays error message when error param is present', async () => {
     const { useSearchParams } = await import('next/navigation');
     vi.mocked(useSearchParams).mockReturnValue({
