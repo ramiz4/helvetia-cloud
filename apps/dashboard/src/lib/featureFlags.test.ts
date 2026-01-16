@@ -435,12 +435,8 @@ describe('FeatureFlagClient', () => {
         json: async () => ({ success: true, enabled: true }),
       } as Response);
 
-      let renderCount = 0;
       const { result, rerender } = renderHook(
-        ({ key, userId, options }) => {
-          renderCount++;
-          return useFeatureFlag(key, userId, options);
-        },
+        ({ key, userId, options }) => useFeatureFlag(key, userId, options),
         {
           initialProps: {
             key: 'test-flag',
