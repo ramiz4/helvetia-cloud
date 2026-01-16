@@ -3,7 +3,7 @@ import { FeatureFlagClient } from './featureFlags';
 
 // Mock shared-ui module
 vi.mock('shared-ui', () => ({
-  API_BASE_URL: 'http://localhost:3001',
+  API_BASE_URL: 'http://localhost:3001/api/v1',
 }));
 
 // Mock fetch globally
@@ -261,6 +261,69 @@ describe('FeatureFlagClient', () => {
 
       await FeatureFlagClient.isEnabled('test-flag');
       expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should expire cached values after TTL', async () => {
+      vi.useFakeTimers();
+
+      // Populate cache
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, enabled: true }),
+      } as Response);
+
+      await FeatureFlagClient.isEnabled('test-flag');
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      // Advance time by 4 minutes (should still use cache)
+      vi.advanceTimersByTime(4 * 60 * 1000);
+
+      const result1 = await FeatureFlagClient.isEnabled('test-flag');
+      expect(result1).toBe(true);
+      expect(fetch).toHaveBeenCalledTimes(1); // Still only 1 call
+
+      // Advance time by another 2 minutes (total 6 minutes - cache expired)
+      vi.advanceTimersByTime(2 * 60 * 1000);
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, enabled: false }),
+      } as Response);
+
+      const result2 = await FeatureFlagClient.isEnabled('test-flag');
+      expect(result2).toBe(false);
+      expect(fetch).toHaveBeenCalledTimes(2); // Should fetch again
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('duplicate keys handling', () => {
+    it('should deduplicate keys in checkMultiple', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            flag1: true,
+          },
+        }),
+      } as Response);
+
+      // Pass duplicate keys
+      const result = await FeatureFlagClient.checkMultiple(['flag1', 'flag1', 'flag1']);
+
+      expect(result).toEqual({
+        flag1: true,
+      });
+
+      // Should only check flag1 once
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/feature-flags/check-bulk'),
+        expect.objectContaining({
+          body: JSON.stringify({ keys: ['flag1'], userId: undefined }),
+        }),
+      );
     });
   });
 });

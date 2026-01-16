@@ -10,7 +10,28 @@ interface CacheEntry {
 }
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_SIZE = 1000; // Maximum number of entries to prevent unbounded growth
 const cache = new Map<string, CacheEntry>();
+
+/**
+ * Evict oldest entries from cache when size limit is reached
+ * Uses simple FIFO eviction (oldest entries removed first)
+ */
+function evictOldestCacheEntries(): void {
+  if (cache.size <= MAX_CACHE_SIZE) {
+    return;
+  }
+
+  const entriesToRemove = cache.size - MAX_CACHE_SIZE;
+  const iterator = cache.keys();
+
+  for (let i = 0; i < entriesToRemove; i++) {
+    const key = iterator.next().value;
+    if (key) {
+      cache.delete(key);
+    }
+  }
+}
 
 /**
  * Feature flag utility for checking if a feature is enabled
@@ -49,6 +70,7 @@ export class FeatureFlagClient {
       const enabled = data.enabled || false;
 
       // Cache the result
+      evictOldestCacheEntries();
       cache.set(cacheKey, { value: enabled, timestamp: Date.now() });
 
       return enabled;
@@ -69,11 +91,14 @@ export class FeatureFlagClient {
       return {};
     }
 
+    // Deduplicate keys to avoid redundant checks
+    const uniqueKeys = Array.from(new Set(keys));
+
     // Check cache first and separate cached vs uncached keys
     const results: Record<string, boolean> = {};
     const uncachedKeys: string[] = [];
 
-    for (const key of keys) {
+    for (const key of uniqueKeys) {
       const cacheKey = `${key}:${userId || 'anonymous'}`;
       const cached = cache.get(cacheKey);
 
@@ -102,6 +127,8 @@ export class FeatureFlagClient {
       if (!response.ok) {
         console.error('Failed to check feature flags in bulk');
         // Return cached results + false for uncached
+        // Note: We intentionally don't cache error responses to avoid caching transient failures.
+        // Only successful API responses (including legitimate false values) are cached.
         uncachedKeys.forEach((key) => {
           results[key] = false;
         });
@@ -117,6 +144,7 @@ export class FeatureFlagClient {
         results[key] = enabled;
 
         // Cache the result
+        evictOldestCacheEntries();
         const cacheKey = `${key}:${userId || 'anonymous'}`;
         cache.set(cacheKey, { value: enabled, timestamp: Date.now() });
       }
@@ -125,6 +153,8 @@ export class FeatureFlagClient {
     } catch (error) {
       console.error('Error checking feature flags in bulk', error);
       // Return cached results + false for uncached
+      // Note: We intentionally don't cache error responses to avoid caching transient failures.
+      // Only successful API responses (including legitimate false values) are cached.
       uncachedKeys.forEach((key) => {
         results[key] = false;
       });

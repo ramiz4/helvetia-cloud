@@ -230,6 +230,13 @@ describe('FeatureFlagService', () => {
         nonexistent2: false,
       });
     });
+
+    it('should return empty object for empty array', async () => {
+      const result = await service.checkMultiple([]);
+
+      expect(result).toEqual({});
+      expect(mockRepository.isEnabled).not.toHaveBeenCalled();
+    });
   });
 
   describe('toggleFlag', () => {

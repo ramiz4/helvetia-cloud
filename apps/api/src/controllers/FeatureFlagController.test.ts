@@ -309,5 +309,36 @@ describe('FeatureFlagController', () => {
         undefined,
       );
     });
+
+    it('should return 400 when exceeding 50 flag limit', async () => {
+      // Create array with 51 flags
+      const tooManyFlags = Array.from({ length: 51 }, (_, i) => `flag${i}`);
+      mockRequest.body = { keys: tooManyFlags };
+
+      await controller.checkBulkFlags(mockRequest as FastifyRequest, mockReply as FastifyReply);
+
+      expect(mockReply.code).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: 'Validation failed',
+        }),
+      );
+    });
+
+    it('should return 500 on service error', async () => {
+      mockRequest.body = { keys: ['flag1', 'flag2'] };
+      vi.mocked(mockFeatureFlagService.checkMultiple).mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      await controller.checkBulkFlags(mockRequest as FastifyRequest, mockReply as FastifyReply);
+
+      expect(mockReply.code).toHaveBeenCalledWith(500);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: false,
+        error: 'Failed to check feature flags',
+      });
+    });
   });
 });
