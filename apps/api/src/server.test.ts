@@ -641,7 +641,7 @@ describe('API Server', () => {
       expect(response.json()).toEqual({ error: 'Webhook secret not configured' });
     });
 
-    it.skip('should log suspicious requests with missing signature', async () => {
+    it('should log suspicious requests with missing signature', async () => {
       const warnSpy = vi.spyOn(fastify.log, 'warn');
       const payload = {
         repository: { html_url: 'https://github.com/test/repo' },
@@ -662,7 +662,7 @@ describe('API Server', () => {
       );
     });
 
-    it.skip('should log suspicious requests with invalid signature', async () => {
+    it('should log suspicious requests with invalid signature', async () => {
       const warnSpy = vi.spyOn(fastify.log, 'warn');
       const payload = {
         repository: { html_url: 'https://github.com/test/repo' },
