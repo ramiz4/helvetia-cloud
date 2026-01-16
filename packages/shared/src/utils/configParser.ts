@@ -133,19 +133,21 @@ export function parseStringEnv(
     return defaultValue;
   }
 
+  const value = raw.trim();
+
   // Warn and use default for empty string
-  if (raw.trim() === '') {
+  if (value === '') {
     console.warn(`[Config] Invalid ${name} value (empty string), using default ${defaultValue}`);
     return defaultValue;
   }
 
   // Validate if validator provided
-  if (options.validate && !options.validate(raw)) {
+  if (options.validate && !options.validate(value)) {
     console.warn(
       `[Config] Invalid ${name} value '${raw}': ${options.errorMessage || 'validation failed'}, using default ${defaultValue}`,
     );
     return defaultValue;
   }
 
-  return raw;
+  return value;
 }

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser';
+import { PLATFORM_DOMAIN_REGEX } from './constants';
 
 describe('Config Parser Utilities', () => {
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
@@ -321,9 +322,8 @@ describe('Config Parser Utilities', () => {
 
       it('should handle domain validation', () => {
         process.env.TEST_STRING = 'example.com';
-        const domainRegex = /^[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
         const result = parseStringEnv('TEST_STRING', 'default.com', {
-          validate: (value) => domainRegex.test(value),
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
           errorMessage: 'must be a valid domain',
         });
         expect(result).toBe('example.com');
@@ -332,14 +332,60 @@ describe('Config Parser Utilities', () => {
 
       it('should reject invalid domain', () => {
         process.env.TEST_STRING = 'not a domain';
-        const domainRegex = /^[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
         const result = parseStringEnv('TEST_STRING', 'default.com', {
-          validate: (value) => domainRegex.test(value),
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
           errorMessage: 'must be a valid domain',
         });
         expect(result).toBe('default.com');
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           expect.stringContaining('must be a valid domain'),
+        );
+      });
+
+      it('should validate multi-level domains', () => {
+        process.env.TEST_STRING = 'api.helvetia.cloud';
+        const result = parseStringEnv('TEST_STRING', 'default.com', {
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
+          errorMessage: 'must be a valid domain',
+        });
+        expect(result).toBe('api.helvetia.cloud');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should validate deeply nested domains', () => {
+        process.env.TEST_STRING = 'staging.api.helvetia.cloud';
+        const result = parseStringEnv('TEST_STRING', 'default.com', {
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
+          errorMessage: 'must be a valid domain',
+        });
+        expect(result).toBe('staging.api.helvetia.cloud');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('whitespace handling', () => {
+      it('should trim leading and trailing whitespace', () => {
+        process.env.TEST_STRING = '  trimmed-value  ';
+        const result = parseStringEnv('TEST_STRING', 'default-value');
+        expect(result).toBe('trimmed-value');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should trim whitespace before validation', () => {
+        process.env.TEST_STRING = '  valid  ';
+        const result = parseStringEnv('TEST_STRING', 'default-value', {
+          validate: (value) => value === 'valid',
+        });
+        expect(result).toBe('valid');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should treat whitespace-only string as empty', () => {
+        process.env.TEST_STRING = '   ';
+        const result = parseStringEnv('TEST_STRING', 'default-value');
+        expect(result).toBe('default-value');
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Invalid TEST_STRING value (empty string)'),
         );
       });
     });

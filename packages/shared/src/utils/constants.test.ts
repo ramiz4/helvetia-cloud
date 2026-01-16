@@ -65,5 +65,26 @@ describe('Shared Constants', () => {
       expect(typeof constants.PLATFORM_DOMAIN).toBe('string');
       expect(constants.PLATFORM_DOMAIN.length).toBeGreaterThan(0);
     });
+
+    it('should have a valid domain regex pattern', () => {
+      expect(constants.PLATFORM_DOMAIN_REGEX).toBeInstanceOf(RegExp);
+    });
+
+    it('should validate simple domains', () => {
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('example.com')).toBe(true);
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('helvetia.cloud')).toBe(true);
+    });
+
+    it('should validate multi-level domains', () => {
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('api.helvetia.cloud')).toBe(true);
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('staging.api.helvetia.cloud')).toBe(true);
+    });
+
+    it('should reject invalid domains', () => {
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('invalid')).toBe(false);
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('no spaces.com')).toBe(false);
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('.example.com')).toBe(false);
+      expect(constants.PLATFORM_DOMAIN_REGEX.test('example..com')).toBe(false);
+    });
   });
 });

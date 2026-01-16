@@ -51,15 +51,21 @@ export const LOCK_RETRY_JITTER_MS = parseIntEnv(
 );
 
 /**
+ * Regular expression for validating domain names
+ * Supports multi-level domains (e.g., api.helvetia.cloud, staging.helvetia.cloud)
+ * Pattern: one or more labels (alphanumeric with hyphens) separated by dots, ending with TLD
+ */
+export const PLATFORM_DOMAIN_REGEX = /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
+
+/**
  * Platform domain configuration
  * Used for generating service URLs and Traefik routing rules
  * Can be overridden via PLATFORM_DOMAIN environment variable
  */
 export const PLATFORM_DOMAIN = parseStringEnv('PLATFORM_DOMAIN', 'helvetia.cloud', {
   validate: (value) => {
-    // Basic domain validation: should contain at least one dot and valid characters
-    const domainRegex = /^[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
-    return domainRegex.test(value);
+    // Basic domain validation: must contain at least one dot and valid label characters
+    return PLATFORM_DOMAIN_REGEX.test(value);
   },
   errorMessage: 'must be a valid domain name',
 });
