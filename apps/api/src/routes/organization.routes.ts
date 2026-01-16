@@ -1,12 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { OrganizationController } from '../controllers/OrganizationController';
 import { resolve, TOKENS } from '../di';
-import { requireOrganizationPermission } from '../middleware';
 
 export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
   const controller = resolve<OrganizationController>(TOKENS.OrganizationController);
-  // Import Role enum dynamically to avoid issues with test mocking
-  const { Role } = await import('database');
 
   fastify.post(
     '/organizations',
