@@ -70,7 +70,12 @@ function LoginContent() {
           className="inline-flex items-center text-slate-400 hover:text-white mb-8 transition-colors group focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-lg px-2 py-1 -ml-2"
           aria-label="Back to home page"
         >
-          <span className="mr-2 transform group-hover:-translate-x-1 transition-transform" aria-hidden="true">←</span>
+          <span
+            className="mr-2 transform group-hover:-translate-x-1 transition-transform"
+            aria-hidden="true"
+          >
+            ←
+          </span>
           {t.login.backToHome}
         </Link>
 
@@ -82,12 +87,18 @@ function LoginContent() {
           aria-label="Login form"
         >
           {/* Top accent bar */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500" aria-hidden="true" />
+          <div
+            className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500"
+            aria-hidden="true"
+          />
 
           {/* Header with logo and title */}
           <div className="flex flex-col items-center text-center mb-8">
             <div className="relative w-20 h-20 mb-6">
-              <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl" aria-hidden="true" />
+              <div
+                className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl"
+                aria-hidden="true"
+              />
               <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
                 <Image
                   src="/logo.png"
@@ -131,7 +142,10 @@ function LoginContent() {
               aria-live="assertive"
             >
               <div className="flex items-start gap-3">
-                <div className="p-1 bg-red-500/20 rounded-lg text-red-500 mt-0.5" aria-hidden="true">
+                <div
+                  className="p-1 bg-red-500/20 rounded-lg text-red-500 mt-0.5"
+                  aria-hidden="true"
+                >
                   <span className="text-xs font-bold font-mono">!</span>
                 </div>
                 <div>
@@ -152,14 +166,20 @@ function LoginContent() {
             >
               {isLoading ? (
                 <>
-                  <div className="w-6 h-6 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin" aria-hidden="true" />
+                  <div
+                    className="w-6 h-6 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"
+                    aria-hidden="true"
+                  />
                   <span className="text-xl">{t.login.authenticating}</span>
                 </>
               ) : (
                 <>
                   <GithubIcon size={24} aria-hidden="true" />
                   <span className="text-xl">{t.login.continueWithGithub}</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none" aria-hidden="true" />
+                  <div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
+                    aria-hidden="true"
+                  />
                 </>
               )}
             </button>
@@ -170,7 +190,10 @@ function LoginContent() {
               role="note"
               aria-label="GitHub organization access information"
             >
-              <div className="p-1 bg-indigo-500/20 rounded-lg text-indigo-400 mt-0.5 shrink-0" aria-hidden="true">
+              <div
+                className="p-1 bg-indigo-500/20 rounded-lg text-indigo-400 mt-0.5 shrink-0"
+                aria-hidden="true"
+              >
                 <Shield size={14} />
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed italic">
@@ -184,11 +207,15 @@ function LoginContent() {
               role="note"
               aria-label="Security information"
             >
-              <div className="p-1 bg-emerald-500/20 rounded-lg text-emerald-400 mt-0.5 shrink-0" aria-hidden="true">
+              <div
+                className="p-1 bg-emerald-500/20 rounded-lg text-emerald-400 mt-0.5 shrink-0"
+                aria-hidden="true"
+              >
                 <CheckCircle2 size={14} />
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Your data is encrypted and stored in Switzerland. We never access your repositories without permission.
+                Your data is encrypted and stored in Switzerland. We never access your repositories
+                without permission.
               </p>
             </div>
 
@@ -233,7 +260,11 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[80vh] flex items-center justify-center" role="status" aria-label="Loading login page">
+        <div
+          className="min-h-[80vh] flex items-center justify-center"
+          role="status"
+          aria-label="Loading login page"
+        >
           <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
           <span className="sr-only">Loading...</span>
         </div>
