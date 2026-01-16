@@ -55,4 +55,15 @@ describe('Shared Constants', () => {
       expect(constants.LOCK_RETRY_JITTER_MS).toBeGreaterThan(0);
     });
   });
+
+  describe('Platform Configuration', () => {
+    it('should use default platform domain (helvetia.cloud)', () => {
+      expect(constants.PLATFORM_DOMAIN).toBe('helvetia.cloud');
+    });
+
+    it('should be a non-empty string', () => {
+      expect(typeof constants.PLATFORM_DOMAIN).toBe('string');
+      expect(constants.PLATFORM_DOMAIN.length).toBeGreaterThan(0);
+    });
+  });
 });

@@ -49,3 +49,10 @@ export const LOCK_RETRY_JITTER_MS = parseIntEnv(
   100, // Default: 100 ms
   { min: 0, max: 1000 },
 );
+
+/**
+ * Platform domain configuration
+ * Used for generating service URLs and Traefik routing rules
+ * Can be overridden via PLATFORM_DOMAIN environment variable
+ */
+export const PLATFORM_DOMAIN = process.env.PLATFORM_DOMAIN || 'helvetia.cloud';

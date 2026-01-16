@@ -1,3 +1,4 @@
+import { PLATFORM_DOMAIN } from 'shared';
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { ComposeFileBuilder } from '../utils/builders';
 import { ensureImageExists, ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
@@ -69,26 +70,21 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
       buildLogs += startMsg;
 
       // 2. Generate Traefik rule
-      const hosts = [
-        `${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`,
-        `${serviceName}.localhost`,
-      ];
+      const hosts = [`${serviceName}.${PLATFORM_DOMAIN}`, `${serviceName}.localhost`];
 
       if (customDomain) {
         hosts.push(customDomain);
       }
 
       if (context.projectName) {
-        hosts.push(
-          `${context.projectName}-${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`,
-        );
+        hosts.push(`${context.projectName}-${serviceName}.${PLATFORM_DOMAIN}`);
         hosts.push(`${context.projectName}-${serviceName}.localhost`);
       }
 
       if (context.projectName && context.environmentName && context.username) {
         const sanitizedUsername = context.username.toLowerCase().replace(/[^a-z0-9]/g, '-');
         const uHost = `${sanitizedUsername}.${context.projectName}.${context.environmentName}.${serviceName}`;
-        hosts.push(`${uHost}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+        hosts.push(`${uHost}.${PLATFORM_DOMAIN}`);
         hosts.push(`${uHost}.localhost`);
       }
 
