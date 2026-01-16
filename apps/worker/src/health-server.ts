@@ -1,6 +1,7 @@
 import { Queue } from 'bullmq';
 import Fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import IORedis from 'ioredis';
+import { logger } from 'shared';
 import { env } from './config/env';
 import { workerMetricsService } from './services/metrics.service';
 
@@ -85,7 +86,7 @@ healthServer.get('/health', async (_request: FastifyRequest, reply: FastifyReply
         };
       }
     } catch (queueError) {
-      console.error('Failed to fetch queue statistics:', queueError);
+      logger.error({ err: queueError }, 'Failed to fetch queue statistics');
       // Continue with default stats
     }
 
@@ -109,7 +110,7 @@ healthServer.get('/health', async (_request: FastifyRequest, reply: FastifyReply
     const statusCode = isHealthy ? 200 : 503;
     return reply.code(statusCode).send(healthData);
   } catch (error) {
-    console.error('Health check error:', error);
+    logger.error({ err: error }, 'Health check error');
     return reply.code(503).send({
       status: 'unhealthy',
       error: 'Health check failed',
@@ -129,7 +130,7 @@ healthServer.get('/metrics', async (_request, reply) => {
     reply.type('text/plain; version=0.0.4; charset=utf-8');
     return metrics;
   } catch (error) {
-    console.error('Failed to collect metrics:', error);
+    logger.error({ err: error }, 'Failed to collect metrics');
     return reply.status(500).send({ error: 'Failed to collect metrics' });
   }
 });
@@ -144,7 +145,7 @@ healthServer.get('/metrics/json', async (_request, reply) => {
     const metrics = await workerMetricsService.getMetricsJSON();
     return metrics;
   } catch (error) {
-    console.error('Failed to collect metrics:', error);
+    logger.error({ err: error }, 'Failed to collect metrics');
     return reply.status(500).send({ error: 'Failed to collect metrics' });
   }
 });
@@ -162,14 +163,14 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 export async function startHealthServer() {
   try {
     await healthServer.listen({ port: env.WORKER_HEALTH_PORT, host: '0.0.0.0' });
-    console.log(`Worker health check server listening on port ${env.WORKER_HEALTH_PORT}`);
+    logger.info(`Worker health check server listening on port ${env.WORKER_HEALTH_PORT}`);
   } catch (err) {
-    console.error(`Failed to start health check server on port ${env.WORKER_HEALTH_PORT}:`, err);
+    logger.error({ err }, `Failed to start health check server on port ${env.WORKER_HEALTH_PORT}`);
     // If it's a port conflict, we should probably warn but NOT crash the entire worker
     // since the deployments are more important than the health check port in local dev.
     if (isNodeError(err) && err.code === 'EADDRINUSE') {
-      console.warn(
-        `⚠️  WARNING: Port ${env.WORKER_HEALTH_PORT} is already in use. Health check server will be disabled.`,
+      logger.warn(
+        `Port ${env.WORKER_HEALTH_PORT} is already in use. Health check server will be disabled.`,
       );
       return;
     }
@@ -186,8 +187,8 @@ export async function stopHealthServer() {
     if (redisConnection) {
       await redisConnection.quit();
     }
-    console.log('Health check server stopped');
+    logger.info('Health check server stopped');
   } catch (err) {
-    console.error('Error stopping health check server:', err);
+    logger.error({ err }, 'Error stopping health check server');
   }
 }

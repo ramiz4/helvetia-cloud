@@ -28,7 +28,7 @@ export function createRateLimitConfigs(redisConnection: IORedis) {
 
   // Stricter rate limiting for SSE/streaming endpoints
   const wsRateLimitConfig = {
-    max: isTestEnv ? 10000 : parseInt(process.env.WS_RATE_LIMIT_MAX || '10', 10),
+    max: isTestEnv ? 10000 : parseInt(process.env.WS_RATE_LIMIT_MAX || '100', 10),
     timeWindow: process.env.WS_RATE_LIMIT_WINDOW || '1 minute',
     redis: redisConnection,
     nameSpace: 'helvetia-ws-rate-limit:',

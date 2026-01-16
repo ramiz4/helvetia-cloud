@@ -1,3 +1,4 @@
+import { logger } from 'shared';
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 
 // Type for Docker pull progress events
@@ -45,7 +46,7 @@ export class DatabaseDeploymentStrategy implements IDeploymentStrategy {
     }
 
     const startMsg = `==== Managed database service ${type} detected. Using image ${imageTag} ====\n`;
-    console.log(startMsg.trim());
+    logger.info(startMsg.trim());
     context.onLog?.(startMsg);
 
     let buildLogs = startMsg;
@@ -71,12 +72,12 @@ export class DatabaseDeploymentStrategy implements IDeploymentStrategy {
         );
       });
       const successMsg = `Successfully pulled ${imageTag}\n`;
-      console.log(successMsg.trim());
+      logger.info(successMsg.trim());
       context.onLog?.(successMsg);
       buildLogs += successMsg;
     } catch (pullError) {
       const errorMsg = `Failed to pull image ${imageTag}: ${pullError}\n`;
-      console.error(errorMsg.trim());
+      logger.error(errorMsg.trim());
       context.onLog?.(errorMsg);
       throw new Error(`Failed to pull database image: ${pullError}`);
     }

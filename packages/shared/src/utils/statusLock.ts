@@ -1,6 +1,7 @@
 import IORedis from 'ioredis';
 import Redlock from 'redlock';
 import { LOCK_RETRY_DELAY_MS, LOCK_RETRY_JITTER_MS, STATUS_LOCK_TTL_MS } from './constants';
+import { logger } from './logger';
 
 // Type for Lock from redlock
 // Note: Custom type definition needed due to incompatibilities between
@@ -31,7 +32,7 @@ const redlock = new Redlock([redisClient], {
 
 // Listen for errors to avoid unhandled rejections
 redlock.on('clientError', (error) => {
-  console.error('Redlock error:', error);
+  logger.error({ err: error }, 'Redlock error');
 });
 
 /**
@@ -55,10 +56,10 @@ export async function acquireStatusLock(
   try {
     // Note: Type assertion needed due to redlock beta version type incompatibilities
     const lock = (await redlock.acquire([lockKey], ttl)) as unknown as Lock;
-    console.log(`Acquired lock for service ${serviceId}`);
+    logger.debug(`Acquired lock for service ${serviceId}`);
     return lock;
   } catch (error) {
-    console.error(`Failed to acquire lock for service ${serviceId}:`, error);
+    logger.error({ err: error, serviceId }, 'Failed to acquire lock');
     throw new Error(`Could not acquire status lock for service ${serviceId}`);
   }
 }
@@ -70,9 +71,9 @@ export async function acquireStatusLock(
 export async function releaseStatusLock(lock: Lock): Promise<void> {
   try {
     await lock.release();
-    console.log('Lock released successfully');
+    logger.debug('Lock released successfully');
   } catch (error) {
-    console.error('Failed to release lock:', error);
+    logger.error({ err: error }, 'Failed to release lock');
     // Don't throw here - lock will expire anyway
   }
 }
@@ -109,10 +110,10 @@ export async function withStatusLock<T>(
 export async function extendStatusLock(lock: Lock, ttl: number): Promise<Lock> {
   try {
     const extendedLock = (await lock.extend(ttl)) as unknown as Lock;
-    console.log(`Extended lock for ${ttl}ms`);
+    logger.debug(`Extended lock for ${ttl}ms`);
     return extendedLock;
   } catch (error) {
-    console.error('Failed to extend lock:', error);
+    logger.error({ err: error }, 'Failed to extend lock');
     throw error;
   }
 }

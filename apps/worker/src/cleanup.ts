@@ -4,7 +4,7 @@ import Docker from 'dockerode';
 import dotenv from 'dotenv';
 import IORedis from 'ioredis';
 import path from 'path';
-import { DockerContainerOrchestrator } from 'shared';
+import { DockerContainerOrchestrator, logger } from 'shared';
 import { VolumeManager } from './orchestration';
 import { cleanupDockerImages } from './services/imageCleanup';
 
@@ -23,11 +23,11 @@ export const cleanupQueue = new Queue('service-cleanup', {
 async function permanentlyDeleteService(id: string) {
   const service = await prisma.service.findUnique({ where: { id } });
   if (!service) {
-    console.log(`Service ${id} not found, skipping deletion`);
+    logger.info(`Service ${id} not found, skipping deletion`);
     return;
   }
 
-  console.log(`Permanently deleting service ${service.name} (${id})`);
+  logger.info(`Permanently deleting service ${service.name} (${id})`);
 
   const docker = new Docker();
   const orchestrator = new DockerContainerOrchestrator(docker);
@@ -43,7 +43,7 @@ async function permanentlyDeleteService(id: string) {
 
   for (const containerInfo of serviceContainers) {
     const container = await orchestrator.getContainer(containerInfo.id);
-    console.log(`Stopping and removing container ${containerInfo.id} for service ${id}`);
+    logger.info(`Stopping and removing container ${containerInfo.id} for service ${id}`);
     await orchestrator.stopContainer(container).catch(() => {});
     await orchestrator.removeContainer(container).catch(() => {});
   }
@@ -54,10 +54,10 @@ async function permanentlyDeleteService(id: string) {
     const volumeName = `helvetia-data-${service.name}`;
     try {
       await volumeManager.removeVolume(volumeName);
-      console.log(`Removed volume ${volumeName} for service ${service.name}`);
+      logger.info(`Removed volume ${volumeName} for service ${service.name}`);
     } catch (err) {
       if ((err as { statusCode?: number }).statusCode !== 404) {
-        console.error(`Failed to remove volume ${volumeName}:`, err);
+        logger.error({ err }, `Failed to remove volume ${volumeName}`);
       }
     }
   } else if (serviceType === 'COMPOSE') {
@@ -68,10 +68,10 @@ async function permanentlyDeleteService(id: string) {
 
       for (const volumeInfo of volumes) {
         await volumeManager.removeVolume(volumeInfo.Name);
-        console.log(`Removed volume ${volumeInfo.Name} for compose project ${service.name}`);
+        logger.info(`Removed volume ${volumeInfo.Name} for compose project ${service.name}`);
       }
     } catch (err) {
-      console.error(`Failed to list/remove volumes for compose project ${service.name}:`, err);
+      logger.error({ err }, `Failed to list/remove volumes for compose project ${service.name}`);
     }
   }
 
@@ -89,10 +89,10 @@ async function permanentlyDeleteService(id: string) {
     try {
       const image = docker.getImage(tag as string);
       await image.remove({ force: true });
-      console.log(`Removed image ${tag}`);
+      logger.info(`Removed image ${tag}`);
     } catch (err) {
       if ((err as { statusCode?: number }).statusCode !== 404) {
-        console.error(`Failed to remove image ${tag}:`, err);
+        logger.error({ err }, `Failed to remove image ${tag}`);
       }
     }
   }
@@ -101,17 +101,17 @@ async function permanentlyDeleteService(id: string) {
   await prisma.deployment.deleteMany({ where: { serviceId: id } });
   await prisma.service.delete({ where: { id } });
 
-  console.log(`Successfully deleted service ${service.name} (${id})`);
+  logger.info(`Successfully deleted service ${service.name} (${id})`);
 }
 
 // Worker to process cleanup jobs
 export const cleanupWorker = new Worker(
   'service-cleanup',
   async (_job) => {
-    console.log('Running scheduled cleanup job for soft-deleted services and Docker images');
+    logger.info('Running scheduled cleanup job for soft-deleted services and Docker images');
 
     // 1. Cleanup soft-deleted services
-    console.log('\n=== Service Cleanup Phase ===');
+    logger.info('=== Service Cleanup Phase ===');
     // Find services deleted more than 30 days ago
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -125,28 +125,28 @@ export const cleanupWorker = new Worker(
       },
     });
 
-    console.log(`Found ${servicesToDelete.length} services to permanently delete`);
+    logger.info(`Found ${servicesToDelete.length} services to permanently delete`);
 
     for (const service of servicesToDelete) {
       try {
         await permanentlyDeleteService(service.id);
       } catch (error) {
-        console.error(`Failed to delete service ${service.id}:`, error);
+        logger.error({ err: error, serviceId: service.id }, 'Failed to delete service');
       }
     }
 
     // 2. Cleanup Docker images
-    console.log('\n=== Docker Image Cleanup Phase ===');
+    logger.info('=== Docker Image Cleanup Phase ===');
     const docker = new Docker();
     let imageCleanupResult;
 
     try {
       imageCleanupResult = await cleanupDockerImages(docker);
-      console.log(
+      logger.info(
         `Image cleanup completed: ${imageCleanupResult.danglingImagesRemoved} dangling, ${imageCleanupResult.oldImagesRemoved} old images removed`,
       );
     } catch (error) {
-      console.error('Failed to cleanup Docker images:', error);
+      logger.error({ err: error }, 'Failed to cleanup Docker images');
       imageCleanupResult = {
         danglingImagesRemoved: 0,
         oldImagesRemoved: 0,
@@ -174,5 +174,5 @@ export async function scheduleCleanupJob() {
       },
     },
   );
-  console.log('Scheduled daily cleanup job for soft-deleted services and Docker images');
+  logger.info('Scheduled daily cleanup job for soft-deleted services and Docker images');
 }

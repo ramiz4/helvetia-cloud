@@ -1,7 +1,7 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import IORedis from 'ioredis';
-import { PLATFORM_DOMAIN, withStatusLock } from 'shared';
+import { logger, PLATFORM_DOMAIN, withStatusLock } from 'shared';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 
 type NetworkConfig = {
@@ -19,7 +19,7 @@ export async function ensureNetworkExists(
   try {
     const networks = await docker.listNetworks({ filters: { name: [networkName] } });
     if (networks.length === 0) {
-      console.log(`Creating network: ${networkName}`);
+      logger.info(`Creating network: ${networkName}`);
       await docker
         .createNetwork({
           Name: networkName,
@@ -33,7 +33,7 @@ export async function ensureNetworkExists(
         });
     }
   } catch (err) {
-    console.error(`Failed to ensure network ${networkName} exists:`, err);
+    logger.error({ err }, `Failed to ensure network ${networkName} exists`);
   }
 }
 
@@ -44,7 +44,7 @@ export async function ensureImageExists(docker: Docker, imageTag: string): Promi
   try {
     const images = await docker.listImages({ filters: { reference: [imageTag] } });
     if (images.length === 0) {
-      console.log(`Pulling image: ${imageTag}`);
+      logger.info(`Pulling image: ${imageTag}`);
       const stream = await docker.pull(imageTag);
       await new Promise<void>((resolve, reject) => {
         docker.modem.followProgress(
@@ -53,10 +53,10 @@ export async function ensureImageExists(docker: Docker, imageTag: string): Promi
           () => {}, // Silent progress
         );
       });
-      console.log(`Successfully pulled image: ${imageTag}`);
+      logger.info(`Successfully pulled image: ${imageTag}`);
     }
   } catch (err) {
-    console.error(`Failed to ensure image ${imageTag} exists:`, err);
+    logger.error({ err }, `Failed to ensure image ${imageTag} exists`);
     throw err;
   }
 }
@@ -116,7 +116,7 @@ export async function startContainer(params: {
   } = params;
 
   const startMsg = `==== Starting Container: ${serviceName} ====\n\n`;
-  console.log(startMsg.trim());
+  logger.info(startMsg.trim());
   onLog?.(startMsg);
 
   // Default network and name
@@ -223,7 +223,7 @@ export async function startContainer(params: {
   });
 
   await container.start();
-  console.log(`New container ${containerName} started on network ${networkName}.`);
+  logger.info(`New container ${containerName} started on network ${networkName}.`);
   onLog?.(`🚀 Started container: ${containerName} on network: ${networkName}\n`);
 
   return { container, postfix };
@@ -241,7 +241,7 @@ export async function cleanupOldContainers(params: {
 }): Promise<void> {
   const { docker, serviceId, serviceName, currentPostfix, stopOnly } = params;
 
-  console.log(`Cleaning up old containers for ${serviceName} (stopOnly: ${!!stopOnly})...`);
+  logger.info(`Cleaning up old containers for ${serviceName} (stopOnly: ${!!stopOnly})...`);
   const currentContainers = await docker.listContainers({ all: true });
   const containersToRemove = currentContainers.filter(
     (c) =>
@@ -268,11 +268,11 @@ export async function rollbackContainers(params: {
   const { docker, oldContainers } = params;
 
   if (oldContainers.length === 0) {
-    console.log('No old containers to rollback to');
+    logger.info('No old containers to rollback to');
     return;
   }
 
-  console.log(`Rolling back: restarting ${oldContainers.length} old container(s)...`);
+  logger.info(`Rolling back: restarting ${oldContainers.length} old container(s)...`);
   for (const oldContainerInfo of oldContainers) {
     try {
       const container = docker.getContainer(oldContainerInfo.Id);
@@ -280,17 +280,20 @@ export async function rollbackContainers(params: {
 
       // Only restart if container was previously running
       if (containerState.State.Running) {
-        console.log(`Container ${oldContainerInfo.Id} is still running, no action needed`);
+        logger.info(`Container ${oldContainerInfo.Id} is still running, no action needed`);
       } else {
-        console.log(`Restarting old container ${oldContainerInfo.Id}...`);
+        logger.info(`Restarting old container ${oldContainerInfo.Id}...`);
         await container.start();
-        console.log(`Successfully restarted container ${oldContainerInfo.Id}`);
+        logger.info(`Successfully restarted container ${oldContainerInfo.Id}`);
       }
     } catch (rollbackError) {
-      console.error(`Failed to restart old container ${oldContainerInfo.Id}:`, rollbackError);
+      logger.error(
+        { err: rollbackError },
+        `Failed to restart old container ${oldContainerInfo.Id}`,
+      );
     }
   }
-  console.log('Rollback attempt completed');
+  logger.info('Rollback attempt completed');
 }
 
 /**

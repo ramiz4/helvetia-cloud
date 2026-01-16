@@ -1,4 +1,5 @@
 import { Role } from 'database';
+import { logger } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { env } from '../config/env';
 import { TOKENS } from '../di/tokens';
@@ -59,7 +60,7 @@ export class InitializationService {
             password: hashedPassword,
             role: Role.ADMIN,
           });
-          console.log(`Admin user '${adminUsername}' updated successfully.`);
+          logger.info(`Admin user '${adminUsername}' updated successfully.`);
         }
       } else {
         // Create new admin user
@@ -77,10 +78,10 @@ export class InitializationService {
             role: Role.ADMIN,
           },
         );
-        console.log(`Admin user '${adminUsername}' created successfully.`);
+        logger.info(`Admin user '${adminUsername}' created successfully.`);
       }
     } catch (error) {
-      console.error('Failed to initialize admin user:', error);
+      logger.error({ err: error }, 'Failed to initialize admin user');
     }
   }
 
@@ -102,10 +103,10 @@ export class InitializationService {
         const existing = await this.featureFlagRepository.findByKey(flag.key);
         if (!existing) {
           await this.featureFlagRepository.create(flag);
-          console.log(`Feature flag '${flag.key}' seeded successfully.`);
+          logger.info(`Feature flag '${flag.key}' seeded successfully.`);
         }
       } catch (error) {
-        console.error(`Failed to seed feature flag '${flag.key}':`, error);
+        logger.error({ err: error, flag: flag.key }, 'Failed to seed feature flag');
       }
     }
   }
