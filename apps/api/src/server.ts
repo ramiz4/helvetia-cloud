@@ -65,7 +65,7 @@ registerInstance(Symbol.for('IDeploymentQueue'), deploymentQueue);
  * - Request ID generation for tracing
  */
 export const fastify = Fastify({
-  logger: isTestEnv ? { level: 'warn' } : logger,
+  logger: isTestEnv ? false : logger,
   bodyLimit: BODY_LIMIT_GLOBAL,
   // Generate unique request IDs for correlation
   genReqId: (req) => {
