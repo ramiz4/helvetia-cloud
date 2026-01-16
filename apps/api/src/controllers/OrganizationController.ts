@@ -12,7 +12,7 @@ const createOrganizationSchema = z.object({
 
 const addMemberSchema = z.object({
   userId: z.string().uuid(),
-  role: z.enum(['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']),
+  role: z.enum(['OWNER', 'ADMIN', 'DEVELOPER', 'MEMBER', 'VIEWER']),
 });
 
 @injectable()
@@ -86,7 +86,7 @@ export class OrganizationController {
         })
         .parse(request.params);
       const { role } = z
-        .object({ role: z.enum(['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']) })
+        .object({ role: z.enum(['OWNER', 'ADMIN', 'DEVELOPER', 'MEMBER', 'VIEWER']) })
         .parse(request.body);
       const requesterUserId = request.user.id;
 
