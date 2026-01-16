@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { logger } from 'shared';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
@@ -14,8 +15,8 @@ const SALT =
       throw new Error('ENCRYPTION_SALT environment variable must be set in production');
     }
     // Development fallback - generates new salt on each start
-    console.warn(
-      'WARNING: ENCRYPTION_SALT not set. Using random salt. Previously encrypted data will be unrecoverable on restart.',
+    logger.warn(
+      'ENCRYPTION_SALT not set. Using random salt. Previously encrypted data will be unrecoverable on restart.',
     );
     return crypto.randomBytes(32).toString('hex');
   })();

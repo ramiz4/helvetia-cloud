@@ -51,7 +51,7 @@ describe('InitializationService', () => {
       create: vi.fn(),
     } as any;
 
-    service = new InitializationService(mockUserRepo, mockFeatureFlagRepo);
+    service = new InitializationService(mockUserRepo, mockFeatureFlagRepo, logger);
     vi.clearAllMocks();
   });
 

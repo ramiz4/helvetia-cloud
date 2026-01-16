@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import 'reflect-metadata';
-import { DockerContainerOrchestrator } from 'shared';
+import { DockerContainerOrchestrator, logger } from 'shared';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/AuthController';
 import { DeploymentController } from '../controllers/DeploymentController';
@@ -49,6 +49,9 @@ export function initializeContainer(): void {
   // Register Docker instance
   const dockerInstance = new Docker();
   container.registerInstance(TOKENS.Docker, dockerInstance);
+
+  // Register logger instance
+  container.registerInstance(TOKENS.Logger, logger);
 
   // Register container orchestrator implementation with Docker instance
   container.registerInstance(

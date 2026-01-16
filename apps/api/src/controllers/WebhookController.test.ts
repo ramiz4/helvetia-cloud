@@ -52,6 +52,11 @@ describe('WebhookController', () => {
       headers: {},
       body: {},
       ip: '1.2.3.4',
+      log: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
     };
 
     mockReply = {

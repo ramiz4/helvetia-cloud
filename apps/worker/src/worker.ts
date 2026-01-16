@@ -119,9 +119,9 @@ export const worker = new Worker(
       }
 
       if (envValidation.warnings.length > 0) {
-        console.warn(
-          `${logPrefix}Environment variable warnings:`,
-          envValidation.warnings.join(', '),
+        logger.warn(
+          { warnings: envValidation.warnings },
+          `${logPrefix}Environment variable warnings`,
         );
       }
 
@@ -304,19 +304,19 @@ export const worker = new Worker(
         .filter(Boolean)
         .join('\n');
 
-      console.error('Full error details:', fullErrorLog);
+      logger.error({ err: error, fullErrorLog }, `${logPrefix}Deployment ${deploymentId} failed`);
 
       // Cleanup: Remove failed new container if it was created
       if (newContainer) {
-        console.log(`${logPrefix}Cleaning up failed new container...`);
+        logger.info(`${logPrefix}Cleaning up failed new container...`);
         try {
           await newContainer.stop({ t: 5 }).catch(() => {
-            console.log(`${logPrefix}Failed to stop new container (may not be running)`);
+            logger.info(`${logPrefix}Failed to stop new container (may not be running)`);
           });
           await newContainer.remove({ force: true });
-          console.log(`${logPrefix}Failed new container removed`);
+          logger.info(`${logPrefix}Failed new container removed`);
         } catch (cleanupError) {
-          console.error(`${logPrefix}Failed to cleanup new container:`, cleanupError);
+          logger.error({ err: cleanupError }, `${logPrefix}Failed to cleanup new container`);
         }
       }
 
@@ -334,7 +334,7 @@ export const worker = new Worker(
         });
 
         if (oldContainers.length > 0) {
-          console.log(
+          logger.info(
             `${logPrefix}Service status set to RUNNING after rollback attempt; previous containers may still be serving traffic`,
           );
         }
@@ -346,11 +346,11 @@ export const worker = new Worker(
           'code' in dbError &&
           (dbError as Record<string, unknown>).code === 'P2025'
         ) {
-          console.error(
+          logger.error(
             `${logPrefix}Failed to update database: Deployment ${deploymentId} was deleted during processing.`,
           );
         } else {
-          console.error(`${logPrefix}Failed to update database with error status:`, dbError);
+          logger.error({ err: dbError }, `${logPrefix}Failed to update database with error status`);
         }
       }
 

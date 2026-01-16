@@ -148,6 +148,21 @@ vi.mock('dockerode', () => {
   };
 });
 
+vi.mock('shared', async () => {
+  const actual = await vi.importActual('shared');
+  return {
+    ...actual,
+    withStatusLock: vi.fn((id, fn) => fn()),
+    logger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      child: vi.fn().mockReturnThis(),
+    },
+  };
+});
+
 vi.stubGlobal('process', {
   ...process,
   env: {
