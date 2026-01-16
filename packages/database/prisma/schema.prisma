@@ -29,6 +29,7 @@ model User {
 enum Role {
   OWNER
   ADMIN
+  DEVELOPER
   MEMBER
   VIEWER
 }
@@ -37,6 +38,7 @@ model Organization {
   id        String               @id @default(uuid())
   name      String
   slug      String               @unique
+  avatar    String?
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
   members   OrganizationMember[]

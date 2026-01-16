@@ -1,6 +1,7 @@
 export enum Role {
   OWNER = 'OWNER',
   ADMIN = 'ADMIN',
+  DEVELOPER = 'DEVELOPER',
   MEMBER = 'MEMBER',
   VIEWER = 'VIEWER',
 }
@@ -23,6 +24,7 @@ export interface Organization {
   id: string;
   name: string;
   slug: string;
+  avatar?: string;
   createdAt: string;
   updatedAt: string;
   members?: OrganizationMember[];
