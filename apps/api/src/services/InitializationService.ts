@@ -107,7 +107,10 @@ export class InitializationService {
           this.logger.info(`Feature flag '${flag.key}' seeded successfully.`);
         }
       } catch (error) {
-        this.logger.error(`Failed to seed feature flag '${flag.key}':`, { err: error });
+        this.logger.error(
+          { err: error, flag: flag.key },
+          `Failed to seed feature flag '${flag.key}'`,
+        );
       }
     }
   }
