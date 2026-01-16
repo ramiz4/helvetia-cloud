@@ -47,6 +47,144 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
       {
         config: { rateLimit: authRateLimitConfig },
         bodyLimit: BODY_LIMIT_STANDARD, // 1MB limit for webhook payloads
+        schema: {
+          tags: ['Webhooks'],
+          summary: 'GitHub webhook handler',
+          description: `
+Handle GitHub webhook events for automated deployments.
+
+**Supported Events:**
+- \`push\`: Trigger deployment on push to configured branch
+- \`pull_request\`: Create preview deployment for pull requests
+
+**Configuration:**
+1. Go to your repository settings on GitHub
+2. Navigate to Webhooks → Add webhook
+3. Set Payload URL: \`https://your-domain.com/api/v1/webhooks/github\`
+4. Set Content type: \`application/json\`
+5. Set Secret: Your webhook secret (from service settings)
+6. Select events: Push, Pull request
+7. Save webhook
+
+**Webhook Signature Verification:**
+All webhook requests are verified using HMAC SHA-256 signature in the \`X-Hub-Signature-256\` header.
+          `,
+          headers: {
+            type: 'object',
+            properties: {
+              'x-github-event': {
+                type: 'string',
+                description: 'GitHub event type',
+                enum: ['push', 'pull_request', 'ping'],
+                example: 'push',
+              },
+              'x-github-delivery': {
+                type: 'string',
+                format: 'uuid',
+                description: 'Unique delivery ID',
+                example: '12345678-1234-1234-1234-123456789012',
+              },
+              'x-hub-signature-256': {
+                type: 'string',
+                description: 'HMAC SHA-256 signature',
+                example: 'sha256=abc123def456...',
+              },
+            },
+          },
+          body: {
+            type: 'object',
+            description: 'GitHub webhook payload (varies by event type)',
+            additionalProperties: true,
+            properties: {
+              repository: {
+                type: 'object',
+                description: 'Repository information',
+                properties: {
+                  id: {
+                    type: 'number',
+                    example: 123456789,
+                  },
+                  name: {
+                    type: 'string',
+                    example: 'my-repo',
+                  },
+                  full_name: {
+                    type: 'string',
+                    example: 'user/my-repo',
+                  },
+                  clone_url: {
+                    type: 'string',
+                    format: 'uri',
+                    example: 'https://github.com/user/my-repo.git',
+                  },
+                },
+              },
+              ref: {
+                type: 'string',
+                description: 'Git reference (for push events)',
+                example: 'refs/heads/main',
+              },
+              after: {
+                type: 'string',
+                description: 'Commit SHA after push',
+                example: 'abc123def456',
+              },
+              pull_request: {
+                type: 'object',
+                description: 'Pull request information (for PR events)',
+                properties: {
+                  number: {
+                    type: 'number',
+                    example: 42,
+                  },
+                  head: {
+                    type: 'object',
+                    properties: {
+                      ref: {
+                        type: 'string',
+                        example: 'feature-branch',
+                      },
+                      sha: {
+                        type: 'string',
+                        example: 'def456ghi789',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          response: {
+            200: {
+              description: 'Webhook processed successfully',
+              type: 'object',
+              properties: {
+                message: {
+                  type: 'string',
+                  example: 'Webhook processed successfully',
+                },
+                deploymentId: {
+                  type: 'string',
+                  format: 'uuid',
+                  description: 'ID of created deployment (if applicable)',
+                },
+              },
+            },
+            400: {
+              description: 'Bad request - invalid payload or signature',
+              $ref: '#/components/schemas/Error',
+            },
+            401: {
+              description: 'Unauthorized - invalid signature',
+              $ref: '#/components/schemas/Error',
+            },
+            404: {
+              description: 'Service not found for repository',
+              $ref: '#/components/schemas/Error',
+            },
+          },
+          security: [], // Public endpoint (verified via signature)
+        },
       },
       async (request, reply) => {
         return controller.handleGitHubWebhook(request, reply);

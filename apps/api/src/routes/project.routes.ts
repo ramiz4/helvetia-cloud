@@ -6,19 +6,215 @@ export async function projectRoutes(fastify: FastifyInstance) {
   const container = getContainer();
   const controller = container.resolve<ProjectController>(TOKENS.ProjectController);
 
-  fastify.get('/projects', (req, reply) => controller.listProjects(req, reply));
-  fastify.get<{ Params: { id: string } }>('/projects/:id', (req, reply) =>
-    controller.getProject(req, reply),
+  fastify.get(
+    '/projects',
+    {
+      schema: {
+        tags: ['Projects'],
+        summary: 'List all projects',
+        description: 'Retrieve all projects for the authenticated user.',
+        response: {
+          200: {
+            description: 'List of projects',
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/Project',
+            },
+          },
+          401: {
+            description: 'Unauthorized',
+            $ref: '#/components/schemas/Error',
+          },
+        },
+      },
+    },
+    (req, reply) => controller.listProjects(req, reply),
   );
-  fastify.post<{ Body: { name: string } }>('/projects', (req, reply) =>
-    controller.createProject(req, reply),
+
+  fastify.get<{ Params: { id: string } }>(
+    '/projects/:id',
+    {
+      schema: {
+        tags: ['Projects'],
+        summary: 'Get project by ID',
+        description: 'Retrieve a specific project by its ID.',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Project ID',
+            },
+          },
+        },
+        response: {
+          200: {
+            description: 'Project details',
+            $ref: '#/components/schemas/Project',
+          },
+          401: {
+            description: 'Unauthorized',
+            $ref: '#/components/schemas/Error',
+          },
+          404: {
+            description: 'Project not found',
+            $ref: '#/components/schemas/Error',
+          },
+        },
+      },
+    },
+    (req, reply) => controller.getProject(req, reply),
   );
-  fastify.delete<{ Params: { id: string } }>('/projects/:id', (req, reply) =>
-    controller.deleteProject(req, reply),
+
+  fastify.post<{ Body: { name: string } }>(
+    '/projects',
+    {
+      schema: {
+        tags: ['Projects'],
+        summary: 'Create a new project',
+        description: 'Create a new project for the authenticated user.',
+        body: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 100,
+              description: 'Project name',
+              example: 'My Project',
+            },
+          },
+        },
+        response: {
+          201: {
+            description: 'Project created successfully',
+            $ref: '#/components/schemas/Project',
+          },
+          400: {
+            description: 'Bad request - validation error',
+            $ref: '#/components/schemas/Error',
+          },
+          401: {
+            description: 'Unauthorized',
+            $ref: '#/components/schemas/Error',
+          },
+        },
+      },
+    },
+    (req, reply) => controller.createProject(req, reply),
+  );
+
+  fastify.delete<{ Params: { id: string } }>(
+    '/projects/:id',
+    {
+      schema: {
+        tags: ['Projects'],
+        summary: 'Delete a project',
+        description: 'Delete a project and all its associated resources.',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Project ID',
+            },
+          },
+        },
+        response: {
+          200: {
+            description: 'Project deleted successfully',
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string',
+                example: 'Project deleted successfully',
+              },
+            },
+          },
+          401: {
+            description: 'Unauthorized',
+            $ref: '#/components/schemas/Error',
+          },
+          404: {
+            description: 'Project not found',
+            $ref: '#/components/schemas/Error',
+          },
+        },
+      },
+    },
+    (req, reply) => controller.deleteProject(req, reply),
   );
 
   fastify.post<{ Params: { id: string }; Body: { name: string } }>(
     '/projects/:id/environments',
+    {
+      schema: {
+        tags: ['Projects'],
+        summary: 'Create project environment',
+        description: 'Create a new environment for a project (e.g., staging, production).',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Project ID',
+            },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 50,
+              description: 'Environment name',
+              example: 'staging',
+            },
+          },
+        },
+        response: {
+          201: {
+            description: 'Environment created successfully',
+            type: 'object',
+            properties: {
+              id: {
+                type: 'string',
+                format: 'uuid',
+              },
+              name: {
+                type: 'string',
+                example: 'staging',
+              },
+              projectId: {
+                type: 'string',
+                format: 'uuid',
+              },
+              createdAt: {
+                type: 'string',
+                format: 'date-time',
+              },
+            },
+          },
+          401: {
+            description: 'Unauthorized',
+            $ref: '#/components/schemas/Error',
+          },
+          404: {
+            description: 'Project not found',
+            $ref: '#/components/schemas/Error',
+          },
+        },
+      },
+    },
     (req, reply) => controller.createEnvironment(req, reply),
   );
 }

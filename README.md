@@ -4,6 +4,16 @@ A premium, production-realistic **Platform-as-a-Service (PaaS)** designed for se
 
 ---
 
+## 📚 Documentation
+
+- **[API Documentation](./apps/api/docs/README.md)** - Complete API reference and guides
+- **[API Getting Started](./apps/api/docs/API_GETTING_STARTED.md)** - Quick start guide with code examples
+- **[Interactive API Docs](http://localhost:3001/api/v1/docs)** - Swagger UI (development)
+- **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and design decisions
+- **[Security](./apps/api/docs/SECURITY.md)** - Security guidelines and best practices
+
+---
+
 ## ✨ Key Features
 
 - **🚀 Automated Deployments**: Fully integrated with GitHub webhooks for instant `git push` deployments.
