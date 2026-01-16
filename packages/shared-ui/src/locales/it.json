@@ -112,7 +112,11 @@
     "password": "Password",
     "signIn": "Accedi",
     "invalidCredentials": "Nome utente o password non validi",
-    "orgAccessHelp": "Distribuzione da un'organizzazione GitHub? Assicuratevi di aver concesso l'accesso alla vostra organizzazione all'app OAuth di Helvetia."
+    "orgAccessHelp": "Distribuzione da un'organizzazione GitHub? Assicuratevi di aver concesso l'accesso alla vostra organizzazione all'app OAuth di Helvetia.",
+    "benefit1": "Distribuire in secondi con integrazione Git",
+    "benefit2": "Ospitato 100% in Svizzera",
+    "benefit3": "Sicurezza e privacy di livello aziendale",
+    "dataSecurityMessage": "I vostri dati sono crittografati e archiviati in Svizzera. Non accediamo mai ai vostri repository senza permesso."
   },
   "dashboard": {
     "title": "Dashboard",

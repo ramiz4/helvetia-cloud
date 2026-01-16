@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   robots: {
     index: false, // Don't index login pages for security
-    follow: true,
+    follow: false, // Don't follow links from login pages for security
   },
 };
 

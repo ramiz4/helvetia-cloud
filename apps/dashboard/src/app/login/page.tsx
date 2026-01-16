@@ -31,15 +31,15 @@ function LoginContent() {
   const benefits = [
     {
       icon: <Zap size={18} className="text-indigo-400" />,
-      text: 'Deploy in seconds with Git integration',
+      text: t.login.benefit1,
     },
     {
       icon: <Shield size={18} className="text-emerald-400" />,
-      text: 'Hosted 100% in Switzerland',
+      text: t.login.benefit2,
     },
     {
       icon: <Lock size={18} className="text-blue-400" />,
-      text: 'Enterprise-grade security & privacy',
+      text: t.login.benefit3,
     },
   ];
 
@@ -215,8 +215,7 @@ function LoginContent() {
                   <CheckCircle2 size={14} />
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Your data is encrypted and stored in Switzerland. We never access your
-                  repositories without permission.
+                  {t.login.dataSecurityMessage}
                 </p>
               </div>
 
