@@ -1,23 +1,51 @@
+import { parseFloatEnv, parseIntEnv } from './configParser';
+
 /**
  * Container resource limit constants
  * These can be overridden via environment variables
+ *
+ * Valid ranges:
+ * - CONTAINER_MEMORY_LIMIT_MB: 64 MB - 8192 MB (8 GB)
+ * - CONTAINER_CPU_CORES: 0.1 - 8.0 cores
  */
-export const CONTAINER_MEMORY_LIMIT_MB = parseInt(
-  process.env.CONTAINER_MEMORY_LIMIT_MB || '512',
-  10,
+export const CONTAINER_MEMORY_LIMIT_MB = parseIntEnv(
+  'CONTAINER_MEMORY_LIMIT_MB',
+  512, // Default: 512 MB
+  { min: 64, max: 8192 }, // Min: 64 MB, Max: 8 GB
 );
 export const CONTAINER_MEMORY_LIMIT_BYTES = CONTAINER_MEMORY_LIMIT_MB * 1024 * 1024;
 
-export const CONTAINER_CPU_CORES = parseFloat(process.env.CONTAINER_CPU_CORES || '1.0');
+export const CONTAINER_CPU_CORES = parseFloatEnv(
+  'CONTAINER_CPU_CORES',
+  1.0, // Default: 1.0 cores
+  { min: 0.1, max: 8.0 }, // Min: 0.1 cores, Max: 8 cores
+);
 export const CONTAINER_CPU_NANOCPUS = Math.floor(CONTAINER_CPU_CORES * 1000000000);
 
 /**
  * Status lock configuration constants
+ * Valid ranges:
+ * - STATUS_LOCK_TTL_MS: 1000 ms - 60000 ms (1 min)
  */
-export const STATUS_LOCK_TTL_MS = parseInt(process.env.STATUS_LOCK_TTL_MS || '10000', 10);
+export const STATUS_LOCK_TTL_MS = parseIntEnv(
+  'STATUS_LOCK_TTL_MS',
+  10000, // Default: 10 seconds
+  { min: 1000, max: 60000 }, // Min: 1 second, Max: 1 minute
+);
 
 /**
  * Lock retry configuration
+ * Valid ranges:
+ * - LOCK_RETRY_DELAY_MS: 50 ms - 5000 ms
+ * - LOCK_RETRY_JITTER_MS: 0 ms - 1000 ms
  */
-export const LOCK_RETRY_DELAY_MS = parseInt(process.env.LOCK_RETRY_DELAY_MS || '200', 10);
-export const LOCK_RETRY_JITTER_MS = parseInt(process.env.LOCK_RETRY_JITTER_MS || '100', 10);
+export const LOCK_RETRY_DELAY_MS = parseIntEnv(
+  'LOCK_RETRY_DELAY_MS',
+  200, // Default: 200 ms
+  { min: 50, max: 5000 },
+);
+export const LOCK_RETRY_JITTER_MS = parseIntEnv(
+  'LOCK_RETRY_JITTER_MS',
+  100, // Default: 100 ms
+  { min: 0, max: 1000 },
+);

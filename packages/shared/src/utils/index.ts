@@ -15,6 +15,9 @@ export {
 // Log scrubber utilities
 export { createScrubber } from './logs';
 
+// Config parser utilities
+export { parseFloatEnv, parseIntEnv } from './configParser';
+
 // Constants
 export {
   CONTAINER_CPU_CORES,
