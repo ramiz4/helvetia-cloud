@@ -199,7 +199,7 @@ if (!isTestEnv) {
       ]);
       metricsService.updateQueueDepth('deployments', waiting, active, completed, failed);
     } catch (error) {
-      console.error('Failed to collect queue metrics:', error);
+      fastify.log.error(error, 'Failed to collect queue metrics');
     }
   }, 30000);
 }

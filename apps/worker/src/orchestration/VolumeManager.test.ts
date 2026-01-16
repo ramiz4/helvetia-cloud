@@ -1,6 +1,20 @@
 import Docker from 'dockerode';
+import { logger } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { VolumeManager } from './VolumeManager';
+
+vi.mock('shared', async () => {
+  const actual = await vi.importActual('shared');
+  return {
+    ...actual,
+    logger: {
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    },
+  };
+});
 
 describe('VolumeManager', () => {
   let volumeManager: VolumeManager;
@@ -88,8 +102,6 @@ describe('VolumeManager', () => {
       mockDocker.listVolumes.mockResolvedValue({ Volumes: mockVolumes });
       mockDocker.getVolume.mockReturnValueOnce(mockVolume1).mockReturnValueOnce(mockVolume2);
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       await volumeManager.removeVolumesByLabel('app', 'test');
 
       expect(mockDocker.listVolumes).toHaveBeenCalledWith({
@@ -97,10 +109,8 @@ describe('VolumeManager', () => {
       });
       expect(mockVolume1.remove).toHaveBeenCalled();
       expect(mockVolume2.remove).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Removed volume vol1');
-      expect(consoleSpy).toHaveBeenCalledWith('Removed volume vol2');
-
-      consoleSpy.mockRestore();
+      expect(logger.info).toHaveBeenCalledWith('Removed volume vol1');
+      expect(logger.info).toHaveBeenCalledWith('Removed volume vol2');
     });
 
     it('should handle removal errors gracefully', async () => {
@@ -112,16 +122,12 @@ describe('VolumeManager', () => {
       mockDocker.listVolumes.mockResolvedValue({ Volumes: mockVolumes });
       mockDocker.getVolume.mockReturnValue(mockVolume);
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       await volumeManager.removeVolumesByLabel('app', 'test');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to remove volume vol1:',
-        expect.any(Error),
+      expect(logger.error).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        'Failed to remove volume vol1',
       );
-
-      consoleErrorSpy.mockRestore();
     });
   });
 

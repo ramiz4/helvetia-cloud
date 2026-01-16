@@ -270,9 +270,9 @@ describeIf('SSE Redis Subscription Cleanup Tests', () => {
       const unsubscribePromise = new Promise<void>((resolve) => {
         const checkInterval = setInterval(() => {
           if (duplicatedConnection && !unsubscribeSpy) {
-            unsubscribeSpy = vi.spyOn(duplicatedConnection, 'unsubscribe');
             const original = duplicatedConnection.unsubscribe.bind(duplicatedConnection);
-            unsubscribeSpy.mockImplementation(async (...args) => {
+            unsubscribeSpy = vi.spyOn(duplicatedConnection, 'unsubscribe');
+            unsubscribeSpy.mockImplementation(async (...args: any[]) => {
               resolve();
               return original(...args);
             });
