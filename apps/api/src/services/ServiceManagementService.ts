@@ -176,16 +176,16 @@ export class ServiceManagementService implements IServiceManagementService {
       }
 
       await Promise.all(
-        containersForService.map(async (c) => {
+        containersForService.map(async (containerInfo) => {
           try {
-            const container = await this.containerOrchestrator.getContainer(c.id);
-            if (c.state === 'running' || c.state === 'restarting') {
+            const container = await this.containerOrchestrator.getContainer(containerInfo.id);
+            if (containerInfo.state === 'running' || containerInfo.state === 'restarting') {
               await this.containerOrchestrator.stopContainer(container, 5);
             }
             await this.containerOrchestrator.removeContainer(container, { force: true });
           } catch (err) {
             this.logger.error(
-              { err, containerId: c.id, serviceId },
+              { err, containerId: containerInfo.id, serviceId },
               'Failed to remove container for service',
             );
           }
