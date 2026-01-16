@@ -254,12 +254,12 @@ export class WebhookController {
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      request.log.error('GITHUB_WEBHOOK_SECRET is not configured');
+      this.logger.error('GITHUB_WEBHOOK_SECRET is not configured');
       return reply.status(500).send({ error: 'Webhook secret not configured' });
     }
 
     if (!signature) {
-      request.log.warn(
+      this.logger.warn(
         {
           ip: request.ip,
           headers: request.headers,
@@ -273,12 +273,12 @@ export class WebhookController {
     const rawBody = request.rawBody;
 
     if (!rawBody) {
-      request.log.warn('GitHub webhook received without raw body');
+      this.logger.warn('GitHub webhook received without raw body');
       return reply.status(400).send({ error: 'Missing raw body' });
     }
 
     if (!this.verifyGitHubSignature(rawBody, signature, webhookSecret)) {
-      request.log.warn(
+      this.logger.warn(
         {
           ip: request.ip,
           signature: signature.substring(0, 20) + '...',

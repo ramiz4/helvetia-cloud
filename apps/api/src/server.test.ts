@@ -641,8 +641,11 @@ describe('API Server', () => {
       expect(response.json()).toEqual({ error: 'Webhook secret not configured' });
     });
 
-    it.skip('should log suspicious requests with missing signature', async () => {
-      const warnSpy = vi.spyOn(fastify.log, 'warn');
+    it('should log suspicious requests with missing signature', async () => {
+      // Import the mocked logger from shared to spy on it
+      const { logger } = await import('shared');
+      const warnSpy = vi.spyOn(logger, 'warn');
+
       const payload = {
         repository: { html_url: 'https://github.com/test/repo' },
         ref: 'refs/heads/main',
@@ -654,6 +657,8 @@ describe('API Server', () => {
         payload,
       });
 
+      // The WebhookController receives the mocked logger via DI
+      // and logs warnings through it
       expect(warnSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           ip: expect.any(String),
@@ -662,8 +667,11 @@ describe('API Server', () => {
       );
     });
 
-    it.skip('should log suspicious requests with invalid signature', async () => {
-      const warnSpy = vi.spyOn(fastify.log, 'warn');
+    it('should log suspicious requests with invalid signature', async () => {
+      // Import the mocked logger from shared to spy on it
+      const { logger } = await import('shared');
+      const warnSpy = vi.spyOn(logger, 'warn');
+
       const payload = {
         repository: { html_url: 'https://github.com/test/repo' },
         ref: 'refs/heads/main',
@@ -681,6 +689,8 @@ describe('API Server', () => {
         payload: rawBody,
       });
 
+      // The WebhookController receives the mocked logger via DI
+      // and logs warnings through it
       expect(warnSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           ip: expect.any(String),
