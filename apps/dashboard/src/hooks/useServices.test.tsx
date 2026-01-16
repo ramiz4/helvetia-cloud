@@ -578,7 +578,15 @@ describe('useServices hooks', () => {
 
     it('validates all valid ServiceStatus values', () => {
       const queryClient = new QueryClient();
-      const validStatuses = ['RUNNING', 'DEPLOYING', 'FAILED', 'NOT_RUNNING', 'STOPPED'];
+      const validStatuses: ServiceStatus[] = [
+        'IDLE',
+        'RUNNING',
+        'DEPLOYING',
+        'FAILED',
+        'NOT_RUNNING',
+        'STOPPED',
+        'CRASHING',
+      ];
 
       validStatuses.forEach((validStatus) => {
         const initialServices: Service[] = [
@@ -643,6 +651,72 @@ describe('useServices hooks', () => {
       const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
       expect(updatedServices![0].status).toBe('RUNNING'); // Should keep original status
       expect(updatedServices![0].metrics?.cpu).toBe(50);
+    });
+
+    it('handles IDLE status from backend correctly', () => {
+      const queryClient = new QueryClient();
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'STOPPED',
+          metrics: { cpu: 0, memory: 0, memoryLimit: 1024, status: 'STOPPED' },
+          deployments: [],
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
+      ];
+      queryClient.setQueryData(serviceKeys.lists(), initialServices);
+
+      const updater = createUpdateServiceMetrics(queryClient);
+      updater([
+        {
+          id: '1',
+          metrics: { cpu: 0, memory: 0, memoryLimit: 1024, status: 'IDLE' },
+        },
+      ]);
+
+      const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+      expect(updatedServices![0].status).toBe('IDLE');
+      expect(updatedServices![0].metrics?.status).toBe('IDLE');
+    });
+
+    it('handles CRASHING status from backend correctly', () => {
+      const queryClient = new QueryClient();
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'RUNNING',
+          metrics: { cpu: 10, memory: 100, memoryLimit: 1024, status: 'RUNNING' },
+          deployments: [],
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
+      ];
+      queryClient.setQueryData(serviceKeys.lists(), initialServices);
+
+      const updater = createUpdateServiceMetrics(queryClient);
+      updater([
+        {
+          id: '1',
+          metrics: { cpu: 5, memory: 50, memoryLimit: 1024, status: 'CRASHING' },
+        },
+      ]);
+
+      const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+      expect(updatedServices![0].status).toBe('CRASHING');
+      expect(updatedServices![0].metrics?.status).toBe('CRASHING');
     });
   });
 

@@ -275,14 +275,16 @@ export function useStopService() {
   });
 }
 
-// Valid ServiceStatus values for runtime validation
-const VALID_STATUSES: ServiceStatus[] = [
+// Valid ServiceStatus values for runtime validation (must stay in sync with backend)
+const VALID_STATUSES: readonly ServiceStatus[] = [
+  'IDLE',
   'RUNNING',
   'DEPLOYING',
   'FAILED',
   'NOT_RUNNING',
   'STOPPED',
-];
+  'CRASHING',
+] as const;
 
 /**
  * Type guard to check if a value is a valid ServiceStatus
