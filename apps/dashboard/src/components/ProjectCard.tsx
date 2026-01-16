@@ -43,7 +43,7 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div className="p-4 rounded-2xl bg-white/5 border border-white/5 group-hover:bg-white/[0.07] transition-colors">
           <div className="flex items-center gap-2 mb-2 text-slate-500">
             <Layout size={14} className="opacity-70" />
