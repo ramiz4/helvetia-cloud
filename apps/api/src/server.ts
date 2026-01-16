@@ -5,6 +5,8 @@ import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
 
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
@@ -202,6 +204,14 @@ fastify.register(rateLimit, {
 // Create rate limit configs
 // const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
+// Register Swagger/OpenAPI documentation (only in non-test environments)
+if (!isTestEnv) {
+  import('./config/swagger.js').then(({ swaggerConfig, swaggerUiConfig }) => {
+    fastify.register(fastifySwagger, swaggerConfig);
+    fastify.register(fastifySwaggerUi, swaggerUiConfig);
+  });
+}
+
 // Register global error handler
 import { errorHandler } from './middleware/error.middleware';
 fastify.setErrorHandler(errorHandler);
@@ -224,6 +234,10 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/logout',
     '/feature-flags/check',
     '/feature-flags/check-bulk',
+    '/api/v1/docs',
+    '/api/v1/docs/json',
+    '/api/v1/docs/yaml',
+    '/api/v1/docs/static',
   ];
 
   // Get the URL without query parameters
