@@ -22,17 +22,17 @@ import { decrypt } from '../utils/crypto';
 @injectable()
 export class DeploymentOrchestratorService implements IDeploymentOrchestratorService {
   constructor(
-    @inject(Symbol.for('IServiceRepository'))
+    @inject(TOKENS.ServiceRepository)
     private serviceRepository: IServiceRepository,
-    @inject(Symbol.for('IDeploymentRepository'))
+    @inject(TOKENS.DeploymentRepository)
     private deploymentRepository: IDeploymentRepository,
-    @inject(Symbol.for('IUserRepository'))
+    @inject(TOKENS.UserRepository)
     private userRepository: IUserRepository,
-    @inject(Symbol.for('IProjectRepository'))
+    @inject(TOKENS.ProjectRepository)
     private projectRepository: IProjectRepository,
     @inject(TOKENS.OrganizationRepository)
     private organizationRepository: IOrganizationRepository,
-    @inject(Symbol.for('IDeploymentQueue'))
+    @inject(TOKENS.DeploymentQueue)
     private deploymentQueue: Queue,
   ) {}
 
