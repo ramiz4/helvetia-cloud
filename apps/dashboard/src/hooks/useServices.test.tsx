@@ -474,6 +474,176 @@ describe('useServices hooks', () => {
       const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
       expect(updatedServices).toEqual(initialServices);
     });
+
+    it('validates status and updates with valid ServiceStatus value', () => {
+      const queryClient = new QueryClient();
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'RUNNING',
+          metrics: { cpu: 1, memory: 10, memoryLimit: 1024, status: 'RUNNING' },
+          deployments: [],
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
+      ];
+      queryClient.setQueryData(serviceKeys.lists(), initialServices);
+
+      const updater = createUpdateServiceMetrics(queryClient);
+      updater([
+        {
+          id: '1',
+          metrics: { cpu: 50, memory: 500, memoryLimit: 1024, status: 'DEPLOYING' },
+        },
+      ]);
+
+      const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+      expect(updatedServices![0].status).toBe('DEPLOYING');
+      expect(updatedServices![0].metrics?.status).toBe('DEPLOYING');
+    });
+
+    it('falls back to current status when metrics.status is invalid', () => {
+      const queryClient = new QueryClient();
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'RUNNING',
+          metrics: { cpu: 1, memory: 10, memoryLimit: 1024, status: 'RUNNING' },
+          deployments: [],
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
+      ];
+      queryClient.setQueryData(serviceKeys.lists(), initialServices);
+
+      const updater = createUpdateServiceMetrics(queryClient);
+      updater([
+        {
+          id: '1',
+          metrics: { cpu: 50, memory: 500, memoryLimit: 1024, status: 'INVALID_STATUS' },
+        },
+      ]);
+
+      const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+      expect(updatedServices![0].status).toBe('RUNNING'); // Should keep original status
+      expect(updatedServices![0].metrics?.status).toBe('INVALID_STATUS'); // Metrics still updated
+      expect(updatedServices![0].metrics?.cpu).toBe(50);
+    });
+
+    it('falls back to current status when metrics.status is undefined', () => {
+      const queryClient = new QueryClient();
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'STOPPED',
+          metrics: { cpu: 1, memory: 10, memoryLimit: 1024 },
+          deployments: [],
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
+      ];
+      queryClient.setQueryData(serviceKeys.lists(), initialServices);
+
+      const updater = createUpdateServiceMetrics(queryClient);
+      updater([
+        {
+          id: '1',
+          metrics: { cpu: 50, memory: 500, memoryLimit: 1024 },
+        },
+      ]);
+
+      const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+      expect(updatedServices![0].status).toBe('STOPPED'); // Should keep original status
+      expect(updatedServices![0].metrics?.cpu).toBe(50);
+      expect(updatedServices![0].metrics?.memory).toBe(500);
+    });
+
+    it('validates all valid ServiceStatus values', () => {
+      const queryClient = new QueryClient();
+      const validStatuses = ['RUNNING', 'DEPLOYING', 'FAILED', 'NOT_RUNNING', 'STOPPED'];
+
+      validStatuses.forEach((validStatus) => {
+        const initialServices: Service[] = [
+          {
+            id: '1',
+            name: 'test',
+            status: 'RUNNING',
+            metrics: { cpu: 1, memory: 10, memoryLimit: 1024, status: 'RUNNING' },
+            deployments: [],
+            repoUrl: '',
+            branch: '',
+            buildCommand: '',
+            startCommand: '',
+            port: 0,
+            type: 'DOCKER',
+            createdAt: '',
+          },
+        ];
+        queryClient.setQueryData(serviceKeys.lists(), initialServices);
+
+        const updater = createUpdateServiceMetrics(queryClient);
+        updater([
+          {
+            id: '1',
+            metrics: { cpu: 50, memory: 500, memoryLimit: 1024, status: validStatus },
+          },
+        ]);
+
+        const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+        expect(updatedServices![0].status).toBe(validStatus);
+      });
+    });
+
+    it('handles null status value gracefully', () => {
+      const queryClient = new QueryClient();
+      const initialServices: Service[] = [
+        {
+          id: '1',
+          name: 'test',
+          status: 'RUNNING',
+          metrics: { cpu: 1, memory: 10, memoryLimit: 1024, status: 'RUNNING' },
+          deployments: [],
+          repoUrl: '',
+          branch: '',
+          buildCommand: '',
+          startCommand: '',
+          port: 0,
+          type: 'DOCKER',
+          createdAt: '',
+        },
+      ];
+      queryClient.setQueryData(serviceKeys.lists(), initialServices);
+
+      const updater = createUpdateServiceMetrics(queryClient);
+      updater([
+        {
+          id: '1',
+          metrics: { cpu: 50, memory: 500, memoryLimit: 1024, status: null as never },
+        },
+      ]);
+
+      const updatedServices = queryClient.getQueryData<Service[]>(serviceKeys.lists());
+      expect(updatedServices![0].status).toBe('RUNNING'); // Should keep original status
+      expect(updatedServices![0].metrics?.cpu).toBe(50);
+    });
   });
 
   describe('serviceKeys', () => {
