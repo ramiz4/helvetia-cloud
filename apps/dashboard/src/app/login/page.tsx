@@ -223,21 +223,21 @@ function LoginContent() {
               <div className="mt-8 text-center pt-4 border-t border-white/5">
                 <p className="text-slate-500 text-xs font-semibold">
                   {t.login.termsPrivacy.split('{terms}')[0]}
-                  <a
-                    href="#"
+                  <Link
+                    href="/terms"
                     className="text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
                     aria-label="Terms of Service"
                   >
                     {t.login.terms}
-                  </a>
+                  </Link>
                   {' & '}
-                  <a
-                    href="#"
+                  <Link
+                    href="/privacy"
                     className="text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
                     aria-label="Privacy Policy"
                   >
                     {t.login.privacy}
-                  </a>
+                  </Link>
                 </p>
               </div>
             </div>
