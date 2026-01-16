@@ -128,7 +128,7 @@ Configure webhook in your repository:
     },
     servers: [
       {
-        url: env.NODE_ENV === 'production' ? 'https://api.helvetia.cloud' : 'http://localhost:3001',
+        url: env.NODE_ENV === 'production' ? `https://api.${env.PLATFORM_DOMAIN}` : 'http://localhost:3001',
         description: env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],
