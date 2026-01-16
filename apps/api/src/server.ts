@@ -19,6 +19,7 @@ import {
   LOG_RESPONSES,
 } from './config/constants';
 import { initializeContainer, registerInstance } from './di';
+import { TOKENS } from './di/tokens';
 import { UnauthorizedError } from './errors';
 import { metricsService } from './services/metrics.service';
 import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
@@ -36,7 +37,7 @@ const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:
 
 // Register Redis connection in DI if not already registered (useful for testing)
 try {
-  registerInstance(Symbol.for('RedisConnection'), redisConnection);
+  registerInstance(TOKENS.Redis, redisConnection);
 } catch {
   // Already registered
 }
@@ -54,7 +55,7 @@ const deploymentQueue = new Queue('deployments', {
   },
 });
 
-registerInstance(Symbol.for('IDeploymentQueue'), deploymentQueue);
+registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
 
 /**
  * Fastify Application Instance
