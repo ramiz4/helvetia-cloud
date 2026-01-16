@@ -147,10 +147,10 @@ See [API Versioning](./API_VERSIONING.md) and [Changelog](./API_CHANGELOG.md) fo
 
 ## Related Documentation
 
-- **General Documentation**: See [../../docs/](../../docs/) for system-wide documentation
-- **Worker Documentation**: See [../worker/docs/](../worker/docs/) for worker service documentation
-- **Dashboard Documentation**: See [../dashboard/docs/](../dashboard/docs/) for frontend documentation
-- **Database Documentation**: See [../../packages/database/docs/](../../packages/database/docs/) for database documentation
+- **General Documentation**: See [../../../docs/](../../../docs/) for system-wide documentation
+- **Worker Documentation**: See [../../worker/docs/](../../worker/docs/) for worker service documentation
+- **Dashboard Documentation**: See [../../dashboard/docs/](../../dashboard/docs/) for frontend documentation
+- **Database Documentation**: See [../../../packages/database/docs/](../../../packages/database/docs/) for database documentation
 
 ## Support
 

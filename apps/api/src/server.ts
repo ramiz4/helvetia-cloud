@@ -206,10 +206,14 @@ fastify.register(rateLimit, {
 
 // Register Swagger/OpenAPI documentation (only in non-test environments)
 if (!isTestEnv) {
-  import('./config/swagger.js').then(({ swaggerConfig, swaggerUiConfig }) => {
-    fastify.register(fastifySwagger, swaggerConfig);
-    fastify.register(fastifySwaggerUi, swaggerUiConfig);
-  });
+  import('./config/swagger.js')
+    .then(({ swaggerConfig, swaggerUiConfig }) => {
+      fastify.register(fastifySwagger, swaggerConfig);
+      fastify.register(fastifySwaggerUi, swaggerUiConfig);
+    })
+    .catch((error) => {
+      logger.error({ err: error }, 'Failed to register Swagger plugins');
+    });
 }
 
 // Register global error handler
@@ -237,7 +241,6 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/api/v1/docs',
     '/api/v1/docs/json',
     '/api/v1/docs/yaml',
-    '/api/v1/docs/static',
   ];
 
   // Get the URL without query parameters
@@ -245,6 +248,11 @@ fastify.addHook('onRequest', async (request, _reply) => {
 
   // Check if it's a public route (unversioned)
   if (publicRoutes.includes(fullUrl)) {
+    return;
+  }
+
+  // Allow swagger-ui static assets
+  if (fullUrl.startsWith('/api/v1/docs/') || fullUrl.startsWith('/api/v1/docs/static/')) {
     return;
   }
 

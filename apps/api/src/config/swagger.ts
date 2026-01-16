@@ -128,7 +128,10 @@ Configure webhook in your repository:
     },
     servers: [
       {
-        url: env.NODE_ENV === 'production' ? `https://api.${env.PLATFORM_DOMAIN}` : 'http://localhost:3001',
+        url:
+          env.NODE_ENV === 'production'
+            ? `https://api.${env.PLATFORM_DOMAIN}`
+            : 'http://localhost:3001',
         description: env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],
@@ -491,18 +494,6 @@ export const swaggerUiConfig: FastifySwaggerUiOptions = {
     showCommonExtensions: true,
     tryItOutEnabled: true,
   },
-  uiHooks: {
-    onRequest: function (_request, _reply, next) {
-      next();
-    },
-    preHandler: function (_request, _reply, next) {
-      next();
-    },
-  },
   staticCSP: true,
-  transformStaticCSP: (header) => header,
-  transformSpecification: (swaggerObject, _request, _reply) => {
-    return swaggerObject;
-  },
   transformSpecificationClone: true,
 };
