@@ -194,7 +194,7 @@ describe('LoginPage', () => {
         expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
       });
       const results = await axe(container);
-      expect(results).toHaveNoViolations();
+      expect(results.violations).toEqual([]);
     });
 
     it('has skip to main content link', async () => {
@@ -211,7 +211,6 @@ describe('LoginPage', () => {
       await waitFor(() => {
         expect(screen.getByRole('main')).toBeInTheDocument();
         expect(screen.getByRole('region', { name: /login form/i })).toBeInTheDocument();
-        expect(screen.getByRole('article')).toBeInTheDocument();
       });
     });
 
@@ -260,11 +259,17 @@ describe('LoginPage', () => {
         expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
       });
 
-      // Tab through interactive elements
+      // Tab to skip link first (correct accessibility behavior)
+      await user.tab();
+      const skipLink = screen.getByText(/skip to login form/i);
+      expect(skipLink).toHaveFocus();
+
+      // Tab to home link
       await user.tab();
       const homeLink = screen.getByRole('link', { name: /back to home page/i });
       expect(homeLink).toHaveFocus();
 
+      // Tab to GitHub button
       await user.tab();
       const githubButton = screen.getByRole('button', { name: /sign in with github/i });
       expect(githubButton).toHaveFocus();

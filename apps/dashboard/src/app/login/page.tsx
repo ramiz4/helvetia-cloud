@@ -63,7 +63,7 @@ function LoginContent() {
         <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full" />
       </div>
 
-      <div className="w-full max-w-md" role="main">
+      <div className="w-full max-w-md">
         {/* Back to home link */}
         <Link
           href="/"
@@ -80,168 +80,170 @@ function LoginContent() {
         </Link>
 
         {/* Main login card */}
-        <article
-          id="login-form"
-          className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden"
-          role="region"
-          aria-label="Login form"
-        >
-          {/* Top accent bar */}
+        <main>
           <div
-            className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500"
-            aria-hidden="true"
-          />
-
-          {/* Header with logo and title */}
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="relative w-20 h-20 mb-6">
-              <div
-                className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl"
-                aria-hidden="true"
-              />
-              <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                <Image
-                  src="/logo.png"
-                  alt="Helvetia Cloud Logo"
-                  width={48}
-                  height={48}
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
-              {t.login.swissCloudSecurity}
-            </h1>
-            <p className="text-slate-400 leading-relaxed text-base sm:text-lg">
-              {t.login.securityDesc}
-            </p>
-          </div>
-
-          {/* Key benefits */}
-          <div className="mb-8 space-y-3" role="list" aria-label="Platform benefits">
-            {benefits.map((benefit, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/[0.07] transition-colors"
-                role="listitem"
-              >
-                <div className="mt-0.5 shrink-0" aria-hidden="true">
-                  {benefit.icon}
-                </div>
-                <p className="text-sm text-slate-300 leading-relaxed">{benefit.text}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Error message */}
-          {error && (
+            id="login-form"
+            className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden"
+            role="region"
+            aria-label="Login form"
+          >
+            {/* Top accent bar */}
             <div
-              className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl animate-in fade-in slide-in-from-top-2"
-              role="alert"
-              aria-live="assertive"
-            >
-              <div className="flex items-start gap-3">
+              className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500"
+              aria-hidden="true"
+            />
+
+            {/* Header with logo and title */}
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="relative w-20 h-20 mb-6">
                 <div
-                  className="p-1 bg-red-500/20 rounded-lg text-red-500 mt-0.5"
+                  className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl"
+                  aria-hidden="true"
+                />
+                <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <Image
+                    src="/logo.png"
+                    alt="Helvetia Cloud Logo"
+                    width={48}
+                    height={48}
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+                {t.login.swissCloudSecurity}
+              </h1>
+              <p className="text-slate-400 leading-relaxed text-base sm:text-lg">
+                {t.login.securityDesc}
+              </p>
+            </div>
+
+            {/* Key benefits */}
+            <div className="mb-8 space-y-3" role="list" aria-label="Platform benefits">
+              {benefits.map((benefit, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/[0.07] transition-colors"
+                  role="listitem"
+                >
+                  <div className="mt-0.5 shrink-0" aria-hidden="true">
+                    {benefit.icon}
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed">{benefit.text}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div
+                className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl animate-in fade-in slide-in-from-top-2"
+                role="alert"
+                aria-live="assertive"
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="p-1 bg-red-500/20 rounded-lg text-red-500 mt-0.5"
+                    aria-hidden="true"
+                  >
+                    <span className="text-xs font-bold font-mono">!</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-red-400 mb-1">{t.login.authError}</div>
+                    <div className="text-xs text-red-400/80 leading-relaxed">{error}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* GitHub login button */}
+            <div className="space-y-4">
+              <button
+                onClick={handleGitHubLogin}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[24px] font-bold bg-white text-slate-950 hover:bg-slate-50 disabled:bg-slate-200 disabled:cursor-not-allowed transition-all hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.2)] active:scale-95 group/btn overflow-hidden relative focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
+                aria-label="Sign in with GitHub"
+              >
+                {isLoading ? (
+                  <>
+                    <div
+                      className="w-6 h-6 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"
+                      aria-hidden="true"
+                    />
+                    <span className="text-xl">{t.login.authenticating}</span>
+                  </>
+                ) : (
+                  <>
+                    <GithubIcon size={24} aria-hidden="true" />
+                    <span className="text-xl">{t.login.continueWithGithub}</span>
+                    <div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
+                      aria-hidden="true"
+                    />
+                  </>
+                )}
+              </button>
+
+              {/* Organization access help */}
+              <div
+                className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex gap-3 items-start"
+                role="note"
+                aria-label="GitHub organization access information"
+              >
+                <div
+                  className="p-1 bg-indigo-500/20 rounded-lg text-indigo-400 mt-0.5 shrink-0"
                   aria-hidden="true"
                 >
-                  <span className="text-xs font-bold font-mono">!</span>
+                  <Shield size={14} />
                 </div>
-                <div>
-                  <div className="text-sm font-bold text-red-400 mb-1">{t.login.authError}</div>
-                  <div className="text-xs text-red-400/80 leading-relaxed">{error}</div>
+                <p className="text-[11px] text-slate-400 leading-relaxed italic">
+                  {t.login.orgAccessHelp}
+                </p>
+              </div>
+
+              {/* Security and privacy message */}
+              <div
+                className="mt-6 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex gap-3 items-start"
+                role="note"
+                aria-label="Security information"
+              >
+                <div
+                  className="p-1 bg-emerald-500/20 rounded-lg text-emerald-400 mt-0.5 shrink-0"
+                  aria-hidden="true"
+                >
+                  <CheckCircle2 size={14} />
                 </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Your data is encrypted and stored in Switzerland. We never access your
+                  repositories without permission.
+                </p>
               </div>
-            </div>
-          )}
 
-          {/* GitHub login button */}
-          <div className="space-y-4">
-            <button
-              onClick={handleGitHubLogin}
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[24px] font-bold bg-white text-slate-950 hover:bg-slate-50 disabled:bg-slate-200 disabled:cursor-not-allowed transition-all hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.2)] active:scale-95 group/btn overflow-hidden relative focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
-              aria-label="Sign in with GitHub"
-            >
-              {isLoading ? (
-                <>
-                  <div
-                    className="w-6 h-6 border-2 border-slate-950/20 border-t-slate-950 rounded-full animate-spin"
-                    aria-hidden="true"
-                  />
-                  <span className="text-xl">{t.login.authenticating}</span>
-                </>
-              ) : (
-                <>
-                  <GithubIcon size={24} aria-hidden="true" />
-                  <span className="text-xl">{t.login.continueWithGithub}</span>
-                  <div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
-                    aria-hidden="true"
-                  />
-                </>
-              )}
-            </button>
-
-            {/* Organization access help */}
-            <div
-              className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex gap-3 items-start"
-              role="note"
-              aria-label="GitHub organization access information"
-            >
-              <div
-                className="p-1 bg-indigo-500/20 rounded-lg text-indigo-400 mt-0.5 shrink-0"
-                aria-hidden="true"
-              >
-                <Shield size={14} />
+              {/* Terms and Privacy */}
+              <div className="mt-8 text-center pt-4 border-t border-white/5">
+                <p className="text-slate-500 text-xs font-semibold">
+                  {t.login.termsPrivacy.split('{terms}')[0]}
+                  <a
+                    href="#"
+                    className="text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
+                    aria-label="Terms of Service"
+                  >
+                    {t.login.terms}
+                  </a>
+                  {' & '}
+                  <a
+                    href="#"
+                    className="text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
+                    aria-label="Privacy Policy"
+                  >
+                    {t.login.privacy}
+                  </a>
+                </p>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed italic">
-                {t.login.orgAccessHelp}
-              </p>
-            </div>
-
-            {/* Security and privacy message */}
-            <div
-              className="mt-6 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex gap-3 items-start"
-              role="note"
-              aria-label="Security information"
-            >
-              <div
-                className="p-1 bg-emerald-500/20 rounded-lg text-emerald-400 mt-0.5 shrink-0"
-                aria-hidden="true"
-              >
-                <CheckCircle2 size={14} />
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Your data is encrypted and stored in Switzerland. We never access your repositories
-                without permission.
-              </p>
-            </div>
-
-            {/* Terms and Privacy */}
-            <div className="mt-8 text-center pt-4 border-t border-white/5">
-              <p className="text-slate-500 text-xs font-semibold">
-                {t.login.termsPrivacy.split('{terms}')[0]}
-                <a
-                  href="#"
-                  className="text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
-                  aria-label="Terms of Service"
-                >
-                  {t.login.terms}
-                </a>
-                {' & '}
-                <a
-                  href="#"
-                  className="text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
-                  aria-label="Privacy Policy"
-                >
-                  {t.login.privacy}
-                </a>
-              </p>
             </div>
           </div>
-        </article>
+        </main>
 
         {/* Footer */}
         <footer className="mt-12 flex flex-col items-center gap-4">
