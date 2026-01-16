@@ -117,7 +117,11 @@
     "password": "Password",
     "signIn": "Sign In",
     "invalidCredentials": "Invalid username or password",
-    "orgAccessHelp": "Deploying from a GitHub Organization? Make sure to grant 'Organization Access' to the Helvetia OAuth App in your GitHub settings."
+    "orgAccessHelp": "Deploying from a GitHub Organization? Make sure to grant 'Organization Access' to the Helvetia OAuth App in your GitHub settings.",
+    "benefit1": "Deploy in seconds with Git integration",
+    "benefit2": "Hosted 100% in Switzerland",
+    "benefit3": "Enterprise-grade security & privacy",
+    "dataSecurityMessage": "Your data is encrypted and stored in Switzerland. We never access your repositories without permission."
   },
   "dashboard": {
     "title": "Dashboard",
