@@ -174,16 +174,13 @@ export class FeatureFlagClient {
 /**
  * React hook for checking feature flags
  */
-export function useFeatureFlag(
-  key: string,
-  userId?: string,
-  options: { enabled?: boolean } = { enabled: true },
-) {
+export function useFeatureFlag(key: string, userId?: string, options?: { enabled?: boolean }) {
+  const isEnabled = options?.enabled ?? true;
   const [enabled, setEnabled] = React.useState<boolean>(false);
   const [loading, setLoading] = React.useState<boolean>(true);
 
   React.useEffect(() => {
-    if (!options.enabled) {
+    if (!isEnabled) {
       setEnabled(false);
       setLoading(false);
       return;
@@ -193,7 +190,7 @@ export function useFeatureFlag(
     FeatureFlagClient.isEnabled(key, userId)
       .then(setEnabled)
       .finally(() => setLoading(false));
-  }, [key, userId, options.enabled]);
+  }, [key, userId, isEnabled]);
 
   return { enabled, loading };
 }
