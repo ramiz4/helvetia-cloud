@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseFloatEnv, parseIntEnv } from './configParser';
+import { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser';
+import { PLATFORM_DOMAIN_REGEX } from './constants';
 
 describe('Config Parser Utilities', () => {
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
@@ -13,6 +14,7 @@ describe('Config Parser Utilities', () => {
     // Clean up any env vars set during tests
     delete process.env.TEST_INT;
     delete process.env.TEST_FLOAT;
+    delete process.env.TEST_STRING;
   });
 
   describe('parseIntEnv', () => {
@@ -269,6 +271,122 @@ describe('Config Parser Utilities', () => {
         const result = parseFloatEnv('TEST_FLOAT', 1.0);
         expect(result).toBe(2.5);
         expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('parseStringEnv', () => {
+    describe('default behavior', () => {
+      it('should return default value when env var is not set', () => {
+        const result = parseStringEnv('TEST_STRING', 'default-value');
+        expect(result).toBe('default-value');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should return env var value when set', () => {
+        process.env.TEST_STRING = 'test-value';
+        const result = parseStringEnv('TEST_STRING', 'default-value');
+        expect(result).toBe('test-value');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should handle empty string and use default', () => {
+        process.env.TEST_STRING = '';
+        const result = parseStringEnv('TEST_STRING', 'default-value');
+        expect(result).toBe('default-value');
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Invalid TEST_STRING value (empty string)'),
+        );
+      });
+    });
+
+    describe('validation', () => {
+      it('should use default when validation fails', () => {
+        process.env.TEST_STRING = 'invalid';
+        const result = parseStringEnv('TEST_STRING', 'default-value', {
+          validate: (value) => value === 'valid',
+          errorMessage: 'must be "valid"',
+        });
+        expect(result).toBe('default-value');
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('must be "valid"'));
+      });
+
+      it('should accept value when validation passes', () => {
+        process.env.TEST_STRING = 'valid';
+        const result = parseStringEnv('TEST_STRING', 'default-value', {
+          validate: (value) => value === 'valid',
+        });
+        expect(result).toBe('valid');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should handle domain validation', () => {
+        process.env.TEST_STRING = 'example.com';
+        const result = parseStringEnv('TEST_STRING', 'default.com', {
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
+          errorMessage: 'must be a valid domain',
+        });
+        expect(result).toBe('example.com');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should reject invalid domain', () => {
+        process.env.TEST_STRING = 'not a domain';
+        const result = parseStringEnv('TEST_STRING', 'default.com', {
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
+          errorMessage: 'must be a valid domain',
+        });
+        expect(result).toBe('default.com');
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('must be a valid domain'),
+        );
+      });
+
+      it('should validate multi-level domains', () => {
+        process.env.TEST_STRING = 'api.helvetia.cloud';
+        const result = parseStringEnv('TEST_STRING', 'default.com', {
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
+          errorMessage: 'must be a valid domain',
+        });
+        expect(result).toBe('api.helvetia.cloud');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should validate deeply nested domains', () => {
+        process.env.TEST_STRING = 'staging.api.helvetia.cloud';
+        const result = parseStringEnv('TEST_STRING', 'default.com', {
+          validate: (value) => PLATFORM_DOMAIN_REGEX.test(value),
+          errorMessage: 'must be a valid domain',
+        });
+        expect(result).toBe('staging.api.helvetia.cloud');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('whitespace handling', () => {
+      it('should trim leading and trailing whitespace', () => {
+        process.env.TEST_STRING = '  trimmed-value  ';
+        const result = parseStringEnv('TEST_STRING', 'default-value');
+        expect(result).toBe('trimmed-value');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should trim whitespace before validation', () => {
+        process.env.TEST_STRING = '  valid  ';
+        const result = parseStringEnv('TEST_STRING', 'default-value', {
+          validate: (value) => value === 'valid',
+        });
+        expect(result).toBe('valid');
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
+
+      it('should treat whitespace-only string as empty', () => {
+        process.env.TEST_STRING = '   ';
+        const result = parseStringEnv('TEST_STRING', 'default-value');
+        expect(result).toBe('default-value');
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Invalid TEST_STRING value (empty string)'),
+        );
       });
     });
   });

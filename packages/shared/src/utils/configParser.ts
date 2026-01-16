@@ -113,3 +113,41 @@ export function parseFloatEnv(
 
   return parsed;
 }
+
+/**
+ * Safely parse a string environment variable with validation
+ * @param name - Environment variable name
+ * @param defaultValue - Default value if not set or invalid
+ * @param options - Optional validation options
+ * @returns Parsed and validated string value
+ */
+export function parseStringEnv(
+  name: string,
+  defaultValue: string,
+  options: { validate?: (value: string) => boolean; errorMessage?: string } = {},
+): string {
+  const raw = process.env[name];
+
+  // Use default if not set
+  if (raw === undefined) {
+    return defaultValue;
+  }
+
+  const value = raw.trim();
+
+  // Warn and use default for empty string
+  if (value === '') {
+    console.warn(`[Config] Invalid ${name} value (empty string), using default ${defaultValue}`);
+    return defaultValue;
+  }
+
+  // Validate if validator provided
+  if (options.validate && !options.validate(value)) {
+    console.warn(
+      `[Config] Invalid ${name} value '${raw}': ${options.errorMessage || 'validation failed'}, using default ${defaultValue}`,
+    );
+    return defaultValue;
+  }
+
+  return value;
+}

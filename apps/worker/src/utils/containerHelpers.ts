@@ -1,7 +1,7 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import IORedis from 'ioredis';
-import { withStatusLock } from 'shared';
+import { PLATFORM_DOMAIN, withStatusLock } from 'shared';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 
 type NetworkConfig = {
@@ -144,24 +144,21 @@ export async function startContainer(params: {
   const postfix = Math.random().toString(36).substring(2, 6);
   const containerName = `${baseName}-${postfix}`;
 
-  const hosts = [
-    `${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`,
-    `${serviceName}.localhost`,
-  ];
+  const hosts = [`${serviceName}.${PLATFORM_DOMAIN}`, `${serviceName}.localhost`];
 
   if (customDomain) {
     hosts.push(customDomain);
   }
 
   if (projectName) {
-    hosts.push(`${projectName}-${serviceName}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+    hosts.push(`${projectName}-${serviceName}.${PLATFORM_DOMAIN}`);
     hosts.push(`${projectName}-${serviceName}.localhost`);
   }
 
   if (projectName && environmentName && username) {
     const sanitizedUsernameForHost = username.toLowerCase().replace(/[^a-z0-9]/g, '-');
     const uHost = `${sanitizedUsernameForHost}.${projectName}.${environmentName}.${serviceName}`;
-    hosts.push(`${uHost}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}`);
+    hosts.push(`${uHost}.${PLATFORM_DOMAIN}`);
     hosts.push(`${uHost}.localhost`);
   }
 

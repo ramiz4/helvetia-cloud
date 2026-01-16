@@ -16,7 +16,7 @@ export {
 export { createScrubber } from './logs';
 
 // Config parser utilities
-export { parseFloatEnv, parseIntEnv } from './configParser';
+export { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser';
 
 // Constants
 export {
@@ -26,5 +26,7 @@ export {
   CONTAINER_MEMORY_LIMIT_MB,
   LOCK_RETRY_DELAY_MS,
   LOCK_RETRY_JITTER_MS,
+  PLATFORM_DOMAIN,
+  PLATFORM_DOMAIN_REGEX,
   STATUS_LOCK_TTL_MS,
 } from './constants';

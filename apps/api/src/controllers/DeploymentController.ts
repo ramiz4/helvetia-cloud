@@ -2,7 +2,7 @@ import '../types/fastify';
 
 import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { withStatusLock } from 'shared';
+import { PLATFORM_DOMAIN, withStatusLock } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
 import { ForbiddenError, NotFoundError } from '../errors';
@@ -155,8 +155,8 @@ export class DeploymentController {
       const containerName = `${baseName}-${postfix}`;
 
       const traefikRule = service.customDomain
-        ? `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`) || Host(\`${service.customDomain}\`)`
-        : `Host(\`${service.name}.${process.env.PLATFORM_DOMAIN || 'helvetia.cloud'}\`) || Host(\`${service.name}.localhost\`)`;
+        ? `Host(\`${service.name}.${PLATFORM_DOMAIN}\`) || Host(\`${service.name}.localhost\`) || Host(\`${service.customDomain}\`)`
+        : `Host(\`${service.name}.${PLATFORM_DOMAIN}\`) || Host(\`${service.name}.localhost\`)`;
 
       // Create new container with updated config
       const newContainer = await docker.createContainer({
