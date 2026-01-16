@@ -4,7 +4,12 @@ import type { Queue } from 'bullmq';
 import crypto from 'crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import type { IDeploymentRepository, IServiceRepository, IUserRepository } from '../interfaces';
+import type {
+  IDeploymentRepository,
+  ILogger,
+  IServiceRepository,
+  IUserRepository,
+} from '../interfaces';
 import { getRepoUrlMatchCondition } from '../utils/repoUrl';
 
 interface PullRequestEvent {
@@ -65,6 +70,8 @@ export class WebhookController {
     private userRepository: IUserRepository,
     @inject(Symbol.for('IDeploymentQueue'))
     private deploymentQueue: Queue,
+    @inject(Symbol.for('ILogger'))
+    private logger: ILogger,
   ) {}
 
   /**
@@ -163,13 +170,7 @@ export class WebhookController {
 
     for (const containerInfo of serviceContainers) {
       const container = docker.getContainer(containerInfo.Id);
-      // Note: We don't have request.log here as this is a private helper that might be called
-      // without a request context. However, in this controller it is currently only called
-      // within a request context. To be safe/standard, we should ideally use the shared logger
-      // but controllers usually use request.log.
-      // For now, I'll use the shared logger since this is a private helper that could be reused.
-      const { logger } = await import('shared');
-      logger.info(
+      this.logger.info(
         { containerId: containerInfo.Id, serviceId: id },
         'Stopping and removing container for service',
       );
@@ -184,13 +185,11 @@ export class WebhookController {
       try {
         const volume = docker.getVolume(volumeName);
         await volume.remove();
-        const { logger } = await import('shared');
-        logger.info({ volumeName, serviceName: service.name }, 'Removed volume for service');
+        this.logger.info({ volumeName, serviceName: service.name }, 'Removed volume for service');
       } catch (err: unknown) {
         const error = err as Error & { statusCode?: number };
         if (error.statusCode !== 404) {
-          const { logger } = await import('shared');
-          logger.error({ err, volumeName }, 'Failed to remove volume');
+          this.logger.error({ err, volumeName }, 'Failed to remove volume');
         }
       }
     } else if (serviceType === 'COMPOSE') {
@@ -203,15 +202,13 @@ export class WebhookController {
         for (const volumeInfo of projectVolumes) {
           const volume = docker.getVolume(volumeInfo.Name);
           await volume.remove();
-          const { logger } = await import('shared');
-          logger.info(
+          this.logger.info(
             { volumeName: volumeInfo.Name, projectName: service.name },
             'Removed volume for compose project',
           );
         }
       } catch (err) {
-        const { logger } = await import('shared');
-        logger.error(
+        this.logger.error(
           { err, projectName: service.name },
           'Failed to list/remove volumes for compose project',
         );
@@ -229,14 +226,12 @@ export class WebhookController {
       try {
         const image = docker.getImage(tag);
         await image.remove({ force: true });
-        const { logger } = await import('shared');
-        logger.info({ tag }, 'Removed image');
+        this.logger.info({ tag }, 'Removed image');
       } catch (err: unknown) {
         const error = err as Error & { statusCode?: number };
         // Don't log error if image doesn't exist
         if (error.statusCode !== 404) {
-          const { logger } = await import('shared');
-          logger.error({ err, tag }, 'Failed to remove image');
+          this.logger.error({ err, tag }, 'Failed to remove image');
         }
       }
     }
@@ -341,8 +336,7 @@ export class WebhookController {
       const repoUrl = pr.base.repo.html_url;
       const headBranch = pr.head.ref;
 
-      const { logger } = await import('shared');
-      logger.info({ prNumber, action, repoUrl, requestId }, 'Received GitHub PR webhook');
+      this.logger.info({ prNumber, action, repoUrl, requestId }, 'Received GitHub PR webhook');
 
       if (['opened', 'synchronize'].includes(action)) {
         // Find the base service for this repo (the one that isn't a preview)
@@ -351,8 +345,7 @@ export class WebhookController {
         );
 
         if (!baseService) {
-          const { logger } = await import('shared');
-          logger.info(
+          this.logger.info(
             { repoUrl, requestId },
             'No base service found for PR webhook, skipping preview deployment',
           );
@@ -394,11 +387,7 @@ export class WebhookController {
           });
         }
 
-        const { logger: sharedLogger } = await import('shared');
-        sharedLogger.info(
-          { serviceName: service.name, requestId },
-          'Triggering preview deployment',
-        );
+        this.logger.info({ serviceName: service.name, requestId }, 'Triggering preview deployment');
 
         await this.createAndQueueDeployment(service, pr.head.sha, requestId);
 
@@ -412,8 +401,7 @@ export class WebhookController {
         );
 
         if (previewService) {
-          const { logger } = await import('shared');
-          logger.info({ prNumber, requestId }, 'Cleaning up preview environment for PR');
+          this.logger.info({ prNumber, requestId }, 'Cleaning up preview environment for PR');
           await this.deleteService(previewService.id, previewService.userId);
           return reply.status(200).send({ success: true, deletedService: previewService.name });
         }
@@ -423,8 +411,7 @@ export class WebhookController {
       return reply.status(200).send({ skipped: `Action ${action} not handled` });
     } catch (error: unknown) {
       const err = error as Error;
-      const { logger } = await import('shared');
-      logger.error({ err, requestId }, 'Error handling GitHub PR webhook');
+      this.logger.error({ err, requestId }, 'Error handling GitHub PR webhook');
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
         message: err.message,
@@ -448,8 +435,7 @@ export class WebhookController {
     const repoUrl = payload.repository.html_url;
     const branch = payload.ref.replace('refs/heads/', '');
 
-    const { logger } = await import('shared');
-    logger.info({ repoUrl, branch, requestId }, 'Received GitHub push webhook');
+    this.logger.info({ repoUrl, branch, requestId }, 'Received GitHub push webhook');
 
     // Find service(s) matching this repo and branch
     const services = await this.serviceRepository.findByRepoUrlAndBranch(
@@ -458,15 +444,13 @@ export class WebhookController {
     );
 
     if (services.length === 0) {
-      const { logger: sharedLogger } = await import('shared');
-      sharedLogger.info({ repoUrl, branch, requestId }, 'No service found for push webhook');
+      this.logger.info({ repoUrl, branch, requestId }, 'No service found for push webhook');
       return reply.status(200).send({ skipped: 'No matching service found' });
     }
 
     try {
       for (const service of services) {
-        const { logger: sharedLogger } = await import('shared');
-        sharedLogger.info(
+        this.logger.info(
           { serviceName: service.name, requestId },
           'Triggering automated deployment',
         );
@@ -475,8 +459,7 @@ export class WebhookController {
       return reply.status(200).send({ success: true, servicesTriggered: services.length });
     } catch (error: unknown) {
       const err = error as Error;
-      const { logger } = await import('shared');
-      logger.error({ err, requestId }, 'Error handling GitHub push webhook');
+      this.logger.error({ err, requestId }, 'Error handling GitHub push webhook');
       return reply.status(500).send({
         error: 'Internal server error while processing webhook',
         message: err.message,
