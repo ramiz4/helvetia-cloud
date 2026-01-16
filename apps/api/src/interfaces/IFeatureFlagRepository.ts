@@ -72,4 +72,13 @@ export interface IFeatureFlagRepository {
    * Supports A/B testing based on segments
    */
   isEnabled(key: string, userId?: string): Promise<boolean>;
+
+  /**
+   * Check multiple feature flags at once
+   * More efficient than calling isEnabled multiple times
+   * @param keys - Array of feature flag keys to check
+   * @param userId - Optional user ID for A/B testing
+   * @returns Promise<Record<string, boolean>> - Map of flag keys to their enabled status
+   */
+  checkMultiple(keys: string[], userId?: string): Promise<Record<string, boolean>>;
 }

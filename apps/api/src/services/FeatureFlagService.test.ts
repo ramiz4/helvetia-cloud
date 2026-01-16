@@ -27,6 +27,7 @@ describe('FeatureFlagService', () => {
       update: vi.fn(),
       delete: vi.fn(),
       isEnabled: vi.fn(),
+      checkMultiple: vi.fn(),
     };
 
     service = new FeatureFlagService(mockRepository);
@@ -191,11 +192,12 @@ describe('FeatureFlagService', () => {
   });
 
   describe('checkMultiple', () => {
-    it('should check multiple flags at once', async () => {
-      vi.mocked(mockRepository.isEnabled)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(true);
+    it('should delegate to repository checkMultiple method', async () => {
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({
+        flag1: true,
+        flag2: false,
+        flag3: true,
+      });
 
       const result = await service.checkMultiple(['flag1', 'flag2', 'flag3']);
 
@@ -204,11 +206,18 @@ describe('FeatureFlagService', () => {
         flag2: false,
         flag3: true,
       });
-      expect(mockRepository.isEnabled).toHaveBeenCalledTimes(3);
+      expect(mockRepository.checkMultiple).toHaveBeenCalledWith(
+        ['flag1', 'flag2', 'flag3'],
+        undefined,
+      );
+      expect(mockRepository.checkMultiple).toHaveBeenCalledTimes(1);
     });
 
-    it('should check multiple flags for specific user', async () => {
-      vi.mocked(mockRepository.isEnabled).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    it('should pass userId to repository checkMultiple', async () => {
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({
+        flag1: true,
+        flag2: false,
+      });
 
       const result = await service.checkMultiple(['flag1', 'flag2'], 'user-123');
 
@@ -216,12 +225,14 @@ describe('FeatureFlagService', () => {
         flag1: true,
         flag2: false,
       });
-      expect(mockRepository.isEnabled).toHaveBeenCalledWith('flag1', 'user-123');
-      expect(mockRepository.isEnabled).toHaveBeenCalledWith('flag2', 'user-123');
+      expect(mockRepository.checkMultiple).toHaveBeenCalledWith(['flag1', 'flag2'], 'user-123');
     });
 
     it('should return false for all non-existent flags', async () => {
-      vi.mocked(mockRepository.isEnabled).mockResolvedValue(false);
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({
+        nonexistent1: false,
+        nonexistent2: false,
+      });
 
       const result = await service.checkMultiple(['nonexistent1', 'nonexistent2']);
 
@@ -232,10 +243,12 @@ describe('FeatureFlagService', () => {
     });
 
     it('should return empty object for empty array', async () => {
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({});
+
       const result = await service.checkMultiple([]);
 
       expect(result).toEqual({});
-      expect(mockRepository.isEnabled).not.toHaveBeenCalled();
+      expect(mockRepository.checkMultiple).toHaveBeenCalledWith([], undefined);
     });
   });
 
