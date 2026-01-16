@@ -1,5 +1,6 @@
+import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FeatureFlagClient } from './featureFlags';
+import { FeatureFlagClient, useFeatureFlag } from './featureFlags';
 
 // Mock shared-ui module
 vi.mock('shared-ui', () => ({
@@ -324,6 +325,234 @@ describe('FeatureFlagClient', () => {
           body: JSON.stringify({ keys: ['flag1'], userId: undefined }),
         }),
       );
+    });
+  });
+
+  describe('useFeatureFlag hook', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      FeatureFlagClient.clearCache();
+    });
+
+    it('should fetch and return feature flag status', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, enabled: true }),
+      } as Response);
+
+      const { result } = renderHook(() => useFeatureFlag('test-flag'));
+
+      // Initially loading
+      expect(result.current.loading).toBe(true);
+      expect(result.current.enabled).toBe(false);
+
+      // Wait for the fetch to complete
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(true);
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/feature-flags/check'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ key: 'test-flag', userId: undefined }),
+        }),
+      );
+    });
+
+    it('should handle userId parameter', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, enabled: true }),
+      } as Response);
+
+      const { result } = renderHook(() => useFeatureFlag('test-flag', 'user-123'));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/feature-flags/check'),
+        expect.objectContaining({
+          body: JSON.stringify({ key: 'test-flag', userId: 'user-123' }),
+        }),
+      );
+    });
+
+    it('should not fetch when options.enabled is false', async () => {
+      const { result } = renderHook(() =>
+        useFeatureFlag('test-flag', undefined, { enabled: false }),
+      );
+
+      // Should immediately set loading to false and enabled to false
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(false);
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should fetch when options.enabled is true', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, enabled: true }),
+      } as Response);
+
+      const { result } = renderHook(() =>
+        useFeatureFlag('test-flag', undefined, { enabled: true }),
+      );
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(true);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fetch when options is undefined (default behavior)', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, enabled: false }),
+      } as Response);
+
+      const { result } = renderHook(() => useFeatureFlag('test-flag', undefined, undefined));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(false);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not cause unnecessary re-renders with stable dependencies', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, enabled: true }),
+      } as Response);
+
+      const { result, rerender } = renderHook(
+        ({ key, userId, options }) => useFeatureFlag(key, userId, options),
+        {
+          initialProps: {
+            key: 'test-flag',
+            userId: undefined,
+            options: undefined,
+          },
+        },
+      );
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      // Rerender with same props
+      rerender({
+        key: 'test-flag',
+        userId: undefined,
+        options: undefined,
+      });
+
+      // Should only trigger component re-render, not useEffect
+      expect(fetch).toHaveBeenCalledTimes(1); // Still only 1 fetch call
+    });
+
+    it('should re-fetch when key changes', async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ success: true, enabled: true }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ success: true, enabled: false }),
+        } as Response);
+
+      const { result, rerender } = renderHook(({ key }) => useFeatureFlag(key), {
+        initialProps: { key: 'flag-1' },
+      });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(true);
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      // Change key
+      rerender({ key: 'flag-2' });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(false);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should re-fetch when userId changes', async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ success: true, enabled: true }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ success: true, enabled: false }),
+        } as Response);
+
+      const { result, rerender } = renderHook(({ userId }) => useFeatureFlag('test-flag', userId), {
+        initialProps: { userId: 'user-1' },
+      });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(true);
+
+      // Change userId
+      rerender({ userId: 'user-2' });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(false);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should re-fetch when options.enabled changes from false to true', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, enabled: true }),
+      } as Response);
+
+      const { result, rerender } = renderHook(
+        ({ enabled }) => useFeatureFlag('test-flag', undefined, { enabled }),
+        {
+          initialProps: { enabled: false },
+        },
+      );
+
+      // Should not fetch when enabled is false
+      expect(result.current.loading).toBe(false);
+      expect(result.current.enabled).toBe(false);
+      expect(fetch).toHaveBeenCalledTimes(0);
+
+      // Change to true
+      rerender({ enabled: true });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.enabled).toBe(true);
+      expect(fetch).toHaveBeenCalledTimes(1);
     });
   });
 });
