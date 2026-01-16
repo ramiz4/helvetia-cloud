@@ -95,6 +95,12 @@
     "closeMenu": "Navigationsmenü schliesse",
     "mobileMenu": "Mobili Navigation"
   },
+  "theme": {
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System",
+    "switchTheme": "Theme wächsle"
+  },
   "login": {
     "backToHome": "Zrugg uf d’Startsiite",
     "swissCloudSecurity": "Schwiizer Cloud-Sicherheit",
@@ -112,7 +118,11 @@
     "password": "Passwuort",
     "signIn": "Anmeldi",
     "invalidCredentials": "Ungiültige Benutzername oder Passwuort",
-    "orgAccessHelp": "Deployment vonere GitHub Organisation? Stell sicher, dass du de Helvetia OAuth App Zuegriff uf dini Organisation gäh häsch."
+    "orgAccessHelp": "Deployment vonere GitHub Organisation? Stell sicher, dass du de Helvetia OAuth App Zuegriff uf dini Organisation gäh häsch.",
+    "benefit1": "I Sekunde mit Git-Integration deploye",
+    "benefit2": "100% i de Schwiiz ghostet",
+    "benefit3": "Sicherheit & Dateschutz uf Enterprise-Niveau",
+    "dataSecurityMessage": "Dini Date werdet verschlüsslet und i de Schwiiz gspeicheret. Mir greifet nie ohni dini Erlaubnis uf dini Repositories zue."
   },
   "dashboard": {
     "title": "Dashboard",

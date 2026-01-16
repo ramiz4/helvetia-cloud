@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
 import { OrganizationProvider } from '../lib/OrganizationContext';
 import QueryProvider from '../lib/QueryProvider';
+import { ThemeProvider } from '../lib/ThemeContext';
 import './tailwind.css';
 
 export const metadata: Metadata = {
@@ -28,52 +29,51 @@ export default function RootLayout({
         />
       </head>
       <body
-        className="bg-slate-950 text-slate-200 font-sans antialiased min-h-screen"
+        className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans antialiased min-h-screen transition-colors duration-300"
         suppressHydrationWarning
       >
         <a href="#main-content" className="skip-to-main">
           Skip to main content
         </a>
-        <LanguageProvider>
-          <QueryProvider>
-            <OrganizationProvider>
-              <div className="flex flex-col min-h-screen bg-slate-950">
-                <Navigation />
-                <main
-                  id="main-content"
-                  className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
-                >
-                  {children}
-                </main>
-                <Footer />
-              </div>
-            </OrganizationProvider>
-            <Toaster
-              position="bottom-right"
-              toastOptions={{
-                style: {
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  color: '#f8fafc',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '1rem',
-                },
-                success: {
-                  iconTheme: {
-                    primary: '#10b981',
-                    secondary: 'white',
+        <ThemeProvider>
+          <LanguageProvider>
+            <QueryProvider>
+              <OrganizationProvider>
+                <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+                  <Navigation />
+                  <main
+                    id="main-content"
+                    className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
+                  >
+                    {children}
+                  </main>
+                  <Footer />
+                </div>
+              </OrganizationProvider>
+              <Toaster
+                position="bottom-right"
+                toastOptions={{
+                  className:
+                    'bg-slate-50/90 text-slate-900 dark:bg-slate-900/90 dark:text-slate-50 ' +
+                    'backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 ' +
+                    'rounded-2xl',
+                  success: {
+                    iconTheme: {
+                      primary: '#10b981',
+                      secondary: 'white',
+                    },
                   },
-                },
-                error: {
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: 'white',
+                  error: {
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: 'white',
+                    },
                   },
-                },
-              }}
-            />
-          </QueryProvider>
-        </LanguageProvider>
+                }}
+              />
+            </QueryProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

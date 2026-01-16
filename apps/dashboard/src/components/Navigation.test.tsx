@@ -25,6 +25,19 @@ vi.mock('@/lib/OrganizationContext', () => ({
   }),
 }));
 
+vi.mock('@/lib/featureFlags', () => ({
+  useFeatureFlag: () => ({ enabled: false }),
+}));
+
+vi.mock('@/lib/ThemeContext', () => ({
+  useTheme: () => ({
+    theme: 'system',
+    setTheme: vi.fn(),
+    resolvedTheme: 'dark',
+  }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 vi.mock('@/hooks/useOrganizations', () => ({
   useOrganizations: () => ({
     data: [{ id: 'org1', name: 'Org 1' }],

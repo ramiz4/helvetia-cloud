@@ -95,6 +95,12 @@
     "closeMenu": "Navigationsmenü schließen",
     "mobileMenu": "Mobile Navigation"
   },
+  "theme": {
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System",
+    "switchTheme": "Theme wechseln"
+  },
   "login": {
     "backToHome": "Zurück zur Startseite",
     "swissCloudSecurity": "Schweizer Cloud-Sicherheit",
@@ -112,7 +118,11 @@
     "password": "Passwort",
     "signIn": "Anmelden",
     "invalidCredentials": "Ungültiger Benutzername oder Passwort",
-    "orgAccessHelp": "Deployment von einer GitHub Organisation? Stellen Sie sicher, dass Sie der Helvetia OAuth App Zugriff auf Ihre Organisation gewährt haben."
+    "orgAccessHelp": "Deployment von einer GitHub Organisation? Stellen Sie sicher, dass Sie der Helvetia OAuth App Zugriff auf Ihre Organisation gewährt haben.",
+    "benefit1": "In Sekunden mit Git-Integration deployen",
+    "benefit2": "100% in der Schweiz gehostet",
+    "benefit3": "Sicherheit & Datenschutz auf Enterprise-Niveau",
+    "dataSecurityMessage": "Ihre Daten werden verschlüsselt und in der Schweiz gespeichert. Wir greifen niemals ohne Ihre Erlaubnis auf Ihre Repositories zu."
   },
   "dashboard": {
     "title": "Dashboard",

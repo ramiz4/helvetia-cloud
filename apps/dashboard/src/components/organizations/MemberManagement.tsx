@@ -104,6 +104,7 @@ export default function MemberManagement({ organization }: MemberManagementProps
               >
                 <option value="OWNER">Owner</option>
                 <option value="ADMIN">Admin</option>
+                <option value="DEVELOPER">Developer</option>
                 <option value="MEMBER">Member</option>
                 <option value="VIEWER">Viewer</option>
               </select>
@@ -178,6 +179,7 @@ export default function MemberManagement({ organization }: MemberManagementProps
                     >
                       <option value="OWNER">Owner</option>
                       <option value="ADMIN">Admin</option>
+                      <option value="DEVELOPER">Developer</option>
                       <option value="MEMBER">Member</option>
                       <option value="VIEWER">Viewer</option>
                     </select>

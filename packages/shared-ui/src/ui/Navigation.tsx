@@ -30,6 +30,7 @@ interface NavigationProps {
   userMenuChildren?: React.ReactNode;
   mobileMenuExtra?: React.ReactNode;
   planLabel?: string;
+  themeSwitcher?: React.ReactNode;
 }
 
 export default function Navigation({
@@ -42,6 +43,7 @@ export default function Navigation({
   userMenuChildren,
   mobileMenuExtra,
   planLabel,
+  themeSwitcher,
 }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -138,6 +140,7 @@ export default function Navigation({
               </div>
 
               <div className="flex items-center gap-4">
+                {themeSwitcher}
                 <LanguageSwitcher />
                 <div className="w-px h-6 bg-white/10 mx-1" />
                 {user && (
@@ -149,6 +152,7 @@ export default function Navigation({
             </div>
           ) : (
             <div className="hidden lg:flex items-center gap-4">
+              {themeSwitcher}
               <LanguageSwitcher />
               <div className="w-px h-6 bg-white/10 mx-1" />
               <Link
@@ -227,6 +231,15 @@ export default function Navigation({
                     <LanguageSwitcher variant="minimal" />
                   </div>
 
+                  {themeSwitcher && (
+                    <div className="flex flex-col gap-3 px-4">
+                      <span className="text-slate-400 text-sm font-medium">
+                        {t.theme?.switchTheme || 'Theme'}
+                      </span>
+                      {themeSwitcher}
+                    </div>
+                  )}
+
                   {user && (
                     <div className="flex items-center gap-4 px-4 py-3 bg-white/5 rounded-2xl border border-white/10">
                       <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-indigo-500/20 border border-indigo-500/30">
@@ -269,6 +282,14 @@ export default function Navigation({
                   <span className="text-slate-400 text-sm font-medium">{t.nav.selectLanguage}</span>
                   <LanguageSwitcher variant="minimal" />
                 </div>
+                {themeSwitcher && (
+                  <div className="flex flex-col gap-3 px-4">
+                    <span className="text-slate-400 text-sm font-medium">
+                      {t.theme?.switchTheme || 'Theme'}
+                    </span>
+                    {themeSwitcher}
+                  </div>
+                )}
                 <Link
                   href="/login"
                   className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold bg-indigo-500 text-white shadow-lg gap-2"
