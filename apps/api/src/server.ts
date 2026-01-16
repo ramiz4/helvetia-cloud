@@ -42,7 +42,7 @@ try {
 }
 
 // Set up deployment queue
-const deploymentQueue = new Queue('build', {
+const deploymentQueue = new Queue('deployments', {
   connection: redisConnection,
   defaultJobOptions: {
     attempts: 3,
