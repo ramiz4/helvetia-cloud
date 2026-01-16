@@ -378,6 +378,7 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/refresh',
     '/auth/logout',
     '/feature-flags/check',
+    '/feature-flags/check-bulk',
   ];
 
   // Get the URL without query parameters

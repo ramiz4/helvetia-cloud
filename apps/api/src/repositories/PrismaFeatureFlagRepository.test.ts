@@ -259,4 +259,143 @@ describe('PrismaFeatureFlagRepository', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('checkMultiple', () => {
+    it('should return empty object for empty array', async () => {
+      const result = await repository.checkMultiple([]);
+
+      expect(result).toEqual({});
+      expect(mockPrismaClient.featureFlag.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should check multiple flags in a single query', async () => {
+      const flags = [
+        { ...mockFlag, key: 'flag1', enabled: true },
+        { ...mockFlag, key: 'flag2', enabled: false },
+        { ...mockFlag, key: 'flag3', enabled: true },
+      ];
+
+      mockPrismaClient.featureFlag.findMany.mockResolvedValue(flags);
+
+      const result = await repository.checkMultiple(['flag1', 'flag2', 'flag3']);
+
+      expect(result).toEqual({
+        flag1: true,
+        flag2: false,
+        flag3: true,
+      });
+
+      expect(mockPrismaClient.featureFlag.findMany).toHaveBeenCalledWith({
+        where: {
+          key: {
+            in: ['flag1', 'flag2', 'flag3'],
+          },
+        },
+      });
+      expect(mockPrismaClient.featureFlag.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return false for non-existent flags', async () => {
+      // Return only one flag, the others don't exist
+      mockPrismaClient.featureFlag.findMany.mockResolvedValue([
+        { ...mockFlag, key: 'flag1', enabled: true },
+      ]);
+
+      const result = await repository.checkMultiple(['flag1', 'flag2', 'flag3']);
+
+      expect(result).toEqual({
+        flag1: true,
+        flag2: false,
+        flag3: false,
+      });
+    });
+
+    it('should handle userIds segments in batch', async () => {
+      const flags = [
+        {
+          ...mockFlag,
+          key: 'flag1',
+          enabled: true,
+          segments: {
+            type: 'userIds',
+            userIds: ['user-1', 'user-2'],
+          },
+        },
+        {
+          ...mockFlag,
+          key: 'flag2',
+          enabled: true,
+          segments: {
+            type: 'userIds',
+            userIds: ['user-3'],
+          },
+        },
+      ];
+
+      mockPrismaClient.featureFlag.findMany.mockResolvedValue(flags);
+
+      const result = await repository.checkMultiple(['flag1', 'flag2'], 'user-1');
+
+      expect(result).toEqual({
+        flag1: true, // user-1 is in the list
+        flag2: false, // user-1 is not in the list
+      });
+    });
+
+    it('should handle percentage segments in batch', async () => {
+      const flags = [
+        {
+          ...mockFlag,
+          key: 'flag1',
+          enabled: true,
+          segments: {
+            type: 'percentage',
+            percentage: 100, // Always enabled
+          },
+        },
+        {
+          ...mockFlag,
+          key: 'flag2',
+          enabled: true,
+          segments: {
+            type: 'percentage',
+            percentage: 0, // Never enabled
+          },
+        },
+      ];
+
+      mockPrismaClient.featureFlag.findMany.mockResolvedValue(flags);
+
+      const result = await repository.checkMultiple(['flag1', 'flag2'], 'user-123');
+
+      expect(result).toEqual({
+        flag1: true,
+        flag2: false,
+      });
+    });
+
+    it('should handle mixed flags with and without segments', async () => {
+      const flags = [
+        { ...mockFlag, key: 'simple', enabled: true, segments: null },
+        {
+          ...mockFlag,
+          key: 'segmented',
+          enabled: true,
+          segments: {
+            type: 'userIds',
+            userIds: ['user-1'],
+          },
+        },
+      ];
+
+      mockPrismaClient.featureFlag.findMany.mockResolvedValue(flags);
+
+      const result = await repository.checkMultiple(['simple', 'segmented'], 'user-1');
+
+      expect(result).toEqual({
+        simple: true,
+        segmented: true,
+      });
+    });
+  });
 });

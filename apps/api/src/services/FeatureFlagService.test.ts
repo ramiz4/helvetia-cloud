@@ -27,6 +27,7 @@ describe('FeatureFlagService', () => {
       update: vi.fn(),
       delete: vi.fn(),
       isEnabled: vi.fn(),
+      checkMultiple: vi.fn(),
     };
 
     service = new FeatureFlagService(mockRepository);
@@ -187,6 +188,67 @@ describe('FeatureFlagService', () => {
       const result = await service.isEnabled('nonexistent');
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('checkMultiple', () => {
+    it('should delegate to repository checkMultiple method', async () => {
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({
+        flag1: true,
+        flag2: false,
+        flag3: true,
+      });
+
+      const result = await service.checkMultiple(['flag1', 'flag2', 'flag3']);
+
+      expect(result).toEqual({
+        flag1: true,
+        flag2: false,
+        flag3: true,
+      });
+      expect(mockRepository.checkMultiple).toHaveBeenCalledWith(
+        ['flag1', 'flag2', 'flag3'],
+        undefined,
+      );
+      expect(mockRepository.checkMultiple).toHaveBeenCalledTimes(1);
+    });
+
+    it('should pass userId to repository checkMultiple', async () => {
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({
+        flag1: true,
+        flag2: false,
+      });
+
+      const result = await service.checkMultiple(['flag1', 'flag2'], 'user-123');
+
+      expect(result).toEqual({
+        flag1: true,
+        flag2: false,
+      });
+      expect(mockRepository.checkMultiple).toHaveBeenCalledWith(['flag1', 'flag2'], 'user-123');
+    });
+
+    it('should return false for all non-existent flags', async () => {
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({
+        nonexistent1: false,
+        nonexistent2: false,
+      });
+
+      const result = await service.checkMultiple(['nonexistent1', 'nonexistent2']);
+
+      expect(result).toEqual({
+        nonexistent1: false,
+        nonexistent2: false,
+      });
+    });
+
+    it('should return empty object for empty array', async () => {
+      vi.mocked(mockRepository.checkMultiple).mockResolvedValue({});
+
+      const result = await service.checkMultiple([]);
+
+      expect(result).toEqual({});
+      expect(mockRepository.checkMultiple).toHaveBeenCalledWith([], undefined);
     });
   });
 

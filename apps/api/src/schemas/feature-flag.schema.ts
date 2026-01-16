@@ -46,3 +46,11 @@ export const CheckFlagSchema = z.object({
   key: z.string().min(1),
   userId: z.string().optional(),
 });
+
+/**
+ * Schema for checking multiple feature flags at once
+ */
+export const CheckBulkFlagSchema = z.object({
+  keys: z.array(z.string().min(1)).min(1).max(50), // Limit to 50 flags per request
+  userId: z.string().optional(),
+});

@@ -83,6 +83,14 @@ export class FeatureFlagService {
   }
 
   /**
+   * Check multiple feature flags at once
+   * Uses batch query in repository layer for better performance
+   */
+  async checkMultiple(keys: string[], userId?: string): Promise<Record<string, boolean>> {
+    return this.featureFlagRepository.checkMultiple(keys, userId);
+  }
+
+  /**
    * Toggle a feature flag on/off
    */
   async toggleFlag(id: string): Promise<FeatureFlag> {
