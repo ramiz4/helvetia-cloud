@@ -1,11 +1,25 @@
 import crypto from 'crypto';
 import { Role } from 'database';
 import 'reflect-metadata';
+import { logger } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from '../config/env';
 import type { IFeatureFlagRepository, IUserRepository } from '../interfaces';
 import * as passwordUtils from '../utils/password';
 import { InitializationService } from './InitializationService';
+
+vi.mock('shared', async () => {
+  const actual = await vi.importActual('shared');
+  return {
+    ...actual,
+    logger: {
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    },
+  };
+});
 
 vi.mock('../config/env', () => ({
   env: {
@@ -39,8 +53,6 @@ describe('InitializationService', () => {
 
     service = new InitializationService(mockUserRepo, mockFeatureFlagRepo);
     vi.clearAllMocks();
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   describe('initialize', () => {
@@ -139,9 +151,9 @@ describe('InitializationService', () => {
 
       await service.initialize();
 
-      expect(console.error).toHaveBeenCalledWith(
-        'Failed to initialize admin user:',
-        expect.any(Error),
+      expect(logger.error).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        'Failed to initialize admin user',
       );
     });
 

@@ -1,4 +1,4 @@
-import { PLATFORM_DOMAIN } from 'shared';
+import { PLATFORM_DOMAIN, logger } from 'shared';
 import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
 import { ComposeFileBuilder } from '../utils/builders';
 import { ensureImageExists, ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
@@ -65,7 +65,7 @@ export class ComposeDeploymentStrategy implements IDeploymentStrategy {
     try {
       await builder.start();
       const startMsg = `==== Starting Docker Compose deployment for ${serviceName} ====\n\n`;
-      console.log(startMsg.trim());
+      logger.info(startMsg.trim());
       context.onLog?.(startMsg);
       buildLogs += startMsg;
 
@@ -203,7 +203,7 @@ EOF
         }
         await builder.remove({ force: true });
       } catch (cleanupError) {
-        console.error('Failed to cleanup builder container:', cleanupError);
+        logger.error({ err: cleanupError }, 'Failed to cleanup builder container');
       }
     }
   }

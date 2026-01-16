@@ -17,7 +17,7 @@ const start = async () => {
     await initService.initialize();
 
     await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
-    console.log(`API Server listening on port ${env.PORT}`);
+    fastify.log.info(`API Server listening on port ${env.PORT}`);
 
     // Start status reconciliation service
     statusReconciliationService.start(STATUS_RECONCILIATION_INTERVAL_MS);
@@ -30,7 +30,7 @@ const start = async () => {
       try {
         process.kill(process.ppid);
       } catch (e) {
-        console.error('Failed to kill parent process:', e);
+        fastify.log.error(e, 'Failed to kill parent process');
       }
     }
 
@@ -43,12 +43,12 @@ let isShuttingDown = false;
 
 const shutdown = async (signal: string) => {
   if (isShuttingDown) {
-    console.log(`${signal} received but shutdown already in progress`);
+    fastify.log.info(`${signal} received but shutdown already in progress`);
     return;
   }
 
   isShuttingDown = true;
-  console.log(`${signal} received, closing server gracefully...`);
+  fastify.log.info(`${signal} received, closing server gracefully...`);
 
   try {
     // Stop status reconciliation service
@@ -56,11 +56,11 @@ const shutdown = async (signal: string) => {
 
     // Close Fastify server (waits for in-flight requests to complete)
     await fastify.close();
-    console.log('Fastify server closed');
+    fastify.log.info('Fastify server closed');
 
     process.exit(0);
   } catch (error) {
-    console.error('Error during graceful shutdown:', error);
+    fastify.log.error(error, 'Error during graceful shutdown');
     process.exit(1);
   }
 };

@@ -1,5 +1,6 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
+import { logger } from 'shared';
 import {
   CLEANUP_DANGLING_IMAGES,
   CLEANUP_OLD_IMAGES,
@@ -39,7 +40,7 @@ export async function getDockerDiskUsage(docker: Docker): Promise<DiskUsage> {
       freeBytes: 0,
     };
   } catch (error) {
-    console.error('Failed to get Docker disk usage:', error);
+    logger.error({ err: error }, 'Failed to get Docker disk usage');
     return {
       usedPercent: 0,
       totalBytes: 0,
@@ -58,11 +59,11 @@ export async function removeDanglingImages(docker: Docker): Promise<{
   errors: string[];
 }> {
   if (!CLEANUP_DANGLING_IMAGES) {
-    console.log('Dangling image cleanup is disabled');
+    logger.info('Dangling image cleanup is disabled');
     return { count: 0, bytesFreed: 0, errors: [] };
   }
 
-  console.log('Scanning for dangling images...');
+  logger.info('Scanning for dangling images...');
   const errors: string[] = [];
   let count = 0;
   let bytesFreed = 0;
@@ -73,7 +74,7 @@ export async function removeDanglingImages(docker: Docker): Promise<{
       filters: JSON.stringify({ dangling: ['true'] }),
     });
 
-    console.log(`Found ${images.length} dangling images`);
+    logger.info(`Found ${images.length} dangling images`);
 
     for (const imageInfo of images) {
       try {
@@ -83,12 +84,12 @@ export async function removeDanglingImages(docker: Docker): Promise<{
         await image.remove({ force: false });
         count++;
         bytesFreed += imageSize;
-        console.log(
+        logger.info(
           `Removed dangling image ${imageInfo.Id.substring(0, 12)} (${(imageSize / 1024 / 1024).toFixed(2)} MB)`,
         );
       } catch (error) {
         const errorMsg = `Failed to remove dangling image ${imageInfo.Id}: ${error instanceof Error ? error.message : String(error)}`;
-        console.error(errorMsg);
+        logger.error(errorMsg);
         errors.push(errorMsg);
       }
     }
@@ -110,11 +111,11 @@ export async function removeOldImages(docker: Docker): Promise<{
   errors: string[];
 }> {
   if (!CLEANUP_OLD_IMAGES) {
-    console.log('Old image cleanup is disabled');
+    logger.info('Old image cleanup is disabled');
     return { count: 0, bytesFreed: 0, errors: [] };
   }
 
-  console.log(`Scanning for images older than ${IMAGE_RETENTION_DAYS} days...`);
+  logger.info(`Scanning for images older than ${IMAGE_RETENTION_DAYS} days...`);
   const errors: string[] = [];
   let count = 0;
   let bytesFreed = 0;
@@ -145,7 +146,7 @@ export async function removeOldImages(docker: Docker): Promise<{
       },
     });
 
-    console.log(`Found ${oldDeployments.length} old deployments to check`);
+    logger.info(`Found ${oldDeployments.length} old deployments to check`);
 
     // Get list of currently running containers to avoid removing their images
     const runningContainers = await docker.listContainers({ all: false });
@@ -188,7 +189,7 @@ export async function removeOldImages(docker: Docker): Promise<{
 
         // Don't remove the latest successful deployment's image
         if (latestDeployment && latestDeployment.imageTag === imageTag) {
-          console.log(
+          logger.info(
             `Skipping ${imageTag} - it's the latest deployment for service ${deployment.serviceId}`,
           );
           continue;
@@ -199,13 +200,13 @@ export async function removeOldImages(docker: Docker): Promise<{
         const imageData = await image.inspect().catch(() => null);
 
         if (!imageData) {
-          console.log(`Image ${imageTag} not found, may have been already removed`);
+          logger.info(`Image ${imageTag} not found, may have been already removed`);
           continue;
         }
 
         // Don't remove if image is currently in use
         if (activeImageIds.has(imageData.Id)) {
-          console.log(`Skipping ${imageTag} - image is currently in use`);
+          logger.info(`Skipping ${imageTag} - image is currently in use`);
           continue;
         }
 
@@ -215,19 +216,19 @@ export async function removeOldImages(docker: Docker): Promise<{
         await image.remove({ force: false });
         count++;
         bytesFreed += imageSize;
-        console.log(
+        logger.info(
           `Removed old image ${imageTag} from deployment ${deployment.id} (${(imageSize / 1024 / 1024).toFixed(2)} MB, created ${deployment.createdAt.toISOString()})`,
         );
       } catch (error) {
         // If error is 409 (conflict), the image is being used by a container
         const dockerError = error as { statusCode?: number };
         if (dockerError.statusCode === 409) {
-          console.log(`Skipping ${imageTag} - image is in use by a container`);
+          logger.info(`Skipping ${imageTag} - image is in use by a container`);
           continue;
         }
 
         const errorMsg = `Failed to remove old image ${imageTag}: ${error instanceof Error ? error.message : String(error)}`;
-        console.error(errorMsg);
+        logger.error(errorMsg);
         errors.push(errorMsg);
       }
     }
@@ -244,23 +245,23 @@ export async function removeOldImages(docker: Docker): Promise<{
  * Perform comprehensive image cleanup
  */
 export async function cleanupDockerImages(docker: Docker): Promise<CleanupResult> {
-  console.log('=== Starting Docker Image Cleanup ===');
+  logger.info('=== Starting Docker Image Cleanup ===');
 
   // Check disk usage before cleanup
   const diskUsageBefore = await getDockerDiskUsage(docker);
-  console.log(
+  logger.info(
     `Docker images using ${(diskUsageBefore.usedBytes / 1024 / 1024 / 1024).toFixed(2)} GB`,
   );
 
   // Remove dangling images first
   const danglingResult = await removeDanglingImages(docker);
-  console.log(
+  logger.info(
     `Dangling images cleanup: ${danglingResult.count} images removed, ${(danglingResult.bytesFreed / 1024 / 1024).toFixed(2)} MB freed`,
   );
 
   // Remove old images based on retention policy
   const oldImagesResult = await removeOldImages(docker);
-  console.log(
+  logger.info(
     `Old images cleanup: ${oldImagesResult.count} images removed, ${(oldImagesResult.bytesFreed / 1024 / 1024).toFixed(2)} MB freed`,
   );
 
@@ -268,23 +269,23 @@ export async function cleanupDockerImages(docker: Docker): Promise<CleanupResult
   const diskUsageAfter = await getDockerDiskUsage(docker);
   const totalBytesFreed = diskUsageBefore.usedBytes - diskUsageAfter.usedBytes;
 
-  console.log(
+  logger.info(
     `Total cleanup: ${danglingResult.count + oldImagesResult.count} images removed, ${(totalBytesFreed / 1024 / 1024).toFixed(2)} MB freed`,
   );
 
   const allErrors = [...danglingResult.errors, ...oldImagesResult.errors];
   if (allErrors.length > 0) {
-    console.error(`Cleanup completed with ${allErrors.length} errors`);
+    logger.error(`Cleanup completed with ${allErrors.length} errors`);
   }
 
   // Log warning if disk usage is still high
   if (diskUsageAfter.usedPercent > DISK_USAGE_THRESHOLD_PERCENT) {
-    console.warn(
+    logger.warn(
       `⚠️  Disk usage (${diskUsageAfter.usedPercent.toFixed(1)}%) still exceeds threshold (${DISK_USAGE_THRESHOLD_PERCENT}%)`,
     );
   }
 
-  console.log('=== Docker Image Cleanup Complete ===');
+  logger.info('=== Docker Image Cleanup Complete ===');
 
   return {
     danglingImagesRemoved: danglingResult.count,

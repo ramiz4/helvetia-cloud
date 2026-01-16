@@ -1,4 +1,6 @@
+import { logger } from 'shared';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { healthServer, startHealthServer } from './health-server';
 
 // Mock env config
 vi.mock('./config/env', () => ({
@@ -9,36 +11,44 @@ vi.mock('./config/env', () => ({
   },
 }));
 
-// Mock Redis as a constructor function
-const MockIORedis = vi.fn(function MockRedis() {
+vi.mock('shared', async () => {
+  const actual = await vi.importActual('shared');
   return {
-    status: 'ready',
-    connect: vi.fn().mockResolvedValue(undefined),
-    quit: vi.fn().mockResolvedValue(undefined),
+    ...actual,
+    logger: {
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    },
   };
 });
 
-vi.mock('ioredis', () => {
-  return {
-    default: MockIORedis,
-  };
-});
+const { MockIORedis, MockQueue } = vi.hoisted(() => ({
+  MockIORedis: vi.fn(function MockRedis() {
+    return {
+      status: 'ready',
+      connect: vi.fn().mockResolvedValue(undefined),
+      quit: vi.fn().mockResolvedValue(undefined),
+    };
+  }),
+  MockQueue: vi.fn(function MockBullQueue() {
+    return {
+      getWaitingCount: vi.fn().mockResolvedValue(5),
+      getActiveCount: vi.fn().mockResolvedValue(2),
+      getCompletedCount: vi.fn().mockResolvedValue(150),
+      getFailedCount: vi.fn().mockResolvedValue(3),
+    };
+  }),
+}));
 
-// Mock Queue constructor
-const MockQueue = vi.fn(function MockBullQueue() {
-  return {
-    getWaitingCount: vi.fn().mockResolvedValue(5),
-    getActiveCount: vi.fn().mockResolvedValue(2),
-    getCompletedCount: vi.fn().mockResolvedValue(150),
-    getFailedCount: vi.fn().mockResolvedValue(3),
-  };
-});
+vi.mock('ioredis', () => ({
+  default: MockIORedis,
+}));
 
-vi.mock('bullmq', () => {
-  return {
-    Queue: MockQueue,
-  };
-});
+vi.mock('bullmq', () => ({
+  Queue: MockQueue,
+}));
 
 // Mock metrics service
 vi.mock('./services/metrics.service', () => ({
@@ -56,15 +66,12 @@ const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-// Import after mocks are set up
-const { healthServer, startHealthServer } = await import('./health-server');
-
 describe('Worker Health Check', () => {
   beforeEach(() => {
     // Clear mock calls before each test
-    mockConsoleError.mockClear();
-    mockConsoleWarn.mockClear();
-    mockConsoleLog.mockClear();
+    vi.mocked(logger.error).mockClear();
+    vi.mocked(logger.warn).mockClear();
+    vi.mocked(logger.info).mockClear();
     mockExit.mockClear();
   });
 
@@ -284,8 +291,8 @@ describe('Worker Health Check', () => {
       await startHealthServer();
 
       // Should log warning but not exit the process
-      expect(mockConsoleWarn).toHaveBeenCalledWith(expect.stringContaining('Port'));
-      expect(mockConsoleWarn).toHaveBeenCalledWith(expect.stringContaining('already in use'));
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Port'));
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('already in use'));
       expect(mockExit).not.toHaveBeenCalled();
 
       // Restore original

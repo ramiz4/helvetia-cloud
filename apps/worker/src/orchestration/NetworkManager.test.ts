@@ -1,6 +1,20 @@
 import Docker from 'dockerode';
+import { logger } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NetworkManager } from './NetworkManager';
+
+vi.mock('shared', async () => {
+  const actual = await vi.importActual('shared');
+  return {
+    ...actual,
+    logger: {
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    },
+  };
+});
 
 describe('NetworkManager', () => {
   let networkManager: NetworkManager;
@@ -116,8 +130,6 @@ describe('NetworkManager', () => {
       mockDocker.listNetworks.mockResolvedValue(mockNetworks);
       mockDocker.getNetwork.mockReturnValueOnce(mockNetwork1).mockReturnValueOnce(mockNetwork2);
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       await networkManager.removeNetworksByLabel('app', 'test');
 
       expect(mockDocker.listNetworks).toHaveBeenCalledWith({
@@ -125,10 +137,8 @@ describe('NetworkManager', () => {
       });
       expect(mockNetwork1.remove).toHaveBeenCalled();
       expect(mockNetwork2.remove).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('Removed network network1');
-      expect(consoleSpy).toHaveBeenCalledWith('Removed network network2');
-
-      consoleSpy.mockRestore();
+      expect(logger.info).toHaveBeenCalledWith('Removed network network1');
+      expect(logger.info).toHaveBeenCalledWith('Removed network network2');
     });
 
     it('should handle removal errors gracefully', async () => {
@@ -140,16 +150,12 @@ describe('NetworkManager', () => {
       mockDocker.listNetworks.mockResolvedValue(mockNetworks);
       mockDocker.getNetwork.mockReturnValue(mockNetwork);
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       await networkManager.removeNetworksByLabel('app', 'test');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Failed to remove network network1:',
-        expect.any(Error),
+      expect(logger.error).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        'Failed to remove network network1',
       );
-
-      consoleErrorSpy.mockRestore();
     });
   });
 

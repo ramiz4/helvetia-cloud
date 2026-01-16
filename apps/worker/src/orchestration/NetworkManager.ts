@@ -1,4 +1,5 @@
 import Docker from 'dockerode';
+import { logger } from 'shared';
 
 /**
  * NetworkManager handles Docker network operations
@@ -64,9 +65,9 @@ export class NetworkManager {
     for (const networkInfo of networks) {
       try {
         await this.removeNetwork(networkInfo.Id);
-        console.log(`Removed network ${networkInfo.Name}`);
+        logger.info(`Removed network ${networkInfo.Name}`);
       } catch (err) {
-        console.error(`Failed to remove network ${networkInfo.Name}:`, err);
+        logger.error({ err }, `Failed to remove network ${networkInfo.Name}`);
       }
     }
   }

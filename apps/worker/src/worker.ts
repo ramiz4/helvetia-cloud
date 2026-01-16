@@ -2,7 +2,7 @@ import { Job, Worker } from 'bullmq';
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import IORedis from 'ioredis';
-import { createScrubber } from 'shared';
+import { createScrubber, logger } from 'shared';
 import { MAX_LOG_SIZE_CHARS } from './config/constants';
 import type { DeploymentContext } from './interfaces';
 import { workerMetricsService } from './services/metrics.service';
@@ -90,7 +90,7 @@ export const worker = new Worker(
 
     // Log with request ID for correlation
     const logPrefix = requestId ? `[reqId: ${requestId}] ` : '';
-    console.log(`${logPrefix}Starting deployment ${deploymentId} for service ${serviceName}`);
+    logger.info(`${logPrefix}Starting deployment ${deploymentId} for service ${serviceName}`);
 
     // Verify deployment exists before starting
     const deploymentRecord = await prisma.deployment.findUnique({
@@ -98,13 +98,13 @@ export const worker = new Worker(
     });
 
     if (!deploymentRecord) {
-      console.error(`${logPrefix}Deployment ${deploymentId} not found in database. Skipping job.`);
+      logger.error(`${logPrefix}Deployment ${deploymentId} not found in database. Skipping job.`);
       return;
     }
 
     // Validate environment variables before proceeding
     if (envVars && Object.keys(envVars).length > 0) {
-      console.log(`${logPrefix}Validating environment variables...`);
+      logger.info(`${logPrefix}Validating environment variables...`);
       const envValidation = await validateGeneratedDockerfile({
         dockerfileContent: 'FROM scratch', // Dummy dockerfile for env var validation only
         envVars,
@@ -112,7 +112,7 @@ export const worker = new Worker(
 
       if (!envValidation.valid) {
         const errorMessage = formatValidationErrors(envValidation);
-        console.error(`${logPrefix}Environment variable validation failed:`, errorMessage);
+        logger.error({ errorMessage }, `${logPrefix}Environment variable validation failed`);
         throw new Error(
           `Environment variable validation failed:\n${envValidation.errors.join('\n')}`,
         );
@@ -125,7 +125,7 @@ export const worker = new Worker(
         );
       }
 
-      console.log(`${logPrefix}✅ Environment variables validated successfully`);
+      logger.info(`${logPrefix}✅ Environment variables validated successfully`);
     }
 
     try {
@@ -139,7 +139,7 @@ export const worker = new Worker(
       oldContainers = allContainers.filter(
         (c) => c.Labels['helvetia.serviceId'] === serviceId && c.State === 'running',
       );
-      console.log(
+      logger.info(
         `${logPrefix}Found ${oldContainers.length} running containers for rollback if needed`,
       );
 
@@ -176,7 +176,7 @@ export const worker = new Worker(
           buildLogs += scrubbed;
 
           publishLogs(redisConnection, deploymentId, scrubbed).catch((err) =>
-            console.error('Failed to publish real-time logs:', err),
+            logger.error('Failed to publish real-time logs:', err),
           );
         },
       };
@@ -200,7 +200,7 @@ export const worker = new Worker(
           status: 'SUCCESS',
           logs: buildLogs,
         });
-        console.log(`${logPrefix}Deployment ${deploymentId} successful!`);
+        logger.info(`${logPrefix}Deployment ${deploymentId} successful!`);
         return;
       }
 
@@ -288,9 +288,9 @@ export const worker = new Worker(
       });
 
       deploymentStatus = 'SUCCESS';
-      console.log(`${logPrefix}Deployment ${deploymentId} successful!`);
+      logger.info(`${logPrefix}Deployment ${deploymentId} successful!`);
     } catch (error) {
-      console.error(`${logPrefix}Deployment ${deploymentId} failed:`, error);
+      logger.error({ err: error }, `${logPrefix}Deployment ${deploymentId} failed`);
 
       // Comprehensive error logging
       const errorMessage = error instanceof Error ? error.message : String(error);

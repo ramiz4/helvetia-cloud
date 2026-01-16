@@ -12,7 +12,8 @@ export {
   withStatusLock,
 } from './statusLock';
 
-// Log scrubber utilities
+// Log utilities
+export { logger, type Logger } from './logger';
 export { createScrubber } from './logs';
 
 // Config parser utilities

@@ -1,6 +1,6 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
-import { withStatusLock } from 'shared';
+import { logger, withStatusLock } from 'shared';
 import { STATUS_RECONCILIATION_LOCK_TTL_MS } from '../config/constants';
 
 const docker = new Docker();
@@ -28,22 +28,22 @@ export class StatusReconciliationService {
    */
   start(intervalMs = 30000): void {
     if (this.isRunning) {
-      console.log('Status reconciliation service is already running');
+      logger.info('Status reconciliation service is already running');
       return;
     }
 
     this.isRunning = true;
-    console.log(`Starting status reconciliation service (interval: ${intervalMs}ms)`);
+    logger.info(`Starting status reconciliation service (interval: ${intervalMs}ms)`);
 
     // Run immediately
     this.reconcile().catch((error) => {
-      console.error('Error during initial reconciliation:', error);
+      logger.error({ err: error }, 'Error during initial reconciliation');
     });
 
     // Then run periodically
     this.intervalId = setInterval(() => {
       this.reconcile().catch((error) => {
-        console.error('Error during reconciliation:', error);
+        logger.error({ err: error }, 'Error during reconciliation');
       });
     }, intervalMs);
   }
@@ -57,7 +57,7 @@ export class StatusReconciliationService {
       this.intervalId = null;
     }
     this.isRunning = false;
-    console.log('Status reconciliation service stopped');
+    logger.info('Status reconciliation service stopped');
   }
 
   /**
@@ -65,7 +65,7 @@ export class StatusReconciliationService {
    */
   async reconcile(): Promise<void> {
     try {
-      console.log('Starting status reconciliation...');
+      logger.info('Starting status reconciliation...');
 
       // Fetch all services
       const services = await prisma.service.findMany({
@@ -85,7 +85,7 @@ export class StatusReconciliationService {
         await this.reconcileService(service, containers);
       }
 
-      console.log(`Reconciled ${services.length} services`);
+      logger.info(`Reconciled ${services.length} services`);
     } catch (error) {
       console.error('Error during reconciliation:', error);
       throw error;
@@ -147,7 +147,7 @@ export class StatusReconciliationService {
 
           // Update status if it differs
           if (service.status !== expectedStatus) {
-            console.log(
+            logger.info(
               `Reconciling service ${service.name} (${service.id}): ${service.status} -> ${expectedStatus}`,
             );
 
@@ -161,7 +161,7 @@ export class StatusReconciliationService {
       );
     } catch (error) {
       // Log but don't throw - continue with other services
-      console.error(`Failed to reconcile service ${service.id}:`, error);
+      logger.error({ err: error, serviceId: service.id }, 'Failed to reconcile service');
     }
   }
 }

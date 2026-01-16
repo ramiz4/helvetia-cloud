@@ -1,4 +1,5 @@
 import Docker from 'dockerode';
+import { logger } from 'shared';
 
 /**
  * VolumeManager handles Docker volume operations
@@ -45,9 +46,9 @@ export class VolumeManager {
     for (const volumeInfo of volumes) {
       try {
         await this.removeVolume(volumeInfo.Name);
-        console.log(`Removed volume ${volumeInfo.Name}`);
+        logger.info(`Removed volume ${volumeInfo.Name}`);
       } catch (err) {
-        console.error(`Failed to remove volume ${volumeInfo.Name}:`, err);
+        logger.error({ err }, `Failed to remove volume ${volumeInfo.Name}`);
       }
     }
   }
