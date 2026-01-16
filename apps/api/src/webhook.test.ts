@@ -76,6 +76,13 @@ vi.mock('database', () => {
       },
     },
     PrismaClient: vi.fn(),
+    Role: {
+      OWNER: 'OWNER',
+      ADMIN: 'ADMIN',
+      DEVELOPER: 'DEVELOPER',
+      MEMBER: 'MEMBER',
+      VIEWER: 'VIEWER',
+    },
     Prisma: {
       JsonNull: 'JsonNull',
     },

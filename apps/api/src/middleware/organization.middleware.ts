@@ -1,4 +1,4 @@
-import { Role } from 'database';
+import type { Role } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { resolve, TOKENS } from '../di';
@@ -6,15 +6,20 @@ import { ForbiddenError } from '../errors';
 import type { OrganizationService } from '../services/OrganizationService';
 
 /**
- * Permission levels for different roles
+ * Get role hierarchy dynamically to avoid top-level imports
  */
-const ROLE_HIERARCHY: Record<Role, number> = {
-  [Role.OWNER]: 100,
-  [Role.ADMIN]: 80,
-  [Role.DEVELOPER]: 60,
-  [Role.MEMBER]: 40,
-  [Role.VIEWER]: 20,
-};
+function getRoleHierarchy(): Record<Role, number> {
+  // Import Role enum dynamically
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Role } = require('database');
+  return {
+    [Role.OWNER]: 100,
+    [Role.ADMIN]: 80,
+    [Role.DEVELOPER]: 60,
+    [Role.MEMBER]: 40,
+    [Role.VIEWER]: 20,
+  };
+}
 
 /**
  * Check if user has permission for an organization
@@ -51,6 +56,7 @@ export const requireOrganizationRole = (allowedRoles: Role[]) => {
 export const requireOrganizationPermission = (minimumRole: Role) => {
   return async (request: FastifyRequest, _reply: FastifyReply) => {
     const organizationService = resolve<OrganizationService>(TOKENS.OrganizationService);
+    const ROLE_HIERARCHY = getRoleHierarchy();
 
     // Extract organization ID from params
     const paramsSchema = z.object({ id: z.string().uuid() });
