@@ -27,7 +27,7 @@ export function NewEnvironmentModal({ onClose, onSave }: NewEnvironmentModalProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
+        className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
         onClick={onClose}
       />
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
@@ -71,7 +71,7 @@ export function NewEnvironmentModal({ onClose, onSave }: NewEnvironmentModalProp
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-14 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 border border-slate-200 dark:border-white/5"
+              className="flex-1 h-14 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 border border-transparent dark:border-white/5"
             >
               Cancel
             </button>

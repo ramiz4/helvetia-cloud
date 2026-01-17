@@ -156,12 +156,12 @@ export default function NewServicePage() {
       <div className="mb-12">
         <Link
           href="/"
-          className="inline-flex items-center text-slate-400 hover:text-white dark:text-slate-600 dark:hover:text-white mb-6 transition-colors group text-sm font-medium"
+          className="inline-flex items-center text-slate-400 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400 mb-6 transition-colors group text-sm font-medium"
         >
           <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
           {t.common.back}
         </Link>
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-50 tracking-tight mb-2">
           {t.dashboard.newService.title}
         </h1>
         <p className="text-slate-400 dark:text-slate-600 text-lg">

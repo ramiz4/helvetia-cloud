@@ -133,7 +133,7 @@ export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitc
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 group text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10 group text-slate-600 hover:text-slate-900 dark:text-slate-400"
         aria-label={t.nav.selectLanguage}
         aria-haspopup="true"
         aria-expanded={isOpen}
@@ -141,13 +141,13 @@ export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitc
       >
         <Globe
           size={16}
-          className="text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors"
+          className="text-slate-600 dark:text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors"
         />
         <span className="text-sm font-bold uppercase min-w-[1.2rem] text-slate-600 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
           {currentLang?.short || 'EN'}
         </span>
         <ChevronDown
-          className={`text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -176,10 +176,12 @@ export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitc
               className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-all focus:bg-slate-100 dark:focus:bg-white/10 focus:outline-none group/item ${
                 language === l.code
                   ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/5'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white'
               }`}
             >
-              <span className="font-medium">{l.label}</span>
+              <span className="font-medium text-[13px] text-slate-600 dark:text-slate-400 group-hover/item:text-slate-950 dark:group-hover/item:text-white transition-colors">
+                {l.label}
+              </span>
               <span
                 className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 ${
                   language === l.code

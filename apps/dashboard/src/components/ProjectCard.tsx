@@ -24,7 +24,7 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
             e.preventDefault();
             onDelete(project.id);
           }}
-          className="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-all shadow-lg"
+          className="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white transition-all shadow-lg"
           title="Delete Project"
         >
           <Trash2 size={16} />
@@ -45,9 +45,9 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group-hover:bg-slate-100 dark:group-hover:bg-white/[0.07] transition-colors">
-          <div className="flex items-center gap-2 mb-2 text-slate-500">
+          <div className="flex items-center gap-2 mb-2 text-slate-500 dark:text-white">
             <Layout size={14} className="opacity-70" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white">
               Environments
             </span>
           </div>
@@ -56,9 +56,9 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
           </div>
         </div>
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 group-hover:bg-slate-100 dark:group-hover:bg-white/[0.07] transition-colors">
-          <div className="flex items-center gap-2 mb-2 text-slate-500">
+          <div className="flex items-center gap-2 mb-2 text-slate-500 dark:text-white">
             <Box size={14} className="opacity-70" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white">
               Services
             </span>
           </div>
@@ -69,10 +69,10 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
       </div>
 
       <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
-        <span className="text-slate-500 text-xs font-medium uppercase tracking-widest">
+        <span className="text-slate-500 dark:text-white text-xs font-medium uppercase tracking-widest">
           View Project
         </span>
-        <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:translate-x-2 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-500 shadow-lg">
+        <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:translate-x-2 group-hover:bg-indigo-500 group-hover:text-white dark:group-hover:text-white transition-all duration-500 shadow-lg">
           <ChevronRight size={20} />
         </div>
       </div>
