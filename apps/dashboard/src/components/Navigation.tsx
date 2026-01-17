@@ -3,7 +3,7 @@
 import ModernThemeSwitch from '@/components/ModernThemeSwitch';
 import { useFeatureFlag } from '@/lib/featureFlags';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
-import { BookOpen, Building2, LayoutDashboard, Settings } from 'lucide-react';
+import { BookOpen, Building2, CreditCard, LayoutDashboard, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -85,6 +85,11 @@ export default function DashboardNavigation() {
       href: '/deployments',
       icon: BookOpen,
       show: showDeployments,
+    },
+    {
+      label: 'Billing',
+      href: '/billing',
+      icon: CreditCard,
     },
   ];
 
