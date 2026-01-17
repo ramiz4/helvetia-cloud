@@ -22,13 +22,13 @@ The CI workflow (`.github/workflows/ci.yml`) uses GitHub Actions services to pro
 ```yaml
 services:
   postgres:
-    image: postgres:15
+    image: postgres:15 # CI uses postgres:15; local docker-compose.test.yml uses postgres:16-alpine
     env:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: helvetia_test
     ports:
-      - 5433:5432  # Maps host port 5433 to container port 5432
+      - 5433:5432 # Maps host port 5433 to container port 5432
     options: >-
       --health-cmd pg_isready
       --health-interval 10s
@@ -45,7 +45,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - 6380:6379  # Maps host port 6380 to container port 6379
+      - 6380:6379 # Maps host port 6380 to container port 6379
     options: >-
       --health-cmd "redis-cli ping"
       --health-interval 10s
@@ -54,6 +54,15 @@ services:
 ```
 
 **Environment Variable**: `REDIS_URL=redis://localhost:6380`
+
+### Additional Environment Variables
+
+The CI workflow also sets these environment variables for test execution:
+
+- `JWT_SECRET=test-jwt-secret-change-me-in-production` - JWT token signing secret
+- `ENCRYPTION_KEY=0123456789abcdef0123456789abcdef` - 32-character encryption key
+
+These match the default values in `apps/api/vitest.config.ts` and ensure tests run with consistent configuration.
 
 ## Local Testing
 
