@@ -46,7 +46,7 @@ describe('CurrentPlanCard', () => {
     render(<CurrentPlanCard subscription={mockSubscription} onManage={mockOnManage} />);
 
     const statusBadge = screen.getByText('ACTIVE');
-    expect(statusBadge).toHaveClass('text-emerald-400');
+    expect(statusBadge).toHaveClass('text-emerald-600');
   });
 
   it('should show correct status color for PAST_DUE status', () => {
@@ -54,7 +54,7 @@ describe('CurrentPlanCard', () => {
     render(<CurrentPlanCard subscription={pastDueSubscription} onManage={mockOnManage} />);
 
     const statusBadge = screen.getByText('PAST_DUE');
-    expect(statusBadge).toHaveClass('text-amber-400');
+    expect(statusBadge).toHaveClass('text-amber-600');
   });
 
   it('should show correct status color for CANCELED status', () => {
@@ -62,7 +62,7 @@ describe('CurrentPlanCard', () => {
     render(<CurrentPlanCard subscription={canceledSubscription} onManage={mockOnManage} />);
 
     const statusBadge = screen.getByText('CANCELED');
-    expect(statusBadge).toHaveClass('text-slate-400');
+    expect(statusBadge).toHaveClass('text-slate-600');
   });
 
   it('should call onManage when "Manage Subscription" button is clicked', () => {

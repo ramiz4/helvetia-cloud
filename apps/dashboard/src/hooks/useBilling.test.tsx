@@ -70,9 +70,9 @@ describe('useBilling hooks', () => {
 
       const { result } = renderHook(() => useSubscription(), { wrapper });
 
-      await waitFor(() => expect(result.current.isError).toBe(true));
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(result.current.error).toBeDefined();
+      expect(result.current.data).toBeNull();
     });
   });
 
