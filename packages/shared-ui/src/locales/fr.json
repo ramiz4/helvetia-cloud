@@ -83,6 +83,7 @@
     "login": "Connexion",
     "dashboard": "Tableau de bord",
     "deployments": "Déploiements",
+    "billing": "Facturation",
     "newService": "Nouveau Service",
     "settings": "Paramètres",
     "logout": "Déconnexion",
