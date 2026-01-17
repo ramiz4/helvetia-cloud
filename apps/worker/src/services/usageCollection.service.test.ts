@@ -1,6 +1,5 @@
 import { PrismaClient, UsageMetric } from 'database';
 import Docker from 'dockerode';
-import type IORedis from 'ioredis';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageCollectionService } from './usageCollection.service';
 
@@ -28,7 +27,6 @@ describe('UsageCollectionService', () => {
   let service: UsageCollectionService;
   let mockDocker: Docker;
   let mockPrisma: PrismaClient;
-  let mockRedis: IORedis;
 
   beforeEach(() => {
     mockDocker = {} as Docker;
@@ -37,13 +35,6 @@ describe('UsageCollectionService', () => {
         createMany: vi.fn(),
       },
     } as unknown as PrismaClient;
-
-    // Create mock Redis instance
-    mockRedis = {
-      get: vi.fn().mockResolvedValue(null),
-      setex: vi.fn().mockResolvedValue('OK'),
-      quit: vi.fn().mockResolvedValue('OK'),
-    } as unknown as IORedis;
 
     service = new UsageCollectionService(mockDocker, mockPrisma, 'redis://localhost:6379');
   });

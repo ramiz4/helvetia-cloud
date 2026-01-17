@@ -310,12 +310,6 @@ export const usageCollectionWorker = new Worker(
   },
   {
     connection: redisConnection,
-    // Retry configuration
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 5000, // 5 seconds initial delay
-    },
   },
 );
 
