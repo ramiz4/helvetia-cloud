@@ -5,6 +5,8 @@ import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
 
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
@@ -64,6 +66,7 @@ registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
  * - Structured logging via pino (shared logger)
  * - Raw body parsing for webhook verification
  * - Request ID generation for tracing
+ * - AJV schema validator with OpenAPI keywords support
  */
 export const fastify = Fastify({
   logger: isTestEnv ? false : logger,
@@ -75,6 +78,20 @@ export const fastify = Fastify({
   },
   // Disable automatic request logging (we'll do it manually for more control)
   disableRequestLogging: !LOG_REQUESTS && !LOG_RESPONSES,
+  // Configure AJV to allow OpenAPI keywords like 'example'
+  ajv: {
+    customOptions: {
+      strict: false, // Disable strict mode to allow OpenAPI keywords
+      keywords: ['example'], // Explicitly allow 'example' keyword
+    },
+  },
+  // Disable schema-based response serialization to allow all response properties
+  // This ensures responses are not stripped based on OpenAPI schemas
+  schemaController: {
+    compilersFactory: {
+      buildSerializer: () => () => JSON.stringify,
+    },
+  },
 });
 
 // Store redis connection on fastify instance for route access
@@ -202,6 +219,18 @@ fastify.register(rateLimit, {
 // Create rate limit configs
 // const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
+// Register Swagger/OpenAPI documentation (only in non-test environments)
+if (!isTestEnv) {
+  import('./config/swagger.js')
+    .then(({ swaggerConfig, swaggerUiConfig }) => {
+      fastify.register(fastifySwagger, swaggerConfig);
+      fastify.register(fastifySwaggerUi, swaggerUiConfig);
+    })
+    .catch((error) => {
+      logger.error({ err: error }, 'Failed to register Swagger plugins');
+    });
+}
+
 // Register global error handler
 import { errorHandler } from './middleware/error.middleware';
 fastify.setErrorHandler(errorHandler);
@@ -224,6 +253,9 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/auth/logout',
     '/feature-flags/check',
     '/feature-flags/check-bulk',
+    '/api/v1/docs',
+    '/api/v1/docs/json',
+    '/api/v1/docs/yaml',
   ];
 
   // Get the URL without query parameters
@@ -231,6 +263,11 @@ fastify.addHook('onRequest', async (request, _reply) => {
 
   // Check if it's a public route (unversioned)
   if (publicRoutes.includes(fullUrl)) {
+    return;
+  }
+
+  // Allow swagger-ui static assets
+  if (fullUrl.startsWith('/api/v1/docs/') || fullUrl.startsWith('/api/v1/docs/static/')) {
     return;
   }
 
