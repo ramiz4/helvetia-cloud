@@ -1,4 +1,9 @@
+import { initEnv } from './config/env';
 import './load-env';
+
+// Initialize environment variables
+initEnv();
+
 import './types/fastify';
 
 import fastifyCookie from '@fastify/cookie';

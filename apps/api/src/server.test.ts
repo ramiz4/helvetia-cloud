@@ -155,9 +155,10 @@ vi.mock('@fastify/rate-limit', () => {
 import { fastify } from './server';
 
 describe('API Server', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Clear all mocks before each test to ensure clean state
     vi.clearAllMocks();
+    await fastify.ready();
   });
 
   it('should have a health check endpoint', async () => {
