@@ -26,46 +26,46 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'paid':
-        return 'text-emerald-400 bg-emerald-500/10';
+        return 'text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10';
       case 'open':
-        return 'text-amber-400 bg-amber-500/10';
+        return 'text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10';
       case 'void':
       case 'uncollectible':
-        return 'text-slate-400 bg-slate-500/10';
+        return 'text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-slate-500/10';
       default:
-        return 'text-slate-400 bg-slate-500/10';
+        return 'text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-slate-500/10';
     }
   };
 
   return (
-    <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl">
+    <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl">
       <div className="mb-6">
-        <h3 className="text-2xl font-bold text-white mb-2">Invoices</h3>
-        <p className="text-slate-400 text-sm">Your billing history</p>
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Invoices</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm">Your billing history</p>
       </div>
 
       {invoices.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-800/80 flex items-center justify-center mb-4">
-            <FileText size={32} className="text-slate-600" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center mb-4">
+            <FileText size={32} className="text-slate-400 dark:text-slate-600" />
           </div>
-          <p className="text-slate-400 font-medium">No invoices yet</p>
+          <p className="text-slate-600 dark:text-slate-400 font-medium">No invoices yet</p>
         </div>
       ) : (
         <div className="space-y-4">
           {invoices.map((invoice) => (
             <div
               key={invoice.id}
-              className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-colors"
+              className="p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-                    <FileText size={24} className="text-indigo-400" />
+                  <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-white/5 flex items-center justify-center shrink-0">
+                    <FileText size={24} className="text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
                     <div className="flex items-center gap-3 mb-1">
-                      <h4 className="text-lg font-bold text-white">
+                      <h4 className="text-lg font-bold text-slate-900 dark:text-white">
                         {invoice.number || `Invoice ${invoice.id.slice(-8)}`}
                       </h4>
                       <span
@@ -74,17 +74,19 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                         {invoice.status}
                       </span>
                     </div>
-                    <p className="text-slate-400 text-sm">{formatDate(invoice.created)}</p>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">
+                      {formatDate(invoice.created)}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-white tabular-nums">
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
                       {formatAmount(invoice.amount_due, invoice.currency)}
                     </p>
                     {invoice.amount_paid > 0 && invoice.amount_paid < invoice.amount_due && (
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
                         Paid: {formatAmount(invoice.amount_paid, invoice.currency)}
                       </p>
                     )}
@@ -95,7 +97,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                       href={invoice.invoice_pdf}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-lg"
+                      className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white transition-all shadow-lg"
                       title="Download PDF"
                       aria-label={`Download invoice PDF for ${invoice.number || `Invoice ${invoice.id.slice(-8)}`}`}
                     >

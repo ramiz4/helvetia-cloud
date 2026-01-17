@@ -113,8 +113,10 @@ export default function BillingPage() {
   if (isAuthenticated === null || subscriptionLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
-        <p className="text-slate-500 font-medium animate-pulse text-lg">Loading billing...</p>
+        <div className="w-12 h-12 border-4 border-slate-200 dark:border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
+        <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse text-lg">
+          Loading billing...
+        </p>
       </div>
     );
   }
@@ -123,20 +125,22 @@ export default function BillingPage() {
   if (subscriptionError) {
     return (
       <div className="py-8 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-rose-500/10 border border-rose-500/20 rounded-[32px] p-12 text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-500/20 flex items-center justify-center mb-6">
-            <AlertCircle size={32} className="text-rose-400" />
+        <div className="bg-rose-50 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20 rounded-[32px] p-12 text-center">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center mb-6">
+            <AlertCircle size={32} className="text-rose-600 dark:text-rose-400" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Unable to Load Billing</h2>
-          <p className="text-slate-400 text-lg mb-8">
-            We couldn&apos;t load your billing information. This might be because you don&apos;t
-            have a subscription yet.
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            Unable to Load Billing
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-lg mb-8">
+            We encountered an error loading your billing information. Please try refreshing the
+            page.
           </p>
           <button
-            onClick={() => router.push('/')}
-            className="px-8 py-4 rounded-2xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-xl active:scale-95"
+            onClick={() => window.location.reload()}
+            className="px-8 py-4 rounded-2xl font-bold bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-500 dark:hover:bg-indigo-400 transition-all shadow-xl active:scale-95"
           >
-            Back to Dashboard
+            Retry
           </button>
         </div>
       </div>
@@ -148,10 +152,10 @@ export default function BillingPage() {
       <div className="py-8 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-16">
-          <h1 className="text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-extrabold tracking-tight mb-2 text-slate-900 dark:text-white">
             Billing & Usage
           </h1>
-          <p className="text-slate-400 text-lg font-medium">
+          <p className="text-slate-600 dark:text-slate-400 text-lg font-medium">
             Manage your subscription, view usage, and access invoices.
           </p>
         </div>
@@ -167,22 +171,24 @@ export default function BillingPage() {
 
             {!usageLoading && !usageError && usage && <UsageMetrics usage={usage} />}
             {usageLoading && (
-              <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center">
+              <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-12 h-12 mx-auto border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast mb-4" />
-                  <p className="text-slate-400 font-medium">Loading usage...</p>
+                  <div className="w-12 h-12 mx-auto border-4 border-slate-200 dark:border-white/10 border-t-indigo-500 rounded-full animate-spin-fast mb-4" />
+                  <p className="text-slate-600 dark:text-slate-400 font-medium">Loading usage...</p>
                 </div>
               </div>
             )}
             {usageError && !usageLoading && (
-              <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-rose-500/20 shadow-2xl">
+              <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-rose-200 dark:border-rose-500/20 shadow-2xl">
                 <div className="flex items-start gap-4">
                   <div className="mt-1">
-                    <AlertCircle className="w-6 h-6 text-rose-400" />
+                    <AlertCircle className="w-6 h-6 text-rose-500 dark:text-rose-400" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-white mb-1">Unable to load usage</h2>
-                    <p className="text-slate-400 text-sm">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+                      Unable to load usage
+                    </h2>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">
                       We couldn&apos;t load your usage metrics right now. Please try again later.
                     </p>
                   </div>
@@ -192,15 +198,36 @@ export default function BillingPage() {
           </div>
         )}
 
+        {/* No Subscription State */}
+        {!subscription && !subscriptionLoading && (
+          <div className="mb-16 p-8 rounded-[32px] bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
+                <CreditCard className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  No Active Subscription
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400">
+                  You are currently not subscribed to any plan. Choose a plan below to get started.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Available Plans */}
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-              <TrendingUp size={24} className="text-indigo-400" />
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+              <TrendingUp size={24} className="text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white">Available Plans</h2>
-              <p className="text-slate-400 text-sm">Choose the plan that fits your needs</p>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Available Plans</h2>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                Choose the plan that fits your needs
+              </p>
             </div>
           </div>
 
@@ -218,39 +245,49 @@ export default function BillingPage() {
         </div>
 
         {/* Invoices */}
-        {!invoicesLoading && !invoicesError && invoices && (
+        {!invoicesLoading && !invoicesError && invoices && invoices.length > 0 && (
           <div className="mb-16">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-                <CreditCard size={24} className="text-indigo-400" />
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                <CreditCard size={24} className="text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-white">Billing History</h2>
-                <p className="text-slate-400 text-sm">View and download your invoices</p>
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
+                  Billing History
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">
+                  View and download your invoices
+                </p>
               </div>
             </div>
             <InvoiceList invoices={invoices} />
           </div>
         )}
-        {invoicesError && !invoicesLoading && (
+        {invoicesError && !invoicesLoading && subscription && (
           <div className="mb-16">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-                <CreditCard size={24} className="text-indigo-400" />
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                <CreditCard size={24} className="text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-white">Billing History</h2>
-                <p className="text-slate-400 text-sm">View and download your invoices</p>
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
+                  Billing History
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">
+                  View and download your invoices
+                </p>
               </div>
             </div>
-            <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-rose-500/20 shadow-2xl">
+            <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-rose-200 dark:border-rose-500/20 shadow-2xl">
               <div className="flex items-start gap-4">
                 <div className="mt-1">
-                  <AlertCircle className="w-6 h-6 text-rose-400" />
+                  <AlertCircle className="w-6 h-6 text-rose-500 dark:text-rose-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white mb-1">Unable to load invoices</h2>
-                  <p className="text-slate-400 text-sm">
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+                    Unable to load invoices
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">
                     We couldn&apos;t load your invoices right now. Please try again later.
                   </p>
                 </div>

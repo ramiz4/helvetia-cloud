@@ -17,9 +17,9 @@ export function PlanCard({ plan, currentPlan, onSelect, loading }: PlanCardProps
     <div
       className={`p-8 rounded-[32px] backdrop-blur-xl border transition-all duration-500 shadow-2xl flex flex-col relative overflow-hidden ${
         plan.highlighted
-          ? 'bg-indigo-500/10 border-indigo-500/50 scale-105'
-          : 'bg-slate-900/40 border-white/10 hover:border-indigo-500/30'
-      } ${isCurrent ? 'ring-2 ring-indigo-400' : ''}`}
+          ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/50 scale-105'
+          : 'bg-white border-slate-200 dark:bg-slate-900/40 dark:border-white/10 hover:border-indigo-500/30'
+      } ${isCurrent ? 'ring-2 ring-indigo-500 dark:ring-indigo-400' : ''}`}
     >
       {plan.highlighted && (
         <div className="absolute top-6 right-6 px-4 py-2 rounded-full bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider shadow-lg">
@@ -34,19 +34,23 @@ export function PlanCard({ plan, currentPlan, onSelect, loading }: PlanCardProps
       )}
 
       <div className="mb-6">
-        <h3 className="text-3xl font-bold text-white mb-2">{plan.displayName}</h3>
+        <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+          {plan.displayName}
+        </h3>
         <div className="flex items-baseline gap-2">
-          <span className="text-5xl font-black text-white tabular-nums">${plan.price}</span>
-          <span className="text-slate-400 font-medium">/{plan.interval}</span>
+          <span className="text-5xl font-black text-slate-900 dark:text-white tabular-nums">
+            ${plan.price}
+          </span>
+          <span className="text-slate-600 dark:text-slate-400 font-medium">/{plan.interval}</span>
         </div>
       </div>
 
-      <ul className="space-y-4 mb-8 flex-grow">
+      <ul className="space-y-4 mb-8 grow">
         {plan.features.map((feature, index) => (
-          <li key={index} className="flex items-start gap-3 text-slate-300">
-            <div className="mt-0.5 flex-shrink-0">
-              <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                <Check size={14} className="text-indigo-400" />
+          <li key={index} className="flex items-start gap-3 text-slate-700 dark:text-slate-300">
+            <div className="mt-0.5 shrink-0">
+              <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
+                <Check size={14} className="text-indigo-600 dark:text-indigo-400" />
               </div>
             </div>
             <span className="text-sm font-medium leading-relaxed">{feature}</span>
@@ -59,10 +63,10 @@ export function PlanCard({ plan, currentPlan, onSelect, loading }: PlanCardProps
         disabled={isCurrent || loading}
         className={`w-full px-6 py-4 rounded-2xl font-bold transition-all shadow-xl ${
           isCurrent
-            ? 'bg-white/5 text-slate-500 cursor-not-allowed'
+            ? 'bg-slate-100 dark:bg-white/5 text-slate-500 cursor-not-allowed'
             : plan.highlighted
-              ? 'bg-indigo-500 text-white hover:bg-indigo-400 active:scale-95'
-              : 'bg-white/10 text-white hover:bg-white/20 active:scale-95'
+              ? 'bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-500 dark:hover:bg-indigo-400 active:scale-95'
+              : 'bg-slate-900/10 dark:bg-white/10 text-slate-900 dark:text-white hover:bg-slate-900/20 dark:hover:bg-white/20 active:scale-95'
         } ${loading ? 'opacity-50 cursor-wait' : ''}`}
       >
         {loading ? 'Processing...' : isCurrent ? 'Current Plan' : 'Select Plan'}

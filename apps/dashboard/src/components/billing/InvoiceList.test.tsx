@@ -90,7 +90,7 @@ describe('InvoiceList', () => {
     const paidBadge = screen.getByText('paid');
     const openBadge = screen.getByText('open');
 
-    expect(paidBadge).toHaveClass('text-emerald-400');
-    expect(openBadge).toHaveClass('text-amber-400');
+    expect(paidBadge).toHaveClass('text-emerald-600');
+    expect(openBadge).toHaveClass('text-amber-600');
   });
 });

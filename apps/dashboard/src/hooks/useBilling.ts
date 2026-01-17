@@ -13,11 +13,11 @@ export const billingKeys = {
 };
 
 // Fetch current subscription
-async function fetchSubscription(): Promise<Subscription> {
+async function fetchSubscription(): Promise<Subscription | null> {
   const response = await fetchWithAuth(`${API_BASE_URL}/billing/subscription`);
 
   if (response.status === 404) {
-    throw new Error('No subscription found');
+    return null;
   }
 
   if (!response.ok) {
