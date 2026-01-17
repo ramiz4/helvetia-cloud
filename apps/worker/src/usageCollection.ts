@@ -46,7 +46,7 @@ async function reportToStripe(periodStart: Date, periodEnd: Date) {
   try {
     // Import Stripe and BillingService dynamically to avoid errors if Stripe is not configured
     const Stripe = (await import('stripe')).default;
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-11-20.acacia' });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-12-15.clover' });
 
     // Get all subscriptions with active status
     const subscriptions = await prisma.subscription.findMany({
@@ -141,11 +141,17 @@ async function reportToStripe(periodStart: Date, periodEnd: Date) {
           }
 
           // Report usage to Stripe
-          await stripe.subscriptionItems.createUsageRecord(subscriptionItem.id, {
-            quantity: Math.round(quantity),
-            timestamp: Math.floor(periodEnd.getTime() / 1000),
-            action: 'increment',
-          });
+          // Note: The `usageRecords` property does not exist on `subscriptionItems` in Stripe Node SDK v20.2.0.
+          // We use `rawRequest` to call the endpoint directly.
+          await stripe.rawRequest(
+            'POST',
+            `/v1/subscription_items/${subscriptionItem.id}/usage_records`,
+            {
+              quantity: Math.round(quantity),
+              timestamp: Math.floor(periodEnd.getTime() / 1000),
+              action: 'increment',
+            },
+          );
 
           logger.info(
             {
@@ -232,12 +238,6 @@ export const usageCollectionWorker = new Worker(
   },
   {
     connection: redisConnection,
-    // Retry configuration
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 5000, // 5 seconds initial delay
-    },
   },
 );
 
@@ -274,6 +274,11 @@ export async function scheduleUsageCollection() {
     {
       repeat: {
         every: COLLECTION_INTERVAL_MINUTES * 60 * 1000, // Convert minutes to milliseconds
+      },
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 5000,
       },
     },
   );

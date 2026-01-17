@@ -32,7 +32,7 @@ startHealthServer().catch((error) => {
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, closing worker gracefully...');
   await stopHealthServer();
-  const { usageCollectionWorker } = await import('./usageCollection');
+  const { usageCollectionWorker } = await import('./usageCollection.js');
   await Promise.all([worker.close(), usageCollectionWorker.close()]);
   process.exit(0);
 });
@@ -40,7 +40,7 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, closing worker gracefully...');
   await stopHealthServer();
-  const { usageCollectionWorker } = await import('./usageCollection');
+  const { usageCollectionWorker } = await import('./usageCollection.js');
   await Promise.all([worker.close(), usageCollectionWorker.close()]);
   process.exit(0);
 });
