@@ -184,4 +184,106 @@ export class BillingController {
       return reply.status(500).send({ error: 'Failed to get usage' });
     }
   }
+
+  /**
+   * GET /billing/usage/history
+   * Get usage history for custom date range
+   */
+  async getUsageHistory(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+
+      if (!userId) {
+        return reply.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const query = request.query as {
+        periodStart?: string;
+        periodEnd?: string;
+        organizationId?: string;
+      };
+
+      // Default to last 30 days if no dates provided
+      const periodEnd = query.periodEnd ? new Date(query.periodEnd) : new Date();
+      const periodStart = query.periodStart
+        ? new Date(query.periodStart)
+        : new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const usage = await this.usageTrackingService.getAggregatedUsage({
+        userId,
+        organizationId: query.organizationId,
+        periodStart,
+        periodEnd,
+      });
+
+      return {
+        usage,
+        periodStart,
+        periodEnd,
+      };
+    } catch (error) {
+      request.log.error({ error }, 'Failed to get usage history');
+      return reply.status(500).send({ error: 'Failed to get usage history' });
+    }
+  }
+
+  /**
+   * GET /billing/usage/service/:id
+   * Get usage for a specific service
+   */
+  async getServiceUsage(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+
+      if (!userId) {
+        return reply.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const params = request.params as { id: string };
+      const query = request.query as {
+        periodStart?: string;
+        periodEnd?: string;
+      };
+
+      // Default to last 30 days if no dates provided
+      const periodEnd = query.periodEnd ? new Date(query.periodEnd) : new Date();
+      const periodStart = query.periodStart
+        ? new Date(query.periodStart)
+        : new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // Verify service belongs to user
+      const service = await this.userRepository.findById(userId).then(async (user) => {
+        if (!user) return null;
+        // Get service through prisma
+        const prisma = await import('database').then((m) => m.prisma);
+        return prisma.service.findFirst({
+          where: {
+            id: params.id,
+            userId,
+          },
+        });
+      });
+
+      if (!service) {
+        return reply.status(404).send({ error: 'Service not found' });
+      }
+
+      const usage = await this.usageTrackingService.getServiceUsage({
+        serviceId: params.id,
+        periodStart,
+        periodEnd,
+      });
+
+      return {
+        usage,
+        periodStart,
+        periodEnd,
+        serviceId: params.id,
+        serviceName: service.name,
+      };
+    } catch (error) {
+      request.log.error({ error }, 'Failed to get service usage');
+      return reply.status(500).send({ error: 'Failed to get service usage' });
+    }
+  }
 }

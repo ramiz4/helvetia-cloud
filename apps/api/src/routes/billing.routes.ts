@@ -184,4 +184,136 @@ export const billingRoutes: FastifyPluginAsync = async (fastify) => {
     },
     (request, reply) => billingController.getUsage(request, reply),
   );
+
+  /**
+   * GET /billing/usage/history
+   * Get usage history for custom date range
+   */
+  fastify.get(
+    '/billing/usage/history',
+    {
+      preHandler: authenticate,
+      schema: {
+        tags: ['Billing'],
+        summary: 'Get usage history',
+        description:
+          'Retrieve historical resource usage for a custom date range (default: last 30 days)',
+        querystring: {
+          type: 'object',
+          properties: {
+            periodStart: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Start date for usage history (ISO 8601)',
+            },
+            periodEnd: {
+              type: 'string',
+              format: 'date-time',
+              description: 'End date for usage history (ISO 8601)',
+            },
+            organizationId: {
+              type: 'string',
+              description: 'Filter usage by organization',
+            },
+          },
+        },
+        response: {
+          200: {
+            description: 'Historical usage data',
+            type: 'object',
+            properties: {
+              usage: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    metric: {
+                      type: 'string',
+                      enum: ['COMPUTE_HOURS', 'MEMORY_GB_HOURS', 'BANDWIDTH_GB', 'STORAGE_GB'],
+                    },
+                    quantity: { type: 'number' },
+                    cost: { type: 'number' },
+                  },
+                },
+              },
+              periodStart: { type: 'string', format: 'date-time' },
+              periodEnd: { type: 'string', format: 'date-time' },
+            },
+          },
+        },
+      },
+    },
+    (request, reply) => billingController.getUsageHistory(request, reply),
+  );
+
+  /**
+   * GET /billing/usage/service/:id
+   * Get usage for a specific service
+   */
+  fastify.get(
+    '/billing/usage/service/:id',
+    {
+      preHandler: authenticate,
+      schema: {
+        tags: ['Billing'],
+        summary: 'Get service usage',
+        description: 'Retrieve resource usage for a specific service',
+        params: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Service ID',
+            },
+          },
+          required: ['id'],
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            periodStart: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Start date for usage (ISO 8601)',
+            },
+            periodEnd: {
+              type: 'string',
+              format: 'date-time',
+              description: 'End date for usage (ISO 8601)',
+            },
+          },
+        },
+        response: {
+          200: {
+            description: 'Service usage data',
+            type: 'object',
+            properties: {
+              usage: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    metric: {
+                      type: 'string',
+                      enum: ['COMPUTE_HOURS', 'MEMORY_GB_HOURS', 'BANDWIDTH_GB', 'STORAGE_GB'],
+                    },
+                    quantity: { type: 'number' },
+                  },
+                },
+              },
+              periodStart: { type: 'string', format: 'date-time' },
+              periodEnd: { type: 'string', format: 'date-time' },
+              serviceId: { type: 'string' },
+              serviceName: { type: 'string' },
+            },
+          },
+          404: {
+            description: 'Service not found',
+            type: 'object',
+          },
+        },
+      },
+    },
+    (request, reply) => billingController.getServiceUsage(request, reply),
+  );
 };
