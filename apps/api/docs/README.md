@@ -15,6 +15,7 @@ This directory contains API-specific documentation for the Helvetia Cloud API se
 - **[API_CHANGELOG.md](./API_CHANGELOG.md)** - Version history and breaking changes
 - **[ERROR_CODES.md](./ERROR_CODES.md)** - Comprehensive error code reference
 - **[REQUEST_TRACING.md](./REQUEST_TRACING.md)** - Request ID tracing across services
+- **[TESTING.md](./TESTING.md)** ⭐ - Comprehensive testing guide with mocking patterns and best practices
 
 ### Configuration & Limits
 
