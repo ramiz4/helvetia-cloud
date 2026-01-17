@@ -38,6 +38,7 @@ export const TOKENS = {
   FeatureFlagController: Symbol.for('FeatureFlagController'),
   OrganizationController: Symbol.for('OrganizationController'),
   BillingController: Symbol.for('BillingController'),
+  StripeWebhookController: Symbol.for('StripeWebhookController'),
   DeploymentController: Symbol.for('DeploymentController'),
   GitHubController: Symbol.for('GitHubController'),
   ProjectController: Symbol.for('ProjectController'),

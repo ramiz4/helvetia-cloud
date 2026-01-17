@@ -12,6 +12,7 @@ import { GitHubController } from '../controllers/GitHubController';
 import { OrganizationController } from '../controllers/OrganizationController';
 import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
+import { StripeWebhookController } from '../controllers/StripeWebhookController';
 import { WebhookController } from '../controllers/WebhookController';
 import {
   PrismaDeploymentRepository,
@@ -94,6 +95,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.FeatureFlagController, FeatureFlagController);
   container.registerSingleton(TOKENS.OrganizationController, OrganizationController);
   container.registerSingleton(TOKENS.BillingController, BillingController);
+  container.registerSingleton(TOKENS.StripeWebhookController, StripeWebhookController);
 }
 
 /**
