@@ -11,7 +11,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full border-t border-white/10 bg-slate-900/50 backdrop-blur-md pt-16 pb-8 mt-auto">
+    <footer className="w-full border-t border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 backdrop-blur-md pt-16 pb-8 mt-auto">
       <div className="container px-6 mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           {/* Brand Column */}
@@ -26,11 +26,13 @@ export default function Footer() {
                   className="rounded-lg"
                 />
               </div>
-              <span className="text-xl font-bold tracking-tight text-white font-display">
+              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
                 {t.nav.brand}
               </span>
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">{t.footer.brandDesc}</p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+              {t.footer.brandDesc}
+            </p>
             <div className="flex items-center gap-4">
               <a
                 href="https://github.com/ramiz4/helvetia-cloud"
@@ -43,14 +45,14 @@ export default function Footer() {
               </a>
               <a
                 href="#"
-                className="text-slate-500 hover:text-white transition-colors"
+                className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="Twitter"
               >
                 <Twitter size={20} />
               </a>
               <a
                 href="mailto:support@helvetia.cloud"
-                className="text-slate-500 hover:text-white transition-colors"
+                className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="Email"
               >
                 <Mail size={20} />
@@ -60,25 +62,31 @@ export default function Footer() {
 
           {/* Product Column */}
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
+            <h4 className="text-slate-900 dark:text-white font-semibold text-sm uppercase tracking-wider mb-6">
               {t.footer.product}
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
-                <Link href="/" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <Link
+                  href="/"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   {t.nav.dashboard}
                 </Link>
               </li>
               <li>
                 <Link
                   href="/deployments"
-                  className="text-slate-400 hover:text-indigo-400 transition-colors"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.nav.deployments}
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <a
+                  href="#"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   {t.footer.pricing}
                 </a>
               </li>
@@ -87,30 +95,39 @@ export default function Footer() {
 
           {/* Company Column */}
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
+            <h4 className="text-slate-900 dark:text-white font-semibold text-sm uppercase tracking-wider mb-6">
               {t.footer.resources}
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
                 <a
                   href="#"
-                  className="text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-2"
                 >
                   {t.footer.documentation} <ExternalLink size={12} />
                 </a>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <a
+                  href="#"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   {t.footer.blog}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <a
+                  href="#"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   {t.footer.changelog}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <a
+                  href="#"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   {t.footer.status}
                 </a>
               </li>
@@ -119,17 +136,23 @@ export default function Footer() {
 
           {/* Legal Column */}
           <div>
-            <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">
+            <h4 className="text-slate-900 dark:text-white font-semibold text-sm uppercase tracking-wider mb-6">
               {t.footer.legalSwiss}
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <a
+                  href="#"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   {t.footer.termsOfService}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
+                <a
+                  href="#"
+                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
                   {t.footer.privacyPolicy}
                 </a>
               </li>
@@ -149,7 +172,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+        <div className="pt-8 border-t border-slate-200 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <p>{t.footer.rights.replace('{year}', currentYear.toString())}</p>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2">

@@ -35,7 +35,7 @@ export default function ModernThemeSwitch({ variant = 'default' }: ModernThemeSw
     return (
       <button
         onClick={handleToggle}
-        className="group relative flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full"
+        className="group relative flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all w-full"
         aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
         aria-pressed={isDark}
       >
@@ -45,8 +45,8 @@ export default function ModernThemeSwitch({ variant = 'default' }: ModernThemeSw
             relative w-14 h-8 rounded-full transition-all duration-300 ease-in-out
             ${
               isDark
-                ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
-                : 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
+                ? 'bg-linear-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
+                : 'bg-linear-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
             }
             border backdrop-blur-xl shadow-inner
           `}
@@ -108,8 +108,8 @@ export default function ModernThemeSwitch({ variant = 'default' }: ModernThemeSw
         relative w-16 h-8 rounded-full transition-all duration-300 ease-in-out
         ${
           isDark
-            ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
-            : 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
+            ? 'bg-linear-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
+            : 'bg-linear-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
         }
         border backdrop-blur-xl shadow-inner
         hover:scale-105 active:scale-95

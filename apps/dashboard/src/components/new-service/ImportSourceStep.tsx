@@ -43,11 +43,10 @@ export default function ImportSourceStep({
               // Clear repo/branch when switching types to avoid confusion?
               // updateData({ repoUrl: '', branch: 'main' });
             }}
-            className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${
-              importType === type.id
-                ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                : 'bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10 hover:border-white/20'
-            }`}
+            className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${importType === type.id
+              ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500/50 text-indigo-500 dark:text-indigo-400'
+              : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20'
+              }`}
           >
             <type.icon size={24} />
             <span className="text-xs font-bold tracking-tight">{type.label}</span>
@@ -55,7 +54,7 @@ export default function ImportSourceStep({
         ))}
       </div>
 
-      <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8 min-h-[400px]">
+      <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-8 min-h-[400px]">
         {importType === 'github' && (
           <GitHubRepoPicker
             onSelect={(url, branch, name) => {
@@ -79,15 +78,15 @@ export default function ImportSourceStep({
           importType !== 'github-image' && (
             <div className="space-y-6 max-w-xl mx-auto py-12">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-500 dark:text-slate-400">
                   {importType === 'database' ? <Database size={32} /> : <FileCode size={32} />}
                 </div>
-                <h3 className="text-xl font-bold text-white uppercase tracking-tighter">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter">
                   {importType === 'database'
                     ? t.dashboard.newService.importDatabase
                     : t.dashboard.newService.importManual}
                 </h3>
-                <p className="text-slate-400 text-sm mt-1">Manual configuration.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manual configuration.</p>
               </div>
 
               <div className="space-y-4">
@@ -104,7 +103,7 @@ export default function ImportSourceStep({
                         setLocalRepoUrl(e.target.value);
                         updateData({ repoUrl: e.target.value });
                       }}
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-mono text-sm"
+                      className="w-full px-4 py-3 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white transition-all font-mono text-sm"
                     />
                   </div>
                 )}
@@ -141,7 +140,7 @@ export default function ImportSourceStep({
                       onNext();
                     }}
                     disabled={importType !== 'database' && !localRepoUrl}
-                    className="flex-1 h-12 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 h-12 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {t.common.next}
                     <ChevronRight size={18} />
@@ -156,13 +155,13 @@ export default function ImportSourceStep({
           <div className="mt-8 flex justify-end">
             <button
               onClick={onBack}
-              className="px-6 py-3 bg-white/5 text-slate-400 font-bold rounded-xl hover:bg-white/10 hover:text-white transition-all active:scale-95 border border-white/5"
+              className="px-6 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all active:scale-95 border border-slate-200 dark:border-white/5"
             >
               {t.common.back}
             </button>
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

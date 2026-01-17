@@ -43,7 +43,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="relative overflow-hidden bg-slate-950">
+    <div className="relative overflow-hidden dark:bg-slate-950 bg-slate-50">
       {/* Background Orbs */}
       <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[1000px] h-[1000px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />
       <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none -z-10" />

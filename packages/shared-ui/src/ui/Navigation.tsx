@@ -82,7 +82,7 @@ export default function Navigation({
 
         {/* Liquid Glass Background Layer */}
         <div
-          className="absolute inset-0 -z-10 border-b border-white/10 shadow-2xl overflow-hidden"
+          className="absolute inset-0 -z-10 border-b border-white/10 shadow-2xl overflow-hidden hidden dark:block"
           style={{
             background:
               'linear-gradient(-45deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02))',
@@ -94,11 +94,12 @@ export default function Navigation({
               '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 1px rgba(255, 255, 255, 0.08), inset 0 -1px 0 0 rgba(255, 255, 255, 0.03)',
           }}
         />
+        <div className="absolute inset-0 -z-10 border-b border-slate-200 bg-white/80 backdrop-blur-xl dark:hidden" />
 
         <div className="max-w-[1280px] mx-auto px-6 h-[70px] flex items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-3 font-bold text-xl text-white font-display tracking-tight z-50 shrink-0"
+            className="flex items-center gap-3 font-bold text-xl text-slate-900 dark:text-white font-display tracking-tight z-50 shrink-0"
             aria-label={t.nav.homeAria}
           >
             <Image
@@ -130,8 +131,8 @@ export default function Navigation({
                         href={link.href}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
                           isActive
-                            ? 'bg-indigo-500/10 text-indigo-400'
-                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
                         <Icon size={18} />
@@ -144,7 +145,7 @@ export default function Navigation({
               <div className="flex items-center gap-4">
                 {desktopThemeSwitcher || themeSwitcher}
                 <LanguageSwitcher />
-                <div className="w-px h-6 bg-white/10 mx-1" />
+                <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
                 {user && (
                   <UserMenu user={user} onLogout={onLogout} planLabel={planLabel}>
                     {userMenuChildren}
@@ -156,7 +157,7 @@ export default function Navigation({
             <div className="hidden lg:flex items-center gap-4">
               {desktopThemeSwitcher || themeSwitcher}
               <LanguageSwitcher />
-              <div className="w-px h-6 bg-white/10 mx-1" />
+              <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
               <Link
                 href="/login"
                 className="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium cursor-pointer transition-all border border-transparent text-[14px] gap-2 bg-indigo-500 text-white shadow-lg hover:bg-indigo-600 hover:-translate-y-0.5 active:scale-95"
@@ -169,7 +170,7 @@ export default function Navigation({
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex lg:hidden items-center justify-center p-2 rounded-xl bg-white/5 border border-white/10 text-white z-50"
+            className="flex lg:hidden items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white z-50"
             aria-label={isMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"

@@ -45,15 +45,15 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Dark/Light Mode**: System-aware theming support.
 - [x] **GitHub Repository Picker**: Allow users to select repositories and branches directly from their GitHub account when creating a service. Ensure the "Connect a Repository" form features a premium, fancy, and user-friendly UX/UI for a seamless experience.
 - [x] **Static Site Service**: Dedicated support for deploying static applications (Angular, React, Vue) using optimized multi-stage Docker builds and Nginx for high performance.
-- [ ] **Theme switcher**: Allow users to switch between light and dark themes in the main menu.
-- [ ] **Login Page**: A modern, engaging login page.
+- [x] **Theme switcher**: Allow users to switch between light and dark themes in the main menu.
+- [x] **Login Page**: A modern, engaging login page.
 
 ## 🔮 Phase 6: Advanced Ecosystem & Growth
 
 - [x] **Database-as-a-Service**: One-click provisioning of managed databases (Postgres, Redis, MySQL).
 - [x] **Preview Environments**: Automatic ephemeral deployments for Pull Requests.
-- [ ] **Team Collaboration**: Organizations, member management, and RBAC (Role-Based Access Control).
-- [ ] **Billing Integration**: Stripe integration for implementation of usage-based pricing and subscription tiers.
+- [x] **Team Collaboration**: Organizations, member management, and RBAC (Role-Based Access Control).
+- [x] **Billing Integration**: Stripe integration for implementation of usage-based pricing and subscription tiers.
 - [ ] **Marketplace**: One-click catalog for deploying popular open-source applications (e.g., WordPress, Ghost, Plausible).
 - [ ] **CLI Tool**: specialized command-line tool for Helvetia Cloud.
 
@@ -109,7 +109,7 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 
 ## 📚 Documentation
 
-- [ ] **API Documentation**: Create API documentation for the platform.
+- [x] **API Documentation**: Create API documentation for the platform.
 - [ ] **User Documentation**: Create user documentation for the platform.
 
 ## 🔭 Future Horizon

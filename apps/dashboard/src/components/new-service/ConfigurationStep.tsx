@@ -68,32 +68,32 @@ export default function ConfigurationStep({
   return (
     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
       <form onSubmit={onSubmit} className="space-y-8">
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
-          <h2 className="text-xl font-bold mb-8 flex items-center gap-3 text-indigo-400">
+        <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-8">
+          <h2 className="text-xl font-bold mb-8 flex items-center gap-3 text-indigo-500 dark:text-indigo-400">
             <Settings size={28} />
             {t.dashboard.newService.step3}
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 p-6 bg-black/40 rounded-[24px] border border-white/5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 p-6 bg-slate-100 dark:bg-black/40 rounded-[24px] border border-slate-200 dark:border-white/5">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-2">
                 Project
               </label>
-              <div className="text-white font-bold truncate">{data.projectId || 'None'}</div>
+              <div className="text-slate-900 dark:text-white font-bold truncate">{data.projectId || 'None'}</div>
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-2">
                 Environment
               </label>
-              <div className="text-indigo-400 font-bold truncate capitalize">
+              <div className="text-indigo-500 dark:text-indigo-400 font-bold truncate capitalize">
                 {data.environmentId || 'None'}
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500 mb-2">
                 Service Name
               </label>
-              <div className="text-white font-bold truncate">{data.projectName}</div>
+              <div className="text-slate-900 dark:text-white font-bold truncate">{data.projectName}</div>
             </div>
           </div>
 
@@ -120,7 +120,7 @@ export default function ConfigurationStep({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                   Service Name
                 </label>
                 <input
@@ -128,7 +128,7 @@ export default function ConfigurationStep({
                   required
                   value={projectName}
                   onChange={(e) => updateData({ projectName: e.target.value })}
-                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-semibold"
+                  className="w-full px-4 py-3 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white transition-all font-semibold"
                   placeholder="my-awesome-service"
                 />
                 <p className="text-[10px] text-slate-500 font-medium tracking-tight mt-2">
@@ -146,14 +146,14 @@ export default function ConfigurationStep({
                 {isGithubImage ? (
                   <>
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium text-slate-400 mb-2">
+                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                         Image URL
                       </label>
                       <input
                         type="text"
                         readOnly
                         value={repoUrl}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 font-mono text-xs cursor-not-allowed"
+                        className="w-full px-4 py-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 font-mono text-xs cursor-not-allowed"
                       />
                     </div>
                   </>
@@ -167,11 +167,10 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'docker' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                            serviceType === 'docker'
-                              ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                              : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                          }`}
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'docker'
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500/50 text-indigo-500 dark:text-indigo-400'
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -181,11 +180,10 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'static' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                            serviceType === 'static'
-                              ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                              : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                          }`}
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'static'
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500/50 text-indigo-500 dark:text-indigo-400'
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                         >
                           <Globe size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -195,11 +193,10 @@ export default function ConfigurationStep({
                         <button
                           type="button"
                           onClick={() => updateData({ serviceType: 'compose' })}
-                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                            serviceType === 'compose'
-                              ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400'
-                              : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
-                          }`}
+                          className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${serviceType === 'compose'
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500/50 text-indigo-500 dark:text-indigo-400'
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                         >
                           <Combine size={18} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -210,7 +207,7 @@ export default function ConfigurationStep({
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-2">
+                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                         {t.dashboard.newService.branch}
                       </label>
                       <input
@@ -218,7 +215,7 @@ export default function ConfigurationStep({
                         required
                         value={branch}
                         onChange={(e) => updateData({ branch: e.target.value })}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white transition-all font-mono text-sm"
+                        className="w-full px-4 py-3 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white transition-all font-mono text-sm"
                         placeholder="main"
                       />
                     </div>
@@ -305,7 +302,7 @@ export default function ConfigurationStep({
                   <button
                     type="button"
                     onClick={addEnvVar}
-                    className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 transition-all"
+                    className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg border border-indigo-100 dark:border-indigo-500/20 transition-all"
                   >
                     <Plus size={12} /> {t.dashboard.newService.addVariable}
                   </button>
@@ -328,19 +325,19 @@ export default function ConfigurationStep({
                           placeholder="KEY"
                           value={ev.key}
                           onChange={(e) => updateEnvVar(i, 'key', e.target.value)}
-                          className="flex-1 px-3 py-2.5 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs uppercase"
+                          className="flex-1 px-3 py-2.5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white font-mono text-xs uppercase"
                         />
                         <input
                           type="text"
                           placeholder="VALUE"
                           value={ev.value}
                           onChange={(e) => updateEnvVar(i, 'value', e.target.value)}
-                          className="flex-1 px-3 py-2.5 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                          className="flex-1 px-3 py-2.5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white font-mono text-xs"
                         />
                         <button
                           type="button"
                           onClick={() => removeEnvVar(i)}
-                          className="p-2.5 bg-white/5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all"
+                          className="p-2.5 bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 rounded-xl transition-all"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -357,7 +354,7 @@ export default function ConfigurationStep({
                   <button
                     type="button"
                     onClick={addVolume}
-                    className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20 transition-all"
+                    className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg border border-indigo-100 dark:border-indigo-500/20 transition-all"
                   >
                     <Plus size={12} /> Add Volume
                   </button>
@@ -380,12 +377,12 @@ export default function ConfigurationStep({
                           placeholder="/host/path:/container/path"
                           value={vol}
                           onChange={(e) => updateVolume(i, e.target.value)}
-                          className="flex-1 px-3 py-2.5 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                          className="flex-1 px-3 py-2.5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white font-mono text-xs"
                         />
                         <button
                           type="button"
                           onClick={() => removeVolume(i)}
-                          className="p-2.5 bg-white/5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all"
+                          className="p-2.5 bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 rounded-xl transition-all"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -398,12 +395,12 @@ export default function ConfigurationStep({
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 bg-slate-900/50 border border-white/10 rounded-3xl">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-3xl">
           <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={onBack}
-              className="flex-1 md:flex-none px-8 py-4 rounded-2xl font-bold bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all active:scale-95 border border-white/5"
+              className="flex-1 md:flex-none px-8 py-4 rounded-2xl font-bold bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all active:scale-95 border border-slate-200 dark:border-white/5"
             >
               {t.common.back}
             </button>
