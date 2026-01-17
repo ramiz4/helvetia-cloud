@@ -203,11 +203,63 @@ export class BillingController {
         organizationId?: string;
       };
 
-      // Default to last 30 days if no dates provided
-      const periodEnd = query.periodEnd ? new Date(query.periodEnd) : new Date();
-      const periodStart = query.periodStart
-        ? new Date(query.periodStart)
-        : new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // Validate and parse dates
+      let periodEnd: Date;
+      let periodStart: Date;
+
+      if (query.periodEnd) {
+        periodEnd = new Date(query.periodEnd);
+        if (isNaN(periodEnd.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodEnd date format' });
+        }
+      } else {
+        periodEnd = new Date();
+      }
+
+      if (query.periodStart) {
+        periodStart = new Date(query.periodStart);
+        if (isNaN(periodStart.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodStart date format' });
+        }
+      } else {
+        // Default to 30 days ago
+        periodStart = new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+
+      // Validate date range
+      if (periodStart > periodEnd) {
+        return reply.status(400).send({ error: 'periodStart must be before periodEnd' });
+      }
+
+      // Prevent future dates
+      const now = new Date();
+      if (periodEnd > now) {
+        return reply.status(400).send({ error: 'periodEnd cannot be in the future' });
+      }
+
+      // Limit to 1 year maximum range
+      const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+      if (periodEnd.getTime() - periodStart.getTime() > oneYearMs) {
+        return reply.status(400).send({ error: 'Date range cannot exceed 1 year' });
+      }
+
+      // Verify organization access if organizationId is provided
+      if (query.organizationId) {
+        const member = await this.userRepository.findById(userId).then(async (user) => {
+          if (!user) return null;
+          const prisma = await import('database').then((m) => m.prisma);
+          return prisma.organizationMember.findFirst({
+            where: {
+              organizationId: query.organizationId,
+              userId,
+            },
+          });
+        });
+
+        if (!member) {
+          return reply.status(403).send({ error: 'Access denied to organization usage data' });
+        }
+      }
 
       const usage = await this.usageTrackingService.getAggregatedUsage({
         userId,
@@ -245,27 +297,82 @@ export class BillingController {
         periodEnd?: string;
       };
 
-      // Default to last 30 days if no dates provided
-      const periodEnd = query.periodEnd ? new Date(query.periodEnd) : new Date();
-      const periodStart = query.periodStart
-        ? new Date(query.periodStart)
-        : new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // Validate and parse dates
+      let periodEnd: Date;
+      let periodStart: Date;
 
-      // Verify service belongs to user
-      const service = await this.userRepository.findById(userId).then(async (user) => {
-        if (!user) return null;
-        // Get service through prisma
-        const prisma = await import('database').then((m) => m.prisma);
-        return prisma.service.findFirst({
-          where: {
-            id: params.id,
-            userId,
+      if (query.periodEnd) {
+        periodEnd = new Date(query.periodEnd);
+        if (isNaN(periodEnd.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodEnd date format' });
+        }
+      } else {
+        periodEnd = new Date();
+      }
+
+      if (query.periodStart) {
+        periodStart = new Date(query.periodStart);
+        if (isNaN(periodStart.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodStart date format' });
+        }
+      } else {
+        // Default to 30 days ago
+        periodStart = new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+
+      // Validate date range
+      if (periodStart > periodEnd) {
+        return reply.status(400).send({ error: 'periodStart must be before periodEnd' });
+      }
+
+      // Prevent future dates
+      const now = new Date();
+      if (periodEnd > now) {
+        return reply.status(400).send({ error: 'periodEnd cannot be in the future' });
+      }
+
+      // Limit to 1 year maximum range
+      const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+      if (periodEnd.getTime() - periodStart.getTime() > oneYearMs) {
+        return reply.status(400).send({ error: 'Date range cannot exceed 1 year' });
+      }
+
+      // Verify service access (check both direct ownership and organization membership)
+      const prisma = await import('database').then((m) => m.prisma);
+      const service = await prisma.service.findUnique({
+        where: { id: params.id },
+        include: {
+          environment: {
+            include: {
+              project: {
+                include: {
+                  organization: {
+                    include: {
+                      members: {
+                        where: { userId },
+                        select: { id: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
-        });
+        },
       });
 
       if (!service) {
         return reply.status(404).send({ error: 'Service not found' });
+      }
+
+      // Check access: either direct owner or organization member
+      const hasAccess =
+        service.userId === userId ||
+        (service.environment?.project.organization?.members &&
+          service.environment.project.organization.members.length > 0);
+
+      if (!hasAccess) {
+        return reply.status(403).send({ error: 'Access denied to service usage data' });
       }
 
       const usage = await this.usageTrackingService.getServiceUsage({

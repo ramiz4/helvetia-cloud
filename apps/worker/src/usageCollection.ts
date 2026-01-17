@@ -36,17 +36,31 @@ export const usageCollectionQueue = new Queue('usage-collection', {
 
 /**
  * Report usage to Stripe for metered billing
+ * @param collectedUsage Array of usage data with service and ownership information
+ * @param periodStart Start of the collection period
+ * @param periodEnd End of the collection period
  */
-async function reportToStripe(periodStart: Date, periodEnd: Date) {
+async function reportToStripe(
+  collectedUsage: Array<{
+    serviceId: string;
+    userId?: string | null;
+    organizationId?: string | null;
+  }>,
+  periodStart: Date,
+  periodEnd: Date,
+) {
   if (!STRIPE_ENABLED) {
     logger.info('Stripe not configured, skipping usage reporting');
     return { reported: false, reason: 'Stripe not configured' };
   }
 
   try {
-    // Import Stripe and BillingService dynamically to avoid errors if Stripe is not configured
+    // Import Stripe dynamically to avoid errors if Stripe is not configured
     const Stripe = (await import('stripe')).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-12-15.clover' });
+
+    // Use consistent timestamp for all Stripe reports
+    const reportTimestamp = Math.floor(periodEnd.getTime() / 1000);
 
     // Get all subscriptions with active status
     const subscriptions = await prisma.subscription.findMany({
@@ -66,25 +80,33 @@ async function reportToStripe(periodStart: Date, periodEnd: Date) {
 
     let successCount = 0;
     let errorCount = 0;
+    const failedSubscriptions: string[] = [];
 
     for (const subscription of subscriptions) {
       try {
-        // Get aggregated usage for this subscription's billing period
-        const userId = subscription.userId || undefined;
-        const organizationId = subscription.organizationId || undefined;
+        // Filter services that belong to this subscription
+        const subscriptionServices = collectedUsage.filter((u) => {
+          if (subscription.userId) {
+            // User-level subscription: match userId and ensure organizationId is null
+            return u.userId === subscription.userId && !u.organizationId;
+          } else if (subscription.organizationId) {
+            // Organization-level subscription: match organizationId
+            return u.organizationId === subscription.organizationId;
+          }
+          return false;
+        });
 
+        if (subscriptionServices.length === 0) {
+          continue;
+        }
+
+        // Get aggregated usage for these services
+        const serviceIds = subscriptionServices.map((s) => s.serviceId);
         const usage = await prisma.usageRecord.groupBy({
           by: ['metric'],
           where: {
-            service: {
-              userId: userId ? userId : undefined,
-              environment: organizationId
-                ? {
-                    project: {
-                      organizationId,
-                    },
-                  }
-                : undefined,
+            serviceId: {
+              in: serviceIds,
             },
             periodStart: {
               gte: periodStart,
@@ -140,15 +162,13 @@ async function reportToStripe(periodStart: Date, periodEnd: Date) {
             continue;
           }
 
-          // Report usage to Stripe
-          // Note: The `usageRecords` property does not exist on `subscriptionItems` in Stripe Node SDK v20.2.0.
-          // We use `rawRequest` to call the endpoint directly.
+          // Report usage to Stripe with consistent timestamp
           await stripe.rawRequest(
             'POST',
             `/v1/subscription_items/${subscriptionItem.id}/usage_records`,
             {
               quantity: Math.round(quantity),
-              timestamp: Math.floor(periodEnd.getTime() / 1000),
+              timestamp: reportTimestamp,
               action: 'increment',
             },
           );
@@ -166,6 +186,7 @@ async function reportToStripe(periodStart: Date, periodEnd: Date) {
         successCount++;
       } catch (error) {
         errorCount++;
+        failedSubscriptions.push(subscription.id);
         logger.error(
           {
             err: error,
@@ -176,11 +197,20 @@ async function reportToStripe(periodStart: Date, periodEnd: Date) {
       }
     }
 
+    // If more than 20% of subscriptions failed, throw error to trigger job retry
+    const failureRate = subscriptions.length > 0 ? errorCount / subscriptions.length : 0;
+    if (failureRate > 0.2 && errorCount > 0) {
+      throw new Error(
+        `High failure rate in Stripe reporting: ${errorCount}/${subscriptions.length} subscriptions failed`,
+      );
+    }
+
     return {
       reported: true,
       subscriptionsProcessed: subscriptions.length,
       successCount,
       errorCount,
+      failedSubscriptions: errorCount > 0 ? failedSubscriptions : undefined,
     };
   } catch (error) {
     logger.error({ err: error }, 'Failed to report usage to Stripe');
@@ -209,12 +239,42 @@ export const usageCollectionWorker = new Worker(
         'Usage collection completed successfully',
       );
 
-      // Report to Stripe if enabled
-      if (STRIPE_ENABLED) {
-        const periodEnd = new Date();
-        const periodStart = new Date(periodEnd.getTime() - COLLECTION_INTERVAL_MINUTES * 60 * 1000);
+      // Report to Stripe if enabled - pass collected usage directly to avoid race conditions
+      if (STRIPE_ENABLED && result.usage.length > 0) {
+        // Get service ownership information for Stripe reporting
+        const serviceIds = result.usage.map((u) => u.serviceId);
+        const services = await prisma.service.findMany({
+          where: {
+            id: {
+              in: serviceIds,
+            },
+          },
+          select: {
+            id: true,
+            userId: true,
+            environment: {
+              select: {
+                project: {
+                  select: {
+                    organizationId: true,
+                  },
+                },
+              },
+            },
+          },
+        });
 
-        const stripeResult = await reportToStripe(periodStart, periodEnd);
+        const usageWithOwnership = services.map((s) => ({
+          serviceId: s.id,
+          userId: s.userId,
+          organizationId: s.environment?.project.organizationId || null,
+        }));
+
+        const stripeResult = await reportToStripe(
+          usageWithOwnership,
+          result.periodStart,
+          result.periodEnd,
+        );
 
         if (stripeResult.reported) {
           logger.info(
@@ -227,17 +287,35 @@ export const usageCollectionWorker = new Worker(
           );
         }
 
+        // Cleanup service connection
+        await usageCollectionService.cleanup();
+
         return { ...result, stripe: stripeResult };
       }
+
+      // Cleanup service connection
+      await usageCollectionService.cleanup();
 
       return result;
     } catch (error) {
       logger.error({ err: error }, 'Usage collection failed');
+      // Ensure cleanup even on error
+      try {
+        await usageCollectionService.cleanup();
+      } catch (cleanupError) {
+        logger.warn({ err: cleanupError }, 'Failed to cleanup after error');
+      }
       throw error;
     }
   },
   {
     connection: redisConnection,
+    // Retry configuration
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 5000, // 5 seconds initial delay
+    },
   },
 );
 

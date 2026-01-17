@@ -1,5 +1,6 @@
 import { PrismaClient, UsageMetric } from 'database';
 import Docker from 'dockerode';
+import type IORedis from 'ioredis';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageCollectionService } from './usageCollection.service';
 
@@ -12,10 +13,22 @@ vi.mock('shared', () => ({
   },
 }));
 
+// Mock ioredis
+vi.mock('ioredis', () => {
+  const mockRedis = vi.fn().mockImplementation(function (this: any) {
+    this.get = vi.fn().mockResolvedValue(null);
+    this.setex = vi.fn().mockResolvedValue('OK');
+    this.quit = vi.fn().mockResolvedValue('OK');
+    return this;
+  });
+  return { default: mockRedis };
+});
+
 describe('UsageCollectionService', () => {
   let service: UsageCollectionService;
   let mockDocker: Docker;
   let mockPrisma: PrismaClient;
+  let mockRedis: IORedis;
 
   beforeEach(() => {
     mockDocker = {} as Docker;
@@ -25,11 +38,19 @@ describe('UsageCollectionService', () => {
       },
     } as unknown as PrismaClient;
 
-    service = new UsageCollectionService(mockDocker, mockPrisma);
+    // Create mock Redis instance
+    mockRedis = {
+      get: vi.fn().mockResolvedValue(null),
+      setex: vi.fn().mockResolvedValue('OK'),
+      quit: vi.fn().mockResolvedValue('OK'),
+    } as unknown as IORedis;
+
+    service = new UsageCollectionService(mockDocker, mockPrisma, 'redis://localhost:6379');
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.clearAllMocks();
+    await service.cleanup();
   });
 
   describe('collectAllMetrics', () => {
@@ -129,7 +150,7 @@ describe('UsageCollectionService', () => {
   });
 
   describe('calculateUsage', () => {
-    it('should calculate usage for a 10-minute interval', () => {
+    it('should calculate usage for a 10-minute interval with delta tracking', async () => {
       const metrics = [
         {
           containerId: 'container1',
@@ -144,17 +165,18 @@ describe('UsageCollectionService', () => {
         },
       ];
 
-      const usage = service.calculateUsage(metrics, 10);
+      const usage = await service.calculateUsage(metrics, 10);
 
       expect(usage).toHaveLength(1);
       expect(usage[0].serviceId).toBe('service1');
       expect(usage[0].computeHours).toBeCloseTo(10 / 60, 4); // 10 minutes = 0.1667 hours
       expect(usage[0].memoryGBHours).toBeCloseTo((512 / 1024) * (10 / 60), 4); // 0.5GB * 0.1667h
-      expect(usage[0].bandwidthGB).toBeCloseTo(15, 2); // 10GB + 5GB
-      expect(usage[0].storageGB).toBeCloseTo(3, 2); // 1GB + 2GB
+      // First collection: no previous data, so bandwidth and storage should be 0
+      expect(usage[0].bandwidthGB).toBe(0);
+      expect(usage[0].storageGB).toBe(0);
     });
 
-    it('should aggregate usage for multiple containers of the same service', () => {
+    it('should aggregate usage for multiple containers of the same service', async () => {
       const metrics = [
         {
           containerId: 'container1',
@@ -180,15 +202,14 @@ describe('UsageCollectionService', () => {
         },
       ];
 
-      const usage = service.calculateUsage(metrics, 10);
+      const usage = await service.calculateUsage(metrics, 10);
 
       expect(usage).toHaveLength(1);
       expect(usage[0].computeHours).toBeCloseTo((10 / 60) * 2, 4); // 2 containers
       expect(usage[0].memoryGBHours).toBeCloseTo(((512 + 256) / 1024) * (10 / 60), 4);
-      expect(usage[0].bandwidthGB).toBeCloseTo(4, 2); // 2GB * 2 containers
     });
 
-    it('should handle multiple services separately', () => {
+    it('should handle multiple services separately', async () => {
       const metrics = [
         {
           containerId: 'container1',
@@ -214,7 +235,7 @@ describe('UsageCollectionService', () => {
         },
       ];
 
-      const usage = service.calculateUsage(metrics, 10);
+      const usage = await service.calculateUsage(metrics, 10);
 
       expect(usage).toHaveLength(2);
       expect(usage.find((u) => u.serviceId === 'service1')).toBeDefined();

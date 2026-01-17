@@ -1,5 +1,6 @@
 import { PrismaClient, UsageMetric } from 'database';
 import Docker from 'dockerode';
+import IORedis from 'ioredis';
 import { logger } from 'shared';
 
 /**
@@ -29,14 +30,32 @@ interface ServiceUsage {
 }
 
 /**
+ * Previous container metrics stored for delta calculation
+ */
+interface PreviousMetrics {
+  networkRxBytes: number;
+  networkTxBytes: number;
+  blockReadBytes: number;
+  blockWriteBytes: number;
+  timestamp: number;
+}
+
+/**
  * UsageCollectionService
  * Collects resource usage metrics from running containers
  */
 export class UsageCollectionService {
+  private redis: IORedis;
+
   constructor(
     private docker: Docker,
     private prisma: PrismaClient,
-  ) {}
+    redisUrl?: string,
+  ) {
+    this.redis = new IORedis(redisUrl || process.env.REDIS_URL || 'redis://localhost:6379', {
+      maxRetriesPerRequest: null,
+    });
+  }
 
   /**
    * Collect metrics from a single container
@@ -147,11 +166,51 @@ export class UsageCollectionService {
   }
 
   /**
+   * Get previous metrics for a container from Redis
+   */
+  private async getPreviousMetrics(containerId: string): Promise<PreviousMetrics | null> {
+    try {
+      const key = `usage:container:${containerId}`;
+      const data = await this.redis.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      logger.warn({ err: error, containerId }, 'Failed to get previous metrics from Redis');
+      return null;
+    }
+  }
+
+  /**
+   * Store current metrics as previous for next collection
+   */
+  private async storePreviousMetrics(
+    containerId: string,
+    metrics: ContainerMetrics,
+  ): Promise<void> {
+    try {
+      const key = `usage:container:${containerId}`;
+      const data: PreviousMetrics = {
+        networkRxBytes: metrics.networkRxBytes,
+        networkTxBytes: metrics.networkTxBytes,
+        blockReadBytes: metrics.blockReadBytes,
+        blockWriteBytes: metrics.blockWriteBytes,
+        timestamp: Date.now(),
+      };
+      // Store with 24 hour expiry to auto-cleanup stopped containers
+      await this.redis.setex(key, 86400, JSON.stringify(data));
+    } catch (error) {
+      logger.warn({ err: error, containerId }, 'Failed to store previous metrics to Redis');
+    }
+  }
+
+  /**
    * Calculate usage for a collection interval
    * @param metrics Container metrics collected
    * @param intervalMinutes Collection interval in minutes
    */
-  calculateUsage(metrics: ContainerMetrics[], intervalMinutes: number): ServiceUsage[] {
+  async calculateUsage(
+    metrics: ContainerMetrics[],
+    intervalMinutes: number,
+  ): Promise<ServiceUsage[]> {
     const usageMap = new Map<string, ServiceUsage>();
 
     for (const metric of metrics) {
@@ -163,14 +222,29 @@ export class UsageCollectionService {
       // Calculate memory GB-hours (memory usage * time)
       const memoryGBHours = (metric.memoryMB / 1024) * (intervalMinutes / 60);
 
-      // Calculate bandwidth GB (network I/O, convert bytes to GB)
-      // This is cumulative since container start, so we need to track deltas
-      // For now, we'll use the current value as an approximation
-      const bandwidthGB = (metric.networkRxBytes + metric.networkTxBytes) / 1024 / 1024 / 1024;
+      // Get previous metrics to calculate deltas for cumulative values
+      const previous = await this.getPreviousMetrics(metric.containerId);
 
-      // Calculate storage GB (block I/O as a proxy for storage)
-      // This is also cumulative, using current value
-      const storageGB = (metric.blockReadBytes + metric.blockWriteBytes) / 1024 / 1024 / 1024;
+      // Calculate bandwidth GB (network I/O delta, convert bytes to GB)
+      let bandwidthGB = 0;
+      if (previous) {
+        const rxDelta = Math.max(0, metric.networkRxBytes - previous.networkRxBytes);
+        const txDelta = Math.max(0, metric.networkTxBytes - previous.networkTxBytes);
+        bandwidthGB = (rxDelta + txDelta) / 1024 / 1024 / 1024;
+      }
+      // If no previous data, skip bandwidth for this collection (first collection)
+
+      // Calculate storage GB (block I/O delta as a proxy for storage)
+      let storageGB = 0;
+      if (previous) {
+        const readDelta = Math.max(0, metric.blockReadBytes - previous.blockReadBytes);
+        const writeDelta = Math.max(0, metric.blockWriteBytes - previous.blockWriteBytes);
+        storageGB = (readDelta + writeDelta) / 1024 / 1024 / 1024;
+      }
+      // If no previous data, skip storage for this collection (first collection)
+
+      // Store current metrics as previous for next collection
+      await this.storePreviousMetrics(metric.containerId, metric);
 
       if (existing) {
         existing.computeHours += computeHours;
@@ -265,6 +339,9 @@ export class UsageCollectionService {
   async collectAndRecord(intervalMinutes: number): Promise<{
     servicesProcessed: number;
     recordsCreated: number;
+    usage: ServiceUsage[];
+    periodStart: Date;
+    periodEnd: Date;
   }> {
     const periodEnd = new Date();
     const periodStart = new Date(periodEnd.getTime() - intervalMinutes * 60 * 1000);
@@ -276,11 +353,11 @@ export class UsageCollectionService {
 
     if (metrics.length === 0) {
       logger.info('No running containers found for usage collection');
-      return { servicesProcessed: 0, recordsCreated: 0 };
+      return { servicesProcessed: 0, recordsCreated: 0, usage: [], periodStart, periodEnd };
     }
 
-    // Calculate usage
-    const usage = this.calculateUsage(metrics, intervalMinutes);
+    // Calculate usage with delta tracking
+    const usage = await this.calculateUsage(metrics, intervalMinutes);
 
     // Record to database
     await this.recordUsage(usage, periodStart, periodEnd);
@@ -297,6 +374,20 @@ export class UsageCollectionService {
     return {
       servicesProcessed: usage.length,
       recordsCreated,
+      usage,
+      periodStart,
+      periodEnd,
     };
+  }
+
+  /**
+   * Cleanup method to close Redis connection
+   */
+  async cleanup(): Promise<void> {
+    try {
+      await this.redis.quit();
+    } catch (error) {
+      logger.warn({ err: error }, 'Failed to cleanup Redis connection');
+    }
   }
 }

@@ -215,7 +215,7 @@ The worker retries failed collections up to 3 times with exponential backoff:
 
 - Attempt 1: Immediate
 - Attempt 2: 5 seconds delay
-- Attempt 3: 25 seconds delay (5s \* 5^1)
+- Attempt 3: 10 seconds delay (5s \* 2^1)
 
 **Common errors:**
 
@@ -223,20 +223,22 @@ The worker retries failed collections up to 3 times with exponential backoff:
 - Database connection issues
 - Container stats unavailable (container stopped mid-collection)
 
-## Stripe Integration (Future)
+## Stripe Integration
 
-### Reporting to Stripe
+Usage is automatically reported to Stripe for active subscriptions when STRIPE_SECRET_KEY and price IDs are configured. The system:
 
-After recording usage to the database, usage should be reported to Stripe for metered billing:
+1. Collects usage from containers and records to database
+2. Retrieves all ACTIVE subscriptions
+3. Filters usage by subscription ownership (user or organization)
+4. Reports aggregated usage to Stripe for each metric type
+5. Handles per-subscription errors with 20% failure threshold
 
 ```typescript
-// For each metric type
-await billingService.reportUsage({
-  subscriptionItemId: stripeSubscriptionItem.id,
-  quantity: totalQuantity,
-  timestamp: Math.floor(periodEnd.getTime() / 1000),
-});
+// Automatic reporting happens after each collection cycle
+// No manual intervention required when properly configured
 ```
+
+### Mapping to Stripe Products
 
 ### Mapping to Stripe Products
 
@@ -246,6 +248,13 @@ Each metric maps to a Stripe metered price:
 - `MEMORY_GB_HOURS` → `STRIPE_PRICE_ID_MEMORY_GB_HOURS`
 - `BANDWIDTH_GB` → `STRIPE_PRICE_ID_BANDWIDTH_GB`
 - `STORAGE_GB` → `STRIPE_PRICE_ID_STORAGE_GB`
+
+### Error Handling
+
+- Per-subscription errors are logged but don't fail the entire job
+- If >20% of subscriptions fail, the job triggers a retry
+- Failed subscriptions are logged with IDs for investigation
+- Network/storage deltas prevent double-billing across collections
 
 ## Database Schema
 
