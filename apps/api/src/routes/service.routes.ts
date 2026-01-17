@@ -104,92 +104,8 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
       schema: {
         tags: ['Services'],
         summary: 'Create a new service',
-        description: 'Create a new service with the specified configuration.',
-        body: {
-          type: 'object',
-          required: ['name'],
-          properties: {
-            name: {
-              type: 'string',
-              minLength: 2,
-              maxLength: 63,
-              pattern: '^[a-z0-9-]+$',
-              description: 'Service name (lowercase alphanumeric with hyphens)',
-              example: 'my-service',
-            },
-            type: {
-              type: 'string',
-              enum: ['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'],
-              description: 'Service type',
-              example: 'DOCKER',
-            },
-            repoUrl: {
-              type: 'string',
-              format: 'uri',
-              description: 'GitHub repository URL',
-              example: 'https://github.com/user/repo',
-            },
-            branch: {
-              type: 'string',
-              description: 'Git branch to deploy',
-              example: 'main',
-            },
-            buildCommand: {
-              type: 'string',
-              maxLength: 1000,
-              description: 'Build command',
-              example: 'npm install && npm run build',
-            },
-            startCommand: {
-              type: 'string',
-              maxLength: 1000,
-              description: 'Start command',
-              example: 'npm start',
-            },
-            port: {
-              type: 'integer',
-              minimum: 1,
-              maximum: 65535,
-              description: 'Container port',
-              example: 3000,
-            },
-            envVars: {
-              type: 'object',
-              additionalProperties: {
-                type: 'string',
-              },
-              description: 'Environment variables',
-              example: {
-                NODE_ENV: 'production',
-              },
-            },
-            customDomain: {
-              type: 'string',
-              maxLength: 255,
-              description: 'Custom domain',
-              example: 'myapp.com',
-            },
-            staticOutputDir: {
-              type: 'string',
-              maxLength: 255,
-              description: 'Static site output directory',
-              example: 'dist',
-            },
-            volumes: {
-              type: 'array',
-              items: {
-                type: 'string',
-              },
-              description: 'Volume mounts',
-              example: ['/data'],
-            },
-            environmentId: {
-              type: 'string',
-              format: 'uuid',
-              description: 'Environment ID',
-            },
-          },
-        },
+        description:
+          'Create a new service with the specified configuration. Requires name field. See documentation for all available fields and validation rules.',
         response: {
           201: {
             description: 'Service created successfully',
@@ -226,7 +142,8 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
       schema: {
         tags: ['Services'],
         summary: 'Update a service',
-        description: 'Update service configuration. All fields are optional.',
+        description:
+          'Update service configuration. All fields are optional. See documentation for validation rules.',
         params: {
           type: 'object',
           required: ['id'],
@@ -235,77 +152,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
               type: 'string',
               format: 'uuid',
               description: 'Service ID',
-            },
-          },
-        },
-        body: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-              minLength: 2,
-              maxLength: 63,
-              pattern: '^[a-z0-9-]+$',
-              description: 'Service name',
-            },
-            repoUrl: {
-              type: 'string',
-              format: 'uri',
-              description: 'GitHub repository URL',
-            },
-            branch: {
-              type: 'string',
-              description: 'Git branch',
-            },
-            buildCommand: {
-              type: 'string',
-              maxLength: 1000,
-              description: 'Build command',
-            },
-            startCommand: {
-              type: 'string',
-              maxLength: 1000,
-              description: 'Start command',
-            },
-            port: {
-              type: 'integer',
-              minimum: 1,
-              maximum: 65535,
-              description: 'Container port',
-            },
-            envVars: {
-              type: 'object',
-              additionalProperties: {
-                type: 'string',
-              },
-              description: 'Environment variables',
-            },
-            customDomain: {
-              type: 'string',
-              maxLength: 255,
-              description: 'Custom domain',
-            },
-            type: {
-              type: 'string',
-              enum: ['DOCKER', 'STATIC', 'POSTGRES', 'REDIS', 'MYSQL', 'COMPOSE'],
-              description: 'Service type',
-            },
-            staticOutputDir: {
-              type: 'string',
-              maxLength: 255,
-              description: 'Static output directory',
-            },
-            volumes: {
-              type: 'array',
-              items: {
-                type: 'string',
-              },
-              description: 'Volume mounts',
-            },
-            environmentId: {
-              type: 'string',
-              format: 'uuid',
-              description: 'Environment ID',
             },
           },
         },
@@ -444,7 +290,8 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
       schema: {
         tags: ['Services'],
         summary: 'Toggle delete protection',
-        description: 'Enable or disable delete protection for a service.',
+        description:
+          'Enable or disable delete protection for a service. Requires deleteProtected field (boolean).',
         params: {
           type: 'object',
           required: ['id'],
@@ -453,17 +300,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
               type: 'string',
               format: 'uuid',
               description: 'Service ID',
-            },
-          },
-        },
-        body: {
-          type: 'object',
-          required: ['deleteProtected'],
-          properties: {
-            deleteProtected: {
-              type: 'boolean',
-              description: 'Enable/disable delete protection',
-              example: true,
             },
           },
         },

@@ -146,17 +146,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       schema: {
         tags: ['Authentication'],
         summary: 'Refresh access token',
-        description: 'Obtain a new access token using a refresh token.',
-        body: {
-          type: 'object',
-          required: ['refreshToken'],
-          properties: {
-            refreshToken: {
-              type: 'string',
-              description: 'Valid refresh token',
-            },
-          },
-        },
+        description:
+          'Obtain a new access token using a refresh token. Requires refreshToken field in request body.',
         response: {
           200: {
             description: 'Token refreshed successfully',
