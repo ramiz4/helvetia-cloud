@@ -1,6 +1,6 @@
 import type { Subscription } from '@/types/billing';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { CurrentPlanCard } from './CurrentPlanCard';
 
 describe('CurrentPlanCard', () => {
@@ -14,7 +14,7 @@ describe('CurrentPlanCard', () => {
     currentPeriodEnd: '2024-02-01T00:00:00Z',
   };
 
-  const mockOnManage = () => {};
+  const mockOnManage = vi.fn();
 
   it('should render subscription details correctly', () => {
     render(<CurrentPlanCard subscription={mockSubscription} onManage={mockOnManage} />);
@@ -63,5 +63,14 @@ describe('CurrentPlanCard', () => {
 
     const statusBadge = screen.getByText('CANCELED');
     expect(statusBadge).toHaveClass('text-slate-400');
+  });
+
+  it('should call onManage when "Manage Subscription" button is clicked', () => {
+    render(<CurrentPlanCard subscription={mockSubscription} onManage={mockOnManage} />);
+
+    const button = screen.getByRole('button', { name: 'Manage Subscription' });
+    fireEvent.click(button);
+
+    expect(mockOnManage).toHaveBeenCalledTimes(1);
   });
 });

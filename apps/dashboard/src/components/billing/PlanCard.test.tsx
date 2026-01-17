@@ -1,6 +1,6 @@
 import type { PlanDetails } from '@/types/billing';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { PlanCard } from './PlanCard';
 
 describe('PlanCard', () => {
@@ -14,7 +14,7 @@ describe('PlanCard', () => {
     highlighted: false,
   };
 
-  const mockOnSelect = () => {};
+  const mockOnSelect = vi.fn();
 
   it('should render plan details correctly', () => {
     render(<PlanCard plan={mockPlan} onSelect={mockOnSelect} />);
@@ -61,5 +61,14 @@ describe('PlanCard', () => {
     render(<PlanCard plan={mockPlan} onSelect={mockOnSelect} loading />);
 
     expect(screen.getByRole('button', { name: 'Processing...' })).toBeInTheDocument();
+  });
+
+  it('should call onSelect when "Select Plan" button is clicked', () => {
+    render(<PlanCard plan={mockPlan} onSelect={mockOnSelect} />);
+
+    const button = screen.getByRole('button', { name: 'Select Plan' });
+    fireEvent.click(button);
+
+    expect(mockOnSelect).toHaveBeenCalledWith(mockPlan);
   });
 });

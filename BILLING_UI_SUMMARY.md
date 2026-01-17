@@ -87,11 +87,12 @@ User clicks "Manage Subscription" → API creates portal session
 
 **Test Coverage:**
 
-- 32 tests total, all passing
+- 38 tests total, all passing
 - 5 test files covering:
-  - All API hooks (`useBilling.test.tsx`)
-  - All UI components (`*.test.tsx`)
-- 100% component coverage
+  - Billing API hooks including mutations (`useBilling.test.tsx`)
+  - UI component rendering and interactions (`*.test.tsx`)
+- High component rendering coverage
+- Callback interaction tests for PlanCard and CurrentPlanCard
 - Integration with React Query
 - Mock data for realistic testing
 

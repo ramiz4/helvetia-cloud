@@ -1,9 +1,16 @@
-import type { Invoice, Subscription, Usage } from '@/types/billing';
+import type { CheckoutSession, Invoice, PortalSession, Subscription, Usage } from '@/types/billing';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { billingKeys, useInvoices, useSubscription, useUsage } from './useBilling';
+import {
+  billingKeys,
+  useCheckout,
+  useInvoices,
+  usePortal,
+  useSubscription,
+  useUsage,
+} from './useBilling';
 
 // Mock fetchWithAuth from shared-ui
 vi.mock('shared-ui', () => ({
@@ -143,6 +150,83 @@ describe('useBilling hooks', () => {
       expect(billingKeys.subscription()).toEqual(['billing', 'subscription']);
       expect(billingKeys.invoices()).toEqual(['billing', 'invoices']);
       expect(billingKeys.usage()).toEqual(['billing', 'usage']);
+    });
+  });
+
+  describe('useCheckout', () => {
+    it('should create checkout session successfully', async () => {
+      const mockSession: CheckoutSession = {
+        sessionId: 'cs_123',
+        url: 'https://checkout.stripe.com/session/cs_123',
+      };
+
+      vi.mocked(fetchWithAuth).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSession,
+      } as Response);
+
+      const { result } = renderHook(() => useCheckout(), { wrapper });
+
+      await act(async () => {
+        await result.current.mutateAsync({ priceId: 'price_123', plan: 'PRO' });
+      });
+
+      expect(fetchWithAuth).toHaveBeenCalledWith('http://localhost:3001/billing/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ priceId: 'price_123', plan: 'PRO' }),
+      });
+    });
+
+    it('should handle checkout session creation error', async () => {
+      vi.mocked(fetchWithAuth).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      } as Response);
+
+      const { result } = renderHook(() => useCheckout(), { wrapper });
+
+      await expect(async () => {
+        await result.current.mutateAsync({ priceId: 'price_123', plan: 'PRO' });
+      }).rejects.toThrow();
+    });
+  });
+
+  describe('usePortal', () => {
+    it('should create portal session successfully', async () => {
+      const mockSession: PortalSession = {
+        url: 'https://billing.stripe.com/session/bps_123',
+      };
+
+      vi.mocked(fetchWithAuth).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockSession,
+      } as Response);
+
+      const { result } = renderHook(() => usePortal(), { wrapper });
+
+      await act(async () => {
+        await result.current.mutateAsync();
+      });
+
+      expect(fetchWithAuth).toHaveBeenCalledWith('http://localhost:3001/billing/portal', {
+        method: 'POST',
+      });
+    });
+
+    it('should handle portal session creation error', async () => {
+      vi.mocked(fetchWithAuth).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      } as Response);
+
+      const { result } = renderHook(() => usePortal(), { wrapper });
+
+      await expect(async () => {
+        await result.current.mutateAsync();
+      }).rejects.toThrow();
     });
   });
 });

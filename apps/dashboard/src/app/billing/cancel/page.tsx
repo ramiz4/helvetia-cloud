@@ -7,7 +7,7 @@ export default function CancelPage() {
   return (
     <div className="py-8 animate-fade-in max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[48px] text-center p-24 flex flex-col items-center gap-10 shadow-2xl relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-b from-amber-500/10 to-transparent opacity-50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 to-transparent opacity-50" />
 
         <div className="w-24 h-24 bg-amber-500/20 rounded-[32px] flex items-center justify-center relative z-10 ring-1 ring-amber-400/50 shadow-3xl">
           <XCircle size={56} className="text-amber-400" />

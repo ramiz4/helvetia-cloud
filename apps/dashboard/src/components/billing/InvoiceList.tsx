@@ -97,6 +97,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                       rel="noopener noreferrer"
                       className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-lg"
                       title="Download PDF"
+                      aria-label={`Download invoice PDF for ${invoice.number || `Invoice ${invoice.id.slice(-8)}`}`}
                     >
                       <Download size={20} />
                     </a>

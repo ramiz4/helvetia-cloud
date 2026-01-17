@@ -148,7 +148,7 @@ export default function BillingPage() {
       <div className="py-8 animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-16">
-          <h1 className="text-5xl font-extrabold tracking-tight mb-2 bg-linear-to-r from-white to-white/60 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
             Billing & Usage
           </h1>
           <p className="text-slate-400 text-lg font-medium">
@@ -171,6 +171,21 @@ export default function BillingPage() {
                 <div className="text-center">
                   <div className="w-12 h-12 mx-auto border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast mb-4" />
                   <p className="text-slate-400 font-medium">Loading usage...</p>
+                </div>
+              </div>
+            )}
+            {usageError && !usageLoading && (
+              <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-rose-500/20 shadow-2xl">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1">
+                    <AlertCircle className="w-6 h-6 text-rose-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-white mb-1">Unable to load usage</h2>
+                    <p className="text-slate-400 text-sm">
+                      We couldn&apos;t load your usage metrics right now. Please try again later.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -215,6 +230,32 @@ export default function BillingPage() {
               </div>
             </div>
             <InvoiceList invoices={invoices} />
+          </div>
+        )}
+        {invoicesError && !invoicesLoading && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                <CreditCard size={24} className="text-indigo-400" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-white">Billing History</h2>
+                <p className="text-slate-400 text-sm">View and download your invoices</p>
+              </div>
+            </div>
+            <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-xl border border-rose-500/20 shadow-2xl">
+              <div className="flex items-start gap-4">
+                <div className="mt-1">
+                  <AlertCircle className="w-6 h-6 text-rose-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white mb-1">Unable to load invoices</h2>
+                  <p className="text-slate-400 text-sm">
+                    We couldn&apos;t load your invoices right now. Please try again later.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

@@ -87,7 +87,7 @@ export default function DashboardNavigation() {
       show: showDeployments,
     },
     {
-      label: 'Billing',
+      label: t.nav.billing,
       href: '/billing',
       icon: CreditCard,
     },

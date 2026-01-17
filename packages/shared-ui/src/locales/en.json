@@ -83,6 +83,7 @@
     "login": "Login",
     "dashboard": "Dashboard",
     "deployments": "Deployments",
+    "billing": "Billing",
     "settings": "Settings",
     "logout": "Logout",
     "homeAria": "Helvetia Cloud Home",
