@@ -129,11 +129,10 @@ export default function Navigation({
                       <Link
                         key={link.href}
                         href={link.href}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
-                          isActive
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${isActive
                             ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                          }`}
                       >
                         <Icon size={18} />
                         <span>{link.label}</span>
@@ -170,7 +169,7 @@ export default function Navigation({
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex lg:hidden items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white z-50"
+            className="flex lg:hidden items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white z-50 transition-colors"
             aria-label={isMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
@@ -184,13 +183,13 @@ export default function Navigation({
       {isMenuOpen && (
         <div className="fixed inset-0 z-55 lg:hidden">
           <div
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300"
+            className="absolute inset-0 bg-white/60 dark:bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300"
             onClick={() => setIsMenuOpen(false)}
             aria-hidden="true"
           />
           <nav
             id="mobile-menu"
-            className="absolute top-[70px] left-0 right-0 max-h-[calc(100vh-70px)] bg-slate-900/90 border-b border-white/10 overflow-y-auto animate-in slide-in-from-top-4 duration-300 p-6 flex flex-col gap-6"
+            className="absolute top-[70px] left-0 right-0 max-h-[calc(100vh-70px)] bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-white/10 overflow-y-auto animate-in slide-in-from-top-4 duration-300 p-6 flex flex-col gap-6"
             role="navigation"
             aria-label={t.nav.mobileMenu}
             style={{
@@ -210,11 +209,10 @@ export default function Navigation({
                         <Link
                           key={link.href}
                           href={link.href}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
-                            isActive
-                              ? 'bg-indigo-500/10 text-indigo-400'
-                              : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                          }`}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${isActive
+                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                         >
                           <Icon size={20} />
                           <span>{link.label}</span>
@@ -224,11 +222,11 @@ export default function Navigation({
                   {mobileMenuExtra}
                 </div>
 
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-slate-200 dark:bg-white/10" />
 
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-3 px-4">
-                    <span className="text-slate-400 text-sm font-medium">
+                    <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                       {t.nav.selectLanguage}
                     </span>
                     <LanguageSwitcher variant="minimal" />
@@ -236,7 +234,7 @@ export default function Navigation({
 
                   {themeSwitcher && (
                     <div className="flex flex-col gap-3 px-4">
-                      <span className="text-slate-400 text-sm font-medium">
+                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                         {t.theme?.switchTheme || 'Theme'}
                       </span>
                       {themeSwitcher}
@@ -244,8 +242,8 @@ export default function Navigation({
                   )}
 
                   {user && (
-                    <div className="flex items-center gap-4 px-4 py-3 bg-white/5 rounded-2xl border border-white/10">
-                      <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-indigo-500/20 border border-indigo-500/30">
+                    <div className="flex items-center gap-4 px-4 py-3 bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-none">
+                      <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30">
                         {user.avatarUrl ? (
                           <Image
                             src={user.avatarUrl}
@@ -255,7 +253,7 @@ export default function Navigation({
                             className="object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-indigo-400">
+                          <div className="w-full h-full flex items-center justify-center text-indigo-500 dark:text-indigo-400">
                             <span className="text-lg font-bold">
                               {user.username.charAt(0).toUpperCase()}
                             </span>
@@ -263,14 +261,16 @@ export default function Navigation({
                         )}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-white font-semibold">{user.username}</span>
+                        <span className="text-slate-900 dark:text-white font-semibold">
+                          {user.username}
+                        </span>
                         <span className="text-xs text-slate-500 uppercase tracking-wider font-bold">
                           {planLabel || t.common.freePlan}
                         </span>
                       </div>
                       <button
                         onClick={onLogout}
-                        className="ml-auto p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+                        className="ml-auto p-2 text-rose-500 dark:text-red-400 hover:bg-rose-50 dark:hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
                         aria-label={t.nav.logout}
                       >
                         <LogOut size={20} />
@@ -282,12 +282,14 @@ export default function Navigation({
             ) : (
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-3 px-4">
-                  <span className="text-slate-400 text-sm font-medium">{t.nav.selectLanguage}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                    {t.nav.selectLanguage}
+                  </span>
                   <LanguageSwitcher variant="minimal" />
                 </div>
                 {themeSwitcher && (
                   <div className="flex flex-col gap-3 px-4">
-                    <span className="text-slate-400 text-sm font-medium">
+                    <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                       {t.theme?.switchTheme || 'Theme'}
                     </span>
                     {themeSwitcher}
