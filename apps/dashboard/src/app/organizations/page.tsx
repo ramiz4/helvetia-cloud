@@ -45,8 +45,12 @@ export default function OrganizationsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Organizations</h1>
-            <p className="text-slate-400">Manage your teams and collaborate on projects</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
+              Organizations
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400">
+              Manage your teams and collaborate on projects
+            </p>
           </div>
           <button
             onClick={() => setIsCreating(true)}
@@ -59,8 +63,10 @@ export default function OrganizationsPage() {
       </div>
 
       {isCreating && (
-        <div className="mb-6 bg-white/5 border border-white/10 rounded-2xl p-6 animate-in slide-in-from-top-4 duration-300">
-          <h2 className="text-lg font-bold text-white mb-4">Create New Organization</h2>
+        <div className="mb-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 animate-in slide-in-from-top-4 duration-300">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+            Create New Organization
+          </h2>
           <form onSubmit={handleCreateOrg} className="flex gap-4">
             <div className="grow">
               <input
@@ -68,7 +74,7 @@ export default function OrganizationsPage() {
                 value={newOrgName}
                 onChange={(e) => setNewOrgName(e.target.value)}
                 placeholder="Organization name"
-                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-white text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none"
+                className="w-full bg-white dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none"
                 autoFocus
               />
             </div>
@@ -97,15 +103,15 @@ export default function OrganizationsPage() {
         {organizations?.map((org) => (
           <div
             key={org.id}
-            className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl hover:border-indigo-500/20 transition-all group"
+            className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-xl dark:shadow-2xl hover:border-indigo-500/20 transition-all group"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-500 dark:text-indigo-400">
                   <Building2 size={24} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">{org.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{org.name}</h3>
                   <p className="text-xs text-slate-500 font-mono">{org.slug}</p>
                 </div>
               </div>
@@ -117,7 +123,7 @@ export default function OrganizationsPage() {
               </Link>
             </div>
 
-            <div className="flex items-center gap-4 text-sm text-slate-400 mb-4">
+            <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-4">
               <div className="flex items-center gap-1">
                 <Users size={16} />
                 <span>{org.members?.length || 0} members</span>
@@ -126,7 +132,7 @@ export default function OrganizationsPage() {
 
             <Link
               href={`/organizations/${org.id}/settings`}
-              className="block w-full text-center px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-medium transition-all"
+              className="block w-full text-center px-4 py-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white rounded-xl text-sm font-medium transition-all"
             >
               View Details
             </Link>
@@ -136,11 +142,13 @@ export default function OrganizationsPage() {
 
       {organizations && organizations.length === 0 && !isCreating && (
         <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900/50 border border-white/10 mb-4">
-            <Building2 size={32} className="text-slate-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 mb-4">
+            <Building2 size={32} className="text-slate-400 dark:text-slate-500" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">No organizations yet</h3>
-          <p className="text-slate-400 mb-6">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+            No organizations yet
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
             Create your first organization to start collaborating
           </p>
           <button

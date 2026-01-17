@@ -97,14 +97,16 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto py-8 px-6 animate-fade-in">
       <div className="flex items-center justify-between mb-12">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-white mb-2">{t.settings.title}</h1>
-          <p className="text-slate-400 text-lg">{t.settings.subtitle}</p>
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+            {t.settings.title}
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 text-lg">{t.settings.subtitle}</p>
         </div>
       </div>
 
       <div className="space-y-8">
         {/* Profile Section */}
-        <section className="bg-slate-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-[32px] shadow-2xl relative overflow-hidden group">
+        <section className="bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-8 rounded-[32px] shadow-xl dark:shadow-2xl relative overflow-hidden group">
           <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-8 relative z-10">
             <div className="relative">
@@ -126,13 +128,15 @@ export default function SettingsPage() {
               <div className="absolute -bottom-2 -right-2 bg-emerald-500 w-6 h-6 rounded-full border-4 border-slate-950 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-white tracking-tight">{user?.username}</h2>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                {user?.username}
+              </h2>
               <p className="text-slate-500 font-mono text-sm mt-1">ID: {user?.id}</p>
               <div className="flex gap-2 mt-4">
                 <span className="px-3 py-1 bg-indigo-500/15 text-indigo-400 text-[11px] font-bold uppercase tracking-wider rounded-full border border-indigo-500/20 shadow-sm">
                   {t.common.freePlan} <span className="text-[10px]">🇨🇭</span>
                 </span>
-                <span className="px-3 py-1 bg-white/5 text-slate-400 text-[11px] font-bold uppercase tracking-wider rounded-full border border-white/10 shadow-sm">
+                <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 dark:border-white/10 shadow-sm">
                   {t.common.earlyAccess}
                 </span>
               </div>
@@ -141,17 +145,17 @@ export default function SettingsPage() {
         </section>
 
         {/* GitHub Integration */}
-        <section className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl overflow-hidden">
-          <div className="p-8 border-b border-white/10 bg-white/2">
+        <section className="bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[32px] shadow-xl dark:shadow-2xl overflow-hidden">
+          <div className="p-8 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/2">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white text-black rounded-2xl shadow-lg">
                 <GithubIcon size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                   {t.settings.githubIntegration}
                 </h2>
-                <p className="text-slate-400 text-sm mt-1 leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1 leading-relaxed">
                   {t.settings.githubDesc}
                 </p>
               </div>
@@ -159,13 +163,13 @@ export default function SettingsPage() {
           </div>
 
           <div className="p-8 space-y-8">
-            <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 transition-colors hover:border-indigo-500/30 group/item">
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 transition-colors hover:border-indigo-500/30 group/item">
               <div className="flex items-center gap-5">
-                <div className="p-4 bg-black/40 rounded-2xl border border-white/5 group-hover/item:border-indigo-500/20 transition-all shadow-inner">
+                <div className="p-4 bg-white dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 group-hover/item:border-indigo-500/20 transition-all shadow-inner">
                   <GithubIcon size={28} />
                 </div>
                 <div>
-                  <div className="font-bold text-lg text-white flex items-center gap-3">
+                  <div className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-3">
                     {user?.username}
                     {user?.hasGitHubConnected ? (
                       <span className="text-[10px] uppercase tracking-widest bg-emerald-500/15 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5 font-bold shadow-sm">
@@ -200,22 +204,22 @@ export default function SettingsPage() {
               )}
             </div>
 
-            <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-6 flex items-start gap-5">
-              <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400 mt-0.5 shadow-sm">
+            <div className="bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-6 flex items-start gap-5">
+              <div className="p-3 bg-indigo-100 dark:bg-indigo-500/10 rounded-xl text-indigo-500 dark:text-indigo-400 mt-0.5 shadow-sm">
                 <Shield size={22} />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-lg tracking-tight">
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">
                   {t.settings.orgAccessTitle}
                 </h3>
-                <p className="text-sm text-slate-400 mt-2 leading-relaxed font-medium">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed font-medium">
                   {t.settings.orgAccessDesc}
                 </p>
                 <a
                   href={`https://github.com/settings/connections/applications/${GITHUB_CLIENT_ID}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2 text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-all mt-5 bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-500/20"
+                  className="group inline-flex items-center gap-2 text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-all mt-5 bg-indigo-100 dark:bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-200 dark:border-indigo-500/20"
                 >
                   {t.settings.manageOnGithub}
                   <ArrowUpRight
@@ -229,8 +233,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Danger Zone */}
-        <section className="bg-rose-500/5 border border-rose-500/20 rounded-[32px] overflow-hidden shadow-2xl">
-          <div className="p-8 border-b border-rose-500/10 bg-rose-500/5">
+        <section className="bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-[32px] overflow-hidden shadow-xl dark:shadow-2xl">
+          <div className="p-8 border-b border-rose-200 dark:border-rose-500/10 bg-rose-100/50 dark:bg-rose-500/5">
             <h2 className="text-2xl font-bold text-rose-400 tracking-tight">
               {t.settings.dangerZone}
             </h2>
@@ -239,13 +243,15 @@ export default function SettingsPage() {
           <div className="p-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <div>
-                <div className="font-bold text-lg text-white">{t.settings.deleteAccount}</div>
-                <div className="text-sm text-slate-500 mt-1 font-medium max-w-md">
+                <div className="font-bold text-lg text-slate-900 dark:text-white">
+                  {t.settings.deleteAccount}
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-500 mt-1 font-medium max-w-md">
                   {t.settings.deleteAccountDesc}
                 </div>
               </div>
               <button
-                className="w-full sm:w-auto p-4 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-md active:scale-95 border border-rose-500/20"
+                className="w-full sm:w-auto p-4 rounded-xl bg-rose-200/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-md active:scale-95 border border-rose-200 dark:border-rose-500/20"
                 title={t.settings.deleteAccount}
               >
                 <Trash2 size={24} />

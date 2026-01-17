@@ -203,7 +203,7 @@ export default function ProjectPage() {
         <div className="mb-12">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-white transition-colors font-bold text-sm uppercase tracking-widest mb-8 group"
+            className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors font-bold text-sm uppercase tracking-widest mb-8 group"
           >
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             {t.dashboard.project.backToProjects}
@@ -212,19 +212,19 @@ export default function ProjectPage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-[24px] bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20 shadow-inner">
+                <div className="w-16 h-16 rounded-[24px] bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-inner">
                   <Layout size={32} />
                 </div>
                 <div>
-                  <h1 className="text-6xl font-black text-white tracking-tighter leading-none">
+                  <h1 className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                     {project.name}
                   </h1>
                   <div className="flex items-center gap-3 mt-4">
-                    <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
                       {t.dashboard.project.id} {id.slice(0, 8)}...
                     </span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                    <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-emerald-500 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest">
                       {t.dashboard.project.globalStatus} {t.dashboard.project.statusActive}
                     </span>
                   </div>
@@ -233,13 +233,13 @@ export default function ProjectPage() {
             </div>
 
             <div className="flex gap-4">
-              <button className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all border border-white/10 flex items-center gap-3 active:scale-95 shadow-xl">
+              <button className="h-14 px-8 rounded-2xl bg-white dark:bg-white/5 text-slate-900 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10 flex items-center gap-3 active:scale-95 shadow-xl">
                 <Settings size={20} />
                 {t.dashboard.project.settings}
               </button>
               <button
                 onClick={() => setShowNewEnvironmentModal(true)}
-                className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 transition-all border border-white/10 flex items-center gap-3 active:scale-95 shadow-xl"
+                className="h-14 px-8 rounded-2xl bg-white dark:bg-white/5 text-slate-900 dark:text-white font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10 flex items-center gap-3 active:scale-95 shadow-xl"
               >
                 <Plus size={20} />
                 {t.dashboard.project.newEnvironment}
@@ -251,30 +251,30 @@ export default function ProjectPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
           <div className="md:col-span-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-2xl">
+              <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900/40 backdrop-blur-3xl border border-slate-200 dark:border-white/10 shadow-xl dark:shadow-2xl">
                 <div className="flex items-center gap-3 mb-6 text-slate-500 font-black uppercase tracking-widest text-[10px]">
-                  <Box size={14} className="text-indigo-400" />
+                  <Box size={14} className="text-indigo-500 dark:text-indigo-400" />
                   {t.dashboard.stats.total}
                 </div>
-                <div className="text-5xl font-black text-white tracking-tighter leading-none">
+                <div className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                   {stats.total}
                 </div>
               </div>
-              <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-2xl">
+              <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900/40 backdrop-blur-3xl border border-slate-200 dark:border-white/10 shadow-xl dark:shadow-2xl">
                 <div className="flex items-center gap-3 mb-6 text-slate-500 font-black uppercase tracking-widest text-[10px]">
-                  <Activity size={14} className="text-emerald-400" />
+                  <Activity size={14} className="text-emerald-500 dark:text-emerald-400" />
                   {t.dashboard.stats.active}
                 </div>
-                <div className="text-5xl font-black text-white tracking-tighter leading-none">
+                <div className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                   {stats.active}
                 </div>
               </div>
-              <div className="p-8 rounded-[32px] bg-slate-900/40 backdrop-blur-3xl border border-white/10 shadow-2xl">
+              <div className="p-8 rounded-[32px] bg-white dark:bg-slate-900/40 backdrop-blur-3xl border border-slate-200 dark:border-white/10 shadow-xl dark:shadow-2xl">
                 <div className="flex items-center gap-3 mb-6 text-slate-500 font-black uppercase tracking-widest text-[10px]">
-                  <Shield size={14} className="text-rose-400" />
+                  <Shield size={14} className="text-rose-500 dark:text-rose-400" />
                   {t.dashboard.stats.failed}
                 </div>
-                <div className="text-5xl font-black text-white tracking-tighter leading-none">
+                <div className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
                   {stats.failed}
                 </div>
               </div>
@@ -304,18 +304,18 @@ export default function ProjectPage() {
 
           return (
             <div key={env.id} className="mb-20 animate-in slide-in-from-bottom-8 duration-500">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
-                  <h2 className="text-3xl font-black text-white tracking-tight leading-none capitalize">
+                  <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none capitalize">
                     {env.name}
                   </h2>
-                  <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">
                     {t.dashboard.project.environment}
                   </span>
                 </div>
                 <Link
                   href={`/new?project=${id}&env=${env.id}`}
-                  className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-black text-xs uppercase tracking-widest transition-colors group"
+                  className="flex items-center gap-2 text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 font-black text-xs uppercase tracking-widest transition-colors group"
                 >
                   <Plus size={16} />
                   {t.dashboard.project.addServiceTo.replace('{name}', env.name)}
@@ -323,12 +323,12 @@ export default function ProjectPage() {
               </div>
 
               {envServices.length === 0 ? (
-                <div className="p-16 rounded-[40px] bg-slate-900/20 border border-dashed border-white/10 flex flex-col items-center gap-6 text-center group hover:bg-slate-900/30 transition-all">
-                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-slate-600 group-hover:scale-110 group-hover:text-indigo-400 transition-all duration-500">
+                <div className="p-16 rounded-[40px] bg-slate-50 dark:bg-slate-900/20 border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center gap-6 text-center group hover:bg-slate-100 dark:hover:bg-slate-900/30 transition-all">
+                  <div className="w-16 h-16 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-slate-600 group-hover:scale-110 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-all duration-500 shadow-sm">
                     <Box size={32} />
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-white mb-2">
+                    <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                       {t.dashboard.project.noServices}
                     </h4>
                     <p className="text-slate-500 max-w-sm font-medium">

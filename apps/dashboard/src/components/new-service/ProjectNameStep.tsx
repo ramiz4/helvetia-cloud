@@ -60,9 +60,9 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
 
   return (
     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
-        <h2 className="text-xl font-bold text-white mb-8 flex items-center gap-3">
-          <Settings className="text-indigo-400" size={24} />
+      <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-8">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-3">
+          <Settings className="text-indigo-500 dark:text-indigo-400" size={24} />
           {t.dashboard.newService.step1}
         </h2>
 
@@ -70,7 +70,7 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
           {/* Project Selection */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest">
+              <label className="block text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 Select Project
               </label>
               <button
@@ -90,7 +90,7 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
                   placeholder="project-name"
-                  className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-semibold transition-all"
+                  className="flex-1 px-4 py-3 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white font-semibold transition-all"
                 />
                 <button
                   onClick={handleCreateProject}
@@ -113,8 +113,8 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
                     }
                     className={`p-4 rounded-2xl border transition-all flex items-center gap-3 ${
                       data.projectId === project.id
-                        ? 'bg-indigo-500/10 border-indigo-500 text-white'
-                        : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
+                        ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-900 dark:text-white'
+                        : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     <Folder
@@ -144,7 +144,7 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
                     className={`px-6 py-3 rounded-xl border font-bold transition-all ${
                       data.environmentId === env.id
                         ? 'bg-indigo-500 text-white border-indigo-500'
-                        : 'bg-black/20 border-white/5 text-slate-400 hover:border-white/20'
+                        : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {env.name}
@@ -159,7 +159,7 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
           <button
             onClick={onNext}
             disabled={!isStepValid}
-            className="w-full h-14 bg-white text-indigo-950 font-black rounded-2xl hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-30 disabled:active:scale-100 flex items-center justify-center gap-2 shadow-xl"
+            className="w-full h-14 bg-slate-900 dark:bg-white text-white dark:text-indigo-950 font-black rounded-2xl hover:bg-slate-800 dark:hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-30 disabled:active:scale-100 flex items-center justify-center gap-2 shadow-xl"
           >
             {t.common.next}
             <ChevronRight size={20} />

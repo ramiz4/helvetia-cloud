@@ -35,7 +35,7 @@ export default function ModernThemeSwitch({ variant = 'default' }: ModernThemeSw
     return (
       <button
         onClick={handleToggle}
-        className="group relative flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-all w-full"
+        className="group relative flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all w-full"
         aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
         aria-pressed={isDark}
       >

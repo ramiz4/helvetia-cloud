@@ -14,6 +14,7 @@
     "./locales/*": "./src/locales/*"
   },
   "scripts": {
+    "dev": "tsc --watch --preserveWatchOutput",
     "build": "tsc",
     "prepare": "tsc",
     "pretest": "pnpm build",

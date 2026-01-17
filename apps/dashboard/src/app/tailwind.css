@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @source '../../../../packages/shared-ui/src';
+@variant dark (&:where(.dark, .dark *));
 
 /* Accessibility: Screen reader only utility */
 .sr-only {
