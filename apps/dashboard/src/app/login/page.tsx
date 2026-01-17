@@ -45,7 +45,7 @@ function LoginContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Skip to main content for accessibility */}
       <a
         href="#login-form"
@@ -68,7 +68,7 @@ function LoginContent() {
         {/* Back to home link */}
         <Link
           href="/"
-          className="inline-flex items-center text-slate-400 hover:text-white mb-8 transition-colors group focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-lg px-2 py-1 -ml-2"
+          className="inline-flex items-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-8 transition-colors group focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-lg px-2 py-1 -ml-2"
           aria-label="Back to home page"
         >
           <span
@@ -84,13 +84,13 @@ function LoginContent() {
         <main>
           <div
             id="login-form"
-            className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden"
+            className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl dark:shadow-2xl relative overflow-hidden"
             role="region"
             aria-label="Login form"
           >
             {/* Top accent bar */}
             <div
-              className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500"
+              className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-indigo-500 via-blue-500 to-indigo-500"
               aria-hidden="true"
             />
 
@@ -101,7 +101,7 @@ function LoginContent() {
                   className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl"
                   aria-hidden="true"
                 />
-                <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <div className="relative w-full h-full bg-linear-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
                   <Image
                     src="/logo.png"
                     alt="Helvetia Cloud Logo"
@@ -112,10 +112,10 @@ function LoginContent() {
                   />
                 </div>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
                 {t.login.swissCloudSecurity}
               </h1>
-              <p className="text-slate-400 leading-relaxed text-base sm:text-lg">
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-base sm:text-lg">
                 {t.login.securityDesc}
               </p>
             </div>
@@ -125,13 +125,13 @@ function LoginContent() {
               {benefits.map((benefit) => (
                 <div
                   key={benefit.id}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/[0.07] transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
                   role="listitem"
                 >
                   <div className="mt-0.5 shrink-0" aria-hidden="true">
                     {benefit.icon}
                   </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">{benefit.text}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{benefit.text}</p>
                 </div>
               ))}
             </div>
@@ -162,20 +162,20 @@ function LoginContent() {
             <div className="space-y-4">
               <button
                 onClick={handleGitHubLogin}
-                className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[24px] font-bold bg-white text-slate-950 hover:bg-slate-50 transition-all hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.2)] active:scale-95 group/btn overflow-hidden relative focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
+                className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[24px] font-bold bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-50 transition-all hover:shadow-[0_20px_40px_-15px_rgba(15,23,42,0.3)] dark:hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.2)] active:scale-95 group/btn overflow-hidden relative focus:outline-none focus:ring-4 focus:ring-indigo-500/50"
                 aria-label="Sign in with GitHub"
               >
                 <GithubIcon size={24} aria-hidden="true" />
                 <span className="text-xl">{t.login.continueWithGithub}</span>
                 <div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
+                  className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
                   aria-hidden="true"
                 />
               </button>
 
               {/* Organization access help */}
               <div
-                className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex gap-3 items-start"
+                className="p-4 bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/10 rounded-2xl flex gap-3 items-start"
                 role="note"
                 aria-label="GitHub organization access information"
               >
@@ -185,14 +185,14 @@ function LoginContent() {
                 >
                   <Shield size={14} />
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed italic">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed italic">
                   {t.login.orgAccessHelp}
                 </p>
               </div>
 
               {/* Security and privacy message */}
               <div
-                className="mt-6 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex gap-3 items-start"
+                className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-2xl flex gap-3 items-start"
                 role="note"
                 aria-label="Security information"
               >
@@ -202,13 +202,13 @@ function LoginContent() {
                 >
                   <CheckCircle2 size={14} />
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                   {t.login.dataSecurityMessage}
                 </p>
               </div>
 
               {/* Terms and Privacy */}
-              <div className="mt-8 text-center pt-4 border-t border-white/5">
+              <div className="mt-8 text-center pt-4 border-t border-slate-100 dark:border-white/5">
                 <p className="text-slate-500 text-xs font-semibold">
                   {t.login.termsPrivacy.split('{terms}')[0]}
                   <Link
