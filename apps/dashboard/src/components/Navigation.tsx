@@ -1,6 +1,6 @@
 'use client';
 
-import ThemeSwitcher from '@/components/ThemeSwitcher';
+import ModernThemeSwitch from '@/components/ModernThemeSwitch';
 import { useFeatureFlag } from '@/lib/featureFlags';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
 import { BookOpen, Building2, LayoutDashboard, Settings } from 'lucide-react';
@@ -141,7 +141,8 @@ export default function DashboardNavigation() {
       rightActions={<OrganizationSwitcher />}
       userMenuChildren={userMenuChildren}
       mobileMenuExtra={mobileMenuExtra}
-      themeSwitcher={<ThemeSwitcher variant="minimal" />}
+      desktopThemeSwitcher={<ModernThemeSwitch />}
+      themeSwitcher={<ModernThemeSwitch variant="minimal" />}
     />
   );
 }
