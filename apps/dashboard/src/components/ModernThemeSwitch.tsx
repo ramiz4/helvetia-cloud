@@ -27,15 +27,8 @@ export default function ModernThemeSwitch({ variant = 'default' }: ModernThemeSw
   const isDark = resolvedTheme === 'dark';
 
   const handleToggle = () => {
-    // Cycle through: light -> dark -> light
-    // If currently on system, switch based on resolved theme
-    if (theme === 'system') {
-      setTheme(isDark ? 'light' : 'dark');
-    } else if (theme === 'light') {
-      setTheme('dark');
-    } else {
-      setTheme('light');
-    }
+    // Toggle between light and dark (system mode converts to explicit preference)
+    setTheme(isDark ? 'light' : 'dark');
   };
 
   if (variant === 'minimal') {
