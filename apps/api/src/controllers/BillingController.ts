@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { BillingService, SubscriptionService, UsageTrackingService } from '../services';
+import { env } from '../config/env';
 
 /**
  * BillingController
@@ -71,7 +72,7 @@ export class BillingController {
 
       const customerId = await this.billingService.getOrCreateCustomer({
         userId,
-        email: `${user.username}@example.com`, // TODO: Add email field to User model
+        email: `${user.username}@noreply.${env.PLATFORM_DOMAIN}`, // TODO: Add email field to User model
         name: user.username,
       });
 
@@ -79,8 +80,8 @@ export class BillingController {
       const session = await this.billingService.createCheckoutSession({
         customerId,
         priceId,
-        successUrl: `${process.env.APP_BASE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${process.env.APP_BASE_URL}/billing`,
+        successUrl: `${env.APP_BASE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${env.APP_BASE_URL}/billing`,
       });
 
       return { sessionId: session.sessionId, url: session.url };
@@ -110,7 +111,7 @@ export class BillingController {
 
       const session = await this.billingService.createPortalSession({
         customerId: subscription.stripeCustomerId,
-        returnUrl: `${process.env.APP_BASE_URL}/billing`,
+        returnUrl: `${env.APP_BASE_URL}/billing`,
       });
 
       return { url: session.url };

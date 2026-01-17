@@ -111,11 +111,17 @@ export class BillingService implements IBillingService {
     // Get current subscription
     const subscription = await stripe.subscriptions.retrieve(params.subscriptionId);
 
+    const subscriptionItem = subscription.items?.data?.[0];
+
+    if (!subscriptionItem) {
+      throw new Error('Subscription has no items to update');
+    }
+
     // Update subscription with new price
     const updatedSubscription = await stripe.subscriptions.update(params.subscriptionId, {
       items: [
         {
-          id: subscription.items.data[0].id,
+          id: subscriptionItem.id,
           price: params.priceId,
         },
       ],

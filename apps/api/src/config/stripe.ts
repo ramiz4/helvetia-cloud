@@ -18,7 +18,7 @@ export function getStripeClient(): Stripe | null {
 
   if (!stripeClient) {
     stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2024-11-20.acacia',
       typescript: true,
       appInfo: {
         name: 'Helvetia Cloud',

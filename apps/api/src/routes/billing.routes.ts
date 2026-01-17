@@ -60,7 +60,7 @@ export const billingRoutes: FastifyPluginAsync = async (fastify) => {
         description: 'Create a Stripe checkout session for purchasing a subscription',
         body: {
           type: 'object',
-          required: ['priceId', 'plan'],
+          required: ['priceId'],
           properties: {
             priceId: {
               type: 'string',
@@ -69,7 +69,7 @@ export const billingRoutes: FastifyPluginAsync = async (fastify) => {
             plan: {
               type: 'string',
               enum: ['STARTER', 'PRO', 'ENTERPRISE'],
-              description: 'Subscription plan',
+              description: 'Subscription plan (optional, for validation)',
             },
           },
         },

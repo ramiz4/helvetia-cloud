@@ -61,7 +61,7 @@ export class SubscriptionService implements ISubscriptionService {
     currentPeriodEnd: Date;
   } | null> {
     if (!params.userId && !params.organizationId) {
-      throw new Error('Either userId or organizationId must be provided');
+      throw new Error('Either userId or organizationId must be provided for getSubscription');
     }
 
     const subscription = await this.prisma.subscription.findFirst({
@@ -88,7 +88,7 @@ export class SubscriptionService implements ISubscriptionService {
     currentPeriodEnd: Date;
   }): Promise<void> {
     if (!params.userId && !params.organizationId) {
-      throw new Error('Either userId or organizationId must be provided');
+      throw new Error('Either userId or organizationId must be provided for upsertSubscription');
     }
 
     // Try to find existing subscription

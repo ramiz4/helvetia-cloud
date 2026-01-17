@@ -109,6 +109,10 @@ export class UsageTrackingService implements IUsageTrackingService {
 
     const serviceIds = services.map((s) => s.id);
 
+    if (serviceIds.length === 0) {
+      return [];
+    }
+
     // Get aggregated usage
     const records = await this.prisma.usageRecord.groupBy({
       by: ['metric'],

@@ -60,6 +60,13 @@ export class StripeWebhookController {
       return reply.status(400).send({ error: 'Webhook signature verification failed' });
     }
 
+    // Check for malformed JSON from custom parser
+    const body = request.body as unknown;
+    if (body && typeof body === 'object' && '_isMalformed' in body && (body as { _isMalformed: boolean })._isMalformed) {
+      request.log.error({ error: (body as { _error?: string })._error }, 'Malformed webhook JSON');
+      return reply.status(400).send({ error: 'Malformed webhook JSON' });
+    }
+
     try {
       // Handle different event types
       switch (event.type) {
@@ -103,7 +110,7 @@ export class StripeWebhookController {
   ) {
     request.log.info({ subscriptionId: subscription.id }, 'Subscription created');
 
-    const plan = this.mapStripePlanToSubscriptionPlan(subscription);
+    const plan = this.mapStripePlanToSubscriptionPlan(subscription, request);
     const status = this.mapStripeStatus(subscription.status);
 
     // Extract user/org ID from customer metadata
@@ -111,8 +118,10 @@ export class StripeWebhookController {
     const customerDetails = await this.stripe?.customers.retrieve(customer);
 
     if (!customerDetails || customerDetails.deleted) {
-      request.log.error({ customer }, 'Customer not found');
-      return;
+      request.log.error({ customer, subscriptionId: subscription.id }, 'Customer not found or deleted for subscription');
+      throw new Error(
+        `Stripe customer "${customer}" not found or deleted for subscription "${subscription.id}"`,
+      );
     }
 
     const metadata = customerDetails.metadata;
@@ -226,7 +235,10 @@ export class StripeWebhookController {
    * Map Stripe subscription to our plan enum
    * This is a simplified version - in production, you'd check price IDs
    */
-  private mapStripePlanToSubscriptionPlan(subscription: Stripe.Subscription): SubscriptionPlan {
+  private mapStripePlanToSubscriptionPlan(
+    subscription: Stripe.Subscription,
+    request: FastifyRequest,
+  ): SubscriptionPlan {
     // Get the first price from subscription items
     const priceId = subscription.items.data[0]?.price?.id;
 
@@ -240,6 +252,10 @@ export class StripeWebhookController {
     }
 
     // Default to free if we can't determine
+    request.log.warn(
+      { subscriptionId: subscription.id, priceId },
+      'Unable to map Stripe price ID to subscription plan, defaulting to FREE',
+    );
     return 'FREE';
   }
 }
