@@ -45,8 +45,8 @@ export default function ModernThemeSwitch({ variant = 'default' }: ModernThemeSw
             relative w-14 h-8 rounded-full transition-all duration-300 ease-in-out
             ${
               isDark
-                ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
-                : 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
+                ? 'bg-linear-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
+                : 'bg-linear-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
             }
             border backdrop-blur-xl shadow-inner
           `}
@@ -108,8 +108,8 @@ export default function ModernThemeSwitch({ variant = 'default' }: ModernThemeSw
         relative w-16 h-8 rounded-full transition-all duration-300 ease-in-out
         ${
           isDark
-            ? 'bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
-            : 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
+            ? 'bg-linear-to-br from-indigo-500/30 to-purple-500/30 border-indigo-400/30'
+            : 'bg-linear-to-br from-amber-500/20 to-orange-500/20 border-amber-400/30'
         }
         border backdrop-blur-xl shadow-inner
         hover:scale-105 active:scale-95
