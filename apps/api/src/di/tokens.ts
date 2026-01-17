@@ -29,16 +29,20 @@ export const TOKENS = {
   FeatureFlagService: Symbol.for('FeatureFlagService'),
   OrganizationService: Symbol.for('OrganizationService'),
   InitializationService: Symbol.for('InitializationService'),
+  BillingService: Symbol.for('BillingService'),
+  SubscriptionService: Symbol.for('SubscriptionService'),
+  UsageTrackingService: Symbol.for('UsageTrackingService'),
 
   // Controllers
-  ServiceController: Symbol.for('ServiceController'),
-  ProjectController: Symbol.for('ProjectController'),
-  DeploymentController: Symbol.for('DeploymentController'),
-  GitHubController: Symbol.for('GitHubController'),
-  WebhookController: Symbol.for('WebhookController'),
   AuthController: Symbol.for('AuthController'),
   FeatureFlagController: Symbol.for('FeatureFlagController'),
   OrganizationController: Symbol.for('OrganizationController'),
+  BillingController: Symbol.for('BillingController'),
+  DeploymentController: Symbol.for('DeploymentController'),
+  GitHubController: Symbol.for('GitHubController'),
+  ProjectController: Symbol.for('ProjectController'),
+  ServiceController: Symbol.for('ServiceController'),
+  WebhookController: Symbol.for('WebhookController'),
 
   // External dependencies
   PrismaClient: Symbol.for('PrismaClient'),

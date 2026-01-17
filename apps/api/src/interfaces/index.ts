@@ -61,6 +61,9 @@ export {
 export { ILogger, LogContext, LogLevel } from './ILogger';
 
 // Service interfaces
+export { IBillingService } from './IBillingService';
 export { IDeploymentOrchestratorService } from './IDeploymentOrchestratorService';
 export { IProjectManagementService } from './IProjectManagementService';
 export { IServiceManagementService } from './IServiceManagementService';
+export { ISubscriptionService } from './ISubscriptionService';
+export { IUsageTrackingService } from './IUsageTrackingService';
