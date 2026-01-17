@@ -31,6 +31,7 @@ interface NavigationProps {
   mobileMenuExtra?: React.ReactNode;
   planLabel?: string;
   themeSwitcher?: React.ReactNode;
+  desktopThemeSwitcher?: React.ReactNode;
 }
 
 export default function Navigation({
@@ -44,6 +45,7 @@ export default function Navigation({
   mobileMenuExtra,
   planLabel,
   themeSwitcher,
+  desktopThemeSwitcher,
 }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -140,7 +142,7 @@ export default function Navigation({
               </div>
 
               <div className="flex items-center gap-4">
-                {themeSwitcher}
+                {desktopThemeSwitcher || themeSwitcher}
                 <LanguageSwitcher />
                 <div className="w-px h-6 bg-white/10 mx-1" />
                 {user && (
@@ -152,7 +154,7 @@ export default function Navigation({
             </div>
           ) : (
             <div className="hidden lg:flex items-center gap-4">
-              {themeSwitcher}
+              {desktopThemeSwitcher || themeSwitcher}
               <LanguageSwitcher />
               <div className="w-px h-6 bg-white/10 mx-1" />
               <Link
