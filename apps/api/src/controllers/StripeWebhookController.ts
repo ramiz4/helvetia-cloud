@@ -196,7 +196,7 @@ export class StripeWebhookController {
       subscriptionId =
         typeof invoice.subscription === 'string'
           ? invoice.subscription
-          : (invoice.subscription as any)?.id;
+          : (invoice.subscription as Stripe.Subscription)?.id;
     }
 
     if (subscriptionId) {
