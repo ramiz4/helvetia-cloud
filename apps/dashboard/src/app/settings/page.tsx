@@ -97,7 +97,9 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto py-8 px-6 animate-fade-in">
       <div className="flex items-center justify-between mb-12">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">{t.settings.title}</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+            {t.settings.title}
+          </h1>
           <p className="text-slate-600 dark:text-slate-400 text-lg">{t.settings.subtitle}</p>
         </div>
       </div>
@@ -126,7 +128,9 @@ export default function SettingsPage() {
               <div className="absolute -bottom-2 -right-2 bg-emerald-500 w-6 h-6 rounded-full border-4 border-slate-950 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{user?.username}</h2>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                {user?.username}
+              </h2>
               <p className="text-slate-500 font-mono text-sm mt-1">ID: {user?.id}</p>
               <div className="flex gap-2 mt-4">
                 <span className="px-3 py-1 bg-indigo-500/15 text-indigo-400 text-[11px] font-bold uppercase tracking-wider rounded-full border border-indigo-500/20 shadow-sm">
@@ -239,7 +243,9 @@ export default function SettingsPage() {
           <div className="p-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <div>
-                <div className="font-bold text-lg text-slate-900 dark:text-white">{t.settings.deleteAccount}</div>
+                <div className="font-bold text-lg text-slate-900 dark:text-white">
+                  {t.settings.deleteAccount}
+                </div>
                 <div className="text-sm text-slate-600 dark:text-slate-500 mt-1 font-medium max-w-md">
                   {t.settings.deleteAccountDesc}
                 </div>

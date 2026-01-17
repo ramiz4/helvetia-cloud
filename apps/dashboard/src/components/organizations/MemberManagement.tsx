@@ -148,7 +148,10 @@ export default function MemberManagement({ organization }: MemberManagementProps
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {organization.members?.map((member) => (
-                <tr key={member.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                <tr
+                  key={member.id}
+                  className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30">
@@ -166,7 +169,9 @@ export default function MemberManagement({ organization }: MemberManagementProps
                         )}
                       </div>
                       <div>
-                        <div className="text-slate-900 dark:text-white font-semibold">{member.user.username}</div>
+                        <div className="text-slate-900 dark:text-white font-semibold">
+                          {member.user.username}
+                        </div>
                         <div className="text-xs text-slate-500 font-mono">{member.userId}</div>
                       </div>
                     </div>

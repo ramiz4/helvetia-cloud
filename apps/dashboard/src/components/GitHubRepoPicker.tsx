@@ -222,16 +222,26 @@ export default function GitHubRepoPicker({
                 className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-900 dark:text-white appearance-none cursor-pointer transition-all pr-10"
                 aria-label={t.githubPicker.selectOrgAria}
               >
-                <option value="" className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white">
+                <option
+                  value=""
+                  className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white"
+                >
                   {loadingOrgs ? t.githubPicker.loadingOrgs : t.githubPicker.allRepos}
                 </option>
                 {!loadingOrgs && orgs.length === 0 && (
-                  <option disabled className="bg-white dark:bg-gray-900 text-slate-400 dark:text-white/30">
+                  <option
+                    disabled
+                    className="bg-white dark:bg-gray-900 text-slate-400 dark:text-white/30"
+                  >
                     {t.githubPicker.noOrgsFound}
                   </option>
                 )}
                 {orgs.map((org) => (
-                  <option key={org.login} value={org.login} className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white">
+                  <option
+                    key={org.login}
+                    value={org.login}
+                    className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white"
+                  >
                     {org.login}
                   </option>
                 ))}
@@ -260,7 +270,10 @@ export default function GitHubRepoPicker({
             {loading ? (
               <div className="grid grid-cols-1 gap-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-20 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse"
+                  />
                 ))}
               </div>
             ) : (

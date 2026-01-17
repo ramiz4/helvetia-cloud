@@ -131,7 +131,9 @@ function LoginContent() {
                   <div className="mt-0.5 shrink-0" aria-hidden="true">
                     {benefit.icon}
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{benefit.text}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {benefit.text}
+                  </p>
                 </div>
               ))}
             </div>

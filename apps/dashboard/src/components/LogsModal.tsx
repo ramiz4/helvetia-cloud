@@ -37,7 +37,10 @@ export function LogsModal({ logs, isStreaming, onClose, translations: t }: LogsM
           <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-white/50 dark:bg-slate-900/50">
             <div className="flex items-center gap-3">
               <FileText size={20} className="text-indigo-500 dark:text-indigo-400" />
-              <h2 id="logs-modal-title" className="text-xl font-bold text-slate-900 dark:text-white">
+              <h2
+                id="logs-modal-title"
+                className="text-xl font-bold text-slate-900 dark:text-white"
+              >
                 {t.modals.logsTitle}
               </h2>
             </div>

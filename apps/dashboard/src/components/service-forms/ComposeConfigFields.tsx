@@ -10,14 +10,14 @@ export const ComposeConfigFields: React.FC<BaseConfigFieldsProps> = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
           {t.newService.composeFile}
         </label>
         <input
           type="text"
           value={data.buildCommand || ''} // Reusing buildCommand as composeFile path
           onChange={(e) => onChange({ buildCommand: e.target.value })}
-          className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
           placeholder="docker-compose.yml"
           disabled={disabled}
         />
@@ -34,7 +34,7 @@ export const ComposeConfigFields: React.FC<BaseConfigFieldsProps> = ({
           type="text"
           value={data.startCommand || ''} // Reusing startCommand as main service name
           onChange={(e) => onChange({ startCommand: e.target.value })}
-          className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
           placeholder="app"
           disabled={disabled}
         />
@@ -49,7 +49,7 @@ export const ComposeConfigFields: React.FC<BaseConfigFieldsProps> = ({
           type="number"
           value={data.port || 8080}
           onChange={(e) => onChange({ port: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+          className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
           disabled={disabled}
         />
         <p className="text-[10px] text-slate-500 ml-1 italic">Port of the main service to expose</p>

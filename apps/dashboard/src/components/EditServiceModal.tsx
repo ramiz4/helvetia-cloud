@@ -45,23 +45,26 @@ export function EditServiceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
       <FocusTrap active={true} onEscape={onClose}>
         <div
           ref={editModalRef}
-          className="w-full max-w-2xl bg-[#0d121f] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
+          className="w-full max-w-2xl bg-white dark:bg-[#0d121f] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-modal-title"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 shrink-0">
-            <h2 id="edit-modal-title" className="text-xl font-bold text-white tracking-tight">
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 shrink-0">
+            <h2
+              id="edit-modal-title"
+              className="text-xl font-bold text-slate-900 dark:text-white tracking-tight"
+            >
               {t.modals.editTitle}
             </h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               aria-label="Close edit dialog"
             >
               <X size={20} />
@@ -72,20 +75,20 @@ export function EditServiceModal({
           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
             <form id="edit-service-form" onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
                   {t.labels.serviceName}
                 </label>
                 <input
                   type="text"
                   value={editingService.name}
                   onChange={(e) => setEditingService((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
                   {t.labels.repoUrl}
                 </label>
                 <input
@@ -94,14 +97,14 @@ export function EditServiceModal({
                   onChange={(e) =>
                     setEditingService((prev) => ({ ...prev, repoUrl: e.target.value }))
                   }
-                  className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
                     {t.labels.serviceType}
                   </label>
                   <div className="relative">
@@ -114,7 +117,7 @@ export function EditServiceModal({
                           port: e.target.value === 'STATIC' ? 80 : prev.port,
                         }))
                       }
-                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium appearance-none"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium appearance-none"
                     >
                       <option value="DOCKER">{t.newService.dockerService}</option>
                       <option value="STATIC">{t.newService.staticSite}</option>
@@ -139,7 +142,7 @@ export function EditServiceModal({
 
                 {!editingService.repoUrl?.includes('ghcr.io') && (
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
                       {t.labels.branch}
                     </label>
                     <input
@@ -148,7 +151,7 @@ export function EditServiceModal({
                       onChange={(e) =>
                         setEditingService((prev) => ({ ...prev, branch: e.target.value }))
                       }
-                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium font-mono"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium font-mono"
                       placeholder="main"
                     />
                   </div>
@@ -194,7 +197,7 @@ export function EditServiceModal({
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
                     {t.labels.envVars}
                   </label>
                   <button
@@ -209,7 +212,7 @@ export function EditServiceModal({
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                   {editingEnvVarsList.length === 0 ? (
-                    <div className="py-8 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600">
+                    <div className="py-8 border border-dashed border-slate-200 dark:border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-500 dark:text-slate-600">
                       <span className="text-xs">{t.newService.noEnvVars}</span>
                     </div>
                   ) : (
@@ -224,7 +227,7 @@ export function EditServiceModal({
                             newList[i].key = e.target.value;
                             setEditingEnvVarsList(newList);
                           }}
-                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs uppercase"
+                          className="flex-1 px-3 py-2 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white font-mono text-xs uppercase"
                         />
                         <input
                           type="text"
@@ -235,14 +238,14 @@ export function EditServiceModal({
                             newList[i].value = e.target.value;
                             setEditingEnvVarsList(newList);
                           }}
-                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                          className="flex-1 px-3 py-2 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white font-mono text-xs"
                         />
                         <button
                           type="button"
                           onClick={() =>
                             setEditingEnvVarsList((prev) => prev.filter((_, idx) => idx !== i))
                           }
-                          className="p-2 bg-white/5 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
+                          className="p-2 bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:text-rose-400 rounded-xl transition-all"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -254,7 +257,7 @@ export function EditServiceModal({
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
                     Volumes
                   </label>
                   <button
@@ -267,7 +270,7 @@ export function EditServiceModal({
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                   {editingVolumes.length === 0 ? (
-                    <div className="py-8 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-600">
+                    <div className="py-8 border border-dashed border-slate-200 dark:border-white/5 rounded-2xl flex flex-col items-center justify-center text-slate-500 dark:text-slate-600">
                       <span className="text-xs">No volume mappings defined</span>
                     </div>
                   ) : (
@@ -282,14 +285,14 @@ export function EditServiceModal({
                             newList[i] = e.target.value;
                             setEditingVolumes(newList);
                           }}
-                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white font-mono text-xs"
+                          className="flex-1 px-3 py-2 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white font-mono text-xs"
                         />
                         <button
                           type="button"
                           onClick={() =>
                             setEditingVolumes((prev) => prev.filter((_, idx) => idx !== i))
                           }
-                          className="p-2 bg-white/5 text-slate-500 hover:text-rose-400 rounded-xl transition-all"
+                          className="p-2 bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:text-rose-400 rounded-xl transition-all"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -302,11 +305,11 @@ export function EditServiceModal({
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-white/10 bg-white/5 shrink-0 flex items-center justify-end gap-3">
+          <div className="p-6 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 shrink-0 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 rounded-xl font-bold text-slate-400 hover:bg-white/5 transition-all"
+              className="px-6 py-2.5 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 transition-all"
             >
               {t.actions.cancel}
             </button>

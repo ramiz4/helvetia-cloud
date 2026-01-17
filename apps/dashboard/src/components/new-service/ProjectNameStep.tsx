@@ -111,10 +111,11 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
                         environmentId: project.environments?.[0]?.id || '',
                       })
                     }
-                    className={`p-4 rounded-2xl border transition-all flex items-center gap-3 ${data.projectId === project.id
-                      ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-900 dark:text-white'
-                      : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                      }`}
+                    className={`p-4 rounded-2xl border transition-all flex items-center gap-3 ${
+                      data.projectId === project.id
+                        ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500 text-indigo-900 dark:text-white'
+                        : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                    }`}
                   >
                     <Folder
                       size={18}
@@ -140,10 +141,11 @@ export default function ProjectNameStep({ data, updateData, onNext }: ProjectNam
                   <button
                     key={env.id}
                     onClick={() => updateData({ environmentId: env.id })}
-                    className={`px-6 py-3 rounded-xl border font-bold transition-all ${data.environmentId === env.id
-                      ? 'bg-indigo-500 text-white border-indigo-500'
-                      : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                      }`}
+                    className={`px-6 py-3 rounded-xl border font-bold transition-all ${
+                      data.environmentId === env.id
+                        ? 'bg-indigo-500 text-white border-indigo-500'
+                        : 'bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                    }`}
                   >
                     {env.name}
                   </button>

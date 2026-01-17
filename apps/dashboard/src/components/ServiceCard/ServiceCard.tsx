@@ -102,10 +102,11 @@ export function ServiceCard({
             </h3>
             <div className="flex items-center gap-3">
               <span
-                className={`text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${service.status === 'RUNNING'
+                className={`text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${
+                  service.status === 'RUNNING'
                     ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                     : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'
-                  }`}
+                }`}
               >
                 {service.status || t.status.notRunning}
               </span>

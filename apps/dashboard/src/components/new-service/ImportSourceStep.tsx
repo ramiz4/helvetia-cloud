@@ -43,10 +43,11 @@ export default function ImportSourceStep({
               // Clear repo/branch when switching types to avoid confusion?
               // updateData({ repoUrl: '', branch: 'main' });
             }}
-            className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${importType === type.id
-              ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500/50 text-indigo-500 dark:text-indigo-400'
-              : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20'
-              }`}
+            className={`p-6 rounded-2xl flex flex-col items-center justify-center gap-3 border transition-all active:scale-95 ${
+              importType === type.id
+                ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500/50 text-indigo-500 dark:text-indigo-400'
+                : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20'
+            }`}
           >
             <type.icon size={24} />
             <span className="text-xs font-bold tracking-tight">{type.label}</span>
@@ -86,13 +87,15 @@ export default function ImportSourceStep({
                     ? t.dashboard.newService.importDatabase
                     : t.dashboard.newService.importManual}
                 </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manual configuration.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                  Manual configuration.
+                </p>
               </div>
 
               <div className="space-y-4">
                 {importType !== 'database' && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">
+                    <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                       {t.dashboard.newService.repoUrl}
                     </label>
                     <input
@@ -110,13 +113,13 @@ export default function ImportSourceStep({
 
                 {importType === 'database' && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">
+                    <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
                       {t.dashboard.newService.databaseEngine}
                     </label>
                     <select
                       value={data.dbEngine}
                       onChange={(e) => updateData({ dbEngine: e.target.value as DbEngine })}
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white cursor-pointer appearance-none transition-all"
+                      className="w-full px-4 py-3 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-900 dark:text-white cursor-pointer appearance-none transition-all"
                     >
                       <option value="postgres">PostgreSQL</option>
                       <option value="mysql">MySQL</option>
@@ -128,7 +131,7 @@ export default function ImportSourceStep({
                 <div className="flex gap-4">
                   <button
                     onClick={onBack}
-                    className="flex-1 h-12 bg-white/5 text-slate-400 font-bold rounded-xl hover:bg-white/10 hover:text-white transition-all active:scale-95 border border-white/5"
+                    className="flex-1 h-12 bg-slate-100 dark:bg-white/5 text-slate-400 font-bold rounded-xl hover:bg-white/10 hover:text-white transition-all active:scale-95 border border-slate-200 dark:border-white/5"
                   >
                     {t.common.back}
                   </button>
@@ -162,6 +165,6 @@ export default function ImportSourceStep({
           </div>
         )}
       </div>
-    </div >
+    </div>
   );
 }

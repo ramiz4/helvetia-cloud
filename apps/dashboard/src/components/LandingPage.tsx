@@ -116,7 +116,9 @@ export default function LandingPage() {
                 <h3 className="text-2xl mb-4 font-bold text-slate-900 dark:text-white tracking-tight">
                   {feature.title}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">{feature.description}</p>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
+                  {feature.description}
+                </p>
               </div>
             </div>
           ))}

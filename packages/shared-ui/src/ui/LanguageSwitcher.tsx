@@ -101,10 +101,11 @@ export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitc
           <button
             key={l.code}
             onClick={() => setLanguage(l.code as Language)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${language === l.code
-              ? 'bg-indigo-50 dark:bg-indigo-500/20 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
-              : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-white/10'
-              }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+              language === l.code
+                ? 'bg-indigo-50 dark:bg-indigo-500/20 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-white/10'
+            }`}
           >
             {l.short}
           </button>
@@ -172,17 +173,19 @@ export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitc
                 buttonRef.current?.focus();
               }}
               onKeyDown={(e) => handleMenuKeyDown(e, index)}
-              className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-all focus:bg-slate-100 dark:focus:bg-white/10 focus:outline-none group/item ${language === l.code
-                ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/5'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+              className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-all focus:bg-slate-100 dark:focus:bg-white/10 focus:outline-none group/item ${
+                language === l.code
+                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/5'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
             >
               <span className="font-medium">{l.label}</span>
               <span
-                className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 ${language === l.code
-                  ? 'text-indigo-600 dark:text-indigo-500 bg-indigo-100 dark:bg-indigo-500/10'
-                  : 'text-slate-500'
-                  }`}
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 ${
+                  language === l.code
+                    ? 'text-indigo-600 dark:text-indigo-500 bg-indigo-100 dark:bg-indigo-500/10'
+                    : 'text-slate-500'
+                }`}
               >
                 {l.short}
               </span>

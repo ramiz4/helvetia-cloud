@@ -129,10 +129,11 @@ export default function Navigation({
                       <Link
                         key={link.href}
                         href={link.href}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${isActive
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                          isActive
                             ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                          }`}
+                        }`}
                       >
                         <Icon size={18} />
                         <span>{link.label}</span>
@@ -209,10 +210,11 @@ export default function Navigation({
                         <Link
                           key={link.href}
                           href={link.href}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${isActive
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                            isActive
                               ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
                               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                            }`}
+                          }`}
                         >
                           <Icon size={20} />
                           <span>{link.label}</span>

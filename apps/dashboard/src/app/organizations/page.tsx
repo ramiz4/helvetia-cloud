@@ -45,8 +45,12 @@ export default function OrganizationsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">Organizations</h1>
-            <p className="text-slate-600 dark:text-slate-400">Manage your teams and collaborate on projects</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
+              Organizations
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400">
+              Manage your teams and collaborate on projects
+            </p>
           </div>
           <button
             onClick={() => setIsCreating(true)}
@@ -60,7 +64,9 @@ export default function OrganizationsPage() {
 
       {isCreating && (
         <div className="mb-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 animate-in slide-in-from-top-4 duration-300">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Create New Organization</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+            Create New Organization
+          </h2>
           <form onSubmit={handleCreateOrg} className="flex gap-4">
             <div className="grow">
               <input
@@ -139,7 +145,9 @@ export default function OrganizationsPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 mb-4">
             <Building2 size={32} className="text-slate-400 dark:text-slate-500" />
           </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No organizations yet</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+            No organizations yet
+          </h3>
           <p className="text-slate-600 dark:text-slate-400 mb-6">
             Create your first organization to start collaborating
           </p>
