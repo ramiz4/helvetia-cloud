@@ -56,13 +56,10 @@ describe('BillingService', () => {
       },
     } as any;
 
-    // Setup default mocks
-    getStripeClientMock.mockReturnValue(mockStripe);
-    isStripeConfiguredMock.mockReturnValue(true);
-
+    // Clear all mocks first
     vi.clearAllMocks();
 
-    // Re-set mocks after clearing
+    // Setup default mocks
     getStripeClientMock.mockReturnValue(mockStripe);
     isStripeConfiguredMock.mockReturnValue(true);
 
@@ -442,11 +439,14 @@ describe('BillingService', () => {
     });
 
     it('should return null for missing subscription', async () => {
-      const stripeError = new Stripe.errors.StripeError({
-        type: 'invalid_request_error',
-        message: 'No such subscription',
-      });
-      (stripeError as any).code = 'resource_missing';
+      // Create a proper Stripe error with code property
+      const stripeError = Object.assign(
+        new Stripe.errors.StripeError({
+          type: 'invalid_request_error',
+          message: 'No such subscription',
+        }),
+        { code: 'resource_missing' },
+      );
 
       vi.mocked(mockStripe.subscriptions.retrieve).mockRejectedValue(stripeError);
 
