@@ -184,4 +184,213 @@ export class BillingController {
       return reply.status(500).send({ error: 'Failed to get usage' });
     }
   }
+
+  /**
+   * GET /billing/usage/history
+   * Get usage history for custom date range
+   */
+  async getUsageHistory(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+
+      if (!userId) {
+        return reply.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const query = request.query as {
+        periodStart?: string;
+        periodEnd?: string;
+        organizationId?: string;
+      };
+
+      // Validate and parse dates
+      let periodEnd: Date;
+      let periodStart: Date;
+
+      if (query.periodEnd) {
+        periodEnd = new Date(query.periodEnd);
+        if (isNaN(periodEnd.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodEnd date format' });
+        }
+      } else {
+        periodEnd = new Date();
+      }
+
+      if (query.periodStart) {
+        periodStart = new Date(query.periodStart);
+        if (isNaN(periodStart.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodStart date format' });
+        }
+      } else {
+        // Default to 30 days ago
+        periodStart = new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+
+      // Validate date range
+      if (periodStart > periodEnd) {
+        return reply.status(400).send({ error: 'periodStart must be before periodEnd' });
+      }
+
+      // Prevent future dates
+      const now = new Date();
+      if (periodEnd > now) {
+        return reply.status(400).send({ error: 'periodEnd cannot be in the future' });
+      }
+
+      // Limit to 1 year maximum range
+      const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+      if (periodEnd.getTime() - periodStart.getTime() > oneYearMs) {
+        return reply.status(400).send({ error: 'Date range cannot exceed 1 year' });
+      }
+
+      // Verify organization access if organizationId is provided
+      if (query.organizationId) {
+        const member = await this.userRepository.findById(userId).then(async (user) => {
+          if (!user) return null;
+          const prisma = await import('database').then((m) => m.prisma);
+          return prisma.organizationMember.findFirst({
+            where: {
+              organizationId: query.organizationId,
+              userId,
+            },
+          });
+        });
+
+        if (!member) {
+          return reply.status(403).send({ error: 'Access denied to organization usage data' });
+        }
+      }
+
+      const usage = await this.usageTrackingService.getAggregatedUsage({
+        userId,
+        organizationId: query.organizationId,
+        periodStart,
+        periodEnd,
+      });
+
+      return {
+        usage,
+        periodStart,
+        periodEnd,
+      };
+    } catch (error) {
+      request.log.error({ error }, 'Failed to get usage history');
+      return reply.status(500).send({ error: 'Failed to get usage history' });
+    }
+  }
+
+  /**
+   * GET /billing/usage/service/:id
+   * Get usage for a specific service
+   */
+  async getServiceUsage(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = request.user?.id;
+
+      if (!userId) {
+        return reply.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const params = request.params as { id: string };
+      const query = request.query as {
+        periodStart?: string;
+        periodEnd?: string;
+      };
+
+      // Validate and parse dates
+      let periodEnd: Date;
+      let periodStart: Date;
+
+      if (query.periodEnd) {
+        periodEnd = new Date(query.periodEnd);
+        if (isNaN(periodEnd.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodEnd date format' });
+        }
+      } else {
+        periodEnd = new Date();
+      }
+
+      if (query.periodStart) {
+        periodStart = new Date(query.periodStart);
+        if (isNaN(periodStart.getTime())) {
+          return reply.status(400).send({ error: 'Invalid periodStart date format' });
+        }
+      } else {
+        // Default to 30 days ago
+        periodStart = new Date(periodEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+
+      // Validate date range
+      if (periodStart > periodEnd) {
+        return reply.status(400).send({ error: 'periodStart must be before periodEnd' });
+      }
+
+      // Prevent future dates
+      const now = new Date();
+      if (periodEnd > now) {
+        return reply.status(400).send({ error: 'periodEnd cannot be in the future' });
+      }
+
+      // Limit to 1 year maximum range
+      const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+      if (periodEnd.getTime() - periodStart.getTime() > oneYearMs) {
+        return reply.status(400).send({ error: 'Date range cannot exceed 1 year' });
+      }
+
+      // Verify service access (check both direct ownership and organization membership)
+      const prisma = await import('database').then((m) => m.prisma);
+      const service = await prisma.service.findUnique({
+        where: { id: params.id },
+        include: {
+          environment: {
+            include: {
+              project: {
+                include: {
+                  organization: {
+                    include: {
+                      members: {
+                        where: { userId },
+                        select: { id: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!service) {
+        return reply.status(404).send({ error: 'Service not found' });
+      }
+
+      // Check access: either direct owner or organization member
+      const hasAccess =
+        service.userId === userId ||
+        (service.environment?.project.organization?.members &&
+          service.environment.project.organization.members.length > 0);
+
+      if (!hasAccess) {
+        return reply.status(403).send({ error: 'Access denied to service usage data' });
+      }
+
+      const usage = await this.usageTrackingService.getServiceUsage({
+        serviceId: params.id,
+        periodStart,
+        periodEnd,
+      });
+
+      return {
+        usage,
+        periodStart,
+        periodEnd,
+        serviceId: params.id,
+        serviceName: service.name,
+      };
+    } catch (error) {
+      request.log.error({ error }, 'Failed to get service usage');
+      return reply.status(500).send({ error: 'Failed to get service usage' });
+    }
+  }
 }
