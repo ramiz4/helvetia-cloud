@@ -8,6 +8,7 @@ initEnv();
 import { logger } from 'shared';
 import { scheduleCleanupJob } from './cleanup';
 import { startHealthServer, stopHealthServer } from './health-server';
+import { subscriptionCheckWorker } from './subscriptionCheckWorker';
 import { scheduleUsageCollection } from './usageCollection';
 import { worker } from './worker';
 
@@ -33,7 +34,11 @@ process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, closing worker gracefully...');
   await stopHealthServer();
   const { usageCollectionWorker } = await import('./usageCollection.js');
-  await Promise.all([worker.close(), usageCollectionWorker.close()]);
+  await Promise.all([
+    worker.close(),
+    usageCollectionWorker.close(),
+    subscriptionCheckWorker.close(),
+  ]);
   process.exit(0);
 });
 
@@ -41,6 +46,10 @@ process.on('SIGINT', async () => {
   logger.info('SIGINT received, closing worker gracefully...');
   await stopHealthServer();
   const { usageCollectionWorker } = await import('./usageCollection.js');
-  await Promise.all([worker.close(), usageCollectionWorker.close()]);
+  await Promise.all([
+    worker.close(),
+    usageCollectionWorker.close(),
+    subscriptionCheckWorker.close(),
+  ]);
   process.exit(0);
 });

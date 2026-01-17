@@ -111,8 +111,15 @@ export const enforceResourceLimits = (resourceType: 'service' | 'memory' | 'cpu'
     }
 
     // Import PrismaClient dynamically to avoid circular dependencies
-    const prismaModule = await import('database');
-    const prisma = resolve<typeof prismaModule.PrismaClient>(TOKENS.PrismaClient);
+    await import('database');
+    const prisma = resolve<{ service: { count: unknown; findMany: unknown } }>(
+      TOKENS.PrismaClient,
+    ) as {
+      service: {
+        count: (args: unknown) => Promise<number>;
+        findMany: (args: unknown) => Promise<unknown[]>;
+      };
+    };
 
     // Check service count limit
     if (resourceType === 'service') {
