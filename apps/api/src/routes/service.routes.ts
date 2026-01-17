@@ -63,7 +63,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
+              description: 'Service ID (UUID format)',
               description: 'Service ID',
             },
           },
@@ -150,7 +150,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
+              description: 'Service ID (UUID format)',
               description: 'Service ID',
             },
           },
@@ -201,7 +201,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
+              description: 'Service ID (UUID format)',
               description: 'Service ID',
             },
           },
@@ -254,7 +254,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
+              description: 'Service ID (UUID format)',
               description: 'Service ID',
             },
           },
@@ -298,7 +298,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
+              description: 'Service ID (UUID format)',
               description: 'Service ID',
             },
           },
@@ -345,7 +345,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
+              description: 'Service ID (UUID format)',
               description: 'Service ID',
             },
           },
@@ -400,7 +400,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
+              description: 'Service ID (UUID format)',
               description: 'Service ID',
             },
           },

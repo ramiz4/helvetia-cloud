@@ -44,7 +44,6 @@ export async function projectRoutes(fastify: FastifyInstance) {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Project ID',
             },
           },
@@ -120,7 +119,6 @@ export async function projectRoutes(fastify: FastifyInstance) {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Project ID',
             },
           },
@@ -163,7 +161,6 @@ export async function projectRoutes(fastify: FastifyInstance) {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Project ID',
             },
           },
@@ -188,7 +185,6 @@ export async function projectRoutes(fastify: FastifyInstance) {
             properties: {
               id: {
                 type: 'string',
-                format: 'uuid',
               },
               name: {
                 type: 'string',
@@ -196,7 +192,6 @@ export async function projectRoutes(fastify: FastifyInstance) {
               },
               projectId: {
                 type: 'string',
-                format: 'uuid',
               },
               createdAt: {
                 type: 'string',

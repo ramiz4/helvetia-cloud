@@ -94,7 +94,6 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Organization ID',
             },
           },
@@ -114,11 +113,9 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
                       properties: {
                         id: {
                           type: 'string',
-                          format: 'uuid',
                         },
                         userId: {
                           type: 'string',
-                          format: 'uuid',
                         },
                         role: {
                           type: 'string',
@@ -166,7 +163,6 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Organization ID',
             },
           },
@@ -177,7 +173,6 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             userId: {
               type: 'string',
-              format: 'uuid',
               description: 'User ID to add',
             },
             role: {
@@ -195,15 +190,12 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
             properties: {
               id: {
                 type: 'string',
-                format: 'uuid',
               },
               userId: {
                 type: 'string',
-                format: 'uuid',
               },
               organizationId: {
                 type: 'string',
-                format: 'uuid',
               },
               role: {
                 type: 'string',
@@ -242,12 +234,10 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Organization ID',
             },
             userId: {
               type: 'string',
-              format: 'uuid',
               description: 'User ID',
             },
           },
@@ -306,12 +296,10 @@ export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Organization ID',
             },
             userId: {
               type: 'string',
-              format: 'uuid',
               description: 'User ID to remove',
             },
           },

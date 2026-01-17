@@ -80,7 +80,6 @@ All webhook requests are verified using HMAC SHA-256 signature in the \`X-Hub-Si
               },
               'x-github-delivery': {
                 type: 'string',
-                format: 'uuid',
                 description: 'Unique delivery ID',
                 example: '12345678-1234-1234-1234-123456789012',
               },
@@ -165,7 +164,6 @@ All webhook requests are verified using HMAC SHA-256 signature in the \`X-Hub-Si
                 },
                 deploymentId: {
                   type: 'string',
-                  format: 'uuid',
                   description: 'ID of created deployment (if applicable)',
                 },
               },

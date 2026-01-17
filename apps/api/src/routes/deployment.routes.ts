@@ -32,18 +32,7 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Service ID',
-            },
-          },
-        },
-        body: {
-          type: 'object',
-          properties: {
-            commitHash: {
-              type: 'string',
-              description: 'Git commit hash to deploy (optional, defaults to latest)',
-              example: 'abc123def456',
             },
           },
         },
@@ -90,7 +79,6 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Service ID',
             },
           },
@@ -139,7 +127,6 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Service ID',
             },
           },
@@ -188,7 +175,6 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Service ID',
             },
           },
@@ -252,7 +238,6 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Deployment ID',
             },
           },
@@ -303,7 +288,6 @@ export const deploymentRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Deployment ID',
             },
           },

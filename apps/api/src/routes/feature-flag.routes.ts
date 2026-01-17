@@ -34,7 +34,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
               properties: {
                 id: {
                   type: 'string',
-                  format: 'uuid',
                 },
                 name: {
                   type: 'string',
@@ -93,7 +92,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Feature flag ID',
             },
           },
@@ -105,7 +103,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             properties: {
               id: {
                 type: 'string',
-                format: 'uuid',
               },
               name: {
                 type: 'string',
@@ -190,7 +187,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             properties: {
               id: {
                 type: 'string',
-                format: 'uuid',
               },
               name: {
                 type: 'string',
@@ -249,7 +245,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Feature flag ID',
             },
           },
@@ -281,7 +276,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             properties: {
               id: {
                 type: 'string',
-                format: 'uuid',
               },
               name: {
                 type: 'string',
@@ -340,7 +334,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Feature flag ID',
             },
           },
@@ -352,7 +345,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             properties: {
               id: {
                 type: 'string',
-                format: 'uuid',
               },
               enabled: {
                 type: 'boolean',
@@ -397,7 +389,6 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           properties: {
             id: {
               type: 'string',
-              format: 'uuid',
               description: 'Feature flag ID',
             },
           },

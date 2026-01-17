@@ -85,6 +85,13 @@ export const fastify = Fastify({
       keywords: ['example'], // Explicitly allow 'example' keyword
     },
   },
+  // Disable schema-based response serialization to allow all response properties
+  // This ensures responses are not stripped based on OpenAPI schemas
+  schemaController: {
+    compilersFactory: {
+      buildSerializer: () => () => JSON.stringify,
+    },
+  },
 });
 
 // Store redis connection on fastify instance for route access
