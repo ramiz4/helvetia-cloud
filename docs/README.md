@@ -29,6 +29,7 @@ API-specific documentation including versioning, error codes, security, logging,
 - [SSE_AND_STATUS_MANAGEMENT.md](../apps/api/docs/SSE_AND_STATUS_MANAGEMENT.md) - Server-Sent Events and status management
 - [DI_IMPLEMENTATION_SUMMARY.md](../apps/api/docs/DI_IMPLEMENTATION_SUMMARY.md) - Dependency injection framework
 - [MIGRATION_GUIDE.md](../apps/api/docs/MIGRATION_GUIDE.md) - DI migration guide
+- [BILLING_TESTS.md](../apps/api/docs/BILLING_TESTS.md) - Billing test infrastructure and documentation
 
 [View all API documentation →](../apps/api/docs/)
 
@@ -76,4 +77,4 @@ Database-specific documentation including migration guidelines.
 - **Getting Started**: See main [README.md](../README.md)
 - **Contributing**: See [ARCHITECTURE.md](./ARCHITECTURE.md) for system overview
 - **Security**: See [DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md) and [apps/api/docs/SECURITY.md](../apps/api/docs/SECURITY.md)
-- **Testing**: See [INTEGRATION_TESTS.md](./INTEGRATION_TESTS.md) and [TEST_COVERAGE_REPORT.md](./TEST_COVERAGE_REPORT.md)
+- **Testing**: See [INTEGRATION_TESTS.md](./INTEGRATION_TESTS.md), [TEST_COVERAGE_REPORT.md](./TEST_COVERAGE_REPORT.md), and [apps/api/docs/BILLING_TESTS.md](../apps/api/docs/BILLING_TESTS.md)
