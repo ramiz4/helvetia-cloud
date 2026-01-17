@@ -1,12 +1,6 @@
 'use client';
 
-import type {
-  CheckoutSession,
-  Invoice,
-  PortalSession,
-  Subscription,
-  Usage,
-} from '@/types/billing';
+import type { CheckoutSession, Invoice, PortalSession, Subscription, Usage } from '@/types/billing';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { API_BASE_URL, fetchWithAuth } from 'shared-ui';
 

@@ -17,7 +17,7 @@ export default function CancelPage() {
           <h1 className="text-5xl font-black text-white mb-6">Checkout Canceled</h1>
           <p className="text-slate-300 text-xl mb-12 leading-relaxed font-medium">
             Your checkout was canceled. No charges were made to your account. Feel free to try again
-            when you're ready.
+            when you&apos;re ready.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -67,7 +67,8 @@ export function CurrentPlanCard({ subscription, onManage, loading }: CurrentPlan
             <span className="text-slate-400 font-medium">Current Period</span>
           </div>
           <span className="text-sm font-medium text-white">
-            {formatDate(subscription.currentPeriodStart)} - {formatDate(subscription.currentPeriodEnd)}
+            {formatDate(subscription.currentPeriodStart)} -{' '}
+            {formatDate(subscription.currentPeriodEnd)}
           </span>
         </div>
       </div>
