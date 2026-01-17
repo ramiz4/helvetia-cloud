@@ -11,7 +11,8 @@
     "number": 56,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/56",
-    "synced": true
+    "synced": true,
+    "contentHash": "c23915abbdcf2a959a616876e0cc1e8b2269f4c338656409af066877ad4b6f0d"
   },
   {
     "title": "[CRITICAL] Missing Rate Limiting Implementation",
@@ -25,7 +26,8 @@
     "number": 58,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/58",
-    "synced": true
+    "synced": true,
+    "contentHash": "b6744dce63be4552e06f42aa105cefe19eea061b194506426d3c484c70707c6e"
   },
   {
     "title": "[CRITICAL] GitHub Webhook Authentication Missing",
@@ -39,7 +41,8 @@
     "number": 59,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/59",
-    "synced": true
+    "synced": true,
+    "contentHash": "ed47b63d31ecba46eaa877a5280e8b24bf0393641fbc0e77838856f0128c61dc"
   },
   {
     "title": "[CRITICAL] Insecure CORS Configuration Allows Origin Reflection",
@@ -53,7 +56,8 @@
     "number": 60,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/60",
-    "synced": true
+    "synced": true,
+    "contentHash": "46b9be17707a7ec223401820228170a7ea6b8fd2084d6e5edebfbe10bdf8062c"
   },
   {
     "title": "[CRITICAL] Host Filesystem Exposure via Docker Volume Mount",
@@ -67,7 +71,8 @@
     "number": 61,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/61",
-    "synced": true
+    "synced": true,
+    "contentHash": "fcbaa565c2b94f03c5a822ca5e98ec78dc9763d4a31d88ae57cce011f4c56978"
   },
   {
     "title": "[HIGH] SQL Injection Risk with Prisma String Operations",
@@ -80,7 +85,8 @@
     "number": 66,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/66",
-    "synced": true
+    "synced": true,
+    "contentHash": "5ddb15a1a3de37a3141e201703b879d699b3acfc977a5d59d926c62b664ba0e5"
   },
   {
     "title": "[HIGH] Missing Comprehensive Input Validation",
@@ -93,7 +99,8 @@
     "number": 67,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/67",
-    "synced": true
+    "synced": true,
+    "contentHash": "89e0b3141752d3a972b816959375f23cf39fcf4cc85c607e072a0d5bbbe6abe7"
   },
   {
     "title": "[HIGH] SSE Connection Token Expiration Not Handled",
@@ -106,7 +113,8 @@
     "number": 68,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/68",
-    "synced": true
+    "synced": true,
+    "contentHash": "f7a7cddda1b521b296d4faffd4bf28be7087a413ed73327ef8a2ce3d8ad6ffa8"
   },
   {
     "title": "[HIGH] Incomplete Error Handling in Worker Deployment",
@@ -119,7 +127,8 @@
     "number": 70,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/70",
-    "synced": true
+    "synced": true,
+    "contentHash": "824eff390c6627b84f226312431e0a51053fa938d7f7f1f9e9936da4da67365c"
   },
   {
     "title": "[HIGH] Race Condition in Service Status Updates",
@@ -132,7 +141,8 @@
     "number": 71,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/71",
-    "synced": true
+    "synced": true,
+    "contentHash": "8d03511561a34e173524ccb0d1db90d377423279e66714bd5ad77105b34115bf"
   },
   {
     "title": "[HIGH] Docker Socket Security Risk",
@@ -145,7 +155,8 @@
     "number": 72,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/72",
-    "synced": true
+    "synced": true,
+    "contentHash": "8e111b9faa91d1befc539af0f14ca3a416b25215e7fb79d00e21e36bf6625ade"
   },
   {
     "title": "[HIGH] Memory Leak Risk in SSE Connections",
@@ -158,7 +169,8 @@
     "number": 73,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/73",
-    "synced": true
+    "synced": true,
+    "contentHash": "1060856c8ec516e9009ae4a9e22e0ec9a41a5e1a747ce00c5c8c0fa1dda0c46b"
   },
   {
     "title": "[HIGH] Unrestricted Service Deletion Risk",
@@ -171,7 +183,8 @@
     "number": 74,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/74",
-    "synced": true
+    "synced": true,
+    "contentHash": "bbc39193bd6a5b926d1691cc11d8537311fa078662322f10891ce58912f709ea"
   },
   {
     "title": "[MEDIUM] Missing Dockerfile Generation Validation",
@@ -184,7 +197,8 @@
     "number": 75,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/75",
-    "synced": true
+    "synced": true,
+    "contentHash": "65b1cf775911151fb3dea22cba3d591a8c1206405e75b685e6ba94af26a6c9ed"
   },
   {
     "title": "[MEDIUM] Hardcoded Magic Numbers Throughout Codebase",
@@ -197,7 +211,8 @@
     "number": 76,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/76",
-    "synced": true
+    "synced": true,
+    "contentHash": "604a53881cee0e840a4de07bdd8f46e2d05cd6cdf7655fdfd20afed4aeed29a4"
   },
   {
     "title": "[MEDIUM] Missing Request/Response Logging",
@@ -210,7 +225,8 @@
     "number": 77,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/77",
-    "synced": true
+    "synced": true,
+    "contentHash": "db039597ab911982642edee9d4c1cf1237a3b3926072f20e5f9e10bfa6ed1f86"
   },
   {
     "title": "[MEDIUM] No Health Check Endpoint for Worker",
@@ -223,7 +239,8 @@
     "number": 78,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/78",
-    "synced": true
+    "synced": true,
+    "contentHash": "d173a60e36e6f6eabaef699c21f91c6facab8801a330672dc53f57d540701d41"
   },
   {
     "title": "[MEDIUM] Incomplete Test Coverage",
@@ -236,7 +253,8 @@
     "number": 79,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/79",
-    "synced": true
+    "synced": true,
+    "contentHash": "b81a8cc1a776c350c2f549aa970abfa9c4d7f0ffee18c747a8c37526986438bf"
   },
   {
     "title": "[MEDIUM] Environment Variable Management Needs Improvement",
@@ -249,7 +267,8 @@
     "number": 80,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/80",
-    "synced": true
+    "synced": true,
+    "contentHash": "af06bdf035067e50112bcbea558964ec4252ae9f996f444b011872f40401be32"
   },
   {
     "title": "[MEDIUM] No Database Migration Strategy",
@@ -262,7 +281,8 @@
     "number": 81,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/81",
-    "synced": true
+    "synced": true,
+    "contentHash": "e1c0268e5bc23dc2a32326ec615d86f18a855fc9f1dbd6e480f46e9824ef6892"
   },
   {
     "title": "[MEDIUM] Frontend State Management Issues",
@@ -275,7 +295,8 @@
     "number": 82,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/82",
-    "synced": true
+    "synced": true,
+    "contentHash": "50e8821df44ab84884eb1ca0ec5dff4b381268cf4230534e3d505d895f462454"
   },
   {
     "title": "[MEDIUM] Docker Image Cleanup Missing",
@@ -288,7 +309,8 @@
     "number": 83,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/83",
-    "synced": true
+    "synced": true,
+    "contentHash": "ae1a3c0c125949b6441378e6935d55a62b7fb1d5bcf8b17db55df49066a146a6"
   },
   {
     "title": "[MEDIUM] Missing Prometheus Metrics",
@@ -301,7 +323,8 @@
     "number": 84,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/84",
-    "synced": true
+    "synced": true,
+    "contentHash": "460d30925aff7d8b415525aca5c91241e5612bc961871705af142450afbec14a"
   },
   {
     "title": "[MEDIUM] Session Management Needs Refresh Tokens",
@@ -314,7 +337,8 @@
     "number": 69,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/69",
-    "synced": true
+    "synced": true,
+    "contentHash": "48309b71285bd317026537bf1e10a2a7f299a6301a28baa33a75c07866295c09"
   },
   {
     "title": "[MEDIUM] No Request Size Limits",
@@ -327,7 +351,8 @@
     "number": 85,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/85",
-    "synced": true
+    "synced": true,
+    "contentHash": "f266384f9086939c8485381048cfd956bf59cea1fe5b60e53e48ac3c52d798bf"
   },
   {
     "title": "[LOW] Excessive TypeScript `any` Usage",
@@ -340,7 +365,8 @@
     "number": 93,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/93",
-    "synced": true
+    "synced": true,
+    "contentHash": "6540ec172df651fca4175ce60b0d5c3a6c6c7f00a8a259047378918236a1a2b9"
   },
   {
     "title": "[LOW] Inconsistent Error Messages",
@@ -353,7 +379,8 @@
     "number": 87,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/87",
-    "synced": true
+    "synced": true,
+    "contentHash": "bc90a3fa109ab20d797453d4b58b14eb13b9b2b02175e610d809ddd9a2669069"
   },
   {
     "title": "[LOW] Missing API Versioning",
@@ -366,7 +393,8 @@
     "number": 88,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/88",
-    "synced": true
+    "synced": true,
+    "contentHash": "bbb4e4fe089fe0b5bd5e9bc64bf17a3f79ffaa8bde9c382dc57ed14352b339da"
   },
   {
     "title": "[LOW] No Request ID Tracing",
@@ -379,7 +407,8 @@
     "number": 89,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/89",
-    "synced": true
+    "synced": true,
+    "contentHash": "323dd72553054663a65c56ead368d62a51f4513be3fe08beca7f1c822f263725"
   },
   {
     "title": "[LOW] Lack of Feature Flags",
@@ -392,7 +421,8 @@
     "number": 90,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/90",
-    "synced": true
+    "synced": true,
+    "contentHash": "ea2936094d312221457af24ad95cef1307d3d864fa82ee12b8bba589264802a2"
   },
   {
     "title": "[LOW] No Graceful Shutdown",
@@ -405,7 +435,8 @@
     "number": 91,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/91",
-    "synced": true
+    "synced": true,
+    "contentHash": "cb724dae67ab0f3dbae73b7b4329b02df26d2001ffcdc510735638887e2f6574"
   },
   {
     "title": "[LOW] Dashboard Accessibility Issues",
@@ -419,7 +450,8 @@
     "number": 92,
     "state": "CLOSED",
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/92",
-    "synced": true
+    "synced": true,
+    "contentHash": "d3599dc35562255763451285f1608974e4e068272e3b7ad28b4fc8f576b2a722"
   },
   {
     "title": "[HIGH] Implement Dependency Injection & Core Interfaces",
@@ -432,7 +464,8 @@
     "number": 125,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/125"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/125",
+    "contentHash": "65529333c1f8763413500b61fee1fe2e4da0e5cd1fe708f797927489bc30c3c4"
   },
   {
     "title": "[HIGH] Extract Repository Pattern for Data Access",
@@ -445,7 +478,8 @@
     "number": 126,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/126"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/126",
+    "contentHash": "b324664c68b4a02562ef89a88d9e25bada67c5d42e50946cfd29ca5edec18f76"
   },
   {
     "title": "[HIGH] Create Service Layer for Business Logic",
@@ -458,7 +492,8 @@
     "number": 127,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/127"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/127",
+    "contentHash": "e793ad44d1bab532523cfee544f36c52daf95e2715b28a0e1b39ee514b894f07"
   },
   {
     "title": "[MEDIUM] Abstract Container Orchestration Logic",
@@ -471,7 +506,8 @@
     "number": 128,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/128"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/128",
+    "contentHash": "1af8e5c0028df9b90c157875536381b25b92c8b4bd2d47398fdce2205ded6d24"
   },
   {
     "title": "[MEDIUM] Refactor API Routes into Controllers",
@@ -484,7 +520,8 @@
     "number": 129,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/129"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/129",
+    "contentHash": "a787900ecad7eb973316354ac06e1e036574cda4b5200bb5a61da9d432eec660"
   },
   {
     "title": "[MEDIUM] Implement Strategy Pattern for Deployment Types",
@@ -497,7 +534,8 @@
     "number": 130,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/130"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/130",
+    "contentHash": "c7e1de0f070796a625cb599a2b6d6e5f1d3e16006411cefd403faa8524a231e3"
   },
   {
     "title": "[MEDIUM] Improve TypeScript Type Safety",
@@ -511,7 +549,8 @@
     "number": 131,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/131"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/131",
+    "contentHash": "f1f055cf44b5c112299f3ff50d7bb43d364142a51e473e20aaf084c2bc913f36"
   },
   {
     "title": "[LOW] Create Shared Package for Common Logic",
@@ -524,7 +563,8 @@
     "number": 132,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/132"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/132",
+    "contentHash": "434b1ce0fac025d834c7f41f907a3dc0f81ac080d3f26a5651a1d61f0ff5cdfd"
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate Service Routes to ServiceController",
@@ -538,7 +578,8 @@
     "synced": true,
     "number": 146,
     "state": "CLOSED",
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/146"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/146",
+    "contentHash": "e81363eefad4f6b1cd004c47dd9b689cc6321d76fb55c79a0c6a4d7961458d45"
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate Deployment Routes to DeploymentController",
@@ -552,7 +593,8 @@
     "synced": true,
     "number": 147,
     "state": "CLOSED",
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/147"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/147",
+    "contentHash": "c0d6e2889c47d2fcfc37e025ef9d7a39f901dc6d36832de694beb56ee6fabe0a"
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate GitHub Proxy Routes to GitHubController",
@@ -566,7 +608,8 @@
     "synced": true,
     "number": 148,
     "state": "CLOSED",
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/148"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/148",
+    "contentHash": "937f44df2759f9ee4cd1d823ab6a1b89d59af8be178db67fa77db4f4e514149b"
   },
   {
     "title": "[MEDIUM] Phase 4: Migrate Webhook Routes to WebhookController",
@@ -580,7 +623,8 @@
     "synced": true,
     "number": 149,
     "state": "CLOSED",
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/149"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/149",
+    "contentHash": "4abd2d96b1a35ff40479cd76625fb928b3848b4f6f44e1e091e3c8b1cc68ea92"
   },
   {
     "title": "[MEDIUM] Standardize Zod Error Handling with z.treeifyError()",
@@ -594,7 +638,8 @@
     "number": 167,
     "state": "CLOSED",
     "synced": true,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/167"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/167",
+    "contentHash": "7867658a246e18ff4912664ca589451e5d57ee79f688814f80c76322920292e7"
   },
   {
     "title": "[HIGH] Insecure Password Hashing Using SHA-256 Without Salt",
@@ -607,7 +652,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 183,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/183"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/183",
+    "contentHash": "c4ebf5a78934c09a9f91f2b09e3fb6fbc42dde615b754e6c9106796646428089"
   },
   {
     "title": "[HIGH] Duplicate Docker Client Instantiation on Every Request",
@@ -620,7 +666,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 184,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/184"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/184",
+    "contentHash": "b0dbeacd7d789749e5cf86c913fb5e3aa511074deaf9ff4622d4485e2bf1980d"
   },
   {
     "title": "[MEDIUM] Direct Prisma Imports in Controllers Bypass DI",
@@ -633,7 +680,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 185,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/185"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/185",
+    "contentHash": "4ee5e88828932945be770d151be19fd6b20b9466ba2ceff08dcc21fabbb115f9"
   },
   {
     "title": "[MEDIUM] Missing Input Validation for Protection Toggle Endpoint",
@@ -646,7 +694,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 186,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/186"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/186",
+    "contentHash": "f4cfe779ac2383c5366afc64f72cbd87d7b505aa662d5f790ac538d59c022baa"
   },
   {
     "title": "[MEDIUM] Potential Race Condition in Organization Creation During GitHub Auth",
@@ -659,7 +708,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 187,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/187"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/187",
+    "contentHash": "4c13307a0a707e885c70ff384a260846f83faadfb7df823f167a2d7624e4051f"
   },
   {
     "title": "[MEDIUM] SSE Connection Cleanup May Leave Redis Subscriptions",
@@ -672,7 +722,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 188,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/188"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/188",
+    "contentHash": "9594fd1055c46d0017b4ef867f1cf42d2405ea5e0783fe7a53bd60b0e5b56033"
   },
   {
     "title": "[MEDIUM] Feature Flag Client Makes Individual API Calls for Each Flag",
@@ -685,7 +736,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 189,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/189"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/189",
+    "contentHash": "23f9240207b52076f0b205c7381852cf680a1bb87ac792ad49680d84acff71d2"
   },
   {
     "title": "[MEDIUM] Error Boundary Does Not Report Errors to Monitoring Service",
@@ -698,7 +750,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 190,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/190"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/190",
+    "contentHash": "09abf0df5f55300903032fe3467b7f23217beae981715a7a91317fad088bd0b5"
   },
   {
     "title": "[MEDIUM] Webhook Controller Uses Direct Prisma Import Instead of Repositories",
@@ -711,7 +764,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 191,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/191"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/191",
+    "contentHash": "996b1b7029aa5b8a0b87dff9f00f5941c9cd20004c5dca6982f6ec1a35b7c3a1"
   },
   {
     "title": "[LOW] Duplicate Constants Definition Between API and Worker",
@@ -724,7 +778,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 192,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/192"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/192",
+    "contentHash": "d60e86cadbd41e262b3679126a4170a0f24c62ae955422ed68cd869016bd8dfd"
   },
   {
     "title": "[LOW] Missing Error Handling for Config Parsing in Constants",
@@ -737,7 +792,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 193,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/193"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/193",
+    "contentHash": "1d03e2e4135c3abfea6cf71d3509c26a493424ff1f9a130458ecb4c83e80d411"
   },
   {
     "title": "[LOW] Hardcoded Platform Domain in Multiple Locations",
@@ -750,7 +806,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 194,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/194"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/194",
+    "contentHash": "e06a4a8261c5721a4510bb3f48ad409540bda757c91c93550a96adecdc7ea374"
   },
   {
     "title": "[LOW] useFeatureFlag Hook Missing Dependency in useEffect",
@@ -763,7 +820,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 195,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/195"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/195",
+    "contentHash": "9a373f1449b090891308d5342dab98d8bf7efebbed3ccf15739b95a530f4ef4d"
   },
   {
     "title": "[LOW] Services Hook Returns Status String Instead of Proper Enum Type",
@@ -776,7 +834,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 196,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/196"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/196",
+    "contentHash": "9d4bb0a248c2dc99c948e32c451cbde7f07412582405f02c93f1f0726095b662"
   },
   {
     "title": "[MEDIUM] Theme Switcher Implementation",
@@ -790,7 +849,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 227,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/227"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/227",
+    "contentHash": "33ae418435f79b3a47abaf832b3ceae1635b55c8bb09dc93916994be797684c0"
   },
   {
     "title": "[MEDIUM] Modern Login Page Design",
@@ -804,7 +864,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 228,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/228"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/228",
+    "contentHash": "dca5334d6b389512de43a8a4544e24bc77244fdba86aa37d43f5c53193901c36"
   },
   {
     "title": "[HIGH] Team Collaboration & Organizations",
@@ -819,7 +880,8 @@
     "state": "CLOSED",
     "synced": true,
     "number": 229,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/229"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/229",
+    "contentHash": "ab6ed8a3a79fc2b001c5ecf4ecd9366cfc0887283bd4c98e76b11288cbdacc5e"
   },
   {
     "title": "[HIGH] Billing Integration with Stripe",
@@ -835,7 +897,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 230,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/230"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/230",
+    "contentHash": "3ca479b8178e392b822de8f30351c38f563b2dfd4e9dd86ea4cde8ddeb1ee051"
   },
   {
     "title": "[MEDIUM] One-Click Application Marketplace",
@@ -850,7 +913,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 231,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/231"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/231",
+    "contentHash": "f916ea94223b87bdc0f828bedd5d68b002886097375aa4d4c037367a453b290a"
   },
   {
     "title": "[MEDIUM] Helvetia Cloud CLI Tool",
@@ -865,7 +929,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 232,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/232"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/232",
+    "contentHash": "0ed62f11d646524d14887dea8b4499a0e566df385c41749b0db71ca3b61ecaf7"
   },
   {
     "title": "[HIGH] Comprehensive API Documentation",
@@ -875,10 +940,11 @@
       "enhancement"
     ],
     "body": "Create comprehensive API documentation for the Helvetia Cloud platform to enable third-party integrations and developer adoption.\n\n**Current State:**\n- No public API documentation\n- Endpoints are not formally documented\n- No API reference or interactive explorer\n\n**Documentation Requirements:**\n\n### API Reference\n- Complete endpoint listing\n- Request/response schemas\n- Authentication methods\n- Error codes and messages\n- Rate limiting details\n- Versioning strategy\n\n### Interactive Documentation\n- OpenAPI/Swagger specification\n- Try-it-out functionality\n- Code examples in multiple languages\n- Authentication playground\n\n### Getting Started Guide\n- Quick start tutorial\n- Authentication setup\n- Common use cases\n- Best practices\n- SDK installation (if available)\n\n**Technology Options:**\n\n- **OpenAPI/Swagger**: Industry standard, great tooling\n- **Redoc**: Clean, responsive documentation\n- **Docusaurus**: Full documentation site\n- **Stoplight**: API design and documentation\n\n**Endpoints to Document:**\n\n### Authentication\n- POST /auth/github\n- POST /auth/logout\n- GET /auth/verify\n\n### Services\n- GET /services\n- POST /services\n- GET /services/:id\n- PATCH /services/:id\n- DELETE /services/:id\n- POST /services/:id/deploy\n- GET /services/:id/metrics\n- GET /services/:id/logs\n\n### Deployments\n- GET /deployments\n- GET /deployments/:id\n- GET /deployments/:id/logs\n\n### Databases\n- GET /databases\n- POST /databases\n- GET /databases/:id\n- DELETE /databases/:id\n\n### Organizations (future)\n- GET /organizations\n- POST /organizations\n- GET /organizations/:id/members\n- POST /organizations/:id/members\n\n### Webhooks\n- POST /webhooks/github\n\n**Acceptance Criteria:**\n\n- [ ] Generate OpenAPI specification from code\n- [ ] Set up documentation site (Redoc/Stoplight)\n- [ ] Document all public API endpoints\n- [ ] Add request/response examples\n- [ ] Include authentication guide\n- [ ] Document error codes\n- [ ] Add rate limiting information\n- [ ] Create getting started tutorial\n- [ ] Add code examples (cURL, JavaScript, Python)\n- [ ] Include webhook documentation\n- [ ] Add API versioning strategy\n- [ ] Create SDKs for popular languages (optional)\n- [ ] Set up automatic documentation updates\n- [ ] Add API changelog\n- [ ] Include security best practices\n- [ ] Make documentation publicly accessible",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 233,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/233"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/233",
+    "contentHash": "e56537c93bb6f95ea8d3f9a1e44ae0541918bc8750611dd08976d7aa46d7aee2"
   },
   {
     "title": "[HIGH] User Documentation & Guides",
@@ -892,7 +958,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 234,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/234"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/234",
+    "contentHash": "52ee05cfe5e4763eadc9ac31ee6639c3ab0fe8dc1e096e53f0408bea843cfd1a"
   },
   {
     "title": "[HIGH] Privacy Policy",
@@ -906,7 +973,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 235,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/235"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/235",
+    "contentHash": "2ff37de561bde68f06a8ecc0c9b07a6f443a9fa56d5e1b3e2dbf2a50cbf2872a"
   },
   {
     "title": "[HIGH] Terms of Service",
@@ -920,7 +988,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 236,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/236"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/236",
+    "contentHash": "cba2017cb88b077cd7e4c7e2f622d891d5bf2ec84e905e30abc0da346d9af465"
   },
   {
     "title": "[MEDIUM] Frequently Asked Questions (FAQ)",
@@ -934,7 +1003,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 237,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/237"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/237",
+    "contentHash": "dd5dc0f1853cc25158dbce25a29c5ceeb020488ba872d8b30248b3fc7381ddcb"
   },
   {
     "title": "[MEDIUM] Platform Blog",
@@ -948,7 +1018,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 238,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/238"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/238",
+    "contentHash": "51b538c05b44e6ab112c37b95635bc328b37e33d671ebbafdce0d8124ebd66b0"
   },
   {
     "title": "[LOW] Generate SDKs from OpenAPI Specification",
@@ -963,7 +1034,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 246,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/246"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/246",
+    "contentHash": "dab6dc49b7d594e7a15d976de20298e7f65816301e8bd8784a2ab1627752bbcf"
   },
   {
     "title": "[LOW] Export Postman Collection from API",
@@ -978,7 +1050,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 247,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/247"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/247",
+    "contentHash": "34f0b7c0049ca49052359c52919d5547fa4dbe336ee51bba7b7b229d38ff41a4"
   },
   {
     "title": "[MEDIUM] Add GraphQL API (v2.0)",
@@ -993,7 +1066,8 @@
     "state": "OPEN",
     "synced": true,
     "number": 248,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/248"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/248",
+    "contentHash": "8d68f6441c6557053d0eef3bf08b2e5f71975e9346cd57aae031bbabdd4c2e22"
   },
   {
     "title": "[LOW] Interactive Rate Limit Calculator",
@@ -1008,6 +1082,73 @@
     "state": "OPEN",
     "synced": true,
     "number": 249,
-    "url": "https://github.com/ramiz4/helvetia-cloud/issues/249"
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/249",
+    "contentHash": "ec6d1a57a2895445c17b9caf82414cc8e38ee0fe4f8f61c8295727219458d244"
+  },
+  {
+    "title": "[MEDIUM] Automated Usage Collection from Running Containers",
+    "labels": [
+      "P2",
+      "enhancement",
+      "feature",
+      "billing",
+      "backend"
+    ],
+    "body": "Implement automated collection of resource usage metrics from running containers for billing purposes.\n\n**Current State:**\n- Usage tracking infrastructure exists (UsageTrackingService)\n- Manual usage recording API is available\n- No automated collection from containers\n- No background job for metrics collection\n\n**Scope:**\n\nThis issue covers Phase 3 of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Create background worker job for usage collection\n- [ ] Implement compute hours tracking\n- [ ] Implement memory GB-hours tracking  \n- [ ] Implement bandwidth GB tracking\n- [ ] Implement storage GB tracking\n- [ ] Schedule periodic collection (every 5-15 min)\n- [ ] Add usage aggregation logic\n- [ ] Create historical usage endpoints\n- [ ] Integrate with Stripe metered billing\n- [ ] Add error handling and retry logic\n- [ ] Implement data rollup and archival\n- [ ] Add monitoring and alerting\n- [ ] Write unit tests for metrics calculation\n- [ ] Write integration tests for collection job\n- [ ] Document usage collection system\n- [ ] Add configuration for collection intervals",
+    "state": "OPEN",
+    "synced": true,
+    "number": 256,
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/256",
+    "contentHash": "839a43913fa70f07952e86503b741b43d6383a07c7776067579ba3c91441c663"
+  },
+  {
+    "title": "[HIGH] Resource Limit Enforcement Middleware",
+    "labels": [
+      "P1",
+      "enhancement",
+      "feature",
+      "billing",
+      "security",
+      "backend"
+    ],
+    "body": "Implement middleware to enforce subscription-based resource limits and prevent abuse.\n\n**Current State:**\n- Subscription tiers defined with resource limits\n- SubscriptionService provides getResourceLimits() method\n- No enforcement of these limits\n- Users can exceed their tier quotas\n\n**Scope:**\n\nThis issue covers Phase 4 of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Create subscription status middleware\n- [ ] Implement service count enforcement\n- [ ] Implement memory limit enforcement\n- [ ] Implement CPU limit enforcement\n- [ ] Implement bandwidth limit enforcement\n- [ ] Implement storage limit enforcement\n- [ ] Add grace period handling (7 days)\n- [ ] Implement automatic service suspension\n- [ ] Add payment retry logic\n- [ ] Create background job for suspension\n- [ ] Add email notifications for suspensions\n- [ ] Update frontend to show limits and usage\n- [ ] Add upgrade prompts when limits reached\n- [ ] Write unit tests for middleware\n- [ ] Write integration tests for enforcement\n- [ ] Document enforcement policies\n- [ ] Add monitoring for enforcement events",
+    "state": "OPEN",
+    "synced": true,
+    "number": 257,
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/257",
+    "contentHash": "8b70a8e6bc787e9d8c0923ad9624a21ba21ffdb62669f5bb81f2801b29f35bde"
+  },
+  {
+    "title": "[HIGH] Frontend Billing Dashboard UI",
+    "labels": [
+      "P1",
+      "enhancement",
+      "feature",
+      "billing",
+      "frontend",
+      "ui/ux"
+    ],
+    "body": "Create a comprehensive billing dashboard UI for subscription management, usage monitoring, and payment handling.\n\n**Current State:**\n- Billing backend APIs are implemented\n- No frontend UI for billing features\n- Users cannot manage subscriptions or view usage\n\n**Scope:**\n\nThis issue covers Phase 5 of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Create billing overview page\n- [ ] Implement current plan card\n- [ ] Build usage metrics display\n- [ ] Create plan selector component\n- [ ] Implement payment method card\n- [ ] Build invoice list component\n- [ ] Add invoice download functionality\n- [ ] Implement upgrade flow\n- [ ] Implement downgrade flow\n- [ ] Add confirmation dialogs\n- [ ] Create success/cancel pages\n- [ ] Integrate with Stripe Checkout\n- [ ] Integrate with Stripe Customer Portal\n- [ ] Add loading states\n- [ ] Add error handling\n- [ ] Ensure mobile responsiveness\n- [ ] Add dark/light mode support\n- [ ] Test accessibility\n- [ ] Add usage forecasting (optional)\n- [ ] Write component tests\n- [ ] Update navigation to include billing link\n- [ ] Add billing notifications/alerts",
+    "state": "OPEN",
+    "synced": true,
+    "number": 258,
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/258",
+    "contentHash": "b8eca15ad0443940426cb6fc4bc8def03f8bd0f4b02958871615641a313ba80a"
+  },
+  {
+    "title": "[MEDIUM] Comprehensive Billing Tests",
+    "labels": [
+      "P2",
+      "testing",
+      "quality",
+      "billing",
+      "backend"
+    ],
+    "body": "Add comprehensive test coverage for billing services, controllers, and webhook handlers.\n\n**Current State:**\n- Billing implementation is complete\n- No tests for billing features\n- Risk of bugs in payment processing\n\n**Scope:**\n\nThis issue covers Phase 6 (Testing) of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Write unit tests for BillingService (>80% coverage)\n- [ ] Write unit tests for SubscriptionService (>80% coverage)\n- [ ] Write unit tests for UsageTrackingService (>80% coverage)\n- [ ] Write integration tests for BillingController\n- [ ] Write integration tests for StripeWebhookController\n- [ ] Write tests for subscription middleware\n- [ ] Write tests for resource enforcement\n- [ ] Create mock Stripe client\n- [ ] Create test fixtures\n- [ ] Test webhook signature verification\n- [ ] Test all Stripe event types\n- [ ] Test error handling\n- [ ] Test edge cases (grace period, limits, etc.)\n- [ ] Add E2E tests for checkout flow (optional)\n- [ ] Achieve minimum 80% code coverage\n- [ ] Set up test database for integration tests\n- [ ] Document test setup and execution",
+    "state": "OPEN",
+    "synced": true,
+    "number": 259,
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/259",
+    "contentHash": "2a920f457382d05e6caa82c432d4d7c6b049a944230ffcb563ba5d42d39dda11"
   }
 ]

@@ -206,6 +206,18 @@ const envSchema = z.object({
     .default('true')
     .pipe(z.string().transform((val) => val !== 'false')),
 
+  // Stripe Billing Configuration
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_ID_STARTER: z.string().optional(),
+  STRIPE_PRICE_ID_PRO: z.string().optional(),
+  STRIPE_PRICE_ID_ENTERPRISE: z.string().optional(),
+  STRIPE_PRICE_ID_COMPUTE_HOURS: z.string().optional(),
+  STRIPE_PRICE_ID_MEMORY_GB_HOURS: z.string().optional(),
+  STRIPE_PRICE_ID_BANDWIDTH_GB: z.string().optional(),
+  STRIPE_PRICE_ID_STORAGE_GB: z.string().optional(),
+
   // Test Environment
   VITEST: z.string().optional(),
 });

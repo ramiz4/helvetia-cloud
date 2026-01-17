@@ -1,8 +1,7 @@
-import { env, initEnv } from './config/env';
+import { env } from './config/env';
 import './load-env';
 
-// Validate environment variables before doing anything else
-initEnv();
+// Environment variables are initialized in server.ts
 
 import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
 import { resolve, TOKENS } from './di';

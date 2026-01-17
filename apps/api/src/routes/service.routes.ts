@@ -64,7 +64,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             id: {
               type: 'string',
               description: 'Service ID (UUID format)',
-              description: 'Service ID',
             },
           },
         },
@@ -151,7 +150,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             id: {
               type: 'string',
               description: 'Service ID (UUID format)',
-              description: 'Service ID',
             },
           },
         },
@@ -202,7 +200,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             id: {
               type: 'string',
               description: 'Service ID (UUID format)',
-              description: 'Service ID',
             },
           },
         },
@@ -255,7 +252,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             id: {
               type: 'string',
               description: 'Service ID (UUID format)',
-              description: 'Service ID',
             },
           },
         },
@@ -299,7 +295,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             id: {
               type: 'string',
               description: 'Service ID (UUID format)',
-              description: 'Service ID',
             },
           },
         },
@@ -346,7 +341,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             id: {
               type: 'string',
               description: 'Service ID (UUID format)',
-              description: 'Service ID',
             },
           },
         },
@@ -401,7 +395,6 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
             id: {
               type: 'string',
               description: 'Service ID (UUID format)',
-              description: 'Service ID',
             },
           },
         },

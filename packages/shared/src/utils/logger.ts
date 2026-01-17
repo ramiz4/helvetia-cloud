@@ -3,7 +3,7 @@ import pino from 'pino';
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 
-export const logger = pino({
+export const loggerOptions = {
   level: process.env.LOG_LEVEL || 'info',
   transport:
     isDevelopment && !isTest
@@ -29,6 +29,8 @@ export const logger = pino({
     ],
     remove: true,
   },
-});
+};
+
+export const logger = pino(loggerOptions);
 
 export type Logger = typeof logger;

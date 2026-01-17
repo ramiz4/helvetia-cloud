@@ -5,12 +5,14 @@ import 'reflect-metadata';
 import { DockerContainerOrchestrator, logger } from 'shared';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/AuthController';
+import { BillingController } from '../controllers/BillingController';
 import { DeploymentController } from '../controllers/DeploymentController';
 import { FeatureFlagController } from '../controllers/FeatureFlagController';
 import { GitHubController } from '../controllers/GitHubController';
 import { OrganizationController } from '../controllers/OrganizationController';
 import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
+import { StripeWebhookController } from '../controllers/StripeWebhookController';
 import { WebhookController } from '../controllers/WebhookController';
 import {
   PrismaDeploymentRepository,
@@ -22,6 +24,7 @@ import {
 } from '../repositories';
 import {
   AuthenticationService,
+  BillingService,
   DeploymentOrchestratorService,
   FeatureFlagService,
   GitHubService,
@@ -29,6 +32,8 @@ import {
   OrganizationService,
   ProjectManagementService,
   ServiceManagementService,
+  SubscriptionService,
+  UsageTrackingService,
 } from '../services';
 import { TOKENS } from './tokens';
 
@@ -76,6 +81,9 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.FeatureFlagService, FeatureFlagService);
   container.registerSingleton(TOKENS.OrganizationService, OrganizationService);
   container.registerSingleton(TOKENS.InitializationService, InitializationService);
+  container.registerSingleton(TOKENS.BillingService, BillingService);
+  container.registerSingleton(TOKENS.SubscriptionService, SubscriptionService);
+  container.registerSingleton(TOKENS.UsageTrackingService, UsageTrackingService);
 
   // Register controllers
   container.registerSingleton(TOKENS.ServiceController, ServiceController);
@@ -86,6 +94,8 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.AuthController, AuthController);
   container.registerSingleton(TOKENS.FeatureFlagController, FeatureFlagController);
   container.registerSingleton(TOKENS.OrganizationController, OrganizationController);
+  container.registerSingleton(TOKENS.BillingController, BillingController);
+  container.registerSingleton(TOKENS.StripeWebhookController, StripeWebhookController);
 }
 
 /**

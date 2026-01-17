@@ -21,6 +21,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
 // --- Authentication ---
@@ -39,6 +40,7 @@ function getGitHubToken() {
 
 const PATHS = {
   JSON_SOURCE: path.join(__dirname, '..', 'github_issues.json'),
+  REPO: 'ramiz4/helvetia-cloud',
 };
 
 const LABEL_COLORS = {
@@ -95,13 +97,29 @@ const log = {
 };
 
 /**
+ * Generates a SHA-256 hash of the issue content to detect changes.
+ */
+function computeHash(title, body, labels) {
+  const normalizedBody = (body || '').replace(/\r\n/g, '\n').trim();
+  const normalizedLabels = (labels || []).map((l) => (typeof l === 'string' ? l : l.name)).sort();
+  const content = JSON.stringify({ title, body: normalizedBody, labels: normalizedLabels });
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+/**
  * Execute a GitHub CLI command safely.
  */
 function gh(args) {
-  const result = spawnSync('gh', args, { encoding: 'utf-8' });
+  const finalArgs = [...args];
+  // Inject target repository for all commands except authentication checks
+  if (args[0] !== 'auth') {
+    finalArgs.push('--repo', PATHS.REPO);
+  }
+
+  const result = spawnSync('gh', finalArgs, { encoding: 'utf-8' });
   if (result.status !== 0) {
     throw new Error(
-      result.stderr || `Command 'gh ${args.join(' ')}' failed with exit code ${result.status}`,
+      result.stderr || `Command 'gh ${finalArgs.join(' ')}' failed with exit code ${result.status}`,
     );
   }
   return result.stdout.trim();
@@ -195,65 +213,135 @@ const Synchronizer = {
       '--limit',
       '1000',
       '--json',
-      'number,title,state,url',
+      'number,title,body,labels,state,url',
     ]);
     const existingIssues = JSON.parse(rawExisting);
 
+    // Map by Number for precise updates, and Title for new issue detection
+    const existingByNumber = new Map(existingIssues.map((i) => [i.number, i]));
     const existingTitles = new Map();
     existingIssues.forEach((i) => {
       if (!existingTitles.has(i.title)) existingTitles.set(i.title, []);
       existingTitles.get(i.title).push(i);
     });
 
-    // 2. Create missing issues
     let createdCount = 0;
+    let updatedCount = 0;
+
+    // 2. Sync issues (Create or Update)
     for (const issue of targetIssues) {
-      if (issue.synced) continue;
+      const localHash = computeHash(issue.title, issue.body, issue.labels);
 
-      const matches = existingTitles.get(issue.title) || [];
-      const hasOpenIssue = matches.some((m) => m.state === 'OPEN');
-
-      if (hasOpenIssue) {
-        log.info(`Skipping existing (OPEN): ${issue.title}`);
-        continue;
+      // Find matching remote issue
+      let match = null;
+      if (issue.number && existingByNumber.has(issue.number)) {
+        match = existingByNumber.get(issue.number);
+      } else if (existingTitles.has(issue.title)) {
+        // Fallback to title matching if number is missing (e.g. new local entry)
+        const matches = existingTitles.get(issue.title);
+        // Prefer OPEN issues
+        match = matches.find((m) => m.state === 'OPEN') || matches[0];
       }
 
-      try {
-        log.info(`Creating: ${issue.title}`);
+      if (match) {
+        // Check if update is needed
+        const remoteHash = computeHash(match.title, match.body, match.labels);
 
-        const url = gh([
-          'issue',
-          'create',
-          '--title',
-          issue.title,
-          '--body',
-          issue.body,
-          '--label',
-          issue.labels.join(','),
-        ]);
+        if (localHash !== remoteHash) {
+          log.info(`Updating #${match.number}: ${issue.title}`);
+          try {
+            gh([
+              'issue',
+              'edit',
+              match.number.toString(),
+              '--title',
+              issue.title,
+              '--body',
+              issue.body,
+              '--add-label',
+              issue.labels.join(','),
+              // Note: 'gh issue edit' doesn't strictly replace labels, it adds/removes.
+              // But strictly syncing labels via CLI is tricky without removing all first.
+              // For now, we add missing ones. To be perfect, we'd need to remove extras too.
+              // Let's rely on --add-label for now, or use a set-label logic if available?
+              // gh issue edit usually supports --remove-label.
+              // A simpler approach for strict sync might be necessary, but let's stick to update body/title
+              // and ensure labels are present.
+            ]);
 
-        log.success(`Created: ${url}`);
+            // Re-sync labels strictly?
+            // The CLI flags are --add-label and --remove-label.
+            // We calculate diff.
+            const remoteLabels = match.labels.map((l) => l.name);
+            const toAdd = issue.labels.filter((l) => !remoteLabels.includes(l));
+            const toRemove = remoteLabels.filter((l) => !issue.labels.includes(l));
 
-        // Update local cache with new open issue
-        const newNumber = parseInt(url.split('/').pop());
-        if (!existingTitles.has(issue.title)) existingTitles.set(issue.title, []);
-        existingTitles
-          .get(issue.title)
-          .push({ number: newNumber, title: issue.title, state: 'OPEN' });
+            if (toAdd.length > 0)
+              gh(['issue', 'edit', match.number.toString(), '--add-label', toAdd.join(',')]);
+            if (toRemove.length > 0)
+              gh(['issue', 'edit', match.number.toString(), '--remove-label', toRemove.join(',')]);
 
-        createdCount++;
+            log.success(`Updated #${match.number}`);
+            updatedCount++;
+          } catch (e) {
+            log.error(`Failed to update #${match.number}: ${e.message}`);
+          }
+        } else {
+          // log.info(`Skipping #${match.number} (up to date)`);
+        }
 
-        // Rate limit friendliness
-        await new Promise((r) => setTimeout(r, 500));
-      } catch (e) {
-        log.error(`Failed to create '${issue.title}': ${e.message}`);
+        // Update local state references
+        issue.number = match.number;
+        issue.state = match.state;
+        issue.url = match.url;
+      } else {
+        // Create new
+        try {
+          log.info(`Creating: ${issue.title}`);
+          const url = gh([
+            'issue',
+            'create',
+            '--title',
+            issue.title,
+            '--body',
+            issue.body,
+            '--label',
+            issue.labels.join(','),
+          ]);
+          log.success(`Created: ${url}`);
+
+          const newNumber = parseInt(url.split('/').pop());
+          issue.number = newNumber;
+          issue.state = 'OPEN';
+          issue.url = url;
+          createdCount++;
+
+          // Add to cache to prevent dups if title repeats in loop (unlikely)
+          existingByNumber.set(newNumber, {
+            number: newNumber,
+            title: issue.title,
+            state: 'OPEN',
+            body: issue.body,
+            labels: issue.labels.map((l) => ({ name: l })),
+          });
+
+          // Rate limit friendliness
+          await new Promise((r) => setTimeout(r, 500));
+        } catch (e) {
+          log.error(`Failed to create '${issue.title}': ${e.message}`);
+        }
       }
+
+      // Mark as synced and store hash
+      issue.synced = true;
+      issue.contentHash = localHash;
     }
 
-    // 3. Deduplicate
+    // 3. Deduplicate (Clean up GitHub side)
     log.step('Checking for duplicates');
     let deletedCount = 0;
     for (const [title, matches] of existingTitles.entries()) {
+      // Re-fetch mathces from map might be stale if we created new ones, but duplicate check usually targets pre-existing junk.
       const openMatches = matches.filter((m) => m.state === 'OPEN');
 
       if (openMatches.length > 1) {
@@ -279,41 +367,13 @@ const Synchronizer = {
 
     log.step('Sync Summary');
     log.success(`Total Created: ${createdCount}`);
+    log.success(`Total Updated: ${updatedCount}`);
     log.success(`Total Duplicates Removed: ${deletedCount}`);
 
-    // 4. Sync state back to JSON
+    // 4. Update JSON file
     log.step('Updating github_issues.json');
-    let updatedCount = 0;
-
-    for (const issue of targetIssues) {
-      const matches = existingTitles.get(issue.title) || [];
-      let bestMatch = null;
-
-      const openMatches = matches.filter((m) => m.state === 'OPEN');
-      const closedMatches = matches.filter((m) => m.state === 'CLOSED');
-
-      if (openMatches.length > 0) {
-        // Pick oldest open issue (consistent with deduplication)
-        openMatches.sort((a, b) => a.number - b.number);
-        bestMatch = openMatches[0];
-      } else if (closedMatches.length > 0) {
-        // Pick newest closed issue
-        closedMatches.sort((a, b) => b.number - a.number);
-        bestMatch = closedMatches[0];
-      }
-
-      if (bestMatch) {
-        issue.number = bestMatch.number;
-        issue.state = bestMatch.state;
-        issue.url = bestMatch.url;
-        issue.synced = true;
-        updatedCount++;
-      }
-    }
-
     fs.writeFileSync(PATHS.JSON_SOURCE, JSON.stringify(targetIssues, null, 2));
-    log.success(`Updated ${updatedCount} issues in ${PATHS.JSON_SOURCE}`);
-    log.success(`Total Local JSON Updates: ${updatedCount}`);
+    log.success(`Updated local JSON with sync state.`);
   },
 };
 
