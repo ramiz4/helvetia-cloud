@@ -12,7 +12,7 @@ import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
-import { logger } from 'shared';
+import { logger, loggerOptions } from 'shared';
 import {
   BODY_LIMIT_GLOBAL,
   BODY_LIMIT_SMALL,
@@ -69,7 +69,7 @@ registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
  * - AJV schema validator with OpenAPI keywords support
  */
 export const fastify = Fastify({
-  logger: isTestEnv ? false : logger,
+  logger: isTestEnv ? false : loggerOptions,
   bodyLimit: BODY_LIMIT_GLOBAL,
   // Generate unique request IDs for correlation
   genReqId: (req) => {

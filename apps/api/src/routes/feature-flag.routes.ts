@@ -28,33 +28,26 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
         response: {
           200: {
             description: 'List of feature flags',
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                },
-                name: {
-                  type: 'string',
-                  example: 'new-ui',
-                },
-                enabled: {
-                  type: 'boolean',
-                  example: true,
-                },
-                description: {
-                  type: 'string',
-                  example: 'Enable new UI features',
-                  nullable: true,
-                },
-                createdAt: {
-                  type: 'string',
-                  format: 'date-time',
-                },
-                updatedAt: {
-                  type: 'string',
-                  format: 'date-time',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    key: { type: 'string', example: 'new-ui' },
+                    name: { type: 'string', example: 'New User Interface' },
+                    enabled: { type: 'boolean', example: true },
+                    description: {
+                      type: 'string',
+                      example: 'Enable new UI features',
+                      nullable: true,
+                    },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
                 },
               },
             },
@@ -101,26 +94,18 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'Feature flag details',
             type: 'object',
             properties: {
-              id: {
-                type: 'string',
-              },
-              name: {
-                type: 'string',
-              },
-              enabled: {
-                type: 'boolean',
-              },
-              description: {
-                type: 'string',
-                nullable: true,
-              },
-              createdAt: {
-                type: 'string',
-                format: 'date-time',
-              },
-              updatedAt: {
-                type: 'string',
-                format: 'date-time',
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  key: { type: 'string' },
+                  name: { type: 'string' },
+                  enabled: { type: 'boolean' },
+                  description: { type: 'string', nullable: true },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                },
               },
             },
           },
@@ -157,14 +142,21 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
         description: 'Create a new feature flag (admin only).',
         body: {
           type: 'object',
-          required: ['name'],
+          required: ['key', 'name'],
           properties: {
-            name: {
+            key: {
               type: 'string',
               minLength: 1,
               maxLength: 100,
-              description: 'Feature flag name',
+              description: 'Feature flag key (machine name)',
               example: 'new-ui',
+            },
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 200,
+              description: 'Feature flag display name',
+              example: 'New User Interface',
             },
             enabled: {
               type: 'boolean',
@@ -185,22 +177,17 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'Feature flag created',
             type: 'object',
             properties: {
-              id: {
-                type: 'string',
-              },
-              name: {
-                type: 'string',
-              },
-              enabled: {
-                type: 'boolean',
-              },
-              description: {
-                type: 'string',
-                nullable: true,
-              },
-              createdAt: {
-                type: 'string',
-                format: 'date-time',
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  key: { type: 'string' },
+                  name: { type: 'string' },
+                  enabled: { type: 'boolean' },
+                  description: { type: 'string', nullable: true },
+                  createdAt: { type: 'string', format: 'date-time' },
+                },
               },
             },
           },
@@ -274,22 +261,17 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'Feature flag updated',
             type: 'object',
             properties: {
-              id: {
-                type: 'string',
-              },
-              name: {
-                type: 'string',
-              },
-              enabled: {
-                type: 'boolean',
-              },
-              description: {
-                type: 'string',
-                nullable: true,
-              },
-              updatedAt: {
-                type: 'string',
-                format: 'date-time',
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  key: { type: 'string' },
+                  name: { type: 'string' },
+                  enabled: { type: 'boolean' },
+                  description: { type: 'string', nullable: true },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                },
               },
             },
           },
@@ -343,12 +325,13 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'Feature flag toggled',
             type: 'object',
             properties: {
-              id: {
-                type: 'string',
-              },
-              enabled: {
-                type: 'boolean',
-                description: 'New enabled state',
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  enabled: { type: 'boolean', description: 'New enabled state' },
+                },
               },
             },
           },
@@ -438,12 +421,17 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
         description: 'Check if a feature flag is enabled. Public endpoint with rate limiting.',
         body: {
           type: 'object',
-          required: ['name'],
+          required: ['key'],
           properties: {
-            name: {
+            key: {
               type: 'string',
-              description: 'Feature flag name to check',
+              description: 'Feature flag key to check',
               example: 'new-ui',
+            },
+            userId: {
+              type: 'string',
+              description: 'Optional user ID for A/B testing',
+              example: 'user_123',
             },
           },
         },
@@ -452,14 +440,11 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
             description: 'Feature flag status',
             type: 'object',
             properties: {
+              success: { type: 'boolean' },
               enabled: {
                 type: 'boolean',
                 description: 'Whether the feature flag is enabled',
                 example: true,
-              },
-              name: {
-                type: 'string',
-                example: 'new-ui',
               },
             },
           },
@@ -495,15 +480,20 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           'Check the status of multiple feature flags at once. Public endpoint with rate limiting.',
         body: {
           type: 'object',
-          required: ['names'],
+          required: ['keys'],
           properties: {
-            names: {
+            keys: {
               type: 'array',
               items: {
                 type: 'string',
               },
-              description: 'Array of feature flag names to check',
+              description: 'Array of feature flag keys to check',
               example: ['new-ui', 'dark-mode', 'beta-features'],
+            },
+            userId: {
+              type: 'string',
+              description: 'Optional user ID for A/B testing',
+              example: 'user_123',
             },
           },
         },
@@ -511,13 +501,19 @@ export const featureFlagRoutes: FastifyPluginAsync = async (fastify) => {
           200: {
             description: 'Feature flags status',
             type: 'object',
-            additionalProperties: {
-              type: 'boolean',
-            },
-            example: {
-              'new-ui': true,
-              'dark-mode': false,
-              'beta-features': true,
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                additionalProperties: {
+                  type: 'boolean',
+                },
+                example: {
+                  'new-ui': true,
+                  'dark-mode': false,
+                  'beta-features': true,
+                },
+              },
             },
           },
           400: {

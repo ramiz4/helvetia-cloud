@@ -93,8 +93,8 @@ export class BillingService implements IBillingService {
     return {
       subscriptionId: subscription.id,
       status: this.mapStripeStatus(subscription.status),
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodStart: new Date(subscription.items.data[0].current_period_start * 1000),
+      currentPeriodEnd: new Date(subscription.items.data[0].current_period_end * 1000),
     };
   }
 
@@ -130,8 +130,8 @@ export class BillingService implements IBillingService {
 
     return {
       status: this.mapStripeStatus(updatedSubscription.status),
-      currentPeriodStart: new Date(updatedSubscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
+      currentPeriodStart: new Date(updatedSubscription.items.data[0].current_period_start * 1000),
+      currentPeriodEnd: new Date(updatedSubscription.items.data[0].current_period_end * 1000),
     };
   }
 
@@ -229,7 +229,23 @@ export class BillingService implements IBillingService {
   }): Promise<void> {
     const stripe = this.ensureStripeConfigured();
 
-    await stripe.subscriptionItems.createUsageRecord(params.subscriptionItemId, {
+    // Define an interface for SubscriptionItemsResource that includes createUsageRecord
+    // This method is available at runtime but may be missing from some SDK types
+    interface SubscriptionItemsResourceWithUsage extends Stripe.SubscriptionItemsResource {
+      createUsageRecord(
+        id: string,
+        params: {
+          quantity: number;
+          timestamp?: number;
+          action?: 'increment' | 'set';
+        },
+        options?: Stripe.RequestOptions,
+      ): Promise<Stripe.Response<Record<string, unknown>>>;
+    }
+
+    const subscriptionItems = stripe.subscriptionItems as SubscriptionItemsResourceWithUsage;
+
+    await subscriptionItems.createUsageRecord(params.subscriptionItemId, {
       quantity: Math.round(params.quantity),
       timestamp: params.timestamp || Math.floor(Date.now() / 1000),
       action: 'increment',

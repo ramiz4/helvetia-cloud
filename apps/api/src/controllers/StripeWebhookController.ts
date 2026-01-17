@@ -62,7 +62,12 @@ export class StripeWebhookController {
 
     // Check for malformed JSON from custom parser
     const body = request.body as unknown;
-    if (body && typeof body === 'object' && '_isMalformed' in body && (body as { _isMalformed: boolean })._isMalformed) {
+    if (
+      body &&
+      typeof body === 'object' &&
+      '_isMalformed' in body &&
+      (body as { _isMalformed: boolean })._isMalformed
+    ) {
       request.log.error({ error: (body as { _error?: string })._error }, 'Malformed webhook JSON');
       return reply.status(400).send({ error: 'Malformed webhook JSON' });
     }
@@ -118,7 +123,10 @@ export class StripeWebhookController {
     const customerDetails = await this.stripe?.customers.retrieve(customer);
 
     if (!customerDetails || customerDetails.deleted) {
-      request.log.error({ customer, subscriptionId: subscription.id }, 'Customer not found or deleted for subscription');
+      request.log.error(
+        { customer, subscriptionId: subscription.id },
+        'Customer not found or deleted for subscription',
+      );
       throw new Error(
         `Stripe customer "${customer}" not found or deleted for subscription "${subscription.id}"`,
       );
@@ -135,8 +143,8 @@ export class StripeWebhookController {
       stripeSubscriptionId: subscription.id,
       plan,
       status,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodStart: new Date(subscription.items.data[0].current_period_start * 1000),
+      currentPeriodEnd: new Date(subscription.items.data[0].current_period_end * 1000),
     });
   }
 
@@ -154,8 +162,8 @@ export class StripeWebhookController {
     await this.subscriptionService.updateSubscriptionStatus({
       stripeSubscriptionId: subscription.id,
       status,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodStart: new Date(subscription.items.data[0].current_period_start * 1000),
+      currentPeriodEnd: new Date(subscription.items.data[0].current_period_end * 1000),
     });
   }
 
@@ -180,15 +188,23 @@ export class StripeWebhookController {
   private async handleInvoicePaid(invoice: Stripe.Invoice, request: FastifyRequest) {
     request.log.info({ invoiceId: invoice.id }, 'Invoice paid');
 
-    // If subscription is past due, mark it as active
-    if (invoice.subscription) {
-      const subscription = await this.stripe?.subscriptions.retrieve(
-        invoice.subscription as string,
-      );
+    // Get subscription ID - handle different possible API versions
+    let subscriptionId: string | undefined;
+
+    // Try standard property first
+    if ('subscription' in invoice) {
+      subscriptionId =
+        typeof invoice.subscription === 'string'
+          ? invoice.subscription
+          : (invoice.subscription as any)?.id;
+    }
+
+    if (subscriptionId) {
+      const subscription = await this.stripe?.subscriptions.retrieve(subscriptionId);
 
       if (subscription && subscription.status === 'active') {
         await this.subscriptionService.updateSubscriptionStatus({
-          stripeSubscriptionId: invoice.subscription as string,
+          stripeSubscriptionId: subscriptionId,
           status: 'ACTIVE',
         });
       }
@@ -202,9 +218,26 @@ export class StripeWebhookController {
     request.log.info({ invoiceId: invoice.id }, 'Invoice payment failed');
 
     // Mark subscription as past due
-    if (invoice.subscription) {
+    // Mark subscription as past due
+    interface InvoiceWithSubscriptionId extends Stripe.Invoice {
+      subscription?: string | Stripe.Subscription | null;
+      subscription_id?: string | null;
+      subscription_details?: {
+        subscription?: string | Stripe.Subscription | null;
+      } | null;
+    }
+
+    const inv = invoice as InvoiceWithSubscriptionId;
+    const subscriptionId =
+      inv.subscription_id ||
+      (typeof inv.subscription === 'string' ? inv.subscription : inv.subscription?.id) ||
+      (typeof inv.subscription_details?.subscription === 'string'
+        ? inv.subscription_details.subscription
+        : inv.subscription_details?.subscription?.id);
+
+    if (subscriptionId) {
       await this.subscriptionService.updateSubscriptionStatus({
-        stripeSubscriptionId: invoice.subscription as string,
+        stripeSubscriptionId: subscriptionId,
         status: 'PAST_DUE',
       });
     }

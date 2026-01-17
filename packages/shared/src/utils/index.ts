@@ -13,7 +13,7 @@ export {
 } from './statusLock';
 
 // Log utilities
-export { logger, type Logger } from './logger';
+export { logger, loggerOptions, type Logger } from './logger';
 export { createScrubber } from './logs';
 
 // Config parser utilities

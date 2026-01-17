@@ -18,7 +18,7 @@ export function getStripeClient(): Stripe | null {
 
   if (!stripeClient) {
     stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-11-20.acacia',
+      apiVersion: '2025-12-15.clover',
       typescript: true,
       appInfo: {
         name: 'Helvetia Cloud',
@@ -40,12 +40,14 @@ export function isStripeConfigured(): boolean {
 /**
  * Stripe price IDs for subscription plans
  */
-export const STRIPE_PRICE_IDS = {
-  STARTER: env.STRIPE_PRICE_ID_STARTER,
-  PRO: env.STRIPE_PRICE_ID_PRO,
-  ENTERPRISE: env.STRIPE_PRICE_ID_ENTERPRISE,
-  COMPUTE_HOURS: env.STRIPE_PRICE_ID_COMPUTE_HOURS,
-  MEMORY_GB_HOURS: env.STRIPE_PRICE_ID_MEMORY_GB_HOURS,
-  BANDWIDTH_GB: env.STRIPE_PRICE_ID_BANDWIDTH_GB,
-  STORAGE_GB: env.STRIPE_PRICE_ID_STORAGE_GB,
-} as const;
+export function getStripePriceIds() {
+  return {
+    STARTER: env.STRIPE_PRICE_ID_STARTER,
+    PRO: env.STRIPE_PRICE_ID_PRO,
+    ENTERPRISE: env.STRIPE_PRICE_ID_ENTERPRISE,
+    COMPUTE_HOURS: env.STRIPE_PRICE_ID_COMPUTE_HOURS,
+    MEMORY_GB_HOURS: env.STRIPE_PRICE_ID_MEMORY_GB_HOURS,
+    BANDWIDTH_GB: env.STRIPE_PRICE_ID_BANDWIDTH_GB,
+    STORAGE_GB: env.STRIPE_PRICE_ID_STORAGE_GB,
+  } as const;
+}

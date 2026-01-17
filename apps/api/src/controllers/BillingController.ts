@@ -1,7 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import { BillingService, SubscriptionService, UsageTrackingService } from '../services';
 import { env } from '../config/env';
+import type { IUserRepository } from '../interfaces';
+import { BillingService, SubscriptionService, UsageTrackingService } from '../services';
 
 /**
  * BillingController
@@ -17,6 +18,8 @@ export class BillingController {
     private subscriptionService: SubscriptionService,
     @inject(Symbol.for('UsageTrackingService'))
     private usageTrackingService: UsageTrackingService,
+    @inject(Symbol.for('IUserRepository'))
+    private userRepository: IUserRepository,
   ) {}
 
   /**
@@ -62,9 +65,7 @@ export class BillingController {
       }
 
       // Get or create customer
-      const user = await request.server.prisma.user.findUnique({
-        where: { id: userId },
-      });
+      const user = await this.userRepository.findById(userId);
 
       if (!user) {
         return reply.status(404).send({ error: 'User not found' });
