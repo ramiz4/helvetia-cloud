@@ -76,7 +76,26 @@
   "cookie": {
     "title": "Conformità GDPR / DSGVO",
     "text": "Utilizziamo i cookie per garantire la migliore esperienza (conforme DSGVO).",
-    "accept": "Accetta"
+    "accept": "Accetta tutti i cookie",
+    "rejectNonEssential": "Rifiuta i non essenziali",
+    "customize": "Personalizza",
+    "savePreferences": "Salva preferenze",
+    "learnMore": "Scopri di più nella nostra Informativa sulla Privacy",
+    "preferences": {
+      "title": "Preferenze dei cookie",
+      "essential": {
+        "title": "Cookie essenziali",
+        "description": "Necessari per l'autenticazione, la sicurezza e le funzionalità core della piattaforma. Non possono essere disabilitati."
+      },
+      "functional": {
+        "title": "Cookie funzionali",
+        "description": "Utilizzati per ricordare le vostre preferenze (ad es. tema, lingua)."
+      },
+      "analytics": {
+        "title": "Cookie di analisi",
+        "description": "Ci aiutano a capire come utilizzate la piattaforma per migliorare le prestazioni e l'esperienza utente. Utilizziamo analitiche rispettose della privacy."
+      }
+    }
   },
   "nav": {
     "brand": "HELVETIA",

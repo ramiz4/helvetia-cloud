@@ -1,7 +1,7 @@
 'use client';
 
-import { useLanguage } from 'shared-ui';
 import { ShieldCheck } from 'lucide-react';
+import { useLanguage } from 'shared-ui';
 
 export default function PrivacyPolicyPage() {
   const { t } = useLanguage();
@@ -14,9 +14,7 @@ export default function PrivacyPolicyPage() {
           <div className="w-12 h-12 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
             <ShieldCheck className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white">
-            {t.privacy.title}
-          </h1>
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white">{t.privacy.title}</h1>
         </div>
         <p className="text-slate-600 dark:text-slate-400 text-lg">
           {t.privacy.lastUpdated}: {t.privacy.effectiveDate}
@@ -118,9 +116,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           {t.privacy.dataSharing.title}
         </h2>
-        <p className="text-slate-700 dark:text-slate-300 mb-4">
-          {t.privacy.dataSharing.intro}
-        </p>
+        <p className="text-slate-700 dark:text-slate-300 mb-4">{t.privacy.dataSharing.intro}</p>
         <ul className="list-disc list-inside text-slate-700 dark:text-slate-300 space-y-2">
           {t.privacy.dataSharing.items.map((item: string, idx: number) => (
             <li key={idx}>{item}</li>
@@ -138,23 +134,21 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           {t.privacy.userRights.title}
         </h2>
-        <p className="text-slate-700 dark:text-slate-300 mb-4">
-          {t.privacy.userRights.intro}
-        </p>
+        <p className="text-slate-700 dark:text-slate-300 mb-4">{t.privacy.userRights.intro}</p>
         <div className="space-y-4">
-          {t.privacy.userRights.rights.map((right: { title: string; description: string }, idx: number) => (
-            <div key={idx} className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                {right.title}
-              </h3>
-              <p className="text-slate-700 dark:text-slate-300">{right.description}</p>
-            </div>
-          ))}
+          {t.privacy.userRights.rights.map(
+            (right: { title: string; description: string }, idx: number) => (
+              <div key={idx} className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                  {right.title}
+                </h3>
+                <p className="text-slate-700 dark:text-slate-300">{right.description}</p>
+              </div>
+            ),
+          )}
         </div>
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p className="text-slate-700 dark:text-slate-300">
-            {t.privacy.userRights.exercise}
-          </p>
+          <p className="text-slate-700 dark:text-slate-300">{t.privacy.userRights.exercise}</p>
         </div>
       </section>
 
@@ -163,18 +157,18 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           {t.privacy.cookies.title}
         </h2>
-        <p className="text-slate-700 dark:text-slate-300 mb-4">
-          {t.privacy.cookies.intro}
-        </p>
+        <p className="text-slate-700 dark:text-slate-300 mb-4">{t.privacy.cookies.intro}</p>
         <div className="space-y-4">
-          {t.privacy.cookies.types.map((type: { name: string; description: string }, idx: number) => (
-            <div key={idx}>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                {type.name}
-              </h3>
-              <p className="text-slate-700 dark:text-slate-300">{type.description}</p>
-            </div>
-          ))}
+          {t.privacy.cookies.types.map(
+            (type: { name: string; description: string }, idx: number) => (
+              <div key={idx}>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                  {type.name}
+                </h3>
+                <p className="text-slate-700 dark:text-slate-300">{type.description}</p>
+              </div>
+            ),
+          )}
         </div>
       </section>
 
@@ -183,9 +177,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           {t.privacy.children.title}
         </h2>
-        <p className="text-slate-700 dark:text-slate-300">
-          {t.privacy.children.content}
-        </p>
+        <p className="text-slate-700 dark:text-slate-300">{t.privacy.children.content}</p>
       </section>
 
       {/* International Data Transfers */}
@@ -193,9 +185,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           {t.privacy.international.title}
         </h2>
-        <p className="text-slate-700 dark:text-slate-300">
-          {t.privacy.international.content}
-        </p>
+        <p className="text-slate-700 dark:text-slate-300">{t.privacy.international.content}</p>
       </section>
 
       {/* Changes to Privacy Policy */}
@@ -203,9 +193,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           {t.privacy.changes.title}
         </h2>
-        <p className="text-slate-700 dark:text-slate-300">
-          {t.privacy.changes.content}
-        </p>
+        <p className="text-slate-700 dark:text-slate-300">{t.privacy.changes.content}</p>
       </section>
 
       {/* Contact & Complaints */}

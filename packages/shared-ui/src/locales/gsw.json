@@ -76,7 +76,26 @@
   "cookie": {
     "title": "DSGVO / GDPR Konformität",
     "text": "Mir bruuche Cookies für s'bescht Erlebnis (DSGVO konform).",
-    "accept": "Akzeptiere"
+    "accept": "Alli Cookies akzeptiere",
+    "rejectNonEssential": "Nöd-essenzelli ablehne",
+    "customize": "Aapaasse",
+    "savePreferences": "Iistellige speichere",
+    "learnMore": "Meh erfahre in üsere Dateschutzerklär ig",
+    "preferences": {
+      "title": "Cookie-Iistellige",
+      "essential": {
+        "title": "Essenzielle Cookies",
+        "description": "Erforderlich für Authentifizierig, Sicherheit und Kern-Funktionalität vo de Plattform. Die chönd nöd deaktiviert werde."
+      },
+      "functional": {
+        "title": "Funktionali Cookies",
+        "description": "Werde verwändet, zum Ihri Preferenze z'speichere (z. B. Theme, Sprach)."
+      },
+      "analytics": {
+        "title": "Analyse-Cookies",
+        "description": "Hälfe üs verstah, wie Sie d'Plattform nutze, zum Leistig und Benutzer-Erfahrig z'verbessere. Mir verwende dateschutz-fründlichi Analyse."
+      }
+    }
   },
   "nav": {
     "brand": "HELVETIA",

@@ -1,8 +1,8 @@
 'use client';
 
+import { Cookie, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Cookie, Settings, X } from 'lucide-react';
 
 /**
  * Cookie consent preferences
@@ -268,4 +268,3 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
     </div>
   );
 }
-
