@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SubscriptionService } from './SubscriptionService';
 import {
   billingScenarios,
   createSubscriptionFixture,
   subscriptionPlans,
 } from '../test/fixtures/billing.fixtures';
+import { SubscriptionService } from './SubscriptionService';
 
 // Mock Prisma
 const mockPrisma = {

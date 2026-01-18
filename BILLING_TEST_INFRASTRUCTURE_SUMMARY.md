@@ -5,6 +5,7 @@ This document provides a summary of the billing test infrastructure that has bee
 ## Overview
 
 Complete test infrastructure has been established for billing-related functionality, providing:
+
 - Mock Stripe client for isolated testing
 - Comprehensive test fixtures for various billing scenarios
 - 47 example test cases demonstrating best practices
@@ -13,6 +14,7 @@ Complete test infrastructure has been established for billing-related functional
 ## Components Delivered
 
 ### 1. Mock Stripe Client
+
 **Location**: `apps/api/src/test/mocks/stripe.mock.ts`
 
 A complete in-memory implementation of the Stripe API that includes:
@@ -24,6 +26,7 @@ A complete in-memory implementation of the Stripe API that includes:
 - **Billing Portal Sessions**: Create billing portal sessions
 
 **Features**:
+
 - Type-safe responses matching Stripe's API
 - Proper error handling (404s, validation errors)
 - Data persistence within test execution
@@ -31,29 +34,34 @@ A complete in-memory implementation of the Stripe API that includes:
 - Reset function for test isolation
 
 **Helper Functions**:
+
 - `resetMockStripe()` - Reset all mock data between tests
 - `createMockStripe()` - Create complete mock Stripe instance
 - `createTestCustomerWithSubscription()` - Create customer with subscription in one call
 - `getMockData()` - Get all mock data for debugging
 
 ### 2. Test Fixtures
+
 **Location**: `apps/api/src/test/fixtures/billing.fixtures.ts`
 
 Reusable test data including:
 
 **Test Users**:
+
 - Free tier user
 - Starter plan user
 - Pro plan user
 - Enterprise user
 
 **Subscription Plans**:
+
 - FREE: 1 service, 512MB memory, 0.5 CPU cores
 - STARTER: 5 services, 2GB memory, 2 CPU cores
 - PRO: 20 services, 8GB memory, 8 CPU cores
 - ENTERPRISE: Unlimited resources
 
 **Predefined Scenarios**:
+
 1. `newFreeUser` - User with free plan, no services
 2. `starterWithUsage` - Starter plan with active service and usage
 3. `proWithMultipleServices` - Pro plan with 3 services
@@ -62,15 +70,18 @@ Reusable test data including:
 6. `enterpriseHighUsage` - Enterprise user with high resource usage
 
 **Helper Functions**:
+
 - `createSubscriptionFixture()` - Generate subscription test data
 - `createUsageRecordFixture()` - Generate usage record test data
 - `calculateUsageCost()` - Calculate expected cost for usage
 - `isWithinPlanLimits()` - Check if usage is within plan limits
 
 ### 3. Test Configuration
+
 **Updated**: `apps/api/vitest.config.ts`
 
 Added Stripe test environment variables:
+
 - `STRIPE_SECRET_KEY` - Test Stripe secret key
 - `STRIPE_PUBLISHABLE_KEY` - Test Stripe publishable key
 - `STRIPE_WEBHOOK_SECRET` - Test webhook secret
@@ -81,9 +92,11 @@ Added Stripe test environment variables:
 ### 4. Example Tests
 
 #### BillingService Tests
+
 **Location**: `apps/api/src/services/BillingService.test.ts`
 
 15 test cases covering:
+
 - Customer creation and retrieval
 - Subscription creation
 - Checkout session creation
@@ -93,9 +106,11 @@ Added Stripe test environment variables:
 - Error handling
 
 #### SubscriptionService Tests
+
 **Location**: `apps/api/src/services/SubscriptionService.test.ts`
 
 16 test cases covering:
+
 - Subscription retrieval for users and organizations
 - Subscription creation and updates (upsert)
 - Plan limit checks
@@ -105,9 +120,11 @@ Added Stripe test environment variables:
 - Error handling
 
 #### UsageTrackingService Tests
+
 **Location**: `apps/api/src/services/UsageTrackingService.test.ts`
 
 16 test cases covering:
+
 - Usage recording for all metric types
 - Service usage retrieval
 - Aggregated usage calculation
@@ -119,11 +136,13 @@ Added Stripe test environment variables:
 **Total Test Coverage**: 47 test cases
 
 ### 5. Documentation
+
 **Location**: `apps/api/docs/BILLING_TESTS.md`
 
 Comprehensive documentation including:
 
 **Table of Contents**:
+
 - Overview of test infrastructure
 - Running tests (unit and integration)
 - Writing billing tests (with examples)
@@ -134,6 +153,7 @@ Comprehensive documentation including:
 - Troubleshooting
 
 **Documentation Sections**:
+
 1. **Test Infrastructure** - Overview of components
 2. **Running Tests** - Commands and setup instructions
 3. **Writing Billing Tests** - Unit and integration test examples
@@ -193,7 +213,7 @@ it('should create a customer', async () => {
     email: 'test@example.com',
     name: 'Test User',
   });
-  
+
   expect(customer.id).toMatch(/^cus_test_/);
 });
 ```
@@ -205,7 +225,7 @@ import { billingScenarios } from './test/fixtures/billing.fixtures';
 
 it('should handle starter plan with usage', () => {
   const scenario = billingScenarios.starterWithUsage;
-  
+
   expect(scenario.user.id).toBe('user-starter-001');
   expect(scenario.subscription.plan).toBe('STARTER');
   expect(scenario.services).toHaveLength(1);
@@ -235,12 +255,12 @@ apps/api/
 
 ## Test Coverage Summary
 
-| Component | Test Cases | Coverage Areas |
-|-----------|-----------|---------------|
-| BillingService | 15 | Customer management, subscriptions, checkout, invoices |
-| SubscriptionService | 16 | Subscription CRUD, plan limits, status management |
-| UsageTrackingService | 16 | Usage recording, aggregation, cost calculation |
-| **Total** | **47** | **Complete billing functionality** |
+| Component            | Test Cases | Coverage Areas                                         |
+| -------------------- | ---------- | ------------------------------------------------------ |
+| BillingService       | 15         | Customer management, subscriptions, checkout, invoices |
+| SubscriptionService  | 16         | Subscription CRUD, plan limits, status management      |
+| UsageTrackingService | 16         | Usage recording, aggregation, cost calculation         |
+| **Total**            | **47**     | **Complete billing functionality**                     |
 
 ## Benefits
 
@@ -282,6 +302,7 @@ All acceptance criteria have been met successfully.
 ## Support
 
 For questions or issues:
+
 1. Review the [Billing Tests Documentation](../apps/api/docs/BILLING_TESTS.md)
 2. Check existing test files for examples
 3. Open a GitHub issue

@@ -89,10 +89,7 @@ export const mockStripeCustomers = {
     return customer;
   },
 
-  update: async (
-    id: string,
-    params: Stripe.CustomerUpdateParams,
-  ): Promise<Stripe.Customer> => {
+  update: async (id: string, params: Stripe.CustomerUpdateParams): Promise<Stripe.Customer> => {
     const customer = await mockStripeCustomers.retrieve(id);
     const updated = {
       ...customer,
@@ -119,9 +116,7 @@ export const mockStripeCustomers = {
  * Mock Stripe Subscription API
  */
 export const mockStripeSubscriptions = {
-  create: async (
-    params: Stripe.SubscriptionCreateParams,
-  ): Promise<Stripe.Subscription> => {
+  create: async (params: Stripe.SubscriptionCreateParams): Promise<Stripe.Subscription> => {
     const id = `sub_test_${subscriptionIdCounter++}`;
     const now = Math.floor(Date.now() / 1000);
     const subscription: Stripe.Subscription = {
@@ -142,8 +137,7 @@ export const mockStripeSubscriptions = {
       currency: 'usd',
       current_period_end: now + 30 * 24 * 60 * 60, // 30 days from now
       current_period_start: now,
-      customer:
-        typeof params.customer === 'string' ? params.customer : params.customer.toString(),
+      customer: typeof params.customer === 'string' ? params.customer : params.customer.toString(),
       days_until_due: null,
       default_payment_method: null,
       default_source: null,
@@ -323,8 +317,7 @@ export const mockStripeInvoices = {
       created: now,
       currency: 'usd',
       custom_fields: null,
-      customer:
-        typeof params.customer === 'string' ? params.customer : params.customer.toString(),
+      customer: typeof params.customer === 'string' ? params.customer : params.customer.toString(),
       customer_address: null,
       customer_email: null,
       customer_name: null,
@@ -420,9 +413,7 @@ export const mockStripeInvoices = {
     return invoice;
   },
 
-  list: async (
-    params?: Stripe.InvoiceListParams,
-  ): Promise<Stripe.ApiList<Stripe.Invoice>> => {
+  list: async (params?: Stripe.InvoiceListParams): Promise<Stripe.ApiList<Stripe.Invoice>> => {
     const allInvoices = Array.from(mockInvoices.values());
     const filtered = params?.customer
       ? allInvoices.filter((inv) => inv.customer === params.customer)
@@ -471,7 +462,9 @@ export const mockStripeCheckout = {
           terms_of_service_acceptance: null,
         },
         customer:
-          typeof params.customer === 'string' ? params.customer : params.customer?.toString() || null,
+          typeof params.customer === 'string'
+            ? params.customer
+            : params.customer?.toString() || null,
         customer_creation: null,
         customer_details: null,
         customer_email: null,

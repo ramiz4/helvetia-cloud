@@ -1,12 +1,8 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BillingService } from './BillingService';
-import {
-  createMockStripe,
-  mockStripeCustomers,
-  resetMockStripe,
-} from '../test/mocks/stripe.mock';
 import { testStripePrices, testUsers } from '../test/fixtures/billing.fixtures';
+import { createMockStripe, mockStripeCustomers, resetMockStripe } from '../test/mocks/stripe.mock';
+import { BillingService } from './BillingService';
 
 // Mock the stripe config
 vi.mock('../config/stripe', () => ({
@@ -221,12 +217,15 @@ describe('BillingService', () => {
       });
 
       // Then cancel it
-      const canceledSub = await billingService.cancelSubscription(
-        createResult.subscriptionId,
-      );
+      await billingService.cancelSubscription(createResult.subscriptionId);
 
-      expect(canceledSub.status).toBe('canceled');
-      expect(canceledSub.canceled_at).toBeDefined();
+      // Verify it was canceled by retrieving it
+      const subscription = await billingService.getSubscription(createResult.subscriptionId);
+      expect(subscription).not.toBeNull();
+      if (subscription) {
+        expect(subscription.status).toBe('canceled');
+        expect(subscription.canceled_at).toBeDefined();
+      }
     });
   });
 

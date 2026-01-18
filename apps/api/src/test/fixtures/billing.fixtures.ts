@@ -139,8 +139,8 @@ export const subscriptionPlans = {
       monthly: 500, // $500/month
       computeHours: 0.008, // Discounted
       memoryGbHours: 0.004, // Discounted
-      bandwidthGb: 0.10, // Discounted
-      storageGb: 0.020, // Discounted
+      bandwidthGb: 0.1, // Discounted
+      storageGb: 0.02, // Discounted
     },
   },
 };
@@ -393,7 +393,12 @@ export const billingScenarios = {
       stripeSubscriptionId: 'sub_test_starter_003',
     }),
     services: [
-      { id: 'service-pastdue-001', name: 'api-service', userId: 'user-starter-003', status: 'STOPPED' },
+      {
+        id: 'service-pastdue-001',
+        name: 'api-service',
+        userId: 'user-starter-003',
+        status: 'STOPPED',
+      },
     ],
     usage: [],
   },
@@ -474,7 +479,13 @@ export function calculateUsageCost(
  * Helper to check if user is within plan limits
  */
 export function isWithinPlanLimits(
-  usage: { services: number; memoryMB: number; cpuCores: number; bandwidthGB: number; storageGB: number },
+  usage: {
+    services: number;
+    memoryMB: number;
+    cpuCores: number;
+    bandwidthGB: number;
+    storageGB: number;
+  },
   plan: SubscriptionPlan,
 ): {
   withinLimits: boolean;

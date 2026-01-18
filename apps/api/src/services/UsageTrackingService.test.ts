@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { UsageTrackingService } from './UsageTrackingService';
 import {
   billingScenarios,
   calculateUsageCost,
   createUsageRecordFixture,
 } from '../test/fixtures/billing.fixtures';
+import { UsageTrackingService } from './UsageTrackingService';
 
 // Mock Prisma
 const mockPrisma = {
@@ -235,10 +235,7 @@ describe('UsageTrackingService', () => {
         quantity: 100,
       });
 
-      const cost = usageTrackingService.calculateCost(
-        usage.metric,
-        usage.quantity,
-      );
+      const cost = usageTrackingService.calculateCost(usage.metric, usage.quantity);
 
       // $0.01 per compute hour
       expect(cost).toBe(1.0);
@@ -251,10 +248,7 @@ describe('UsageTrackingService', () => {
         quantity: 100,
       });
 
-      const cost = usageTrackingService.calculateCost(
-        usage.metric,
-        usage.quantity,
-      );
+      const cost = usageTrackingService.calculateCost(usage.metric, usage.quantity);
 
       // $0.005 per GB-hour
       expect(cost).toBe(0.5);
@@ -267,10 +261,7 @@ describe('UsageTrackingService', () => {
         quantity: 50,
       });
 
-      const cost = usageTrackingService.calculateCost(
-        usage.metric,
-        usage.quantity,
-      );
+      const cost = usageTrackingService.calculateCost(usage.metric, usage.quantity);
 
       // $0.12 per GB
       expect(cost).toBe(6.0);
@@ -283,10 +274,7 @@ describe('UsageTrackingService', () => {
         quantity: 100,
       });
 
-      const cost = usageTrackingService.calculateCost(
-        usage.metric,
-        usage.quantity,
-      );
+      const cost = usageTrackingService.calculateCost(usage.metric, usage.quantity);
 
       // $0.023 per GB
       expect(cost).toBe(2.3);

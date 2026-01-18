@@ -37,6 +37,7 @@ The mock Stripe client provides in-memory implementations of key Stripe API meth
 - `billingPortal.sessions` - Create billing portal sessions
 
 **Key Features:**
+
 - Data persistence within test execution
 - Proper error handling (404s, validation errors)
 - Type-safe responses matching Stripe's API
@@ -54,6 +55,7 @@ Provides reusable test data including:
 - **Helper functions** - Calculate costs, check limits
 
 **Available Scenarios:**
+
 - `newFreeUser` - User with free plan, no services
 - `starterWithUsage` - Starter plan with active service and usage
 - `proWithMultipleServices` - Pro plan with multiple services
@@ -83,22 +85,26 @@ pnpm --filter api test:watch
 Integration tests require a test database and Redis instance:
 
 1. **Start test containers:**
+
    ```bash
    docker-compose -f docker-compose.test.yml up -d
    ```
 
 2. **Set environment variables:**
+
    ```bash
    export DATABASE_URL="postgresql://postgres:postgres@localhost:5433/helvetia_test"
    export REDIS_URL="redis://localhost:6380"
    ```
 
 3. **Push database schema:**
+
    ```bash
    pnpm migrate:dev
    ```
 
 4. **Run integration tests:**
+
    ```bash
    pnpm --filter api test
    ```
@@ -216,7 +222,7 @@ describeIf('Billing Integration Tests', () => {
 
   it('should get user subscription', async () => {
     const token = generateTestToken({ userId: testUserId });
-    
+
     const response = await app.inject({
       method: 'GET',
       url: '/api/v1/billing/subscription',
@@ -233,7 +239,7 @@ describeIf('Billing Integration Tests', () => {
 
   it('should create checkout session', async () => {
     const token = generateTestToken({ userId: testUserId });
-    
+
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/billing/checkout',
@@ -272,9 +278,9 @@ const usage = billingScenarios.starterWithUsage.usage;
 ### Creating Custom Fixtures
 
 ```typescript
-import { 
-  createSubscriptionFixture, 
-  createUsageRecordFixture 
+import {
+  createSubscriptionFixture,
+  createUsageRecordFixture,
 } from './test/fixtures/billing.fixtures';
 
 // Create custom subscription
@@ -296,10 +302,7 @@ const usage = createUsageRecordFixture({
 ### Helper Functions
 
 ```typescript
-import { 
-  calculateUsageCost, 
-  isWithinPlanLimits 
-} from './test/fixtures/billing.fixtures';
+import { calculateUsageCost, isWithinPlanLimits } from './test/fixtures/billing.fixtures';
 
 // Calculate expected cost
 const cost = calculateUsageCost(
@@ -307,7 +310,7 @@ const cost = calculateUsageCost(
     { metric: 'COMPUTE_HOURS', quantity: 100 },
     { metric: 'MEMORY_GB_HOURS', quantity: 50 },
   ],
-  'STARTER'
+  'STARTER',
 );
 
 // Check if within limits
@@ -319,7 +322,7 @@ const check = isWithinPlanLimits(
     bandwidthGB: 50,
     storageGB: 20,
   },
-  'STARTER'
+  'STARTER',
 );
 console.log(check.withinLimits); // true or false
 console.log(check.exceeded); // Array of exceeded resources
@@ -330,11 +333,11 @@ console.log(check.exceeded); // Array of exceeded resources
 ### Basic Usage
 
 ```typescript
-import { 
-  createMockStripe, 
+import {
+  createMockStripe,
   resetMockStripe,
   mockStripeCustomers,
-  mockStripeSubscriptions
+  mockStripeSubscriptions,
 } from './test/mocks/stripe.mock';
 
 // Create mock Stripe instance
@@ -388,6 +391,7 @@ console.log('Invoices:', mockData.invoices);
 ### Database Setup
 
 Integration tests require:
+
 1. PostgreSQL test database
 2. Redis test instance
 3. Database schema applied
