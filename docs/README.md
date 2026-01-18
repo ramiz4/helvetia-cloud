@@ -6,9 +6,12 @@ This directory contains general documentation that applies to the entire Helveti
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture and design decisions
 - **[ROADMAP.md](./ROADMAP.md)** - Project roadmap and future plans
-- **[INTEGRATION_TESTS.md](./INTEGRATION_TESTS.md)** - Integration testing guide
-- **[TEST_COVERAGE_REPORT.md](./TEST_COVERAGE_REPORT.md)** - Test coverage reports
-- **[DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md)** - Docker security hardening guide
+- **[INFRASTRUCTURE.md](./INFRASTRUCTURE.md)** - Deployment, CI/CD, and configuration
+- **[AUTHENTICATION.md](./AUTHENTICATION.md)** - Login system and security
+- **[BILLING.md](./BILLING.md)** - Subscription system, UI, and limits
+- **[FEATURES.md](./FEATURES.md)** - Organizations, admin, and other core features
+- **[TESTING.md](./TESTING.md)** - Testing strategy and coverage reports
+- **[DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md)** - Detailed security hardening guide
 
 ## Component-Specific Documentation
 
@@ -76,5 +79,5 @@ Database-specific documentation including migration guidelines.
 
 - **Getting Started**: See main [README.md](../README.md)
 - **Contributing**: See [ARCHITECTURE.md](./ARCHITECTURE.md) for system overview
-- **Security**: See [DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md) and [apps/api/docs/SECURITY.md](../apps/api/docs/SECURITY.md)
-- **Testing**: See [INTEGRATION_TESTS.md](./INTEGRATION_TESTS.md), [TEST_COVERAGE_REPORT.md](./TEST_COVERAGE_REPORT.md), and [apps/api/docs/BILLING_TESTS.md](../apps/api/docs/BILLING_TESTS.md)
+- **Security**: See [INFRASTRUCTURE.md](./INFRASTRUCTURE.md) and [DOCKER_SECURITY_HARDENING.md](./DOCKER_SECURITY_HARDENING.md)
+- **Testing**: See [TESTING.md](./TESTING.md)
