@@ -27,7 +27,6 @@ import { GithubIcon } from '../../components/icons/GithubIcon';
 interface UserInfo {
   id: string;
   username: string;
-  email?: string;
   avatarUrl: string;
   githubId: string;
   hasGitHubConnected: boolean;
@@ -42,7 +41,7 @@ export default function SettingsPage() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [confirmEmail, setConfirmEmail] = useState('');
+  const [confirmUsername, setConfirmUsername] = useState('');
 
   const fetchUser = useCallback(async () => {
     try {
@@ -121,8 +120,8 @@ export default function SettingsPage() {
   };
 
   const deleteAccount = async () => {
-    if (!user || confirmEmail !== user.email) {
-      toast.error('Email confirmation does not match');
+    if (!user || confirmUsername !== user.username) {
+      toast.error('Username confirmation does not match');
       return;
     }
 
@@ -130,7 +129,7 @@ export default function SettingsPage() {
     try {
       const res = await fetchWithAuth(`${API_BASE_URL}/gdpr/delete-account`, {
         method: 'DELETE',
-        body: JSON.stringify({ confirmEmail }),
+        body: JSON.stringify({ confirmUsername }),
       });
       if (res.ok) {
         toast.success('Account deleted successfully');
@@ -430,13 +429,13 @@ export default function SettingsPage() {
                 data will be permanently deleted.
               </p>
               <p className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
-                Please type your email to confirm:
+                Please type your username to confirm:
               </p>
               <input
-                type="email"
-                value={confirmEmail}
-                onChange={(e) => setConfirmEmail(e.target.value)}
-                placeholder={user?.email || 'your-email@example.com'}
+                type="text"
+                value={confirmUsername}
+                onChange={(e) => setConfirmUsername(e.target.value)}
+                placeholder={user?.username || 'your-username'}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
               />
             </div>
@@ -444,7 +443,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
-                  setConfirmEmail('');
+                  setConfirmUsername('');
                 }}
                 disabled={isDeleting}
                 className="flex-1 px-4 py-3 rounded-xl font-semibold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
@@ -453,7 +452,7 @@ export default function SettingsPage() {
               </button>
               <button
                 onClick={deleteAccount}
-                disabled={isDeleting || confirmEmail !== user?.email}
+                disabled={isDeleting || confirmUsername !== user?.username}
                 className="flex-1 px-4 py-3 rounded-xl font-semibold bg-rose-600 text-white hover:bg-rose-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isDeleting ? (

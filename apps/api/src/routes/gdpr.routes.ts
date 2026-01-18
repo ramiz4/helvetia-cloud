@@ -62,6 +62,13 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
               error: { type: 'string' },
             },
           },
+          404: {
+            description: 'User not found',
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+            },
+          },
           500: {
             description: 'Internal server error',
             type: 'object',
@@ -91,10 +98,10 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
         // Remove sensitive data (encrypted tokens, etc.)
         const sanitizedUser = {
           id: user.id,
-          email: user.email,
+          username: user.username,
           githubId: user.githubId,
-          githubUsername: user.githubUsername,
           avatarUrl: user.avatarUrl,
+          role: user.role,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         };
@@ -140,12 +147,11 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
         security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
-          required: ['confirmEmail'],
+          required: ['confirmUsername'],
           properties: {
-            confirmEmail: {
+            confirmUsername: {
               type: 'string',
-              format: 'email',
-              description: 'User email for confirmation',
+              description: 'Username for confirmation',
             },
           },
         },
@@ -158,7 +164,7 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
             },
           },
           400: {
-            description: 'Bad request - Email confirmation mismatch',
+            description: 'Bad request - Username confirmation mismatch',
             type: 'object',
             properties: {
               error: { type: 'string' },
@@ -166,6 +172,13 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized - Invalid or missing token',
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+            },
+          },
+          404: {
+            description: 'User not found',
             type: 'object',
             properties: {
               error: { type: 'string' },
@@ -184,23 +197,26 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       try {
         const userId = request.user.id;
-        const { confirmEmail } = request.body as { confirmEmail: string };
+        const { confirmUsername } = request.body as { confirmUsername: string };
 
-        // Fetch user to verify email
+        // Fetch user to verify username
         const user = await userRepository.findById(userId);
         if (!user) {
           return reply.status(404).send({ error: 'User not found' });
         }
 
-        // Verify email matches
-        if (user.email !== confirmEmail) {
-          return reply.status(400).send({ error: 'Email confirmation does not match' });
+        // Verify username matches
+        if (user.username !== confirmUsername) {
+          return reply.status(400).send({ error: 'Username confirmation does not match' });
         }
 
         // Delete all user data (cascading deletes handled by Prisma)
         await userRepository.delete(userId);
 
-        fastify.log.info({ userId, email: user.email }, 'User account deleted (GDPR request)');
+        fastify.log.info(
+          { userId, username: user.username },
+          'User account deleted (GDPR request)',
+        );
 
         return reply.status(200).send({
           message: 'Your account and all associated data have been permanently deleted.',
