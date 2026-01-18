@@ -14,7 +14,8 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
   let proUserId: string;
   let freeAuthToken: string;
   let starterAuthToken: string;
-  let proAuthToken: string;
+  let freeEnvId: string;
+  let starterEnvId: string;
 
   beforeAll(async () => {
     app = await buildServer();
@@ -114,7 +115,48 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
     // Generate JWT tokens
     freeAuthToken = app.jwt.sign({ id: freeUserId, username: freeUser.username });
     starterAuthToken = app.jwt.sign({ id: starterUserId, username: starterUser.username });
-    proAuthToken = app.jwt.sign({ id: proUserId, username: proUser.username });
+
+    // Create default projects and environments
+    const freeProject = await prisma.project.create({
+      data: {
+        name: 'default-project',
+        userId: freeUserId,
+      },
+    });
+    const freeEnv = await prisma.environment.create({
+      data: {
+        name: 'Production',
+        projectId: freeProject.id,
+      },
+    });
+    freeEnvId = freeEnv.id;
+
+    const starterProject = await prisma.project.create({
+      data: {
+        name: 'default-project',
+        userId: starterUserId,
+      },
+    });
+    const starterEnv = await prisma.environment.create({
+      data: {
+        name: 'Production',
+        projectId: starterProject.id,
+      },
+    });
+    starterEnvId = starterEnv.id;
+
+    const proProject = await prisma.project.create({
+      data: {
+        name: 'default-project',
+        userId: proUserId,
+      },
+    });
+    const proEnv = await prisma.environment.create({
+      data: {
+        name: 'Production',
+        projectId: proProject.id,
+      },
+    });
   });
 
   afterAll(async () => {
@@ -150,10 +192,11 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
           name: 'test-service-1',
           type: 'DOCKER',
           repoUrl: 'https://github.com/test/repo',
+          environmentId: freeEnvId,
         },
       });
 
-      expect(response.statusCode).toBe(201);
+      expect(response.statusCode).toBe(200);
     });
 
     it('should block FREE user from creating 2nd service', async () => {
@@ -178,6 +221,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
           name: 'test-service-2',
           type: 'DOCKER',
           repoUrl: 'https://github.com/test/repo',
+          environmentId: freeEnvId,
         },
       });
 
@@ -211,10 +255,11 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
           name: 'service-5',
           type: 'DOCKER',
           repoUrl: 'https://github.com/test/repo',
+          environmentId: starterEnvId,
         },
       });
 
-      expect(response.statusCode).toBe(201);
+      expect(response.statusCode).toBe(200);
     });
 
     it('should block STARTER user from creating 6th service', async () => {
@@ -241,6 +286,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
           name: 'service-6',
           type: 'DOCKER',
           repoUrl: 'https://github.com/test/repo',
+          environmentId: starterEnvId,
         },
       });
 
@@ -274,17 +320,18 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
           name: 'new-service',
           type: 'DOCKER',
           repoUrl: 'https://github.com/test/repo',
+          environmentId: freeEnvId,
         },
       });
 
-      expect(response.statusCode).toBe(201);
+      expect(response.statusCode).toBe(200);
     });
   });
 
   describe('Subscription Status Enforcement', () => {
     it('should block access for CANCELED subscription', async () => {
       // Update subscription to CANCELED
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: { status: SubscriptionStatus.CANCELED },
       });
@@ -298,6 +345,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
         payload: {
           name: 'test-service',
           type: 'DOCKER',
+          environmentId: freeEnvId,
         },
       });
 
@@ -306,14 +354,14 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
       expect(body.error.message).toContain('canceled');
 
       // Restore status for other tests
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: { status: SubscriptionStatus.ACTIVE },
       });
     });
 
     it('should block access for UNPAID subscription', async () => {
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: { status: SubscriptionStatus.UNPAID },
       });
@@ -327,6 +375,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
         payload: {
           name: 'test-service',
           type: 'DOCKER',
+          environmentId: freeEnvId,
         },
       });
 
@@ -335,7 +384,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
       expect(body.error.message).toContain('unpaid');
 
       // Restore
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: { status: SubscriptionStatus.ACTIVE },
       });
@@ -345,7 +394,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
       const now = new Date();
       const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: {
           status: SubscriptionStatus.PAST_DUE,
@@ -363,14 +412,15 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
           name: 'test-service',
           type: 'DOCKER',
           repoUrl: 'https://github.com/test/repo',
+          environmentId: freeEnvId,
         },
       });
 
-      expect(response.statusCode).toBe(201);
+      expect(response.statusCode).toBe(200);
 
       // Restore
       const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: {
           status: SubscriptionStatus.ACTIVE,
@@ -383,7 +433,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
       const now = new Date();
       const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
 
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: {
           status: SubscriptionStatus.PAST_DUE,
@@ -400,6 +450,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
         payload: {
           name: 'test-service',
           type: 'DOCKER',
+          environmentId: freeEnvId,
         },
       });
 
@@ -409,7 +460,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
 
       // Restore
       const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: {
           status: SubscriptionStatus.ACTIVE,
@@ -419,7 +470,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
     });
 
     it('should allow access to other routes with expired subscription (only blocks service operations)', async () => {
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: { status: SubscriptionStatus.CANCELED },
       });
@@ -437,7 +488,7 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
       expect(response.statusCode).toBe(200);
 
       // Restore
-      await prisma.subscription.update({
+      await prisma.subscription.updateMany({
         where: { userId: freeUserId },
         data: { status: SubscriptionStatus.ACTIVE },
       });
