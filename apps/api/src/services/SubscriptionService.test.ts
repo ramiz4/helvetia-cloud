@@ -1,363 +1,835 @@
-import { PrismaClient, SubscriptionPlan } from 'database';
+import { PrismaClient, SubscriptionPlan, SubscriptionStatus } from 'database';
 import 'reflect-metadata';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { planLimits, testSubscriptions } from '../test/fixtures/billing.fixtures';
+import { beforeEach, describe, expect, it, vi, type MockedObject } from 'vitest';
 import { SubscriptionService } from './SubscriptionService';
+
+/**
+ * Test fixtures for subscription data
+ * These represent common subscription scenarios including trial periods, grace periods, and different plans
+ */
+const TEST_FIXTURES = {
+  // User subscriptions
+  activeUserSubscription: {
+    id: 'sub-1',
+    userId: 'user-1',
+    organizationId: null,
+    stripeCustomerId: 'cus_test123',
+    stripeSubscriptionId: 'sub_test123',
+    plan: SubscriptionPlan.STARTER,
+    status: SubscriptionStatus.ACTIVE,
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  },
+  pastDueUserSubscription: {
+    id: 'sub-2',
+    userId: 'user-2',
+    organizationId: null,
+    stripeCustomerId: 'cus_test456',
+    stripeSubscriptionId: 'sub_test456',
+    plan: SubscriptionPlan.PRO,
+    status: SubscriptionStatus.PAST_DUE,
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-15'),
+  },
+  canceledUserSubscription: {
+    id: 'sub-3',
+    userId: 'user-3',
+    organizationId: null,
+    stripeCustomerId: 'cus_test789',
+    stripeSubscriptionId: 'sub_test789',
+    plan: SubscriptionPlan.FREE,
+    status: SubscriptionStatus.CANCELED,
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-20'),
+  },
+  // Organization subscriptions
+  activeOrgSubscription: {
+    id: 'sub-4',
+    userId: null,
+    organizationId: 'org-1',
+    stripeCustomerId: 'cus_org123',
+    stripeSubscriptionId: 'sub_org123',
+    plan: SubscriptionPlan.ENTERPRISE,
+    status: SubscriptionStatus.ACTIVE,
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  },
+  unpaidOrgSubscription: {
+    id: 'sub-5',
+    userId: null,
+    organizationId: 'org-2',
+    stripeCustomerId: 'cus_org456',
+    stripeSubscriptionId: 'sub_org456',
+    plan: SubscriptionPlan.PRO,
+    status: SubscriptionStatus.UNPAID,
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-18'),
+  },
+  // Subscription without Stripe subscription ID (trial or free tier)
+  freeTrialSubscription: {
+    id: 'sub-6',
+    userId: 'user-4',
+    organizationId: null,
+    stripeCustomerId: 'cus_trial123',
+    stripeSubscriptionId: null,
+    plan: SubscriptionPlan.FREE,
+    status: SubscriptionStatus.ACTIVE,
+    currentPeriodStart: new Date('2024-01-01'),
+    currentPeriodEnd: new Date('2024-02-01'),
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  },
+};
 
 describe('SubscriptionService', () => {
   let subscriptionService: SubscriptionService;
-  let mockPrisma: any;
+  let mockPrisma: MockedObject<PrismaClient>;
 
+  /**
+   * Test setup
+   * - Creates a fresh mock PrismaClient before each test
+   * - Initializes SubscriptionService with the mock
+   * - Clears all mocks to ensure test isolation
+   */
   beforeEach(() => {
-    // Create mock Prisma client
+    // Create mock PrismaClient with proper typing
     mockPrisma = {
       subscription: {
         findFirst: vi.fn(),
+        findUnique: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+        delete: vi.fn(),
+        findMany: vi.fn(),
       },
-    } as unknown as PrismaClient;
+    } as any;
 
-    // Create service instance
     subscriptionService = new SubscriptionService(mockPrisma);
+    vi.clearAllMocks();
   });
 
   describe('getSubscription', () => {
-    it('should retrieve subscription for a user', async () => {
-      const mockSubscription = testSubscriptions.starter;
-      mockPrisma.subscription.findFirst.mockResolvedValue(mockSubscription);
+    it('should return subscription for userId', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.activeUserSubscription,
+      );
 
       const result = await subscriptionService.getSubscription({ userId: 'user-1' });
 
-      expect(result).toEqual(mockSubscription);
       expect(mockPrisma.subscription.findFirst).toHaveBeenCalledWith({
         where: {
           userId: 'user-1',
           organizationId: undefined,
         },
       });
+      expect(result).toEqual(TEST_FIXTURES.activeUserSubscription);
     });
 
-    it('should retrieve subscription for an organization', async () => {
-      const mockSubscription = { ...testSubscriptions.starter, organizationId: 'org-1' };
-      mockPrisma.subscription.findFirst.mockResolvedValue(mockSubscription);
+    it('should return subscription for organizationId', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.activeOrgSubscription,
+      );
 
       const result = await subscriptionService.getSubscription({ organizationId: 'org-1' });
 
-      expect(result).toEqual(mockSubscription);
       expect(mockPrisma.subscription.findFirst).toHaveBeenCalledWith({
         where: {
           userId: undefined,
           organizationId: 'org-1',
         },
       });
+      expect(result).toEqual(TEST_FIXTURES.activeOrgSubscription);
     });
 
-    it('should return null if subscription not found', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(null);
+    it('should return null when no subscription found', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
 
       const result = await subscriptionService.getSubscription({ userId: 'user-nonexistent' });
 
       expect(result).toBeNull();
     });
 
-    it('should throw error if neither userId nor organizationId provided', async () => {
+    it('should return subscription with null stripeSubscriptionId for trial users', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.freeTrialSubscription,
+      );
+
+      const result = await subscriptionService.getSubscription({ userId: 'user-4' });
+
+      expect(result).toEqual(TEST_FIXTURES.freeTrialSubscription);
+      expect(result?.stripeSubscriptionId).toBeNull();
+    });
+
+    it('should throw error when neither userId nor organizationId provided', async () => {
       await expect(subscriptionService.getSubscription({})).rejects.toThrow(
         'Either userId or organizationId must be provided for getSubscription',
       );
+
+      expect(mockPrisma.subscription.findFirst).not.toHaveBeenCalled();
     });
   });
 
   describe('upsertSubscription', () => {
-    it('should create a new subscription if none exists', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(null);
-      mockPrisma.subscription.create.mockResolvedValue(testSubscriptions.starter);
+    const newSubscriptionData = {
+      userId: 'user-new',
+      stripeCustomerId: 'cus_new123',
+      stripeSubscriptionId: 'sub_new123',
+      plan: SubscriptionPlan.STARTER,
+      status: SubscriptionStatus.ACTIVE,
+      currentPeriodStart: new Date('2024-01-15'),
+      currentPeriodEnd: new Date('2024-02-15'),
+    };
 
-      await subscriptionService.upsertSubscription({
-        userId: 'user-1',
-        stripeCustomerId: 'cus_test123',
-        stripeSubscriptionId: 'sub_test123',
-        plan: 'STARTER',
-        status: 'ACTIVE',
-        currentPeriodStart: new Date('2024-01-01'),
-        currentPeriodEnd: new Date('2024-02-01'),
+    it('should create new subscription when none exists', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
+      vi.mocked(mockPrisma.subscription.create).mockResolvedValue({
+        id: 'sub-new',
+        organizationId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...newSubscriptionData,
       });
 
-      expect(mockPrisma.subscription.create).toHaveBeenCalledWith({
-        data: {
-          userId: 'user-1',
+      await subscriptionService.upsertSubscription(newSubscriptionData);
+
+      expect(mockPrisma.subscription.findFirst).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-new',
           organizationId: undefined,
-          stripeCustomerId: 'cus_test123',
-          stripeSubscriptionId: 'sub_test123',
-          plan: 'STARTER',
-          status: 'ACTIVE',
-          currentPeriodStart: new Date('2024-01-01'),
-          currentPeriodEnd: new Date('2024-02-01'),
         },
+      });
+      expect(mockPrisma.subscription.create).toHaveBeenCalledWith({
+        data: newSubscriptionData,
       });
       expect(mockPrisma.subscription.update).not.toHaveBeenCalled();
     });
 
     it('should update existing subscription', async () => {
-      const existingSubscription = testSubscriptions.starter;
-      mockPrisma.subscription.findFirst.mockResolvedValue(existingSubscription);
-      mockPrisma.subscription.update.mockResolvedValue({
+      const existingSubscription = TEST_FIXTURES.activeUserSubscription;
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(existingSubscription);
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue({
         ...existingSubscription,
-        plan: 'PRO',
+        ...newSubscriptionData,
       });
 
       await subscriptionService.upsertSubscription({
+        ...newSubscriptionData,
         userId: 'user-1',
-        stripeCustomerId: 'cus_test123',
-        stripeSubscriptionId: 'sub_test123',
-        plan: 'PRO',
-        status: 'ACTIVE',
-        currentPeriodStart: new Date('2024-01-01'),
-        currentPeriodEnd: new Date('2024-02-01'),
       });
 
+      expect(mockPrisma.subscription.findFirst).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-1',
+          organizationId: undefined,
+        },
+      });
       expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
         where: { id: existingSubscription.id },
         data: {
-          stripeCustomerId: 'cus_test123',
-          stripeSubscriptionId: 'sub_test123',
-          plan: 'PRO',
-          status: 'ACTIVE',
-          currentPeriodStart: new Date('2024-01-01'),
-          currentPeriodEnd: new Date('2024-02-01'),
+          stripeCustomerId: newSubscriptionData.stripeCustomerId,
+          stripeSubscriptionId: newSubscriptionData.stripeSubscriptionId,
+          plan: newSubscriptionData.plan,
+          status: newSubscriptionData.status,
+          currentPeriodStart: newSubscriptionData.currentPeriodStart,
+          currentPeriodEnd: newSubscriptionData.currentPeriodEnd,
         },
       });
       expect(mockPrisma.subscription.create).not.toHaveBeenCalled();
     });
 
-    it('should support organization subscriptions', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(null);
-      mockPrisma.subscription.create.mockResolvedValue({});
+    it('should create subscription for organization when none exists', async () => {
+      const orgSubscriptionData = {
+        organizationId: 'org-new',
+        stripeCustomerId: 'cus_orgnew123',
+        stripeSubscriptionId: 'sub_orgnew123',
+        plan: SubscriptionPlan.ENTERPRISE,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date('2024-01-15'),
+        currentPeriodEnd: new Date('2024-02-15'),
+      };
 
-      await subscriptionService.upsertSubscription({
-        organizationId: 'org-1',
-        stripeCustomerId: 'cus_test123',
-        plan: 'STARTER',
-        status: 'ACTIVE',
-        currentPeriodStart: new Date('2024-01-01'),
-        currentPeriodEnd: new Date('2024-02-01'),
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
+      vi.mocked(mockPrisma.subscription.create).mockResolvedValue({
+        id: 'sub-orgnew',
+        userId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...orgSubscriptionData,
       });
 
+      await subscriptionService.upsertSubscription(orgSubscriptionData);
+
       expect(mockPrisma.subscription.create).toHaveBeenCalledWith({
-        data: {
-          userId: undefined,
-          organizationId: 'org-1',
-          stripeCustomerId: 'cus_test123',
-          stripeSubscriptionId: undefined,
-          plan: 'STARTER',
-          status: 'ACTIVE',
-          currentPeriodStart: new Date('2024-01-01'),
-          currentPeriodEnd: new Date('2024-02-01'),
-        },
+        data: orgSubscriptionData,
       });
     });
 
-    it('should throw error if neither userId nor organizationId provided', async () => {
+    it('should update organization subscription when it exists', async () => {
+      const existingOrgSub = TEST_FIXTURES.activeOrgSubscription;
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(existingOrgSub);
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(existingOrgSub);
+
+      await subscriptionService.upsertSubscription({
+        organizationId: 'org-1',
+        stripeCustomerId: 'cus_org123_updated',
+        plan: SubscriptionPlan.PRO,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { id: existingOrgSub.id },
+        data: expect.objectContaining({
+          plan: SubscriptionPlan.PRO,
+        }),
+      });
+    });
+
+    it('should handle subscription without stripeSubscriptionId (trial/free tier)', async () => {
+      const trialData = {
+        userId: 'user-trial',
+        stripeCustomerId: 'cus_trial456',
+        plan: SubscriptionPlan.FREE,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date('2024-01-15'),
+        currentPeriodEnd: new Date('2024-02-15'),
+      };
+
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
+      vi.mocked(mockPrisma.subscription.create).mockResolvedValue({
+        id: 'sub-trial',
+        organizationId: null,
+        stripeSubscriptionId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...trialData,
+      });
+
+      await subscriptionService.upsertSubscription(trialData);
+
+      expect(mockPrisma.subscription.create).toHaveBeenCalledWith({
+        data: trialData,
+      });
+    });
+
+    it('should throw error when neither userId nor organizationId provided', async () => {
       await expect(
         subscriptionService.upsertSubscription({
-          stripeCustomerId: 'cus_test123',
-          plan: 'STARTER',
-          status: 'ACTIVE',
-          currentPeriodStart: new Date('2024-01-01'),
-          currentPeriodEnd: new Date('2024-02-01'),
+          stripeCustomerId: 'cus_invalid',
+          plan: SubscriptionPlan.FREE,
+          status: SubscriptionStatus.ACTIVE,
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(),
         }),
       ).rejects.toThrow('Either userId or organizationId must be provided for upsertSubscription');
+
+      expect(mockPrisma.subscription.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.subscription.create).not.toHaveBeenCalled();
+      expect(mockPrisma.subscription.update).not.toHaveBeenCalled();
     });
   });
 
   describe('updateSubscriptionStatus', () => {
-    it('should update subscription status', async () => {
-      mockPrisma.subscription.update.mockResolvedValue({
-        ...testSubscriptions.starter,
-        status: 'PAST_DUE',
-      });
+    it('should update status and period dates', async () => {
+      const updatedSub = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        status: SubscriptionStatus.CANCELED,
+      };
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(updatedSub);
 
       await subscriptionService.updateSubscriptionStatus({
         stripeSubscriptionId: 'sub_test123',
-        status: 'PAST_DUE',
+        status: SubscriptionStatus.CANCELED,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
       });
 
       expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
         where: { stripeSubscriptionId: 'sub_test123' },
         data: {
-          status: 'PAST_DUE',
+          status: SubscriptionStatus.CANCELED,
+          currentPeriodStart: new Date('2024-02-01'),
+          currentPeriodEnd: new Date('2024-03-01'),
+        },
+      });
+    });
+
+    it('should update status only without changing period dates', async () => {
+      const updatedSub = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        status: SubscriptionStatus.PAST_DUE,
+      };
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(updatedSub);
+
+      await subscriptionService.updateSubscriptionStatus({
+        stripeSubscriptionId: 'sub_test123',
+        status: SubscriptionStatus.PAST_DUE,
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { stripeSubscriptionId: 'sub_test123' },
+        data: {
+          status: SubscriptionStatus.PAST_DUE,
           currentPeriodStart: undefined,
           currentPeriodEnd: undefined,
         },
       });
     });
 
-    it('should update subscription status with period dates', async () => {
-      const periodStart = new Date('2024-02-01');
-      const periodEnd = new Date('2024-03-01');
-      mockPrisma.subscription.update.mockResolvedValue({});
+    it('should update to UNPAID status during grace period', async () => {
+      const updatedSub = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        status: SubscriptionStatus.UNPAID,
+      };
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(updatedSub);
 
       await subscriptionService.updateSubscriptionStatus({
         stripeSubscriptionId: 'sub_test123',
-        status: 'ACTIVE',
-        currentPeriodStart: periodStart,
-        currentPeriodEnd: periodEnd,
+        status: SubscriptionStatus.UNPAID,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
       });
 
       expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
         where: { stripeSubscriptionId: 'sub_test123' },
         data: {
-          status: 'ACTIVE',
-          currentPeriodStart: periodStart,
-          currentPeriodEnd: periodEnd,
+          status: SubscriptionStatus.UNPAID,
+          currentPeriodStart: new Date('2024-02-01'),
+          currentPeriodEnd: new Date('2024-03-01'),
+        },
+      });
+    });
+
+    it('should handle status update for organization subscription', async () => {
+      const updatedOrgSub = {
+        ...TEST_FIXTURES.activeOrgSubscription,
+        status: SubscriptionStatus.CANCELED,
+      };
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(updatedOrgSub);
+
+      await subscriptionService.updateSubscriptionStatus({
+        stripeSubscriptionId: 'sub_org123',
+        status: SubscriptionStatus.CANCELED,
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { stripeSubscriptionId: 'sub_org123' },
+        data: {
+          status: SubscriptionStatus.CANCELED,
+          currentPeriodStart: undefined,
+          currentPeriodEnd: undefined,
         },
       });
     });
   });
 
   describe('hasActiveSubscription', () => {
-    it('should return true if user has active subscription', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(testSubscriptions.starter);
+    it('should return true for ACTIVE subscription', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.activeUserSubscription,
+      );
 
       const result = await subscriptionService.hasActiveSubscription({ userId: 'user-1' });
 
       expect(result).toBe(true);
     });
 
-    it('should return false if user has no subscription', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(null);
+    it('should return false for PAST_DUE subscription', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.pastDueUserSubscription,
+      );
 
-      const result = await subscriptionService.hasActiveSubscription({ userId: 'user-1' });
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false if user subscription is not active', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(testSubscriptions.canceled);
-
-      const result = await subscriptionService.hasActiveSubscription({ userId: 'user-1' });
+      const result = await subscriptionService.hasActiveSubscription({ userId: 'user-2' });
 
       expect(result).toBe(false);
     });
 
-    it('should return false for past due subscriptions', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(testSubscriptions.pastDue);
+    it('should return false for CANCELED subscription', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.canceledUserSubscription,
+      );
 
-      const result = await subscriptionService.hasActiveSubscription({ userId: 'user-1' });
+      const result = await subscriptionService.hasActiveSubscription({ userId: 'user-3' });
 
       expect(result).toBe(false);
     });
 
-    it('should work with organization subscriptions', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue({
-        ...testSubscriptions.starter,
-        organizationId: 'org-1',
+    it('should return false for UNPAID subscription (grace period)', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.unpaidOrgSubscription,
+      );
+
+      const result = await subscriptionService.hasActiveSubscription({ organizationId: 'org-2' });
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when no subscription exists', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
+
+      const result = await subscriptionService.hasActiveSubscription({
+        userId: 'user-nonexistent',
       });
+
+      expect(result).toBe(false);
+    });
+
+    it('should return true for organization with active subscription', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.activeOrgSubscription,
+      );
 
       const result = await subscriptionService.hasActiveSubscription({ organizationId: 'org-1' });
 
       expect(result).toBe(true);
     });
+
+    it('should call getSubscription internally with correct params', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.activeUserSubscription,
+      );
+
+      await subscriptionService.hasActiveSubscription({ userId: 'user-1' });
+
+      expect(mockPrisma.subscription.findFirst).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-1',
+          organizationId: undefined,
+        },
+      });
+    });
   });
 
   describe('getResourceLimits', () => {
     it('should return correct limits for FREE plan', () => {
-      const limits = subscriptionService.getResourceLimits('FREE');
+      const limits = subscriptionService.getResourceLimits(SubscriptionPlan.FREE);
 
-      expect(limits).toEqual(planLimits.FREE);
+      expect(limits).toEqual({
+        maxServices: 1,
+        maxMemoryMB: 512,
+        maxCPUCores: 0.5,
+        maxBandwidthGB: 10,
+        maxStorageGB: 5,
+      });
     });
 
     it('should return correct limits for STARTER plan', () => {
-      const limits = subscriptionService.getResourceLimits('STARTER');
+      const limits = subscriptionService.getResourceLimits(SubscriptionPlan.STARTER);
 
-      expect(limits).toEqual(planLimits.STARTER);
+      expect(limits).toEqual({
+        maxServices: 5,
+        maxMemoryMB: 2048,
+        maxCPUCores: 2,
+        maxBandwidthGB: 100,
+        maxStorageGB: 50,
+      });
     });
 
     it('should return correct limits for PRO plan', () => {
-      const limits = subscriptionService.getResourceLimits('PRO');
+      const limits = subscriptionService.getResourceLimits(SubscriptionPlan.PRO);
 
-      expect(limits).toEqual(planLimits.PRO);
+      expect(limits).toEqual({
+        maxServices: 20,
+        maxMemoryMB: 8192,
+        maxCPUCores: 8,
+        maxBandwidthGB: 500,
+        maxStorageGB: 200,
+      });
     });
 
     it('should return correct limits for ENTERPRISE plan', () => {
-      const limits = subscriptionService.getResourceLimits('ENTERPRISE');
+      const limits = subscriptionService.getResourceLimits(SubscriptionPlan.ENTERPRISE);
 
-      expect(limits).toEqual(planLimits.ENTERPRISE);
-    });
-
-    it('should return unlimited (-1) for all ENTERPRISE limits', () => {
-      const limits = subscriptionService.getResourceLimits('ENTERPRISE');
-
-      expect(limits.maxServices).toBe(-1);
-      expect(limits.maxMemoryMB).toBe(-1);
-      expect(limits.maxCPUCores).toBe(-1);
-      expect(limits.maxBandwidthGB).toBe(-1);
-      expect(limits.maxStorageGB).toBe(-1);
-    });
-
-    it('should handle all valid plan types', () => {
-      const plans: SubscriptionPlan[] = ['FREE', 'STARTER', 'PRO', 'ENTERPRISE'];
-
-      plans.forEach((plan) => {
-        const limits = subscriptionService.getResourceLimits(plan);
-
-        expect(limits).toBeDefined();
-        expect(typeof limits.maxServices).toBe('number');
-        expect(typeof limits.maxMemoryMB).toBe('number');
-        expect(typeof limits.maxCPUCores).toBe('number');
-        expect(typeof limits.maxBandwidthGB).toBe('number');
-        expect(typeof limits.maxStorageGB).toBe('number');
+      expect(limits).toEqual({
+        maxServices: -1, // Unlimited
+        maxMemoryMB: -1, // Unlimited
+        maxCPUCores: -1, // Unlimited
+        maxBandwidthGB: -1, // Unlimited
+        maxStorageGB: -1, // Unlimited
       });
+    });
+
+    it('should return consistent limits across multiple calls for same plan', () => {
+      const limits1 = subscriptionService.getResourceLimits(SubscriptionPlan.STARTER);
+      const limits2 = subscriptionService.getResourceLimits(SubscriptionPlan.STARTER);
+
+      expect(limits1).toEqual(limits2);
+    });
+
+    it('should have increasing limits from FREE to PRO plans', () => {
+      const freeLimits = subscriptionService.getResourceLimits(SubscriptionPlan.FREE);
+      const starterLimits = subscriptionService.getResourceLimits(SubscriptionPlan.STARTER);
+      const proLimits = subscriptionService.getResourceLimits(SubscriptionPlan.PRO);
+
+      // Verify progressive limits
+      expect(starterLimits.maxServices).toBeGreaterThan(freeLimits.maxServices);
+      expect(starterLimits.maxMemoryMB).toBeGreaterThan(freeLimits.maxMemoryMB);
+      expect(starterLimits.maxCPUCores).toBeGreaterThan(freeLimits.maxCPUCores);
+      expect(starterLimits.maxBandwidthGB).toBeGreaterThan(freeLimits.maxBandwidthGB);
+      expect(starterLimits.maxStorageGB).toBeGreaterThan(freeLimits.maxStorageGB);
+
+      expect(proLimits.maxServices).toBeGreaterThan(starterLimits.maxServices);
+      expect(proLimits.maxMemoryMB).toBeGreaterThan(starterLimits.maxMemoryMB);
+      expect(proLimits.maxCPUCores).toBeGreaterThan(starterLimits.maxCPUCores);
+      expect(proLimits.maxBandwidthGB).toBeGreaterThan(starterLimits.maxBandwidthGB);
+      expect(proLimits.maxStorageGB).toBeGreaterThan(starterLimits.maxStorageGB);
+    });
+
+    it('should not require Prisma client (synchronous method)', () => {
+      // This test verifies that getResourceLimits is a pure function
+      // that doesn't depend on external state or async operations
+      const limits = subscriptionService.getResourceLimits(SubscriptionPlan.PRO);
+
+      expect(limits).toBeDefined();
+      expect(mockPrisma.subscription.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.subscription.create).not.toHaveBeenCalled();
+      expect(mockPrisma.subscription.update).not.toHaveBeenCalled();
     });
   });
 
-  describe('Edge cases', () => {
-    it('should handle subscription with null stripeSubscriptionId', async () => {
-      const freeSubscription = testSubscriptions.free;
-      mockPrisma.subscription.findFirst.mockResolvedValue(freeSubscription);
+  /**
+   * Edge Cases and Error Scenarios
+   * Testing boundary conditions and error handling
+   */
+  describe('Edge Cases', () => {
+    it('should handle subscription with far future period end date', async () => {
+      const farFuture = new Date('2099-12-31');
+      const subscription = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        currentPeriodEnd: farFuture,
+      };
+
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(subscription);
 
       const result = await subscriptionService.getSubscription({ userId: 'user-1' });
 
-      expect(result?.stripeSubscriptionId).toBeNull();
+      expect(result?.currentPeriodEnd).toEqual(farFuture);
     });
 
-    it('should handle concurrent upsert operations', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(null);
-      mockPrisma.subscription.create.mockResolvedValue({});
+    it('should handle subscription with past period end date', async () => {
+      const past = new Date('2020-01-01');
+      const subscription = {
+        ...TEST_FIXTURES.canceledUserSubscription,
+        currentPeriodEnd: past,
+      };
 
-      const promises = Array.from({ length: 5 }, (_, i) =>
-        subscriptionService.upsertSubscription({
-          userId: `user-${i}`,
-          stripeCustomerId: `cus_${i}`,
-          plan: 'STARTER',
-          status: 'ACTIVE',
-          currentPeriodStart: new Date('2024-01-01'),
-          currentPeriodEnd: new Date('2024-02-01'),
-        }),
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(subscription);
+
+      const result = await subscriptionService.getSubscription({ userId: 'user-3' });
+
+      expect(result?.currentPeriodEnd).toEqual(past);
+    });
+
+    it('should handle transition from trial to paid subscription', async () => {
+      // First call: trial subscription (no stripeSubscriptionId)
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.freeTrialSubscription,
       );
 
-      await expect(Promise.all(promises)).resolves.toBeDefined();
+      // Update to paid subscription
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue({
+        ...TEST_FIXTURES.freeTrialSubscription,
+        stripeSubscriptionId: 'sub_paid123',
+        plan: SubscriptionPlan.STARTER,
+      });
+
+      await subscriptionService.upsertSubscription({
+        userId: 'user-4',
+        stripeCustomerId: 'cus_trial123',
+        stripeSubscriptionId: 'sub_paid123',
+        plan: SubscriptionPlan.STARTER,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { id: TEST_FIXTURES.freeTrialSubscription.id },
+        data: expect.objectContaining({
+          stripeSubscriptionId: 'sub_paid123',
+          plan: SubscriptionPlan.STARTER,
+        }),
+      });
     });
 
-    it('should handle subscription period at boundary dates', async () => {
-      const periodStart = new Date('2024-01-01T00:00:00.000Z');
-      const periodEnd = new Date('2024-12-31T23:59:59.999Z');
+    it('should handle downgrade from paid to free plan', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(
+        TEST_FIXTURES.activeUserSubscription,
+      );
 
-      mockPrisma.subscription.findFirst.mockResolvedValue(null);
-      mockPrisma.subscription.create.mockResolvedValue({});
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue({
+        ...TEST_FIXTURES.activeUserSubscription,
+        plan: SubscriptionPlan.FREE,
+        stripeSubscriptionId: null,
+      });
 
       await subscriptionService.upsertSubscription({
         userId: 'user-1',
         stripeCustomerId: 'cus_test123',
-        plan: 'STARTER',
-        status: 'ACTIVE',
-        currentPeriodStart: periodStart,
-        currentPeriodEnd: periodEnd,
+        plan: SubscriptionPlan.FREE,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
       });
 
-      const createCall = mockPrisma.subscription.create.mock.calls[0][0];
-      expect(createCall.data.currentPeriodStart).toEqual(periodStart);
-      expect(createCall.data.currentPeriodEnd).toEqual(periodEnd);
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { id: TEST_FIXTURES.activeUserSubscription.id },
+        data: expect.objectContaining({
+          plan: SubscriptionPlan.FREE,
+        }),
+      });
+    });
+
+    it('should handle stripeCustomerId change in existing subscription', async () => {
+      // This tests updating a subscription where Stripe customer ID changes
+      const subscriptionWithOldCustomer = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        stripeCustomerId: 'cus_old123',
+      };
+
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(subscriptionWithOldCustomer);
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue({
+        ...subscriptionWithOldCustomer,
+        stripeCustomerId: 'cus_new123',
+      });
+
+      await subscriptionService.upsertSubscription({
+        userId: 'user-1',
+        stripeCustomerId: 'cus_new123',
+        plan: SubscriptionPlan.STARTER,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { id: subscriptionWithOldCustomer.id },
+        data: expect.objectContaining({
+          stripeCustomerId: 'cus_new123',
+        }),
+      });
+    });
+  });
+
+  /**
+   * Stripe Integration Points
+   * These tests verify that the service handles Stripe-related data correctly
+   * even though Stripe API calls are mocked at a higher level (BillingService)
+   */
+  describe('Stripe Integration Points', () => {
+    it('should store Stripe customer ID and subscription ID correctly', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
+      vi.mocked(mockPrisma.subscription.create).mockResolvedValue({
+        id: 'sub-new',
+        userId: 'user-1',
+        organizationId: null,
+        stripeCustomerId: 'cus_stripe123',
+        stripeSubscriptionId: 'sub_stripe123',
+        plan: SubscriptionPlan.STARTER,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await subscriptionService.upsertSubscription({
+        userId: 'user-1',
+        stripeCustomerId: 'cus_stripe123',
+        stripeSubscriptionId: 'sub_stripe123',
+        plan: SubscriptionPlan.STARTER,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+      });
+
+      expect(mockPrisma.subscription.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          stripeCustomerId: 'cus_stripe123',
+          stripeSubscriptionId: 'sub_stripe123',
+        }),
+      });
+    });
+
+    it('should handle webhook status updates from Stripe', async () => {
+      // Simulates Stripe webhook updating subscription status
+      const updatedSub = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        status: SubscriptionStatus.PAST_DUE,
+      };
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(updatedSub);
+
+      await subscriptionService.updateSubscriptionStatus({
+        stripeSubscriptionId: 'sub_test123',
+        status: SubscriptionStatus.PAST_DUE,
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { stripeSubscriptionId: 'sub_test123' },
+        data: expect.objectContaining({
+          status: SubscriptionStatus.PAST_DUE,
+        }),
+      });
+    });
+
+    it('should handle subscription cancellation from Stripe', async () => {
+      const canceledSub = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        status: SubscriptionStatus.CANCELED,
+      };
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(canceledSub);
+
+      await subscriptionService.updateSubscriptionStatus({
+        stripeSubscriptionId: 'sub_test123',
+        status: SubscriptionStatus.CANCELED,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { stripeSubscriptionId: 'sub_test123' },
+        data: {
+          status: SubscriptionStatus.CANCELED,
+          currentPeriodStart: new Date('2024-02-01'),
+          currentPeriodEnd: new Date('2024-03-01'),
+        },
+      });
+    });
+
+    it('should handle subscription renewal from Stripe webhook', async () => {
+      const renewedSub = {
+        ...TEST_FIXTURES.activeUserSubscription,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
+      };
+      vi.mocked(mockPrisma.subscription.update).mockResolvedValue(renewedSub);
+
+      await subscriptionService.updateSubscriptionStatus({
+        stripeSubscriptionId: 'sub_test123',
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date('2024-02-01'),
+        currentPeriodEnd: new Date('2024-03-01'),
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { stripeSubscriptionId: 'sub_test123' },
+        data: {
+          status: SubscriptionStatus.ACTIVE,
+          currentPeriodStart: new Date('2024-02-01'),
+          currentPeriodEnd: new Date('2024-03-01'),
+        },
+      });
     });
   });
 });
