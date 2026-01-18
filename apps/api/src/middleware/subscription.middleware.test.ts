@@ -413,7 +413,7 @@ describe('Subscription Middleware', () => {
   describe('requireActiveSubscription - Grace Period Edge Cases', () => {
     it('should allow access for PAST_DUE exactly at 7 days (grace period boundary)', async () => {
       const now = new Date();
-      const periodEnd = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000 + 1000); // 7 days ago minus 1 second
+      const periodEnd = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000 + 1000); // Just under 7 days ago (6 days 23h 59m 59s)
 
       vi.mocked(mockSubscriptionService.getSubscription).mockResolvedValue({
         id: 'sub-123',
@@ -434,7 +434,7 @@ describe('Subscription Middleware', () => {
 
     it('should block access for PAST_DUE just after 7 days (beyond grace period)', async () => {
       const now = new Date();
-      const periodEnd = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000 - 1000); // 7 days ago plus 1 second
+      const periodEnd = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000 - 1000); // Just over 7 days ago (7 days and 1 second)
 
       vi.mocked(mockSubscriptionService.getSubscription).mockResolvedValue({
         id: 'sub-123',
