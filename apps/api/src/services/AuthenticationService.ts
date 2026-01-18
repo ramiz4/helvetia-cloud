@@ -35,14 +35,16 @@ export class AuthenticationService {
     username: string,
     jwtSign: (payload: { id: string; username: string; role: Role }) => string,
   ): Promise<{ user: AuthResponseDto['user']; accessToken: string; refreshToken: string }> {
-    // Check if email already exists
-    const existingUserByEmail = await this.userRepository.findByEmail(email);
+    // Check if email and username already exist in parallel
+    const [existingUserByEmail, existingUserByUsername] = await Promise.all([
+      this.userRepository.findByEmail(email),
+      this.userRepository.findByUsername(username),
+    ]);
+
     if (existingUserByEmail) {
       throw new UnauthorizedError('Email already registered');
     }
 
-    // Check if username already exists
-    const existingUserByUsername = await this.userRepository.findByUsername(username);
     if (existingUserByUsername) {
       throw new UnauthorizedError('Username already taken');
     }
@@ -362,6 +364,9 @@ export class AuthenticationService {
 
   /**
    * Disconnect GitHub account (remove access token and GitHub ID)
+   * NOTE: Requires email/password authentication to prevent account lockout.
+   * In a production system with email verification, consider also checking if email is verified
+   * before allowing GitHub disconnection.
    */
   async disconnectGitHub(userId: string): Promise<void> {
     const user = await this.userRepository.findById(userId);
