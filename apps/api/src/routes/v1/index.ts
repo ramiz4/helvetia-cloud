@@ -37,6 +37,7 @@ export const v1Routes: FastifyPluginAsync = async (fastify) => {
   const { stripeWebhookRoutes } = await import('../stripe-webhook.routes.js');
   const { organizationRoutes } = await import('../organization.routes.js');
   const { termsRoutes } = await import('../terms.routes.js');
+  const { privacyPolicyRoutes } = await import('../privacy-policy.routes.js');
 
   // Register all v1 routes
   fastify.register(authRoutes);
@@ -50,4 +51,5 @@ export const v1Routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(stripeWebhookRoutes);
   fastify.register(organizationRoutes);
   fastify.register(termsRoutes);
+  fastify.register(privacyPolicyRoutes);
 };

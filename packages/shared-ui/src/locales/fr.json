@@ -324,5 +324,22 @@
     "acceptingTerms": "Acceptation en cours...",
     "acceptSuccess": "Conditions acceptées avec succès !",
     "acceptError": "Échec de l'acceptation des conditions. Veuillez réessayer."
+  },
+  "privacy": {
+    "pageTitle": "Politique de confidentialité",
+    "pageDescription": "Découvrez comment nous protégeons vos données personnelles",
+    "version": "Version",
+    "effectiveDate": "Date d'effet",
+    "lastUpdated": "Dernière mise à jour",
+    "selectLanguage": "Choisir la langue",
+    "loadingPrivacy": "Chargement de la politique de confidentialité...",
+    "errorLoading": "Échec du chargement de la politique de confidentialité",
+    "tryAgain": "Réessayer",
+    "acceptanceRequired": "Veuillez lire et accepter notre politique de confidentialité",
+    "iAccept": "J'accepte la politique de confidentialité",
+    "acceptAndContinue": "Accepter et continuer",
+    "acceptingPrivacy": "Acceptation de la politique de confidentialité...",
+    "acceptSuccess": "Politique de confidentialité acceptée avec succès !",
+    "acceptError": "Échec de l'acceptation de la politique de confidentialité. Veuillez réessayer."
   }
 }

@@ -13,6 +13,12 @@ export {
 } from './IFeatureFlagRepository';
 export { IOrganizationRepository } from './IOrganizationRepository';
 export {
+  AcceptPrivacyPolicyData,
+  CreatePrivacyPolicyVersionData,
+  IPrivacyPolicyRepository,
+  UserPrivacyPolicyAcceptanceWithVersion,
+} from './IPrivacyPolicyRepository';
+export {
   Environment,
   EnvironmentCreateInput,
   IProjectRepository,

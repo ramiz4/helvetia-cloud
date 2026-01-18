@@ -323,5 +323,22 @@
     "acceptingTerms": "Accepting terms...",
     "acceptSuccess": "Terms accepted successfully!",
     "acceptError": "Failed to accept terms. Please try again."
+  },
+  "privacy": {
+    "pageTitle": "Privacy Policy",
+    "pageDescription": "Read how we protect your personal data",
+    "version": "Version",
+    "effectiveDate": "Effective Date",
+    "lastUpdated": "Last Updated",
+    "selectLanguage": "Select Language",
+    "loadingPrivacy": "Loading privacy policy...",
+    "errorLoading": "Failed to load privacy policy",
+    "tryAgain": "Try Again",
+    "acceptanceRequired": "Please review and accept our Privacy Policy",
+    "iAccept": "I Accept the Privacy Policy",
+    "acceptAndContinue": "Accept and Continue",
+    "acceptingPrivacy": "Accepting privacy policy...",
+    "acceptSuccess": "Privacy policy accepted successfully!",
+    "acceptError": "Failed to accept privacy policy. Please try again."
   }
 }

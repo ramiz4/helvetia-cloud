@@ -1,6 +1,8 @@
 'use client';
 
+import { PrivacyPolicyAcceptanceModal } from '@/components/PrivacyPolicyAcceptanceModal';
 import { TermsAcceptanceModal } from '@/components/TermsAcceptanceModal';
+import { usePrivacyAcceptance } from '@/hooks/usePrivacyAcceptance';
 import { useTermsAcceptance } from '@/hooks/useTermsAcceptance';
 import { useEffect, useState } from 'react';
 
@@ -10,7 +12,8 @@ interface TermsAcceptanceWrapperProps {
 
 export function TermsAcceptanceWrapper({ children }: TermsAcceptanceWrapperProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   // Check authentication on mount
   useEffect(() => {
@@ -18,22 +21,45 @@ export function TermsAcceptanceWrapper({ children }: TermsAcceptanceWrapperProps
     setIsAuthenticated(!!user);
   }, []);
 
-  // Only fetch terms acceptance status if authenticated
+  // Fetch terms acceptance status
   const {
-    data: acceptanceStatus,
-    isLoading,
-    isError,
+    data: termsStatus,
+    isLoading: isTermsLoading,
+    isError: isTermsError,
   } = useTermsAcceptance(isAuthenticated === true);
 
-  // Show modal when user needs to accept terms
-  useEffect(() => {
-    if (acceptanceStatus?.requiresAcceptance && acceptanceStatus?.latestTerms && !showModal) {
-      setShowModal(true);
-    }
-  }, [acceptanceStatus, showModal]);
+  // Fetch privacy acceptance status
+  const {
+    data: privacyStatus,
+    isLoading: isPrivacyLoading,
+    isError: isPrivacyError,
+  } = usePrivacyAcceptance(isAuthenticated === true);
 
-  const handleAccept = () => {
-    setShowModal(false);
+  // Manage modals
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Terms take precedence
+    if (termsStatus?.requiresAcceptance && termsStatus?.latestTerms) {
+      setShowTermsModal(true);
+      setShowPrivacyModal(false);
+    } else if (privacyStatus?.requiresAcceptance && privacyStatus?.latestPolicy) {
+      // Only show privacy if terms are accepted (or don't need acceptance)
+      setShowTermsModal(false);
+      setShowPrivacyModal(true);
+    } else {
+      setShowTermsModal(false);
+      setShowPrivacyModal(false);
+    }
+  }, [termsStatus, privacyStatus, isAuthenticated]);
+
+  const handleTermsAccept = () => {
+    setShowTermsModal(false);
+    // The effect will run again and show privacy modal if needed
+  };
+
+  const handlePrivacyAccept = () => {
+    setShowPrivacyModal(false);
   };
 
   const handleCancel = () => {
@@ -41,22 +67,30 @@ export function TermsAcceptanceWrapper({ children }: TermsAcceptanceWrapperProps
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setIsAuthenticated(false);
-    setShowModal(false);
+    setShowTermsModal(false);
+    setShowPrivacyModal(false);
     window.location.href = '/login';
   };
 
-  // Don't render anything while loading or if not authenticated
-  if (isLoading || isError || !isAuthenticated) {
+  // Don't render anything while loading or if not authenticated (initial check)
+  if (isTermsLoading || isPrivacyLoading || isTermsError || isPrivacyError || !isAuthenticated) {
     return <>{children}</>;
   }
 
   return (
     <>
       {children}
-      {showModal && acceptanceStatus?.latestTerms && (
+      {showTermsModal && termsStatus?.latestTerms && (
         <TermsAcceptanceModal
-          terms={acceptanceStatus.latestTerms}
-          onAccept={handleAccept}
+          terms={termsStatus.latestTerms}
+          onAccept={handleTermsAccept}
+          onCancel={handleCancel}
+        />
+      )}
+      {showPrivacyModal && privacyStatus?.latestPolicy && (
+        <PrivacyPolicyAcceptanceModal
+          policy={privacyStatus.latestPolicy}
+          onAccept={handlePrivacyAccept}
           onCancel={handleCancel}
         />
       )}

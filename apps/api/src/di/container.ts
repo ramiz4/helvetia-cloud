@@ -10,6 +10,7 @@ import { DeploymentController } from '../controllers/DeploymentController';
 import { FeatureFlagController } from '../controllers/FeatureFlagController';
 import { GitHubController } from '../controllers/GitHubController';
 import { OrganizationController } from '../controllers/OrganizationController';
+import { PrivacyPolicyController } from '../controllers/PrivacyPolicyController';
 import { ProjectController } from '../controllers/ProjectController';
 import { ServiceController } from '../controllers/ServiceController';
 import { StripeWebhookController } from '../controllers/StripeWebhookController';
@@ -19,6 +20,7 @@ import {
   PrismaDeploymentRepository,
   PrismaFeatureFlagRepository,
   PrismaOrganizationRepository,
+  PrismaPrivacyPolicyRepository,
   PrismaProjectRepository,
   PrismaServiceRepository,
   PrismaTermsRepository,
@@ -32,6 +34,7 @@ import {
   GitHubService,
   InitializationService,
   OrganizationService,
+  PrivacyPolicyService,
   ProjectManagementService,
   ServiceManagementService,
   SubscriptionService,
@@ -75,6 +78,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.FeatureFlagRepository, PrismaFeatureFlagRepository);
   container.registerSingleton(TOKENS.OrganizationRepository, PrismaOrganizationRepository);
   container.registerSingleton(TOKENS.TermsRepository, PrismaTermsRepository);
+  container.registerSingleton(TOKENS.PrivacyPolicyRepository, PrismaPrivacyPolicyRepository);
 
   // Register service implementations
   container.registerSingleton(TOKENS.ServiceManagementService, ServiceManagementService);
@@ -89,6 +93,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.SubscriptionService, SubscriptionService);
   container.registerSingleton(TOKENS.UsageTrackingService, UsageTrackingService);
   container.registerSingleton(TOKENS.TermsService, TermsService);
+  container.registerSingleton(TOKENS.PrivacyPolicyService, PrivacyPolicyService);
 
   // Register controllers
   container.registerSingleton(TOKENS.ServiceController, ServiceController);
@@ -102,6 +107,7 @@ export function initializeContainer(): void {
   container.registerSingleton(TOKENS.BillingController, BillingController);
   container.registerSingleton(TOKENS.StripeWebhookController, StripeWebhookController);
   container.registerSingleton(TOKENS.TermsController, TermsController);
+  container.registerSingleton(TOKENS.PrivacyPolicyController, PrivacyPolicyController);
 }
 
 /**

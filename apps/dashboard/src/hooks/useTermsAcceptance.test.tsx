@@ -29,24 +29,30 @@ describe('useTermsAcceptance', () => {
 
   it('should fetch terms acceptance status successfully', async () => {
     const mockData = {
-      hasAccepted: false,
-      currentVersion: '1.0.0',
       requiresAcceptance: true,
       latestTerms: {
         id: 'terms-1',
         version: '1.0.0',
         content: 'Test terms content',
         language: 'en',
-        effectiveDate: '2024-01-01',
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
+        effectiveAt: '2024-01-01T00:00:00Z',
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
       },
+      hasAccepted: false,
+      currentVersion: '1.0.0',
     };
 
     vi.mocked(sharedUi.fetchWithAuth).mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => mockData,
+      json: async () => ({
+        success: true,
+        data: {
+          requiresAcceptance: true,
+          latestVersion: mockData.latestTerms,
+        },
+      }),
     } as Response);
 
     const { result } = renderHook(() => useTermsAcceptance(true), {

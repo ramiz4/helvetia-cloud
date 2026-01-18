@@ -5,7 +5,7 @@ import { z } from 'zod';
  */
 export const GetTermsSchema = z.object({
   version: z.string().min(1).max(20),
-  language: z.enum(['en', 'de', 'fr', 'it']).optional().default('en'),
+  language: z.enum(['en', 'de', 'fr', 'it', 'gsw']).optional().default('en'),
 });
 
 /**
@@ -21,6 +21,6 @@ export const AcceptTermsSchema = z.object({
 export const CreateTermsVersionSchema = z.object({
   version: z.string().min(1).max(20),
   content: z.string().min(1),
-  language: z.enum(['en', 'de', 'fr', 'it']),
+  language: z.enum(['en', 'de', 'fr', 'it', 'gsw']),
   effectiveAt: z.string().datetime().or(z.date()),
 });

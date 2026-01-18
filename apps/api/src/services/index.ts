@@ -10,6 +10,7 @@ export * from './FeatureFlagService';
 export * from './GitHubService';
 export * from './InitializationService';
 export * from './OrganizationService';
+export * from './PrivacyPolicyService';
 export * from './ProjectManagementService';
 export * from './ServiceManagementService';
 export * from './SubscriptionService';

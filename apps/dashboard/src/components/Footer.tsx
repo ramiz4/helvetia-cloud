@@ -84,7 +84,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/pricing"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.pricing}
@@ -101,7 +101,9 @@ export default function Footer() {
             <ul className="space-y-4 text-sm">
               <li>
                 <a
-                  href="#"
+                  href="/documentation"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-2"
                 >
                   {t.footer.documentation} <ExternalLink size={12} />
@@ -109,7 +111,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/blog"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.blog}
@@ -117,7 +119,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/changelog"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.changelog}
@@ -125,7 +127,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/status"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.status}
@@ -149,12 +151,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/privacy-policy"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.privacyPolicy}
-                </a>
+                </Link>
               </li>
               <li>
                 <div className="flex items-center gap-2 text-indigo-400/80 font-medium">

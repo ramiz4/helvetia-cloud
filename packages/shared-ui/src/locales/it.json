@@ -324,5 +324,22 @@
     "acceptingTerms": "Accettazione in corso...",
     "acceptSuccess": "Termini accettati con successo!",
     "acceptError": "Impossibile accettare i termini. Riprova."
+  },
+  "privacy": {
+    "pageTitle": "Informativa sulla privacy",
+    "pageDescription": "Scopri come proteggiamo i tuoi dati personali",
+    "version": "Versione",
+    "effectiveDate": "Data di decorrenza",
+    "lastUpdated": "Ultimo aggiornamento",
+    "selectLanguage": "Seleziona lingua",
+    "loadingPrivacy": "Caricamento dell'informativa sulla privacy...",
+    "errorLoading": "Caricamento dell'informativa sulla privacy non riuscito",
+    "tryAgain": "Riprova",
+    "acceptanceRequired": "Si prega di leggere e accettare la nostra informativa sulla privacy",
+    "iAccept": "Accetto l'informativa sulla privacy",
+    "acceptAndContinue": "Accetta e continua",
+    "acceptingPrivacy": "Accettazione dell'informativa sulla privacy...",
+    "acceptSuccess": "Informativa sulla privacy accettata con successo!",
+    "acceptError": "Impossibile accettare l'informativa sulla privacy. Riprova."
   }
 }
