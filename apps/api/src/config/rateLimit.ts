@@ -73,10 +73,25 @@ export function createRateLimitConfigs(redisConnection: IORedis) {
     },
   };
 
+  // Standard rate limiting for general endpoints
+  const standardRateLimitConfig = {
+    max: isTestEnv ? 10000 : parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
+    redis: redisConnection,
+    nameSpace: 'helvetia-standard-rate-limit:',
+    skipOnError: true,
+    addHeaders: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true,
+    },
+  };
+
   return {
     authRateLimitConfig,
     wsRateLimitConfig,
     deploymentRateLimitConfig,
     featureFlagCheckRateLimitConfig,
+    standardRateLimitConfig,
   };
 }

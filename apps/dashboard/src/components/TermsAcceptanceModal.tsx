@@ -130,9 +130,10 @@ export function TermsAcceptanceModal({ terms, onAccept, onCancel }: TermsAccepta
             disabled={!hasScrolledToBottom || isAccepting}
             className={`
               px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2
-              ${hasScrolledToBottom && !isAccepting
-                ? 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/20'
-                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+              ${
+                hasScrolledToBottom && !isAccepting
+                  ? 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/20'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
               }
             `}
           >

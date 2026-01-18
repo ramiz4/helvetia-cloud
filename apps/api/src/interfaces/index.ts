@@ -33,7 +33,12 @@ export {
   ServiceCreateInput,
   ServiceUpdateInput,
 } from './IServiceRepository';
-export { AcceptTermsData, CreateTermsVersionData, ITermsRepository } from './ITermsRepository';
+export {
+  AcceptTermsData,
+  CreateTermsVersionData,
+  ITermsRepository,
+  UserTermsAcceptanceWithVersion,
+} from './ITermsRepository';
 export {
   IUserRepository,
   User,

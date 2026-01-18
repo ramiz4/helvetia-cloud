@@ -38,13 +38,6 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
     notFound();
   }
 
-  const languages = [
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'it', label: 'Italiano', flag: '🇮🇹' },
-  ];
-
   return (
     <div className="py-8 animate-fade-in max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -65,7 +58,6 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Metadata */}
