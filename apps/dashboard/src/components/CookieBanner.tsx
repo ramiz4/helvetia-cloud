@@ -14,15 +14,38 @@ interface CookiePreferences {
 }
 
 /**
- * Props for the {@link CookieBanner} component.
- *
- * @property text - Informational text shown in the banner body. Typically explains cookie usage and links to the privacy policy.
- * @property acceptText - Label for the accept button that records the user's consent.
+ * Cookie translations interface
  */
-interface CookieBannerProps {
+interface CookieTranslations {
   title: string;
   text: string;
-  acceptText: string;
+  accept: string;
+  rejectNonEssential: string;
+  customize: string;
+  savePreferences: string;
+  learnMore: string;
+  preferences: {
+    title: string;
+    essential: {
+      title: string;
+      description: string;
+    };
+    functional: {
+      title: string;
+      description: string;
+    };
+    analytics: {
+      title: string;
+      description: string;
+    };
+  };
+}
+
+/**
+ * Props for the {@link CookieBanner} component.
+ */
+interface CookieBannerProps {
+  translations: CookieTranslations;
 }
 
 /**
@@ -40,11 +63,8 @@ interface CookieBannerProps {
  * then checks the persisted consent value and updates the visibility accordingly.
  *
  * @param props - Configuration for the banner content.
- * @param props.title - Title of the cookie banner.
- * @param props.text - Informational message about cookie usage displayed in the banner.
- * @param props.acceptText - Text shown on the accept all button.
  */
-export default function CookieBanner({ title, text, acceptText }: CookieBannerProps) {
+export default function CookieBanner({ translations: t }: CookieBannerProps) {
   const [accepted, setAccepted] = useState(true); // Default to true to avoid flash, check useEffect
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
@@ -129,16 +149,16 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
                 <Cookie className="w-5 h-5 text-indigo-400" />
               </div>
               <h2 id="cookie-banner-title" className="text-lg font-bold text-white">
-                {title}
+                {t.title}
               </h2>
             </div>
           </div>
 
           {/* Description */}
           <p id="cookie-banner-description" className="text-sm text-slate-300 mb-4">
-            {text}{' '}
+            {t.text}{' '}
             <Link href="/privacy" className="text-indigo-400 hover:text-indigo-300 underline">
-              Learn more in our Privacy Policy
+              {t.learnMore}
             </Link>
           </p>
 
@@ -148,24 +168,24 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
               <button
                 onClick={handleAcceptAll}
                 className="flex-1 px-6 py-3 rounded-xl font-semibold bg-indigo-500 text-white hover:bg-indigo-400 transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
-                aria-label={acceptText}
+                aria-label={t.accept}
               >
-                {acceptText}
+                {t.accept}
               </button>
               <button
                 onClick={handleRejectNonEssential}
                 className="px-6 py-3 rounded-xl font-semibold bg-slate-700 text-white hover:bg-slate-600 transition-all active:scale-95"
-                aria-label="Reject non-essential cookies"
+                aria-label={t.rejectNonEssential}
               >
-                Reject Non-Essential
+                {t.rejectNonEssential}
               </button>
               <button
                 onClick={() => setShowPreferences(true)}
                 className="px-6 py-3 rounded-xl font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2"
-                aria-label="Customize cookie preferences"
+                aria-label={t.customize}
               >
                 <Settings className="w-4 h-4" />
-                Customize
+                {t.customize}
               </button>
             </div>
           )}
@@ -174,7 +194,7 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
           {showPreferences && (
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-700">
-                <h3 className="text-sm font-semibold text-white">Cookie Preferences</h3>
+                <h3 className="text-sm font-semibold text-white">{t.preferences.title}</h3>
                 <button
                   onClick={() => setShowPreferences(false)}
                   className="text-slate-400 hover:text-white transition-colors"
@@ -187,11 +207,10 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
               {/* Essential Cookies */}
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-white mb-1">Essential Cookies</h4>
-                  <p className="text-xs text-slate-400">
-                    Required for authentication, security, and core platform functionality. These
-                    cannot be disabled.
-                  </p>
+                  <h4 className="text-sm font-semibold text-white mb-1">
+                    {t.preferences.essential.title}
+                  </h4>
+                  <p className="text-xs text-slate-400">{t.preferences.essential.description}</p>
                 </div>
                 <div className="ml-4">
                   <div className="w-12 h-6 bg-indigo-500 rounded-full relative cursor-not-allowed opacity-50">
@@ -203,10 +222,10 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
               {/* Functional Cookies */}
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-white mb-1">Functional Cookies</h4>
-                  <p className="text-xs text-slate-400">
-                    Used to remember your preferences (e.g., theme, language).
-                  </p>
+                  <h4 className="text-sm font-semibold text-white mb-1">
+                    {t.preferences.functional.title}
+                  </h4>
+                  <p className="text-xs text-slate-400">{t.preferences.functional.description}</p>
                 </div>
                 <div className="ml-4">
                   <button
@@ -228,11 +247,10 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
               {/* Analytics Cookies */}
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-white mb-1">Analytics Cookies</h4>
-                  <p className="text-xs text-slate-400">
-                    Help us understand platform usage to improve performance and user experience. We
-                    use privacy-focused analytics.
-                  </p>
+                  <h4 className="text-sm font-semibold text-white mb-1">
+                    {t.preferences.analytics.title}
+                  </h4>
+                  <p className="text-xs text-slate-400">{t.preferences.analytics.description}</p>
                 </div>
                 <div className="ml-4">
                   <button
@@ -256,9 +274,9 @@ export default function CookieBanner({ title, text, acceptText }: CookieBannerPr
                 <button
                   onClick={handleAcceptSelected}
                   className="w-full px-6 py-3 rounded-xl font-semibold bg-indigo-500 text-white hover:bg-indigo-400 transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
-                  aria-label="Save cookie preferences"
+                  aria-label={t.savePreferences}
                 >
-                  Save Preferences
+                  {t.savePreferences}
                 </button>
               </div>
             </div>

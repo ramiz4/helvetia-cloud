@@ -9,5 +9,5 @@ import CookieBanner from './CookieBanner';
 export default function CookieBannerWrapper() {
   const { t } = useLanguage();
 
-  return <CookieBanner title={t.cookie.title} text={t.cookie.text} acceptText={t.cookie.accept} />;
+  return <CookieBanner translations={t.cookie} />;
 }
