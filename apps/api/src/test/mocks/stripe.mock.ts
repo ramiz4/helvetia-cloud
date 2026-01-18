@@ -1,4 +1,4 @@
-import type Stripe from 'stripe';
+import Stripe from 'stripe';
 
 /**
  * Mock Stripe client for testing
@@ -229,12 +229,13 @@ export const mockStripeSubscriptions = {
   retrieve: async (id: string): Promise<Stripe.Subscription> => {
     const subscription = mockSubscriptions.get(id);
     if (!subscription) {
-      const error = new Error(`No such subscription: ${id}`) as Error & {
-        type: string;
-        statusCode: number;
-      };
+      // Create a proper Stripe-like error
+      const error: any = new Error(`No such subscription: ${id}`);
       error.type = 'StripeInvalidRequestError';
+      error.code = 'resource_missing';
       error.statusCode = 404;
+      // Make it look like a Stripe error for instanceof checks
+      Object.setPrototypeOf(error, Stripe.errors.StripeError.prototype);
       throw error;
     }
     return subscription;
@@ -552,6 +553,30 @@ export const mockStripeBillingPortal = {
 };
 
 /**
+ * Mock Stripe Subscription Items API
+ */
+export const mockStripeSubscriptionItems = {
+  createUsageRecord: async (
+    id: string,
+    params: {
+      quantity: number;
+      timestamp?: number;
+      action?: 'increment' | 'set';
+    },
+  ): Promise<Record<string, unknown>> => {
+    // Simple mock that just returns success
+    return {
+      id: `mbur_test_${Date.now()}`,
+      object: 'usage_record',
+      livemode: false,
+      quantity: params.quantity,
+      subscription_item: id,
+      timestamp: params.timestamp || Math.floor(Date.now() / 1000),
+    };
+  },
+};
+
+/**
  * Create a complete mock Stripe instance
  */
 export function createMockStripe(): Partial<Stripe> {
@@ -561,6 +586,7 @@ export function createMockStripe(): Partial<Stripe> {
     invoices: mockStripeInvoices as unknown as Stripe.InvoicesResource,
     checkout: mockStripeCheckout as unknown as Stripe.CheckoutResource,
     billingPortal: mockStripeBillingPortal as unknown as Stripe.BillingPortalResource,
+    subscriptionItems: mockStripeSubscriptionItems as unknown as Stripe.SubscriptionItemsResource,
   };
 }
 
