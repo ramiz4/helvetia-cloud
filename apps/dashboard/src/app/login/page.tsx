@@ -57,10 +57,7 @@ function LoginContent() {
 
     try {
       const endpoint = mode === 'register' ? '/auth/register' : '/auth/login';
-      const body =
-        mode === 'register'
-          ? { email, password, username }
-          : { email, password };
+      const body = mode === 'register' ? { email, password, username } : { email, password };
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',

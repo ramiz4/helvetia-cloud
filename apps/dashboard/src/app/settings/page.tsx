@@ -8,7 +8,6 @@ import {
   FileText,
   Globe,
   LogOut,
-  RefreshCw,
   Shield,
   Trash2,
 } from 'lucide-react';
@@ -102,10 +101,6 @@ export default function SettingsPage() {
     const githubUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=user,repo,read:org,read:packages`;
 
     window.location.href = githubUrl;
-  };
-
-  const reconnectGithub = () => {
-    connectGithub();
   };
 
   const exportUserData = async () => {

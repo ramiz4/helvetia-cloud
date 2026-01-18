@@ -81,7 +81,12 @@ function GitHubLinkCallbackContent() {
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
@@ -110,9 +115,7 @@ function GitHubLinkCallbackContent() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-              Link Failed
-            </h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Link Failed</h2>
             <p className="text-slate-600 dark:text-slate-400">
               We couldn't link your GitHub account. Redirecting...
             </p>
