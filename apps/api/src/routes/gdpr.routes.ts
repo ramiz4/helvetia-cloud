@@ -14,7 +14,7 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
   const organizationRepository = resolve<IOrganizationRepository>(TOKENS.OrganizationRepository);
   const redisConnection = fastify.redis;
   const { createRateLimitConfigs } = await import('../config/rateLimit.js');
-  const { defaultRateLimitConfig } = createRateLimitConfigs(redisConnection);
+  const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
 
   /**
    * GET /gdpr/export
@@ -24,7 +24,7 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
     '/gdpr/export',
     {
       preHandler: [authenticate],
-      config: { rateLimit: defaultRateLimitConfig },
+      config: { rateLimit: authRateLimitConfig },
       schema: {
         tags: ['GDPR'],
         summary: 'Export user data',
@@ -137,7 +137,7 @@ export const gdprRoutes: FastifyPluginAsync = async (fastify) => {
     '/gdpr/delete-account',
     {
       preHandler: [authenticate],
-      config: { rateLimit: defaultRateLimitConfig },
+      config: { rateLimit: authRateLimitConfig },
       bodyLimit: BODY_LIMIT_SMALL,
       schema: {
         tags: ['GDPR'],
