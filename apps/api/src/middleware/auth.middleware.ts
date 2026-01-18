@@ -9,6 +9,7 @@ export const PUBLIC_ROUTES = [
   '/health',
   '/webhooks/github',
   '/auth/github',
+  '/auth/register',
   '/auth/login',
   '/auth/refresh',
   '/auth/logout',

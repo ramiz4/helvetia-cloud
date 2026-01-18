@@ -61,19 +61,104 @@ export class AuthController {
   }
 
   /**
-   * POST /auth/login
-   * Login with username and password (local admin)
+   * POST /auth/register
+   * Register with email and password
    */
-  async loginLocal(request: FastifyRequest, reply: FastifyReply) {
-    const { username, password } = request.body as { username?: string; password?: string };
+  async register(request: FastifyRequest, reply: FastifyReply) {
+    const { email, password, username } = request.body as {
+      email?: string;
+      password?: string;
+      username?: string;
+    };
 
-    if (!username || !password) {
-      return reply.status(400).send({ error: 'Username and password are required' });
+    if (!email || !password || !username) {
+      return reply.status(400).send({ error: 'Email, password, and username are required' });
+    }
+
+    // Basic server-side validation for defense-in-depth
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return reply.status(400).send({ error: 'Invalid email format' });
+    }
+
+    if (password.length < 8) {
+      return reply.status(400).send({ error: 'Password must be at least 8 characters long' });
+    }
+
+    if (username.length < 3 || username.length > 30) {
+      return reply.status(400).send({ error: 'Username must be between 3 and 30 characters long' });
     }
 
     try {
       const jwtSign = (payload: JwtPayload) => request.server.jwt.sign(payload);
-      const result = await this.authService.authenticateLocal(username, password, jwtSign);
+      const result = await this.authService.registerWithEmail(email, password, username, jwtSign);
+
+      // Set cookies
+      reply.setCookie('token', result.accessToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 15,
+      });
+
+      reply.setCookie('refreshToken', result.refreshToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30,
+      });
+
+      return { user: result.user, token: result.accessToken };
+    } catch (err: unknown) {
+      if ((err as Error).name === 'UnauthorizedError') {
+        return reply.status(400).send({ error: (err as Error).message });
+      }
+      request.log.error({ err }, 'Registration failed');
+      return reply.status(500).send({ error: 'Registration failed' });
+    }
+  }
+
+  /**
+   * POST /auth/login
+   * Login with email/username and password
+   */
+  async loginLocal(request: FastifyRequest, reply: FastifyReply) {
+    const { email, username, password } = request.body as {
+      email?: string;
+      username?: string;
+      password?: string;
+    };
+
+    if ((!email && !username) || !password) {
+      return reply.status(400).send({ error: 'Email or username and password are required' });
+    }
+
+    // Basic server-side validation for defense-in-depth
+    if (email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        return reply.status(400).send({ error: 'Invalid email format' });
+      }
+    }
+
+    if (username && (username.length < 3 || username.length > 30)) {
+      return reply.status(400).send({ error: 'Username must be between 3 and 30 characters long' });
+    }
+
+    try {
+      const jwtSign = (payload: JwtPayload) => request.server.jwt.sign(payload);
+
+      // Try email login first if email is provided
+      let result;
+      if (email) {
+        result = await this.authService.authenticateWithEmail(email, password, jwtSign);
+      } else if (username) {
+        result = await this.authService.authenticateLocal(username, password, jwtSign);
+      } else {
+        return reply.status(400).send({ error: 'Email or username is required' });
+      }
 
       // Set cookies
       reply.setCookie('token', result.accessToken, {
@@ -212,9 +297,39 @@ export class AuthController {
     return {
       id: dbUser.id,
       username: dbUser.username,
+      email: dbUser.email,
       avatarUrl: dbUser.avatarUrl,
+      githubId: dbUser.githubId,
       hasGitHubConnected: !!dbUser.githubAccessToken,
+      hasPasswordAuth: !!dbUser.password,
     };
+  }
+
+  /**
+   * POST /auth/github/link
+   * Link GitHub account to existing user
+   */
+  async linkGitHub(request: FastifyRequest, reply: FastifyReply) {
+    const user = request.user;
+    if (!user) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+
+    const { code } = request.body as { code?: string };
+    if (!code) {
+      return reply.status(400).send({ error: 'GitHub authorization code is required' });
+    }
+
+    try {
+      const result = await this.authService.linkGitHubAccount(user.id, code);
+      return result;
+    } catch (err: unknown) {
+      if ((err as Error).name === 'UnauthorizedError') {
+        return reply.status(400).send({ error: (err as Error).message });
+      }
+      request.log.error({ err }, 'Failed to link GitHub account');
+      return reply.status(500).send({ error: 'Failed to link GitHub account' });
+    }
   }
 
   /**
@@ -227,8 +342,15 @@ export class AuthController {
       return reply.status(401).send({ error: 'User not authenticated' });
     }
 
-    await this.userRepository.update(user.id, { githubAccessToken: null });
-
-    return { success: true };
+    try {
+      await this.authService.disconnectGitHub(user.id);
+      return { success: true, message: 'GitHub account disconnected successfully' };
+    } catch (err: unknown) {
+      if ((err as Error).name === 'UnauthorizedError') {
+        return reply.status(400).send({ error: (err as Error).message });
+      }
+      request.log.error({ err }, 'Failed to disconnect GitHub account');
+      return reply.status(500).send({ error: 'Failed to disconnect GitHub account' });
+    }
   }
 }

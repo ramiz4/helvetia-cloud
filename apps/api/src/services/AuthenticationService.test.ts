@@ -81,6 +81,7 @@ describe('AuthenticationService', () => {
       findById: vi.fn(),
       findByGithubId: vi.fn(),
       findByUsername: vi.fn(),
+      findByEmail: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -379,14 +380,35 @@ describe('AuthenticationService', () => {
 
   describe('disconnectGitHub', () => {
     it('should disconnect GitHub account', async () => {
-      vi.mocked(mockUserRepo.findById).mockResolvedValue(mockUser);
-      vi.mocked(mockUserRepo.update).mockResolvedValue({ ...mockUser, githubAccessToken: null });
+      const userWithEmailAuth = {
+        ...mockUser,
+        email: 'test@example.com',
+        password: 'hashed_password',
+      };
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(userWithEmailAuth);
+      vi.mocked(mockUserRepo.update).mockResolvedValue({
+        ...userWithEmailAuth,
+        githubAccessToken: null,
+        githubId: null,
+      });
 
       await service.disconnectGitHub('user-1');
 
       expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
         githubAccessToken: null,
+        githubId: null,
       });
+    });
+
+    it('should throw UnauthorizedError if user does not have email/password auth', async () => {
+      const userWithoutEmailAuth = {
+        ...mockUser,
+        email: null,
+        password: null,
+      };
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(userWithoutEmailAuth);
+
+      await expect(service.disconnectGitHub('user-1')).rejects.toThrow(UnauthorizedError);
     });
 
     it('should throw UnauthorizedError if user is not found', async () => {
@@ -422,6 +444,305 @@ describe('AuthenticationService', () => {
       const result = await service.getGitHubAccessToken('user-1');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('registerWithEmail', () => {
+    it('should register user with valid inputs', async () => {
+      const mockJwtSign = vi.fn().mockReturnValue('jwt_token');
+      const email = 'test@example.com';
+      const password = 'password123';
+      const username = 'testuser';
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(null);
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(null);
+      vi.mocked(mockUserRepo.create).mockResolvedValue({
+        id: 'user-1',
+        username,
+        email,
+        avatarUrl: null,
+        githubId: null,
+        githubAccessToken: null,
+        password: 'bcrypt_hashed_password123',
+        role: Role.MEMBER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const result = await service.registerWithEmail(email, password, username, mockJwtSign);
+
+      expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(email);
+      expect(mockUserRepo.findByUsername).toHaveBeenCalledWith(username);
+      expect(passwordUtils.hashPassword).toHaveBeenCalledWith(password);
+      expect(mockUserRepo.create).toHaveBeenCalled();
+      expect(mockJwtSign).toHaveBeenCalled();
+      expect(result).toHaveProperty('user');
+      expect(result).toHaveProperty('accessToken', 'jwt_token');
+      expect(result).toHaveProperty('refreshToken', 'refresh_token_user-1');
+    });
+
+    it('should reject when email is already registered', async () => {
+      const mockJwtSign = vi.fn();
+      const email = 'existing@example.com';
+      const password = 'password123';
+      const username = 'testuser';
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(mockUser);
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(null);
+
+      await expect(
+        service.registerWithEmail(email, password, username, mockJwtSign),
+      ).rejects.toThrow('Email already registered');
+    });
+
+    it('should reject when username is already taken', async () => {
+      const mockJwtSign = vi.fn();
+      const email = 'test@example.com';
+      const password = 'password123';
+      const username = 'existinguser';
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(null);
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(mockUser);
+
+      await expect(
+        service.registerWithEmail(email, password, username, mockJwtSign),
+      ).rejects.toThrow('Username already taken');
+    });
+
+    it('should hash password before storing', async () => {
+      const mockJwtSign = vi.fn().mockReturnValue('jwt_token');
+      const email = 'test@example.com';
+      const password = 'mypassword';
+      const username = 'testuser';
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(null);
+      vi.mocked(mockUserRepo.findByUsername).mockResolvedValue(null);
+      vi.mocked(mockUserRepo.create).mockResolvedValue({
+        id: 'user-1',
+        username,
+        email,
+        avatarUrl: null,
+        githubId: null,
+        githubAccessToken: null,
+        password: 'bcrypt_hashed_mypassword',
+        role: Role.MEMBER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await service.registerWithEmail(email, password, username, mockJwtSign);
+
+      expect(passwordUtils.hashPassword).toHaveBeenCalledWith(password);
+      const createCall = vi.mocked(mockUserRepo.create).mock.calls[0][0];
+      expect(createCall).toHaveProperty('password', 'bcrypt_hashed_mypassword');
+    });
+  });
+
+  describe('authenticateWithEmail', () => {
+    it('should authenticate user with valid credentials', async () => {
+      const mockJwtSign = vi.fn().mockReturnValue('jwt_token');
+      const email = 'test@example.com';
+      const password = 'password123';
+
+      const userWithEmail = {
+        ...mockUser,
+        email,
+        password: 'bcrypt_hashed_password123',
+      };
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(userWithEmail);
+      vi.mocked(passwordUtils.verifyPassword).mockResolvedValue(true);
+      vi.mocked(passwordUtils.isLegacyHash).mockReturnValue(false);
+
+      const result = await service.authenticateWithEmail(email, password, mockJwtSign);
+
+      expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(email);
+      expect(passwordUtils.verifyPassword).toHaveBeenCalledWith(password, userWithEmail.password);
+      expect(result).toHaveProperty('user');
+      expect(result).toHaveProperty('accessToken', 'jwt_token');
+      expect(result).toHaveProperty('refreshToken', 'refresh_token_user-1');
+    });
+
+    it('should reject when email does not exist', async () => {
+      const mockJwtSign = vi.fn();
+      const email = 'nonexistent@example.com';
+      const password = 'password123';
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(null);
+
+      await expect(service.authenticateWithEmail(email, password, mockJwtSign)).rejects.toThrow(
+        'Invalid email or password',
+      );
+    });
+
+    it('should reject when password is incorrect', async () => {
+      const mockJwtSign = vi.fn();
+      const email = 'test@example.com';
+      const password = 'wrongpassword';
+
+      const userWithEmail = {
+        ...mockUser,
+        email,
+        password: 'bcrypt_hashed_correctpassword',
+      };
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(userWithEmail);
+      vi.mocked(passwordUtils.verifyPassword).mockResolvedValue(false);
+      vi.mocked(passwordUtils.isLegacyHash).mockReturnValue(false);
+
+      await expect(service.authenticateWithEmail(email, password, mockJwtSign)).rejects.toThrow(
+        'Invalid email or password',
+      );
+    });
+
+    it('should migrate legacy password on successful login', async () => {
+      const mockJwtSign = vi.fn().mockReturnValue('jwt_token');
+      const email = 'test@example.com';
+      const password = 'password123';
+      const legacyHash = crypto.createHash('sha256').update(password).digest('hex');
+
+      const userWithEmail = {
+        ...mockUser,
+        email,
+        password: legacyHash,
+      };
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(userWithEmail);
+      vi.mocked(passwordUtils.isLegacyHash).mockReturnValue(true);
+
+      await service.authenticateWithEmail(email, password, mockJwtSign);
+
+      expect(passwordUtils.hashPassword).toHaveBeenCalledWith(password);
+      expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
+        password: 'bcrypt_hashed_password123',
+      });
+    });
+
+    it('should reject when user has no password', async () => {
+      const mockJwtSign = vi.fn();
+      const email = 'test@example.com';
+      const password = 'password123';
+
+      const userWithEmail = {
+        ...mockUser,
+        email,
+        password: null,
+      };
+
+      vi.mocked(mockUserRepo.findByEmail).mockResolvedValue(userWithEmail);
+
+      await expect(service.authenticateWithEmail(email, password, mockJwtSign)).rejects.toThrow(
+        'Invalid email or password',
+      );
+    });
+  });
+
+  describe('linkGitHubAccount', () => {
+    it('should successfully link GitHub account', async () => {
+      const userId = 'user-1';
+      const code = 'github_auth_code';
+      const accessToken = 'github_access_token';
+
+      const userWithoutGithub = {
+        id: userId,
+        username: 'testuser',
+        email: 'test@example.com',
+        password: 'hashed_password',
+        avatarUrl: null,
+        githubId: null,
+        githubAccessToken: null,
+        role: Role.MEMBER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(userWithoutGithub);
+      vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(null);
+      vi.mocked(axios.post).mockResolvedValue({
+        data: { access_token: accessToken },
+      });
+      vi.mocked(axios.get).mockResolvedValue({
+        data: mockGitHubUser,
+      });
+
+      const result = await service.linkGitHubAccount(userId, code);
+
+      expect(result.success).toBe(true);
+      expect(mockUserRepo.update).toHaveBeenCalledWith(userId, {
+        githubId: '123456',
+        githubAccessToken: `encrypted_${accessToken}`,
+        avatarUrl: mockGitHubUser.avatar_url,
+      });
+    });
+
+    it('should reject when user not found', async () => {
+      const userId = 'nonexistent';
+      const code = 'github_auth_code';
+
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(null);
+
+      await expect(service.linkGitHubAccount(userId, code)).rejects.toThrow('User not found');
+    });
+
+    it('should reject when GitHub account already linked to this user', async () => {
+      const userId = 'user-1';
+      const code = 'github_auth_code';
+
+      const userWithGithub = {
+        ...mockUser,
+        email: 'test@example.com',
+      };
+
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(userWithGithub);
+
+      await expect(service.linkGitHubAccount(userId, code)).rejects.toThrow(
+        'GitHub account already linked',
+      );
+    });
+
+    it('should reject when GitHub account already linked to another user', async () => {
+      const userId = 'user-1';
+      const code = 'github_auth_code';
+      const accessToken = 'github_access_token';
+
+      const userWithoutGithub = {
+        id: userId,
+        username: 'testuser',
+        email: 'test@example.com',
+        password: 'hashed_password',
+        avatarUrl: null,
+        githubId: null,
+        githubAccessToken: null,
+        role: Role.MEMBER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const otherUserWithGithub = {
+        id: 'other-user',
+        username: 'otheruser',
+        email: 'other@example.com',
+        password: null,
+        avatarUrl: null,
+        githubId: '123456',
+        githubAccessToken: 'encrypted_token',
+        role: Role.MEMBER,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(userWithoutGithub);
+      vi.mocked(mockUserRepo.findByGithubId).mockResolvedValue(otherUserWithGithub);
+      vi.mocked(axios.post).mockResolvedValue({
+        data: { access_token: accessToken },
+      });
+      vi.mocked(axios.get).mockResolvedValue({
+        data: mockGitHubUser,
+      });
+
+      await expect(service.linkGitHubAccount(userId, code)).rejects.toThrow(
+        'This GitHub account is already linked to another user',
+      );
     });
   });
 });

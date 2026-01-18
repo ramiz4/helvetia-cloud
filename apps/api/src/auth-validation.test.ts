@@ -92,7 +92,7 @@ describe('Auth Route Validation', () => {
       expect(response.statusCode).not.toBe(400);
     });
 
-    it('should reject login if email is provided instead of username', async () => {
+    it('should accept login with email and password', async () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/v1/auth/login',
@@ -102,13 +102,10 @@ describe('Auth Route Validation', () => {
         },
       });
 
-      // Should be 400 because 'username' is required and 'email' is not in the schema
-      expect(response.statusCode).toBe(400);
-      const json = response.json();
-      expect(json.success).toBe(false);
-      expect(json.error.code).toBe('VALIDATION_FAILED');
-      // Verify that 'username' is the missing property
-      expect(JSON.stringify(json.error.details)).toContain('username');
+      // Schema validation should pass (not 400)
+      // This test verifies that the schema validation accepts email/password format
+      // We expect either 401 (authentication failure) or 500 (service error), but NOT 400 (validation error)
+      expect(response.statusCode).not.toBe(400);
     });
 
     it('should reject login if password is missing', async () => {
@@ -123,21 +120,14 @@ describe('Auth Route Validation', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should reject login if username is missing', async () => {
+    it('should reject login if both username and password are missing', async () => {
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/v1/auth/login',
-        payload: {
-          password: 'password123',
-        },
+        payload: {},
       });
 
       expect(response.statusCode).toBe(400);
-      const json = response.json();
-      expect(json.success).toBe(false);
-      expect(json.error.code).toBe('VALIDATION_FAILED');
-      // Verify that 'username' is the missing property
-      expect(JSON.stringify(json.error.details)).toContain('username');
     });
   });
 });

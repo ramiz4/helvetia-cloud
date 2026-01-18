@@ -73,8 +73,76 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   /**
+   * POST /auth/register
+   * Register with email and password
+   */
+  fastify.post(
+    '/auth/register',
+    {
+      config: { rateLimit: authRateLimitConfig },
+      bodyLimit: BODY_LIMIT_SMALL,
+      schema: {
+        tags: ['Authentication'],
+        summary: 'Register with email and password',
+        description: 'Create a new account with email, password, and username. Returns JWT tokens.',
+        body: {
+          type: 'object',
+          required: ['email', 'password', 'username'],
+          properties: {
+            email: {
+              type: 'string',
+              format: 'email',
+              description: 'User email address',
+              example: 'user@example.com',
+            },
+            password: {
+              type: 'string',
+              format: 'password',
+              description: 'User password (min 8 characters)',
+              example: 'SecurePass123!',
+              minLength: 8,
+            },
+            username: {
+              type: 'string',
+              description: 'Username',
+              example: 'johndoe',
+              minLength: 3,
+              maxLength: 30,
+            },
+          },
+        },
+        response: {
+          200: {
+            description: 'Registration successful',
+            type: 'object',
+            properties: {
+              accessToken: {
+                type: 'string',
+                description: 'JWT access token (expires in 15 minutes)',
+              },
+              refreshToken: {
+                type: 'string',
+                description: 'Refresh token (expires in 7 days)',
+              },
+              user: {
+                type: 'object',
+              },
+            },
+          },
+          400: {
+            description: 'Bad request - validation error or user already exists',
+            type: 'object',
+          },
+        },
+        security: [], // Public endpoint
+      },
+    },
+    (request, reply) => authController.register(request, reply),
+  );
+
+  /**
    * POST /auth/login
-   * Login with username and password (local admin)
+   * Login with email/username and password
    */
   fastify.post(
     '/auth/login',
@@ -84,11 +152,17 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       schema: {
         tags: ['Authentication'],
         summary: 'Login with credentials',
-        description: 'Authenticate with username and password. Returns JWT tokens.',
+        description:
+          'Authenticate with email or username and password. If email is provided, it takes priority over username. Returns JWT tokens.',
         body: {
           type: 'object',
-          required: ['username', 'password'],
           properties: {
+            email: {
+              type: 'string',
+              format: 'email',
+              description: 'User email address',
+              example: 'user@example.com',
+            },
             username: {
               type: 'string',
               description: 'Username',
@@ -101,6 +175,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
               example: 'SecurePass123!',
             },
           },
+          anyOf: [{ required: ['email', 'password'] }, { required: ['username', 'password'] }],
         },
         response: {
           200: {
@@ -226,26 +301,88 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   /**
+   * POST /auth/github/link
+   * Link GitHub account to existing user
+   */
+  fastify.post(
+    '/auth/github/link',
+    {
+      preHandler: authenticate,
+      config: { rateLimit: authRateLimitConfig },
+      bodyLimit: BODY_LIMIT_SMALL,
+      schema: {
+        tags: ['Authentication'],
+        summary: 'Link GitHub account',
+        description: 'Connect GitHub account to existing email/password user account.',
+        body: {
+          type: 'object',
+          required: ['code'],
+          properties: {
+            code: {
+              type: 'string',
+              description: 'GitHub OAuth authorization code',
+              example: 'abc123def456',
+            },
+          },
+        },
+        response: {
+          200: {
+            description: 'GitHub account linked successfully',
+            type: 'object',
+            properties: {
+              success: {
+                type: 'boolean',
+              },
+              message: {
+                type: 'string',
+                example: 'GitHub account linked successfully',
+              },
+            },
+          },
+          400: {
+            description: 'Bad request - invalid code or account already linked',
+            type: 'object',
+          },
+          401: {
+            description: 'Unauthorized - missing or invalid token',
+            type: 'object',
+          },
+        },
+      },
+    },
+    (request, reply) => authController.linkGitHub(request, reply),
+  );
+
+  /**
    * DELETE /auth/github/disconnect
    * Disconnect GitHub account
    */
   fastify.delete(
     '/auth/github/disconnect',
     {
+      preHandler: authenticate,
       schema: {
         tags: ['Authentication'],
         summary: 'Disconnect GitHub account',
-        description: 'Remove GitHub account connection from user profile.',
+        description:
+          'Remove GitHub account connection from user profile. Requires email/password auth to be set up.',
         response: {
           200: {
             description: 'GitHub account disconnected',
             type: 'object',
             properties: {
+              success: {
+                type: 'boolean',
+              },
               message: {
                 type: 'string',
                 example: 'GitHub account disconnected successfully',
               },
             },
+          },
+          400: {
+            description: 'Bad request - cannot disconnect without email/password auth',
+            type: 'object',
           },
           401: {
             description: 'Unauthorized',

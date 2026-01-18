@@ -5,8 +5,9 @@ import { Role } from 'database';
  */
 export interface User {
   id: string;
-  githubId: string;
+  githubId: string | null;
   username: string;
+  email: string | null;
   avatarUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -20,8 +21,9 @@ export interface User {
  */
 export interface UserCreateInput {
   id?: string;
-  githubId: string;
+  githubId?: string | null;
   username: string;
+  email?: string | null;
   avatarUrl?: string | null;
   githubAccessToken?: string | null;
   role?: Role;
@@ -32,8 +34,9 @@ export interface UserCreateInput {
  * User update input
  */
 export interface UserUpdateInput {
-  githubId?: string;
+  githubId?: string | null;
   username?: string;
+  email?: string | null;
   avatarUrl?: string | null;
   githubAccessToken?: string | null;
   role?: Role;
@@ -46,6 +49,7 @@ export interface UserUpdateInput {
 export interface UserWhereUniqueInput {
   id?: string;
   githubId?: string;
+  email?: string;
 }
 
 /**
@@ -66,6 +70,11 @@ export interface IUserRepository {
    * Find a user by username
    */
   findByUsername(username: string): Promise<User | null>;
+
+  /**
+   * Find a user by email
+   */
+  findByEmail(email: string): Promise<User | null>;
 
   /**
    * Create a new user

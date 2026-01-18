@@ -10,8 +10,10 @@ datasource db {
 
 model User {
   id                String         @id @default(uuid())
-  githubId          String         @unique
+  githubId          String?        @unique
   username          String
+  /// User email address for email/password authentication
+  email             String?        @unique
   avatarUrl         String?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -27,6 +29,8 @@ model User {
   subscriptions     Subscription[]
   termsAcceptances         UserTermsAcceptance[]
   privacyPolicyAcceptances UserPrivacyPolicyAcceptance[]
+
+  @@index([email])
 }
 
 enum Role {

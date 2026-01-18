@@ -1,18 +1,27 @@
 'use client';
 
-import { CheckCircle2, Lock, Shield, Zap } from 'lucide-react';
+import { CheckCircle2, Lock, Mail, Shield, User, Zap } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
-import { GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import toast from 'react-hot-toast';
+import { API_BASE_URL, GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
 
 function LoginContent() {
   const { t } = useLanguage();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get('error');
   const error = errorParam === 'code_expired' ? t.login.codeExpired : errorParam;
+
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGitHubLogin = () => {
     if (!GITHUB_CLIENT_ID) {
@@ -24,6 +33,55 @@ function LoginContent() {
     const githubUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=user,repo,read:org,read:packages`;
 
     window.location.href = githubUrl;
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (mode === 'register') {
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+      if (password.length < 8) {
+        toast.error('Password must be at least 8 characters');
+        return;
+      }
+      if (!username || username.length < 3) {
+        toast.error('Username must be at least 3 characters');
+        return;
+      }
+    }
+
+    setIsLoading(true);
+
+    try {
+      const endpoint = mode === 'register' ? '/auth/register' : '/auth/login';
+      const body = mode === 'register' ? { email, password, username } : { email, password };
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        toast.success(mode === 'register' ? 'Account created successfully!' : 'Welcome back!');
+        router.push('/services');
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || `${mode === 'register' ? 'Registration' : 'Login'} failed`);
+      }
+    } catch (err) {
+      console.error('Auth error:', err);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const benefits = [
@@ -159,6 +217,149 @@ function LoginContent() {
                 </div>
               </div>
             )}
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+              {mode === 'register' && (
+                <div>
+                  <label
+                    htmlFor="username"
+                    className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                  >
+                    Username
+                  </label>
+                  <div className="relative">
+                    <User
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={20}
+                    />
+                    <input
+                      id="username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="johndoe"
+                      required={mode === 'register'}
+                      minLength={3}
+                      className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                >
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={20}
+                  />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={20}
+                  />
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={8}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              {mode === 'register' && (
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                  >
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Lock
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={20}
+                    />
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required={mode === 'register'}
+                      minLength={8}
+                      className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 disabled:bg-indigo-300 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {mode === 'register' ? 'Creating Account...' : 'Signing In...'}
+                  </>
+                ) : (
+                  <>{mode === 'register' ? 'Create Account' : 'Sign In'}</>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                className="w-full text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 font-semibold transition-colors"
+              >
+                {mode === 'login'
+                  ? "Don't have an account? Sign up"
+                  : 'Already have an account? Sign in'}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200 dark:border-white/10" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white dark:bg-slate-900/50 text-slate-500 font-semibold">
+                  Or continue with
+                </span>
+              </div>
+            </div>
 
             {/* GitHub login button */}
             <div className="space-y-4">
