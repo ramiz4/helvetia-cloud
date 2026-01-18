@@ -201,7 +201,7 @@ describe('PrivacyPolicyService', () => {
 
       await service.initializePrivacyPolicyFromFiles('1.0.0', new Date());
 
-      const languages = ['en', 'de', 'fr', 'it'];
+      const languages = ['en', 'de', 'fr', 'it', 'gsw'];
       expect(mockPrivacyRepo.createVersion).toHaveBeenCalledTimes(languages.length);
     });
   });
