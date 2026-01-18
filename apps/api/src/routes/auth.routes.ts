@@ -87,13 +87,12 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         description: 'Authenticate with email and password. Returns JWT tokens.',
         body: {
           type: 'object',
-          required: ['email', 'password'],
+          required: ['username', 'password'],
           properties: {
-            email: {
+            username: {
               type: 'string',
-              format: 'email',
-              description: 'User email address',
-              example: 'admin@example.com',
+              description: 'Username',
+              example: 'admin',
             },
             password: {
               type: 'string',
