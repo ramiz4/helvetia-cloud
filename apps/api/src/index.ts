@@ -7,6 +7,7 @@ import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
 import { resolve, TOKENS } from './di';
 import { fastify } from './server';
 import { InitializationService } from './services/InitializationService';
+import { scheduleSubscriptionChecks } from './services/SubscriptionCheckScheduler';
 import { statusReconciliationService } from './utils/statusReconciliation';
 
 const start = async () => {
@@ -20,6 +21,10 @@ const start = async () => {
 
     // Start status reconciliation service
     statusReconciliationService.start(STATUS_RECONCILIATION_INTERVAL_MS);
+
+    // Schedule subscription checks
+    await scheduleSubscriptionChecks();
+    fastify.log.info('Subscription check scheduler initialized');
   } catch (err) {
     fastify.log.error(err);
 
@@ -52,6 +57,10 @@ const shutdown = async (signal: string) => {
   try {
     // Stop status reconciliation service
     statusReconciliationService.stop();
+
+    // Close subscription scheduler
+    const { closeSubscriptionScheduler } = await import('./services/SubscriptionCheckScheduler.js');
+    await closeSubscriptionScheduler();
 
     // Close Fastify server (waits for in-flight requests to complete)
     await fastify.close();

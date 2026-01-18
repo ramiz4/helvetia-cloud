@@ -2,12 +2,12 @@ import { prisma } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildServer } from './server';
 
-// Skip these integration tests if DATABASE_URL is not set
+// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
 // These tests require a real database to run
-const shouldSkip = !process.env.DATABASE_URL;
-const describeIf = shouldSkip ? describe.skip : describe;
+// Set RUN_INTEGRATION_TESTS=1 to enable these tests
+const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
 
-describeIf('Deployment Flow Integration Tests', () => {
+describe.skipIf(shouldSkip)('Deployment Flow Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let testServiceId: string;
@@ -51,7 +51,7 @@ describeIf('Deployment Flow Integration Tests', () => {
       await prisma.service.deleteMany({ where: { userId: testUserId } }).catch(() => {});
       await prisma.user.deleteMany({ where: { id: testUserId } }).catch(() => {});
     }
-    await app.close();
+    if (app) await app.close();
   });
 
   beforeEach(async () => {

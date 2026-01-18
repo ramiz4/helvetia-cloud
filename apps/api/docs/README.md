@@ -15,6 +15,7 @@ This directory contains API-specific documentation for the Helvetia Cloud API se
 - **[API_CHANGELOG.md](./API_CHANGELOG.md)** - Version history and breaking changes
 - **[ERROR_CODES.md](./ERROR_CODES.md)** - Comprehensive error code reference
 - **[REQUEST_TRACING.md](./REQUEST_TRACING.md)** - Request ID tracing across services
+- **[TESTING.md](./TESTING.md)** ⭐ - Comprehensive testing guide with mocking patterns and best practices
 
 ### Configuration & Limits
 
@@ -39,6 +40,10 @@ This directory contains API-specific documentation for the Helvetia Cloud API se
 - **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - API implementation details
 - **[TYPE_PATTERNS.md](./TYPE_PATTERNS.md)** - TypeScript patterns and type safety
 - **[TYPE_SAFETY_IMPROVEMENTS.md](./TYPE_SAFETY_IMPROVEMENTS.md)** - Type safety improvements
+
+### Testing
+
+- **[BILLING_TESTS.md](./BILLING_TESTS.md)** - Billing test infrastructure, mock Stripe client, test fixtures, and examples
 
 ## API Endpoints Overview
 
