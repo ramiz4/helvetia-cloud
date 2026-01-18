@@ -67,254 +67,48 @@ The platform consists of three main frontend applications:
 
 ### 1. Prerequisites
 
-- Docker & Docker Compose
-- Node.js (v20+) & [pnpm](https://pnpm.io/)
+- **Docker** & **Docker Compose**
+- **Node.js 20+** & **pnpm**
 
-### 2. Setup Environment
-
-Clone the repository and copy the example environment variables:
+### 2. Rapid Setup
 
 ```bash
+# 1. Clone & Setup Env
 cp .env.example .env
-```
 
-#### Environment Variable Validation
-
-Helvetia Cloud uses [Zod](https://github.com/colinhacks/zod) to validate all environment variables on startup, ensuring that your configuration is correct before the application starts. This prevents runtime errors caused by missing or invalid environment variables.
-
-**How it works:**
-
-- **API, Worker, and Dashboard** each validate their respective environment variables when they start
-- **Clear error messages** are displayed if required variables are missing or invalid
-- **Type safety** is provided through TypeScript types derived from the validation schema
-- **Automatic defaults** are applied for optional variables
-
-**If validation fails:**
-
-The application will display a clear error message like this:
-
-```
-❌ Invalid environment variables:
-  - DATABASE_URL: Invalid input: expected string, received undefined
-  - REDIS_URL: Invalid input: expected string, received undefined
-  - JWT_SECRET: Invalid input: expected string, received undefined
-
-Please check your .env file and ensure all required variables are set.
-Refer to .env.example for the expected format.
-```
-
-**Testing environment validation:**
-
-You can run the validation tests to ensure the schemas are working correctly:
-
-```bash
-# Test API environment validation
-pnpm --filter api test src/config/env.test.ts
-
-# Test Worker environment validation
-pnpm --filter worker test src/config/env.test.ts
-
-# Test Dashboard environment validation
-pnpm --filter dashboard test src/lib/env.test.ts
-```
-
-#### Required Configuration
-
-**GitHub OAuth** (Required):
-
-- `GITHUB_CLIENT_ID`: Your GitHub OAuth App Client ID
-- `GITHUB_CLIENT_SECRET`: Your GitHub OAuth App Client Secret
-
-**Core Services** (Required):
-
-- `DATABASE_URL`: PostgreSQL connection string
-- `REDIS_URL`: Redis connection string
-- `JWT_SECRET`: Secret key for JWT token signing
-- `ENCRYPTION_KEY`: A 32-character key for encrypting sensitive data (e.g. GitHub tokens)
-- `ENCRYPTION_SALT`: A random hex string used as a salt for encryption key derivation
-- `PLATFORM_DOMAIN`: Your platform's domain (e.g., `helvetia.cloud`)
-- `APP_BASE_URL`: The base URL of the application, used for CORS configuration (e.g., `http://localhost:3000`)
-- `ALLOWED_ORIGINS`: Comma-separated list of allowed origins for CORS (e.g., `http://localhost:3000,https://app.example.com`). Falls back to `APP_BASE_URL` if not set.
-- `NODE_ENV`: The environment mode (e.g., `development` or `production`)
-
-  **Dashboard Configuration** (Next.js):
-
-- `NEXT_PUBLIC_API_URL`: The URL of the API Service (e.g., `http://localhost:3001`)
-- `NEXT_PUBLIC_WS_URL`: The WebSocket URL for real-time logs (e.g., `ws://localhost:3001`)
-- `NEXT_PUBLIC_APP_URL`: The URL of the Dashboard itself (e.g., `http://localhost:3000`)
-
-#### Rate Limiting Configuration (Optional)
-
-The API includes production-ready rate limiting with Redis-backed distributed storage. Configure these values to adjust rate limits based on your deployment needs:
-
-**Global Rate Limiting**:
-
-- `RATE_LIMIT_MAX`: Maximum requests per time window (default: `100`)
-- `RATE_LIMIT_WINDOW`: Time window for rate limiting (default: `1 minute`)
-
-**Authentication Endpoint** (stricter to prevent brute force):
-
-- `AUTH_RATE_LIMIT_MAX`: Maximum auth requests per time window (default: `10`)
-- `AUTH_RATE_LIMIT_WINDOW`: Time window for auth rate limiting (default: `1 minute`)
-
-**WebSocket Log Streaming** (prevents connection abuse):
-
-- `WS_RATE_LIMIT_MAX`: Maximum WebSocket connections per time window (default: `10`)
-- `WS_RATE_LIMIT_WINDOW`: Time window for WebSocket rate limiting (default: `1 minute`)
-
-> **Note**: Health check endpoints (`/health`) are automatically excluded from rate limiting for monitoring purposes.
-
-#### Container & Resource Configuration (Optional)
-
-Configure resource limits and operational parameters for deployed containers:
-
-**Container Resource Limits**:
-
-- `CONTAINER_MEMORY_LIMIT_MB`: Memory limit per container in MB (default: `512`)
-- `CONTAINER_CPU_CORES`: CPU cores per container (default: `1.0`)
-
-**Service Configuration**:
-
-- `MAX_LOG_SIZE_CHARS`: Maximum log size stored in database (default: `50000`)
-- `METRICS_UPDATE_INTERVAL_MS`: Interval for metrics updates in milliseconds (default: `5000` = 5 seconds)
-- `STATUS_RECONCILIATION_INTERVAL_MS`: Interval for status reconciliation in milliseconds (default: `30000` = 30 seconds)
-- `CONNECTION_TIMEOUT_MS`: SSE connection timeout in milliseconds (default: `1800000` = 30 minutes)
-- `WORKER_HEALTH_PORT`: Worker health check server port (default: `3002`)
-
-**Distributed Lock Configuration**:
-
-- `STATUS_LOCK_TTL_MS`: Default lock TTL for status updates in milliseconds (default: `10000` = 10 seconds)
-- `STATUS_RECONCILIATION_LOCK_TTL_MS`: Lock TTL for status reconciliation in milliseconds (default: `5000` = 5 seconds)
-- `LOCK_RETRY_DELAY_MS`: Retry delay between lock acquisition attempts in milliseconds (default: `200`)
-- `LOCK_RETRY_JITTER_MS`: Random jitter added to retry delay in milliseconds (default: `100`)
-
-**Body Size Limits**:
-
-- `BODY_LIMIT_GLOBAL_MB`: Global body size limit in MB (default: `10`)
-- `BODY_LIMIT_STANDARD_MB`: Standard body size limit in MB (default: `1`)
-- `BODY_LIMIT_SMALL_KB`: Small body size limit in KB (default: `100`)
-
-> **Note**: All default values are production-ready. Only adjust these if you have specific deployment requirements.
-
-#### GitHub Webhook Configuration
-
-To enable automated deployments via GitHub webhooks:
-
-1. **Generate a webhook secret** (or use any strong random string):
-
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-   ```
-
-2. **Add to your `.env` file**:
-
-   ```env
-   GITHUB_WEBHOOK_SECRET=your_generated_secret_here
-   ```
-
-3. **Configure in GitHub Repository**:
-   - Go to your repository settings
-   - Navigate to **Settings** > **Webhooks** > **Add webhook**
-   - Set **Payload URL** to: `https://your-domain.com/webhooks/github`
-   - Set **Content type** to: `application/json`
-   - Set **Secret** to: The same value as your `GITHUB_WEBHOOK_SECRET`
-   - Select events: **Push events** and **Pull requests**
-   - Click **Add webhook**
-
-> **Security Note**: The webhook endpoint verifies GitHub signatures using HMAC SHA-256. Requests without valid signatures are rejected with a 401 status code. Always keep your webhook secret secure and never commit it to version control.
-
-### 3. Launch Infrastructure
-
-Start the core services (Database, Redis, Docker Socket Proxy, and Traefik):
-
-```bash
+# 2. Start Infrastructure (Postgres, Redis, Traefik)
 docker-compose up -d postgres redis docker-socket-proxy traefik
-```
 
-> **Security Note**: The Docker Socket Proxy provides a security layer between services and the Docker daemon, restricting API access with ACLs. See [docs/DOCKER_SECURITY_HARDENING.md](./docs/DOCKER_SECURITY_HARDENING.md) for details.
-
-### 4. Initialize & Start
-
-Install dependencies, prepare the database, and run in development mode:
-
-```bash
+# 3. Install & Run
 pnpm install
 pnpm migrate:dev
 pnpm dev
 ```
 
-Or start specific services individually:
+### 3. Critical Configuration
 
-```bash
-pnpm dev:dashboard  # Start dashboard on http://localhost:3000
-pnpm dev:admin      # Start admin panel on http://localhost:3002
-pnpm dev:api        # Start API on http://localhost:3001
-pnpm dev:worker     # Start background worker
-```
+Update `.env` with these essentials:
 
-### 5. Access the Platform
+- **GitHub OAuth**: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` (for auth and deployments)
+- **Secrets**: `JWT_SECRET`, `ENCRYPTION_KEY` (32-char), `GITHUB_WEBHOOK_SECRET`
+- **Domain**: `PLATFORM_DOMAIN` (default: `localhost`)
 
-- **Dashboard**: [http://localhost:3000](http://localhost:3000) - Main user interface
-- **Admin Panel**: [http://localhost:3002](http://localhost:3002) - Administrative control panel (requires admin role)
-- **API Engine**: [http://localhost:3001](http://localhost:3001)
-  - **API v1 Endpoints**: `http://localhost:3001/api/v1/*`
-  - See [API Versioning Strategy](./apps/api/docs/API_VERSIONING.md) for details
-- **Worker Health Check**: [http://localhost:3002/health](http://localhost:3002/health)
-- **Observability (Grafana)**: [http://localhost:3010](http://localhost:3010) (`admin`/`admin`)
-- **Traefik Dashboard**: [http://localhost:8090](http://localhost:8090)
+_See `.env.example` for all available configuration options including Rate Limiting and Resource Limits._
 
-### 6. 🌍 Deploying to Production
+### 4. Services Access
 
-For deploying to a live VPS (e.g., DigitalOcean, AWS, Hetzner), we provide a comprehensive **Deployment Guide** and an automated setup generator.
+| Service       | URL                                     | Description               |
+| ------------- | --------------------------------------- | ------------------------- |
+| **Dashboard** | [localhost:3000](http://localhost:3000) | Main UI (Port 3000)       |
+| **API**       | [localhost:3001](http://localhost:3001) | REST API (Port 3001)      |
+| **Admin**     | [localhost:3002](http://localhost:3002) | Admin Panel (Port 3002)   |
+| **Traefik**   | [localhost:8090](http://localhost:8090) | Router Dashboard          |
+| **Grafana**   | [localhost:3010](http://localhost:3010) | Metrics (`admin`/`admin`) |
 
-👉 **[Read the Deployment Guide](./docs/DEPLOYMENT.md)**
+### Production & Deployment
 
-The guide covers:
-
-- VPS Prerequisites
-- Using the **Admin Server Setup** generator
-- Manual configuration steps
-- Architecture details (Traefik, SSL, etc.)
-
-### 7. Running Locally in Production Mode
-
-To run the optimized, built version of the application:
-
-1.  **Build the application**:
-
-    ```bash
-    pnpm build
-    ```
-
-2.  **Start the production server**:
-    ```bash
-    pnpm start
-    ```
-    This will start all services (`api`, `worker`, `dashboard`) using their built artifacts in `dist/` folders. It ensures better performance and mimics a real production environment.
-
-#### Graceful Shutdown
-
-All services implement graceful shutdown to handle termination signals properly:
-
-- **API Service**: Handles `SIGTERM`/`SIGINT` signals by:
-  - Stopping status reconciliation service
-  - Waiting for in-flight HTTP requests to complete
-  - Closing all connections (Fastify server, Redis, BullMQ)
-
-- **Worker Service**: Handles `SIGTERM`/`SIGINT` signals by:
-  - Stopping the health check server
-  - Closing BullMQ worker (waits for active jobs to complete)
-  - Closing all connections
-
-To gracefully stop services in production:
-
-```bash
-# Send SIGTERM signal (Docker, systemd, and most orchestrators use this)
-kill -TERM <pid>
-
-# Or use SIGINT (Ctrl+C in terminal)
-kill -INT <pid>
-```
+- **Local Production Build**: Run `pnpm build && pnpm start` to test the optimized build.
+- **Deploy to VPS**: Read our [Deployment Guide](./docs/DEPLOYMENT.md) for DigitalOcean/AWS setup.
 
 ---
 
