@@ -63,7 +63,7 @@ Tests the retrieval and aggregation of usage data for a specific service.
 - Null safety (quantity defaults to 0)
 - Error handling
 
-### 3. getAggregatedUsage Method Tests (10 tests)
+### 3. getAggregatedUsage Method Tests (12 tests)
 
 Tests the aggregation of usage across multiple services for a user or organization.
 
@@ -77,17 +77,21 @@ Tests the aggregation of usage across multiple services for a user or organizati
 - ✅ Correctly integrate cost calculation
 - ✅ Throw error when service query fails
 - ✅ Throw error when usage aggregation fails
+- ✅ Handle both userId and organizationId provided simultaneously
+- ✅ Query all services when neither userId nor organizationId provided
 
 #### Key Aspects Tested:
 
 - User-based aggregation
 - Organization-based aggregation (with nested environment/project relation)
+- Combined user and organization filtering
+- No filter scenario (all services)
 - Empty service list handling
 - Multiple service aggregation
 - Cost calculation integration
 - Error handling at different stages
 
-### 4. calculateCost Method Tests (12 tests)
+### 4. calculateCost Method Tests (11 tests)
 
 Tests the cost calculation logic for different usage metrics.
 
@@ -102,15 +106,14 @@ Tests the cost calculation logic for different usage metrics.
 - ✅ Handle fractional quantities
 - ✅ Handle large quantities
 - ✅ Round down correctly
-- ✅ Round up correctly
+- ✅ Round down correctly for midpoint values
 - ✅ Handle very small fractional costs
-- ✅ Handle negative quantities (edge case)
 
 #### Key Aspects Tested:
 
 - All pricing tiers for each metric type
 - Rounding behavior (Math.round to 2 decimal places)
-- Edge cases: zero, negative, fractional, and large values
+- Edge cases: zero, fractional, and large values
 - Precision handling for small decimal values
 
 ## Pricing Constants Tested
@@ -134,13 +137,13 @@ STORAGE_GB: 0.023; // $0.023 per GB per month
 
 ```bash
 # Run all tests for UsageTrackingService
-pnpm --filter api test UsageTrackingService.test.ts
+pnpm --filter api test -- UsageTrackingService
 
 # Run with coverage
-pnpm --filter api test:coverage UsageTrackingService.test.ts
+pnpm --filter api test:coverage -- UsageTrackingService
 
 # Run in watch mode
-pnpm --filter api test:watch UsageTrackingService.test.ts
+pnpm --filter api test:watch -- UsageTrackingService
 ```
 
 ### Test Dependencies

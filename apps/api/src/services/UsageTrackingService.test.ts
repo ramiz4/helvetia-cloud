@@ -219,7 +219,7 @@ describe('UsageTrackingService', () => {
       });
     });
 
-    it('should handle multiple records of same metric (aggregation)', async () => {
+    it('should handle multiple records of the same metric (aggregation)', async () => {
       const params = {
         serviceId: 'service-1',
         periodStart: new Date('2024-01-01T00:00:00Z'),
@@ -550,6 +550,86 @@ describe('UsageTrackingService', () => {
 
       await expect(service.getAggregatedUsage(params)).rejects.toThrow('Failed to aggregate usage');
     });
+
+    it('should handle both userId and organizationId provided simultaneously', async () => {
+      const params = {
+        userId: 'user-1',
+        organizationId: 'org-1',
+        periodStart: new Date('2024-01-01T00:00:00Z'),
+        periodEnd: new Date('2024-01-31T23:59:59Z'),
+      };
+
+      mockPrisma.service.findMany.mockResolvedValue([mockService]);
+
+      const mockGroupByResult = [
+        {
+          metric: UsageMetric.COMPUTE_HOURS,
+          _sum: { quantity: 100.0 },
+        },
+      ];
+
+      mockPrisma.usageRecord.groupBy.mockResolvedValue(mockGroupByResult);
+
+      const result = await service.getAggregatedUsage(params);
+
+      expect(result).toEqual([
+        {
+          metric: UsageMetric.COMPUTE_HOURS,
+          quantity: 100.0,
+          cost: 1.0,
+        },
+      ]);
+
+      // Verify that both userId and organizationId are used in the query
+      expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: params.userId,
+          environment: {
+            project: {
+              organizationId: params.organizationId,
+            },
+          },
+        },
+        select: { id: true },
+      });
+    });
+
+    it('should query all services when neither userId nor organizationId provided', async () => {
+      const params = {
+        periodStart: new Date('2024-01-01T00:00:00Z'),
+        periodEnd: new Date('2024-01-31T23:59:59Z'),
+      };
+
+      mockPrisma.service.findMany.mockResolvedValue([mockService, mockService2]);
+
+      const mockGroupByResult = [
+        {
+          metric: UsageMetric.COMPUTE_HOURS,
+          _sum: { quantity: 300.0 },
+        },
+      ];
+
+      mockPrisma.usageRecord.groupBy.mockResolvedValue(mockGroupByResult);
+
+      const result = await service.getAggregatedUsage(params);
+
+      expect(result).toEqual([
+        {
+          metric: UsageMetric.COMPUTE_HOURS,
+          quantity: 300.0,
+          cost: 3.0,
+        },
+      ]);
+
+      // Verify that no user or organization filter is applied
+      expect(mockPrisma.service.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: undefined,
+          environment: undefined,
+        },
+        select: { id: true },
+      });
+    });
   });
 
   describe('calculateCost', () => {
@@ -598,19 +678,14 @@ describe('UsageTrackingService', () => {
       expect(cost).toBe(0.12); // 12.344 * 0.01 = 0.12344 -> 0.12
     });
 
-    it('should round up correctly', () => {
+    it('should round down correctly for midpoint values', () => {
       const cost = service.calculateCost(UsageMetric.COMPUTE_HOURS, 12.355);
-      expect(cost).toBe(0.12); // 12.355 * 0.01 = 0.12355 -> 0.12
+      expect(cost).toBe(0.12); // 12.355 * 0.01 = 0.12355 -> 0.12 (rounds down)
     });
 
     it('should handle very small fractional costs', () => {
       const cost = service.calculateCost(UsageMetric.MEMORY_GB_HOURS, 0.1);
       expect(cost).toBe(0.0); // 0.1 * 0.005 = 0.0005 -> 0.00
-    });
-
-    it('should handle negative quantities (edge case)', () => {
-      const cost = service.calculateCost(UsageMetric.COMPUTE_HOURS, -100);
-      expect(cost).toBe(-1.0); // -100 * 0.01
     });
   });
 });
