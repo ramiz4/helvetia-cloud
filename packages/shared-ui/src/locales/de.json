@@ -301,5 +301,28 @@
     "sessionExpired": "Sitzung abgelaufen. Bitte erneut anmelden.",
     "fetchReposFailed": "Fehlschlag beim Abrufen der Repositories",
     "fetchBranchesFailed": "Fehlschlag beim Abrufen der Branches"
+  },
+  "terms": {
+    "pageTitle": "Nutzungsbedingungen",
+    "pageDescription": "Lesen Sie unsere Nutzungsbedingungen und rechtlichen Vereinbarungen",
+    "version": "Version",
+    "effectiveDate": "Gültig ab",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "selectLanguage": "Sprache wählen",
+    "loadingTerms": "Lade Nutzungsbedingungen...",
+    "errorLoading": "Nutzungsbedingungen konnten nicht geladen werden",
+    "tryAgain": "Erneut versuchen",
+    "acceptanceRequired": "Bitte lesen und akzeptieren Sie unsere Nutzungsbedingungen",
+    "mustScrollToAccept": "Bitte scrollen Sie nach unten, um die Schaltfläche Akzeptieren zu aktivieren",
+    "scrollToBottom": "Zum Akzeptieren nach unten scrollen",
+    "iAccept": "Ich akzeptiere die Nutzungsbedingungen",
+    "acceptAndContinue": "Akzeptieren und fortfahren",
+    "decline": "Ablehnen",
+    "cancel": "Abbrechen",
+    "acceptedOn": "Akzeptiert am",
+    "needsAcceptance": "Sie müssen die Nutzungsbedingungen akzeptieren, um Helvetia Cloud weiterhin nutzen zu können",
+    "acceptingTerms": "Akzeptiere Bedingungen...",
+    "acceptSuccess": "Nutzungsbedingungen erfolgreich akzeptiert!",
+    "acceptError": "Fehler beim Akzeptieren der Bedingungen. Bitte versuchen Sie es erneut."
   }
 }

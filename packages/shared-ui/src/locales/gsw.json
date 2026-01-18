@@ -301,5 +301,28 @@
     "sessionExpired": "Sitzig abgloffe. Bitte neu aamälde.",
     "fetchReposFailed": "Repos chönd nöd glade werde",
     "fetchBranchesFailed": "Branches chönd nöd glade werde"
+  },
+  "terms": {
+    "pageTitle": "Nutzigsbedingige",
+    "pageDescription": "Lies üsi Nutzigsbedingige und rächtsverbindlichi Vereinbarige",
+    "version": "Version",
+    "effectiveDate": "Gültig ab",
+    "lastUpdated": "Zletscht aktualisiert",
+    "selectLanguage": "Sproch wähle",
+    "loadingTerms": "Lade Nutzigsbedingige...",
+    "errorLoading": "Nutzigsbedingige chönd nöd glade werde",
+    "tryAgain": "Nomal probiere",
+    "acceptanceRequired": "Bitte lies und akzeptier üsi Nutzigsbedingige",
+    "mustScrollToAccept": "Bitte scrolle nach unde zum d'Akzeptiere-Chnopf aktiviere",
+    "scrollToBottom": "Zum Akzeptiere nach unde scrolle",
+    "iAccept": "Ich akzeptiere d'Nutzigsbedingige",
+    "acceptAndContinue": "Akzeptiere und wiiterfahre",
+    "decline": "Ablehne",
+    "cancel": "Abbreche",
+    "acceptedOn": "Akzeptiert am",
+    "needsAcceptance": "Du muesch d'Nutzigsbedingige akzeptiere zum Helvetia Cloud wiiter nutze",
+    "acceptingTerms": "Akzeptiere Bedingige...",
+    "acceptSuccess": "Nutzigsbedingige erfolgrich akzeptiert!",
+    "acceptError": "Fähler bim Akzeptiere vo de Bedingige. Bitte probier's nomal."
   }
 }

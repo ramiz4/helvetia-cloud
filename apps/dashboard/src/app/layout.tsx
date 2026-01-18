@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { LanguageProvider } from 'shared-ui';
 import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
+import { TermsAcceptanceWrapper } from '../components/TermsAcceptanceWrapper';
 import { OrganizationProvider } from '../lib/OrganizationContext';
 import QueryProvider from '../lib/QueryProvider';
 import { ThemeProvider } from '../lib/ThemeContext';
@@ -39,16 +40,18 @@ export default function RootLayout({
           <LanguageProvider>
             <QueryProvider>
               <OrganizationProvider>
-                <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-                  <Navigation />
-                  <main
-                    id="main-content"
-                    className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
-                  >
-                    {children}
-                  </main>
-                  <Footer />
-                </div>
+                <TermsAcceptanceWrapper>
+                  <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+                    <Navigation />
+                    <main
+                      id="main-content"
+                      className="container mx-auto px-6 pt-24 pb-12 grow animate-fade-in"
+                    >
+                      {children}
+                    </main>
+                    <Footer />
+                  </div>
+                </TermsAcceptanceWrapper>
               </OrganizationProvider>
               <Toaster
                 position="bottom-right"

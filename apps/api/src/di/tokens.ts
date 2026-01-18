@@ -13,6 +13,7 @@ export const TOKENS = {
   RefreshTokenRepository: Symbol.for('IRefreshTokenRepository'),
   FeatureFlagRepository: Symbol.for('IFeatureFlagRepository'),
   OrganizationRepository: Symbol.for('IOrganizationRepository'),
+  TermsRepository: Symbol.for('ITermsRepository'),
 
   // Infrastructure
   ContainerOrchestrator: Symbol.for('IContainerOrchestrator'),
@@ -32,6 +33,7 @@ export const TOKENS = {
   BillingService: Symbol.for('BillingService'),
   SubscriptionService: Symbol.for('SubscriptionService'),
   UsageTrackingService: Symbol.for('UsageTrackingService'),
+  TermsService: Symbol.for('TermsService'),
 
   // Controllers
   AuthController: Symbol.for('AuthController'),
@@ -44,6 +46,7 @@ export const TOKENS = {
   ProjectController: Symbol.for('ProjectController'),
   ServiceController: Symbol.for('ServiceController'),
   WebhookController: Symbol.for('WebhookController'),
+  TermsController: Symbol.for('TermsController'),
 
   // External dependencies
   PrismaClient: Symbol.for('PrismaClient'),

@@ -39,6 +39,10 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateY(10px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        scaleIn: {
+          from: { opacity: '0', transform: 'scale(0.95)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
         spin: {
           to: { transform: 'rotate(360deg)' },
         },
@@ -49,6 +53,7 @@ const config: Config = {
       animation: {
         'liquid-gradient': 'liquid-gradient 15s ease infinite',
         'fade-in': 'fadeIn 0.4s ease-out forwards',
+        'scale-in': 'scaleIn 0.3s ease-out forwards',
         'spin-slow': 'spin 8s linear infinite',
         'spin-fast': 'spin 0.8s linear infinite',
         shimmer: 'shimmer 2s infinite',
