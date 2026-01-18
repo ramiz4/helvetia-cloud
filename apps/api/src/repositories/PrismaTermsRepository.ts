@@ -81,7 +81,7 @@ export class PrismaTermsRepository implements ITermsRepository {
       include: {
         termsVersion: true,
       },
-    });
+    }) as Promise<UserTermsAcceptanceWithVersion | null>;
   }
 
   async createAcceptance(data: AcceptTermsData): Promise<UserTermsAcceptance> {

@@ -27,13 +27,13 @@ async function fetchTermsAcceptanceStatus(): Promise<TermsAcceptanceStatus> {
 }
 
 // Accept terms
-async function acceptTerms(termsId: string): Promise<void> {
+async function acceptTerms(termsVersionId: string): Promise<void> {
   const response = await fetchWithAuth(`${API_BASE_URL}/terms/accept`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ termsId }),
+    body: JSON.stringify({ termsVersionId }),
   });
 
   if (!response.ok) {
