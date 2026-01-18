@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Stripe from 'stripe';
 
 /**
@@ -119,9 +120,7 @@ export function createMockStripeSubscription(
 /**
  * Helper to create a mock Stripe customer object
  */
-export function createMockStripeCustomer(
-  params: Partial<Stripe.Customer> = {},
-): Stripe.Customer {
+export function createMockStripeCustomer(params: Partial<Stripe.Customer> = {}): Stripe.Customer {
   return {
     id: params.id || 'cus_test_customer123',
     object: 'customer',
@@ -159,9 +158,7 @@ export function createMockStripeCustomer(
 /**
  * Helper to create a mock Stripe invoice object
  */
-export function createMockStripeInvoice(
-  params: Partial<Stripe.Invoice> = {},
-): Stripe.Invoice {
+export function createMockStripeInvoice(params: Partial<Stripe.Invoice> = {}): Stripe.Invoice {
   const now = Math.floor(Date.now() / 1000);
   return {
     id: params.id || 'in_test_invoice123',
@@ -360,7 +357,10 @@ export const webhookEventFixtures = {
   /**
    * customer.subscription.updated event
    */
-  subscriptionUpdated: (subscriptionId = 'sub_test_12345', status: Stripe.Subscription.Status = 'active') => {
+  subscriptionUpdated: (
+    subscriptionId = 'sub_test_12345',
+    status: Stripe.Subscription.Status = 'active',
+  ) => {
     const subscription = createMockStripeSubscription({
       id: subscriptionId,
       status,
@@ -412,7 +412,10 @@ export const webhookEventFixtures = {
   /**
    * invoice.payment_failed event
    */
-  invoicePaymentFailed: (subscriptionId = 'sub_test_12345', customerId = 'cus_test_customer123') => {
+  invoicePaymentFailed: (
+    subscriptionId = 'sub_test_12345',
+    customerId = 'cus_test_customer123',
+  ) => {
     const invoice = createMockStripeInvoice({
       id: 'in_test_failed',
       customer: customerId,
@@ -441,7 +444,6 @@ export function generateStripeWebhookSignature(
   secret: string,
   timestamp?: number,
 ): string {
-  const crypto = require('crypto');
   const t = timestamp || Math.floor(Date.now() / 1000);
   const signedPayload = `${t}.${payload}`;
   const signature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');

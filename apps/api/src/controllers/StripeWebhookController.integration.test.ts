@@ -297,10 +297,7 @@ describe.skipIf(shouldSkip)('StripeWebhookController Integration Tests', () => {
         metadata: { userId: testUserId },
       });
 
-      const event = webhookEventFixtures.subscriptionCreated(
-        customer.id,
-        'price_test_enterprise',
-      );
+      const event = webhookEventFixtures.subscriptionCreated(customer.id, 'price_test_enterprise');
       const payload = JSON.stringify(event);
       const signature = generateStripeWebhookSignature(payload, webhookSecret);
 
