@@ -14,10 +14,8 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
   let proUserId: string;
   let freeAuthToken: string;
   let starterAuthToken: string;
-  let proAuthToken: string;
   let freeEnvId: string;
   let starterEnvId: string;
-  let proEnvId: string;
 
   beforeAll(async () => {
     app = await buildServer();
@@ -117,7 +115,6 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
     // Generate JWT tokens
     freeAuthToken = app.jwt.sign({ id: freeUserId, username: freeUser.username });
     starterAuthToken = app.jwt.sign({ id: starterUserId, username: starterUser.username });
-    proAuthToken = app.jwt.sign({ id: proUserId, username: proUser.username });
 
     // Create default projects and environments
     const freeProject = await prisma.project.create({
@@ -160,7 +157,6 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
         projectId: proProject.id,
       },
     });
-    proEnvId = proEnv.id;
   });
 
   afterAll(async () => {
