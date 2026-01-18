@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { LanguageProvider } from 'shared-ui';
+import CookieBannerWrapper from '../components/CookieBannerWrapper';
 import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
 import { TermsAcceptanceWrapper } from '../components/TermsAcceptanceWrapper';
@@ -74,6 +75,7 @@ export default function RootLayout({
                   },
                 }}
               />
+              <CookieBannerWrapper />
             </QueryProvider>
           </LanguageProvider>
         </ThemeProvider>

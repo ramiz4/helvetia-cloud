@@ -76,7 +76,26 @@
   "cookie": {
     "title": "DSGVO / GDPR Compliance",
     "text": "We use cookies to ensure you get the best experience on our website. This includes compliance with DSGVO/GDPR.",
-    "accept": "Accept"
+    "accept": "Accept All Cookies",
+    "rejectNonEssential": "Reject Non-Essential",
+    "customize": "Customize",
+    "savePreferences": "Save Preferences",
+    "learnMore": "Learn more in our Privacy Policy",
+    "preferences": {
+      "title": "Cookie Preferences",
+      "essential": {
+        "title": "Essential Cookies",
+        "description": "Required for authentication, security, and core platform functionality. These cannot be disabled."
+      },
+      "functional": {
+        "title": "Functional Cookies",
+        "description": "Used to remember your preferences (e.g., theme, language)."
+      },
+      "analytics": {
+        "title": "Analytics Cookies",
+        "description": "Help us understand platform usage to improve performance and user experience. We use privacy-focused analytics."
+      }
+    }
   },
   "nav": {
     "brand": "HELVETIA",
@@ -300,6 +319,153 @@
     "sessionExpired": "Session expired. Please log in again.",
     "fetchReposFailed": "Failed to fetch repositories",
     "fetchBranchesFailed": "Failed to fetch branches"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated",
+    "effectiveDate": "January 18, 2026",
+    "intro": {
+      "title": "1. Introduction",
+      "welcome": "Welcome to Helvetia Cloud. We are committed to protecting your privacy and ensuring the security of your personal data. This Privacy Policy explains how we collect, use, process, and protect your information in compliance with the General Data Protection Regulation (GDPR), the Swiss Federal Act on Data Protection (FADP), and other applicable data protection laws.",
+      "dataControllerTitle": "Data Controller",
+      "companyName": "Helvetia Cloud",
+      "address": "Switzerland",
+      "email": "Contact"
+    },
+    "dataCollected": {
+      "title": "2. Data We Collect",
+      "accountInfo": {
+        "title": "Account Information",
+        "items": [
+          "GitHub username and profile information",
+          "Email address (from GitHub)",
+          "GitHub user ID and avatar",
+          "OAuth access tokens (encrypted)"
+        ]
+      },
+      "serviceData": {
+        "title": "Service and Deployment Data",
+        "items": [
+          "Repository URLs and branch information",
+          "Deployment configurations and environment variables (encrypted)",
+          "Build logs and deployment history",
+          "Container metrics and resource usage",
+          "Custom domain configurations"
+        ]
+      },
+      "technical": {
+        "title": "Technical and Usage Data",
+        "items": [
+          "IP addresses (for security and fraud prevention)",
+          "Browser type and version",
+          "Device information",
+          "Access logs and timestamps",
+          "API usage patterns"
+        ]
+      }
+    },
+    "dataUse": {
+      "title": "3. How We Use Your Data",
+      "items": [
+        "Provide and maintain the Helvetia Cloud platform services",
+        "Process deployments and manage your applications",
+        "Authenticate and authorize access to your account",
+        "Send service notifications and important updates",
+        "Improve platform performance and user experience",
+        "Detect and prevent security threats and fraudulent activity",
+        "Comply with legal obligations and enforce our Terms of Service",
+        "Provide customer support and respond to your inquiries"
+      ]
+    },
+    "dataStorage": {
+      "title": "4. Data Storage & Processing",
+      "swissHosting": "All data is stored and processed exclusively in Switzerland, ensuring the highest standards of data protection and privacy.",
+      "retention": "We retain your data for as long as your account is active and for a reasonable period thereafter to comply with legal obligations. Deployment logs are retained for 90 days. You can request deletion of your data at any time.",
+      "security": "We implement industry-standard security measures including encryption at rest and in transit, access controls, regular security audits, and isolated build environments."
+    },
+    "dataSharing": {
+      "title": "5. Data Sharing",
+      "intro": "We do not sell, rent, or trade your personal data. We may share your data only in the following limited circumstances:",
+      "items": [
+        "GitHub: We integrate with GitHub to access your repositories. We only access repositories you explicitly authorize.",
+        "Service Providers: We may use trusted third-party service providers (e.g., infrastructure providers) who process data on our behalf under strict confidentiality agreements.",
+        "Legal Requirements: We may disclose data when required by law, court order, or to protect our rights and safety.",
+        "Business Transfers: In the event of a merger or acquisition, your data may be transferred, but we will notify you and ensure continued protection."
+      ],
+      "noSelling": "We will never sell your personal data to third parties."
+    },
+    "userRights": {
+      "title": "6. Your Rights (GDPR/FADP)",
+      "intro": "Under GDPR and Swiss data protection law, you have the following rights:",
+      "rights": [
+        {
+          "title": "Right to Access",
+          "description": "You can request a copy of all personal data we hold about you."
+        },
+        {
+          "title": "Right to Rectification",
+          "description": "You can request correction of inaccurate or incomplete data."
+        },
+        {
+          "title": "Right to Erasure ('Right to be Forgotten')",
+          "description": "You can request deletion of your personal data. This will terminate your account and remove all associated data."
+        },
+        {
+          "title": "Right to Data Portability",
+          "description": "You can request your data in a structured, machine-readable format."
+        },
+        {
+          "title": "Right to Object",
+          "description": "You can object to certain processing of your data."
+        },
+        {
+          "title": "Right to Restrict Processing",
+          "description": "You can request that we limit how we use your data."
+        },
+        {
+          "title": "Right to Withdraw Consent",
+          "description": "You can withdraw consent for data processing at any time."
+        }
+      ],
+      "exercise": "To exercise any of these rights, please contact us at support@helvetia.cloud or use the data management tools in your account settings."
+    },
+    "cookies": {
+      "title": "7. Cookies & Tracking",
+      "intro": "We use cookies and similar technologies to provide and improve our services:",
+      "types": [
+        {
+          "name": "Essential Cookies",
+          "description": "Required for authentication, security, and core platform functionality. These cannot be disabled."
+        },
+        {
+          "name": "Functional Cookies",
+          "description": "Used to remember your preferences (e.g., theme, language)."
+        },
+        {
+          "name": "Analytics Cookies",
+          "description": "Help us understand how you use the platform to improve performance and user experience. We use privacy-focused analytics."
+        }
+      ]
+    },
+    "children": {
+      "title": "8. Children's Privacy",
+      "content": "Helvetia Cloud is not intended for users under the age of 16. We do not knowingly collect personal data from children. If you believe we have inadvertently collected data from a child, please contact us immediately."
+    },
+    "international": {
+      "title": "9. International Data Transfers",
+      "content": "All data is stored and processed in Switzerland. We do not transfer your personal data outside of Switzerland or the European Economic Area (EEA). If transfers become necessary, we will ensure appropriate safeguards are in place (e.g., Standard Contractual Clauses)."
+    },
+    "changes": {
+      "title": "10. Changes to Privacy Policy",
+      "content": "We may update this Privacy Policy from time to time. We will notify you of significant changes by email or through a prominent notice on our platform. The 'Last Updated' date at the top indicates when the policy was last revised. Your continued use of Helvetia Cloud after changes constitutes acceptance of the updated policy."
+    },
+    "contact": {
+      "title": "11. Contact & Complaints",
+      "intro": "If you have questions about this Privacy Policy or wish to exercise your data rights, please contact us:",
+      "email": "Email",
+      "address": "Helvetia Cloud, Switzerland",
+      "complaint": "You have the right to lodge a complaint with your local data protection authority (e.g., the Swiss Federal Data Protection and Information Commissioner - FDPIC) if you believe your data protection rights have been violated."
+    }
   },
   "terms": {
     "pageTitle": "Terms of Service",

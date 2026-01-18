@@ -13,7 +13,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Setup rate limiting
   const redis = fastify.redis;
-  const { standardRateLimitConfig } = createRateLimitConfigs(redis);
+  const { authRateLimitConfig } = createRateLimitConfigs(redis);
 
   /**
    * GET /terms/latest
@@ -22,7 +22,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/terms/latest',
     {
-      config: { rateLimit: standardRateLimitConfig },
+      config: { rateLimit: authRateLimitConfig },
       schema: {
         tags: ['Terms of Service'],
         summary: 'Get latest terms of service',
@@ -81,7 +81,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/terms/version',
     {
-      config: { rateLimit: standardRateLimitConfig },
+      config: { rateLimit: authRateLimitConfig },
       schema: {
         tags: ['Terms of Service'],
         summary: 'Get terms by version',
@@ -132,7 +132,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/terms/versions',
     {
-      config: { rateLimit: standardRateLimitConfig },
+      config: { rateLimit: authRateLimitConfig },
       schema: {
         tags: ['Terms of Service'],
         summary: 'List all terms versions',
@@ -187,7 +187,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
     {
       preHandler: [authenticate],
       bodyLimit: BODY_LIMIT_SMALL,
-      config: { rateLimit: standardRateLimitConfig },
+      config: { rateLimit: authRateLimitConfig },
       schema: {
         tags: ['Terms of Service'],
         summary: 'Accept terms of service',
@@ -248,7 +248,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
     '/terms/check-acceptance',
     {
       preHandler: [authenticate],
-      config: { rateLimit: standardRateLimitConfig },
+      config: { rateLimit: authRateLimitConfig },
       schema: {
         tags: ['Terms of Service'],
         summary: 'Check terms acceptance status',

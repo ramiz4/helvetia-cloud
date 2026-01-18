@@ -31,6 +31,7 @@ export const v1Routes: FastifyPluginAsync = async (fastify) => {
   const { serviceRoutes } = await import('../service.routes.js');
   const { deploymentRoutes } = await import('../deployment.routes.js');
   const { featureFlagRoutes } = await import('../feature-flag.routes.js');
+  const { gdprRoutes } = await import('../gdpr.routes.js');
   const { githubRoutes } = await import('../github.routes.js');
   const { projectRoutes } = await import('../project.routes.js');
   const { webhookRoutes } = await import('../webhook.routes.js');
@@ -44,6 +45,7 @@ export const v1Routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(serviceRoutes);
   fastify.register(deploymentRoutes);
   fastify.register(featureFlagRoutes);
+  fastify.register(gdprRoutes);
   fastify.register(githubRoutes);
   fastify.register(projectRoutes);
   fastify.register(webhookRoutes);

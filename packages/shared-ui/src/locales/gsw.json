@@ -76,7 +76,26 @@
   "cookie": {
     "title": "DSGVO / GDPR Konformität",
     "text": "Mir bruuche Cookies für s'bescht Erlebnis (DSGVO konform).",
-    "accept": "Akzeptiere"
+    "accept": "Alli Cookies akzeptiere",
+    "rejectNonEssential": "Nöd-essenzelli ablehne",
+    "customize": "Aapaasse",
+    "savePreferences": "Iistellige speichere",
+    "learnMore": "Meh erfahre in üsere Dateschutzerklärig",
+    "preferences": {
+      "title": "Cookie-Iistellige",
+      "essential": {
+        "title": "Essenzielle Cookies",
+        "description": "Erforderlich für Authentifizierig, Sicherheit und Kern-Funktionalität vo de Plattform. Die chönd nöd deaktiviert werde."
+      },
+      "functional": {
+        "title": "Funktionali Cookies",
+        "description": "Werde verwändet, zum Ihri Preferenze z'speichere (z. B. Theme, Sprach)."
+      },
+      "analytics": {
+        "title": "Analyse-Cookies",
+        "description": "Hälfe üs verstah, wie Sie d'Plattform nutze, zum Leistig und Benutzer-Erfahrig z'verbessere. Mir verwende dateschutz-fründlichi Analyse."
+      }
+    }
   },
   "nav": {
     "brand": "HELVETIA",
@@ -301,6 +320,153 @@
     "sessionExpired": "Sitzig abgloffe. Bitte neu aamälde.",
     "fetchReposFailed": "Repos chönd nöd glade werde",
     "fetchBranchesFailed": "Branches chönd nöd glade werde"
+  },
+  "privacy": {
+    "title": "Dateschutz",
+    "lastUpdated": "Letschti Aktualisierig",
+    "effectiveDate": "18. Januar 2026",
+    "intro": {
+      "title": "1. Iileitung",
+      "welcome": "Willkomme bi Helvetia Cloud. Mir sind em Schutz vo Ihrer Privatsphäre und de Sicherheit vo Ihre persönliche Date verpflichtet. Die Dateschutzerklärig erklärt, wie mir Ihri Informatione sammle, nutze, verarbeite und schütze, gemäss de Dateschutz-Grundverordig (DSGVO), em Schwizer Bundesgsetz über de Dateschutz (DSG) und andere gültende Dateschutzgsetz.",
+      "dataControllerTitle": "Verantwortliche",
+      "companyName": "Helvetia Cloud",
+      "address": "Schwiiz",
+      "email": "Kontakt"
+    },
+    "dataCollected": {
+      "title": "2. Date wo mir sammle",
+      "accountInfo": {
+        "title": "Konto-Informatione",
+        "items": [
+          "GitHub-Benutzername und Profil-Informatione",
+          "E-Mail-Adresse (vo GitHub)",
+          "GitHub-Benutzer-ID und Avatar",
+          "OAuth-Zuegriffs-Token (verschlüsslet)"
+        ]
+      },
+      "serviceData": {
+        "title": "Service- und Deployment-Date",
+        "items": [
+          "Repository-URLs und Branch-Informatione",
+          "Deployment-Konfiguratione und Umgebigsvariable (verschlüsslet)",
+          "Build-Logs und Deployment-Verlauf",
+          "Container-Metrike und Ressource-Nutzig",
+          "Benutzerdefinierti Domain-Konfiguratione"
+        ]
+      },
+      "technical": {
+        "title": "Technischi und Nutzigsdate",
+        "items": [
+          "IP-Adresse (für Sicherheit und Betrugspräventio)",
+          "Browser-Typ und -Versio",
+          "Gerät-Informatione",
+          "Zuegriffs-Logs und Ziitstempel",
+          "API-Nutzigsmuschter"
+        ]
+      }
+    },
+    "dataUse": {
+      "title": "3. Wie mir Ihri Date nutze",
+      "items": [
+        "Bereitstellig und Wartig vo de Helvetia Cloud-Plattform",
+        "Verarbeitig vo Deployments und Verwaltig vo Ihre Applikatione",
+        "Authentifizierig und Autorisierig vom Zuegriff uf Ihr Konto",
+        "Versand vo Dienst-Benachrichtigunge und wichtige Updates",
+        "Verbesserig vo de Plattform-Leistig und Benutzer-Erfahrig",
+        "Erkennig und Verhindderig vo Sicherheitsbedrohige und betrügerische Aktivitäte",
+        "Ihaltig vo gsetzliche Verpflichtige und Durechsetzig vo üsne Nutzigsbedingnige",
+        "Bereitstellig vo Kunde-Support und Beantwortig vo Ihre Aafrage"
+      ]
+    },
+    "dataStorage": {
+      "title": "4. Date-Speicherig & Verarbeitig",
+      "swissHosting": "Alli Date werde uusschliesslich in de Schwiiz gspeicheret und verarbeitet, um höchsti Standards für Dateschutz und Privatsphäre z'gwährleiste.",
+      "retention": "Mir bewahre Ihri Date uf, so lang Ihr Konto aktiv isch, und für e vernünftigi Ziit denn, zum gsetzliche Verpflichtige nochzcho. Deployment-Logs werde 90 Täg lang ufbewahrt. Sie chönd jederziit d'Löschig vo Ihre Date beanträge.",
+      "security": "Mir implementiere branche-übliche Sicherheitsmassnahme, iischliesslich Verschlüsselig im Ruezuestand und bi de Übertraagig, Zuegriffs-Kontrolle, regelmässigi Sicherheitsüberprüefige und isolierti Build-Umgebige."
+    },
+    "dataSharing": {
+      "title": "5. Date-Wiitergab",
+      "intro": "Mir verkaufe, vermiete oder handle Ihri persönliche Date nöd. Mir chönd Ihri Date nur in de folgende begränzte Fäll witergäh:",
+      "items": [
+        "GitHub: Mir integiere üs mit GitHub, zum uf Ihri Repositories zuezgriife. Mir griife nur uf Repositories zue, wo Sie uusdrücklich autorisiere.",
+        "Dienst-Aabiter: Mir chönd vertrauenswürdigi Dritt-Aabiter (z. B. Infrastruktur-Aabiter) iisetze, wo Date in üsem Uuftrag under strenge Vertraulichkeits-Veriibarigé verarbeite.",
+        "Gsetzlichi Aaforderige: Mir chönd Date offeleege, wenn das gsetzlich vorgeschribe isch, durich Gerichts-Beschluss oder zum Schutz vo üsne Rächt und Sicherheit.",
+        "Gschäfts-Überträgige: Im Fall vo ere Fusio oder Übernahm chönd Ihri Date übertrage werde, aber mir werde Sie benachrichtige und e fortgsetzti Schutz gwährleiste."
+      ],
+      "noSelling": "Mir werde Ihri persönliche Date niemals a Dritti verkaufe."
+    },
+    "userRights": {
+      "title": "6. Ihri Rächt (DSGVO/DSG)",
+      "intro": "Gemäss DSGVO und Schwizer Dateschutzgsetz händ Sie folgendi Rächt:",
+      "rights": [
+        {
+          "title": "Rächt uf Zuegriff",
+          "description": "Sie chönd e Kopii vo alle persönliche Date aaforderä, wo mir über Sie speichere."
+        },
+        {
+          "title": "Rächt uf Berichtigig",
+          "description": "Sie chönd d'Korrektur vo unrichtige oder unvollständige Date verlange."
+        },
+        {
+          "title": "Rächt uf Löschig ('Rächt uf Vergesse werde')",
+          "description": "Sie chönd d'Löschig vo Ihre persönliche Date beanträge. Das füehrt zur Beendigig vo Ihrem Konto und zur Entfernig vo alle zuehörige Date."
+        },
+        {
+          "title": "Rächt uf Date-Übertragbarkeit",
+          "description": "Sie chönd Ihri Date in eme strukturierte, maschine-läsbare Format aaforderä."
+        },
+        {
+          "title": "Widerspruchs-Rächt",
+          "description": "Sie chönd gegen bestimmti Verarbeitige vo Ihre Date Iispruch erhebe."
+        },
+        {
+          "title": "Rächt uf Iischränkig vo de Verarbeitig",
+          "description": "Sie chönd verlange, dass mir d'Nutzig vo Ihre Date iischränke."
+        },
+        {
+          "title": "Rächt uf Widerruf vo de Iiwilligig",
+          "description": "Sie chönd Ihri Iiwilligig zur Date-Verarbeitig jederziit widerruefe."
+        }
+      ],
+      "exercise": "Zum eis vo dene Rächt uuszüebe, kontaktiere Sie üs bitte under support@helvetia.cloud oder nutze Sie d'Date-Verwaltigstools in Ihre Konto-Iistellige."
+    },
+    "cookies": {
+      "title": "7. Cookies & Tracking",
+      "intro": "Mir verwende Cookies und ähnlichi Technologie, zum üsi Dienst beriitzstelle und z'verbessere:",
+      "types": [
+        {
+          "name": "Essenzielle Cookies",
+          "description": "Erforderlich für Authentifizierig, Sicherheit und Kern-Funktionalität vo de Plattform. Die chönd nöd deaktiviert werde."
+        },
+        {
+          "name": "Funktionali Cookies",
+          "description": "Werde verwändet, zum Ihri Preferenze z'speichere (z. B. Theme, Sprach)."
+        },
+        {
+          "name": "Analyse-Cookies",
+          "description": "Hälfe üs verstah, wie Sie d'Plattform nutze, zum Leistig und Benutzer-Erfahrig z'verbessere. Mir verwende dateschutz-fründlichi Analyse."
+        }
+      ]
+    },
+    "children": {
+      "title": "8. Dateschutz für Chind",
+      "content": "Helvetia Cloud richtet sich nöd a Nutzer under 16 Jahr. Mir sammle wissentlich kei persönliche Date vo Chind. Wenn Sie glaube, dass mir versehentlich Date vo eme Chind erfasst händ, kontaktiere Sie üs bitte sofort."
+    },
+    "international": {
+      "title": "9. Internationali Date-Übermittlige",
+      "content": "Alli Date werde in de Schwiiz gspeicheret und verarbeitet. Mir übertrage Ihri persönliche Date nöd usserhalb vo de Schwiiz oder em Europäische Wirtschaftsruum (EWR). Falls Überträgige erforderlich werde, werde mir sicherstelle, dass aagmesseni Schutzmassnahme vorhande sind (z. B. Standard-Vertragsklausele)."
+    },
+    "changes": {
+      "title": "10. Änderige vo de Dateschutzerklärig",
+      "content": "Mir chönd die Dateschutzerklärig vo Ziit zu Ziit aktualisiere. Mir werde Sie über wesentlichi Änderige per E-Mail oder durich e uuffälligi Hiwiis uf üsere Plattform benachrichtige. S'Datum 'Letschti Aktualisierig' obe zeigt aa, wenn d'Richtlinie zletscht überarbeitet worde isch. Ihri fortgsetzti Nutzig vo Helvetia Cloud nach Änderige stellt d'Aannahm vo de aktualisierte Richtlinie dar."
+    },
+    "contact": {
+      "title": "11. Kontakt & Beschwerdi",
+      "intro": "Wenn Sie Frage zu dere Dateschutzerklärig händ oder Ihri Date-Rächt uusüebe möchted, kontaktiere Sie üs bitte:",
+      "email": "E-Mail",
+      "address": "Helvetia Cloud, Schwiiz",
+      "complaint": "Sie händ s'Rächt, e Beschwerd bi Ihrer örtliche Dateschutz-Behörde (z. B. em Eidgenössische Dateschutz- und Öffentlichkeitsbeauftragte - EDÖB) iizreiche, wenn Sie glaube, dass Ihri Dateschutz-Rächt verletzt worde sind."
+    }
   },
   "terms": {
     "pageTitle": "Nutzigsbedingige",

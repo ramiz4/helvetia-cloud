@@ -149,12 +149,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/privacy"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.privacyPolicy}
-                </a>
+                </Link>
               </li>
               <li>
                 <div className="flex items-center gap-2 text-indigo-400/80 font-medium">
