@@ -59,7 +59,7 @@ const shutdown = async (signal: string) => {
     statusReconciliationService.stop();
 
     // Close subscription scheduler
-    const { closeSubscriptionScheduler } = await import('./services/SubscriptionCheckScheduler');
+    const { closeSubscriptionScheduler } = await import('./services/SubscriptionCheckScheduler.js');
     await closeSubscriptionScheduler();
 
     // Close Fastify server (waits for in-flight requests to complete)

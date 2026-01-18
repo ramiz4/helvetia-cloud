@@ -7,6 +7,11 @@ import { logger } from 'shared';
  * Schedules periodic jobs to check subscription statuses and suspend services
  *
  * Jobs are scheduled to run every hour
+ *
+ * IMPORTANT: This module should only be called once during application startup.
+ * The Redis connection and queue are created at module level and shared across
+ * all invocations. Multiple calls to scheduleSubscriptionChecks() will work
+ * correctly (removing duplicates), but the Redis connection will remain open.
  */
 
 const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {

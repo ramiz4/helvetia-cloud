@@ -67,9 +67,13 @@ async function sendWarningEmail(
 }
 
 /**
- * Suspend all services for a user
+ * Suspend all services for a user and update last suspension timestamp
  */
-async function suspendUserServices(userId: string, reason: string): Promise<number> {
+async function suspendUserServices(
+  userId: string,
+  subscriptionId: string,
+  reason: string,
+): Promise<number> {
   const services = await prisma.service.findMany({
     where: {
       userId,
@@ -104,6 +108,14 @@ async function suspendUserServices(userId: string, reason: string): Promise<numb
         message: 'Failed to suspend service',
       });
     }
+  }
+
+  // Update last suspension timestamp on subscription
+  if (suspendedCount > 0) {
+    await prisma.subscription.update({
+      where: { id: subscriptionId },
+      data: { lastSuspensionAt: new Date() },
+    });
   }
 
   return suspendedCount;
@@ -155,81 +167,144 @@ async function processSubscriptionCheck(job: Job): Promise<void> {
         const daysElapsed = daysSinceExpiry(subscription.currentPeriodEnd);
 
         if (withinGracePeriod) {
-          // Send warning email on specific days (1, 3, 5, 7)
+          // Send warning email on specific days (1, 3, 5, 7) only once per day
           if ([1, 3, 5, 7].includes(daysElapsed)) {
-            const daysRemaining = GRACE_PERIOD_DAYS - daysElapsed;
+            const lastWarning = subscription.lastWarningEmailAt;
+            const shouldSendWarning =
+              !lastWarning || now.getTime() - new Date(lastWarning).getTime() > 20 * 60 * 60 * 1000; // 20 hours to avoid missing next day
+
+            if (shouldSendWarning) {
+              const daysRemaining = GRACE_PERIOD_DAYS - daysElapsed;
+              await sendWarningEmail(
+                userId,
+                subscription.user?.username || 'user',
+                SubscriptionStatus.PAST_DUE,
+                daysRemaining,
+              );
+              warningsCount++;
+
+              // Update last warning timestamp
+              await prisma.subscription.update({
+                where: { id: subscription.id },
+                data: { lastWarningEmailAt: now },
+              });
+
+              logger.info({
+                subscriptionId: subscription.id,
+                userId,
+                daysElapsed,
+                daysRemaining,
+                message: 'Warning email sent for past due subscription',
+              });
+            }
+          }
+        } else {
+          // Grace period expired - suspend services only if not already suspended recently
+          const lastSuspension = subscription.lastSuspensionAt;
+          const shouldSuspend =
+            !lastSuspension || now.getTime() - new Date(lastSuspension).getTime() > 60 * 60 * 1000; // 1 hour
+
+          if (shouldSuspend) {
+            const suspended = await suspendUserServices(
+              userId,
+              subscription.id,
+              'Subscription past due - grace period expired',
+            );
+            suspendedCount += suspended;
+
+            logger.warn({
+              subscriptionId: subscription.id,
+              userId,
+              servicesAffected: suspended,
+              daysElapsed,
+              message: 'Services suspended - past due grace period expired',
+            });
+          }
+        }
+      }
+
+      // Handle UNPAID subscriptions - only suspend once
+      if (subscription.status === SubscriptionStatus.UNPAID) {
+        const lastSuspension = subscription.lastSuspensionAt;
+        const shouldSuspend =
+          !lastSuspension || now.getTime() - new Date(lastSuspension).getTime() > 60 * 60 * 1000;
+
+        if (shouldSuspend) {
+          const suspended = await suspendUserServices(
+            userId,
+            subscription.id,
+            'Subscription unpaid',
+          );
+          suspendedCount += suspended;
+
+          // Send warning email only once per day
+          const lastWarning = subscription.lastWarningEmailAt;
+          const shouldSendWarning =
+            !lastWarning || now.getTime() - new Date(lastWarning).getTime() > 20 * 60 * 60 * 1000;
+
+          if (shouldSendWarning) {
             await sendWarningEmail(
               userId,
               subscription.user?.username || 'user',
-              SubscriptionStatus.PAST_DUE,
-              daysRemaining,
+              SubscriptionStatus.UNPAID,
             );
             warningsCount++;
 
-            logger.info({
-              subscriptionId: subscription.id,
-              userId,
-              daysElapsed,
-              daysRemaining,
-              message: 'Warning email sent for past due subscription',
+            await prisma.subscription.update({
+              where: { id: subscription.id },
+              data: { lastWarningEmailAt: now },
             });
           }
-        } else {
-          // Grace period expired - suspend services
-          const suspended = await suspendUserServices(
-            userId,
-            'Subscription past due - grace period expired',
-          );
-          suspendedCount += suspended;
 
           logger.warn({
             subscriptionId: subscription.id,
             userId,
             servicesAffected: suspended,
-            daysElapsed,
-            message: 'Services suspended - past due grace period expired',
+            message: 'Services suspended - subscription unpaid',
           });
         }
       }
 
-      // Handle UNPAID subscriptions
-      if (subscription.status === SubscriptionStatus.UNPAID) {
-        const suspended = await suspendUserServices(userId, 'Subscription unpaid');
-        suspendedCount += suspended;
-
-        await sendWarningEmail(
-          userId,
-          subscription.user?.username || 'user',
-          SubscriptionStatus.UNPAID,
-        );
-        warningsCount++;
-
-        logger.warn({
-          subscriptionId: subscription.id,
-          userId,
-          servicesAffected: suspended,
-          message: 'Services suspended - subscription unpaid',
-        });
-      }
-
-      // Handle CANCELED subscriptions
+      // Handle CANCELED subscriptions - only suspend once
       if (subscription.status === SubscriptionStatus.CANCELED) {
-        const suspended = await suspendUserServices(userId, 'Subscription canceled');
-        suspendedCount += suspended;
+        const lastSuspension = subscription.lastSuspensionAt;
+        const shouldSuspend =
+          !lastSuspension || now.getTime() - new Date(lastSuspension).getTime() > 60 * 60 * 1000;
 
-        await sendWarningEmail(
-          userId,
-          subscription.user?.username || 'user',
-          SubscriptionStatus.CANCELED,
-        );
-        warningsCount++;
+        if (shouldSuspend) {
+          const suspended = await suspendUserServices(
+            userId,
+            subscription.id,
+            'Subscription canceled',
+          );
+          suspendedCount += suspended;
 
-        logger.warn({
-          subscriptionId: subscription.id,
-          userId,
-          servicesAffected: suspended,
-          message: 'Services suspended - subscription canceled',
-        });
+          // Send warning email only once per day
+          const lastWarning = subscription.lastWarningEmailAt;
+          const shouldSendWarning =
+            !lastWarning || now.getTime() - new Date(lastWarning).getTime() > 20 * 60 * 60 * 1000;
+
+          if (shouldSendWarning) {
+            await sendWarningEmail(
+              userId,
+              subscription.user?.username || 'user',
+              SubscriptionStatus.CANCELED,
+            );
+            warningsCount++;
+
+            await prisma.subscription.update({
+              where: { id: subscription.id },
+              data: { lastWarningEmailAt: now },
+            });
+          }
+
+          logger.warn({
+            subscriptionId: subscription.id,
+            userId,
+            servicesAffected: suspended,
+            message: 'Services suspended - subscription canceled',
+          });
+        }
       }
     } catch (error) {
       logger.error({
