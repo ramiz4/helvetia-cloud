@@ -81,7 +81,7 @@ export class PrismaPrivacyPolicyRepository implements IPrivacyPolicyRepository {
       include: {
         privacyPolicy: true,
       },
-    }) as Promise<UserPrivacyPolicyAcceptanceWithVersion | null>;
+    });
   }
 
   async createAcceptance(data: AcceptPrivacyPolicyData): Promise<UserPrivacyPolicyAcceptance> {

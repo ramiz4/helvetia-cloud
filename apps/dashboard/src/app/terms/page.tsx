@@ -69,7 +69,15 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
     gsw: 'Helvetia Cloud Plattform-Veriiubarig',
   };
 
-  const labels: Record<string, any> = {
+  const labels: Record<
+    string,
+    {
+      version: string;
+      effectiveDate: string;
+      lastUpdated: string;
+      backToDashboard: string;
+    }
+  > = {
     en: {
       version: 'Version',
       effectiveDate: 'Effective Date',
