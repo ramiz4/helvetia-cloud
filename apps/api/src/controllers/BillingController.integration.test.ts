@@ -1,6 +1,5 @@
 import { prisma } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from '../config/env';
 import { buildServer } from '../server';
 import {
   createSubscriptionFixture,
@@ -104,20 +103,18 @@ describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
   afterAll(async () => {
     // Cleanup test data
     if (testServiceId) {
-      await prisma.usageRecord.deleteMany({ where: { serviceId: testServiceId } }).catch(() => {});
-      await prisma.service.deleteMany({ where: { id: testServiceId } }).catch(() => {});
+      await prisma.usageRecord.deleteMany({ where: { serviceId: testServiceId } });
+      await prisma.service.deleteMany({ where: { id: testServiceId } });
     }
     if (testUserId) {
-      await prisma.usageRecord
-        .deleteMany({ where: { service: { userId: testUserId } } })
-        .catch(() => {});
-      await prisma.service.deleteMany({ where: { userId: testUserId } }).catch(() => {});
-      await prisma.subscription.deleteMany({ where: { userId: testUserId } }).catch(() => {});
-      await prisma.organizationMember.deleteMany({ where: { userId: testUserId } }).catch(() => {});
-      await prisma.user.deleteMany({ where: { id: testUserId } }).catch(() => {});
+      await prisma.usageRecord.deleteMany({ where: { service: { userId: testUserId } } });
+      await prisma.service.deleteMany({ where: { userId: testUserId } });
+      await prisma.subscription.deleteMany({ where: { userId: testUserId } });
+      await prisma.organizationMember.deleteMany({ where: { userId: testUserId } });
+      await prisma.user.deleteMany({ where: { id: testUserId } });
     }
     if (testOrganizationId) {
-      await prisma.organization.deleteMany({ where: { id: testOrganizationId } }).catch(() => {});
+      await prisma.organization.deleteMany({ where: { id: testOrganizationId } });
     }
     if (app) await app.close();
   });
@@ -457,8 +454,9 @@ describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
 
       expect(response.statusCode).toBe(400);
       const data = JSON.parse(response.body);
-      // Check for validation error (either schema or custom)
-      expect(data.code || data.error).toBeDefined();
+      // Should have an error property indicating validation failure
+      expect(data.success).toBe(false);
+      expect(data.error).toBeDefined();
     });
 
     it('should return 400 when periodStart is after periodEnd', async () => {
@@ -606,6 +604,15 @@ describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
     });
 
     it('should return 403 for unauthorized service access', async () => {
+      // Create another user and service in beforeEach to avoid test isolation issues
+      await prisma.subscription.create({
+        data: createSubscriptionFixture({
+          userId: testUserId,
+          plan: 'PRO',
+          status: 'ACTIVE',
+        }),
+      });
+
       // Create another user
       const otherUser = await prisma.user.create({
         data: {
@@ -640,7 +647,7 @@ describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
       const data = JSON.parse(response.body);
       expect(data.error).toBe('Access denied to service usage data');
 
-      // Cleanup
+      // Cleanup in same test to maintain isolation
       await prisma.service.delete({ where: { id: otherService.id } });
       await prisma.user.delete({ where: { id: otherUser.id } });
     });
@@ -679,18 +686,9 @@ describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
   });
 
   describe('Stripe Webhook Integration', () => {
-    const webhookSecret = 'whsec_test_secret_123';
-
-    beforeAll(() => {
-      // Set webhook secret
-      process.env.STRIPE_WEBHOOK_SECRET = webhookSecret;
-      env.STRIPE_WEBHOOK_SECRET = webhookSecret;
-    });
-
-    // Note: These tests will fail webhook signature verification because
-    // we're using a mock Stripe client. In a real scenario, we'd need to
-    // properly construct Stripe webhook events or bypass signature verification
-    // for testing. For now, we test that endpoints exist and respond appropriately.
+    // Note: These tests verify the webhook endpoint exists and responds appropriately.
+    // Full webhook event processing would require mocking Stripe.webhooks.constructEvent
+    // or bypassing signature verification in test mode.
 
     // Note: Stripe webhook endpoint may require special handling or different routing
     // These tests verify the endpoint exists and handles requests appropriately
