@@ -76,7 +76,26 @@
   "cookie": {
     "title": "DSGVO / GDPR Konformität",
     "text": "Wir verwenden Cookies, um das beste Erlebnis auf unserer Website zu gewährleisten (DSGVO-konform).",
-    "accept": "Akzeptieren"
+    "accept": "Alle Cookies akzeptieren",
+    "rejectNonEssential": "Nicht-essenzielle ablehnen",
+    "customize": "Anpassen",
+    "savePreferences": "Einstellungen speichern",
+    "learnMore": "Erfahren Sie mehr in unserer Datenschutzerklärung",
+    "preferences": {
+      "title": "Cookie-Einstellungen",
+      "essential": {
+        "title": "Essentielle Cookies",
+        "description": "Erforderlich für Authentifizierung, Sicherheit und Kernfunktionalität der Plattform. Diese können nicht deaktiviert werden."
+      },
+      "functional": {
+        "title": "Funktionale Cookies",
+        "description": "Werden verwendet, um Ihre Präferenzen zu speichern (z. B. Theme, Sprache)."
+      },
+      "analytics": {
+        "title": "Analyse-Cookies",
+        "description": "Helfen uns zu verstehen, wie Sie die Plattform nutzen, um Leistung und Benutzererfahrung zu verbessern. Wir verwenden datenschutzfreundliche Analysen."
+      }
+    }
   },
   "nav": {
     "brand": "HELVETIA",
@@ -301,6 +320,153 @@
     "sessionExpired": "Sitzung abgelaufen. Bitte erneut anmelden.",
     "fetchReposFailed": "Fehlschlag beim Abrufen der Repositories",
     "fetchBranchesFailed": "Fehlschlag beim Abrufen der Branches"
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "effectiveDate": "18. Januar 2026",
+    "intro": {
+      "title": "1. Einleitung",
+      "welcome": "Willkommen bei Helvetia Cloud. Wir sind dem Schutz Ihrer Privatsphäre und der Sicherheit Ihrer personenbezogenen Daten verpflichtet. Diese Datenschutzerklärung erläutert, wie wir Ihre Informationen gemäß der Datenschutz-Grundverordnung (DSGVO), dem Schweizer Bundesgesetz über den Datenschutz (DSG) und anderen geltenden Datenschutzgesetzen sammeln, verwenden, verarbeiten und schützen.",
+      "dataControllerTitle": "Verantwortlicher",
+      "companyName": "Helvetia Cloud",
+      "address": "Schweiz",
+      "email": "Kontakt"
+    },
+    "dataCollected": {
+      "title": "2. Von uns erfasste Daten",
+      "accountInfo": {
+        "title": "Kontoinformationen",
+        "items": [
+          "GitHub-Benutzername und Profilinformationen",
+          "E-Mail-Adresse (von GitHub)",
+          "GitHub-Benutzer-ID und Avatar",
+          "OAuth-Zugriffstoken (verschlüsselt)"
+        ]
+      },
+      "serviceData": {
+        "title": "Service- und Deployment-Daten",
+        "items": [
+          "Repository-URLs und Branch-Informationen",
+          "Deployment-Konfigurationen und Umgebungsvariablen (verschlüsselt)",
+          "Build-Logs und Deployment-Verlauf",
+          "Container-Metriken und Ressourcennutzung",
+          "Benutzerdefinierte Domain-Konfigurationen"
+        ]
+      },
+      "technical": {
+        "title": "Technische und Nutzungsdaten",
+        "items": [
+          "IP-Adressen (für Sicherheit und Betrugsprävention)",
+          "Browsertyp und -version",
+          "Geräteinformationen",
+          "Zugriffsprotokolle und Zeitstempel",
+          "API-Nutzungsmuster"
+        ]
+      }
+    },
+    "dataUse": {
+      "title": "3. Wie wir Ihre Daten verwenden",
+      "items": [
+        "Bereitstellung und Wartung der Helvetia Cloud-Plattformdienste",
+        "Verarbeitung von Deployments und Verwaltung Ihrer Anwendungen",
+        "Authentifizierung und Autorisierung des Zugriffs auf Ihr Konto",
+        "Versand von Dienstbenachrichtigungen und wichtigen Updates",
+        "Verbesserung der Plattformleistung und Benutzererfahrung",
+        "Erkennung und Verhinderung von Sicherheitsbedrohungen und betrügerischen Aktivitäten",
+        "Einhaltung gesetzlicher Verpflichtungen und Durchsetzung unserer Nutzungsbedingungen",
+        "Bereitstellung von Kundensupport und Beantwortung Ihrer Anfragen"
+      ]
+    },
+    "dataStorage": {
+      "title": "4. Datenspeicherung & Verarbeitung",
+      "swissHosting": "Alle Daten werden ausschließlich in der Schweiz gespeichert und verarbeitet, um höchste Standards für Datenschutz und Privatsphäre zu gewährleisten.",
+      "retention": "Wir bewahren Ihre Daten auf, solange Ihr Konto aktiv ist, und für einen angemessenen Zeitraum danach, um gesetzlichen Verpflichtungen nachzukommen. Deployment-Logs werden 90 Tage lang aufbewahrt. Sie können jederzeit die Löschung Ihrer Daten beantragen.",
+      "security": "Wir implementieren branchenübliche Sicherheitsmaßnahmen, einschließlich Verschlüsselung im Ruhezustand und bei der Übertragung, Zugriffskontrollen, regelmäßiger Sicherheitsüberprüfungen und isolierter Build-Umgebungen."
+    },
+    "dataSharing": {
+      "title": "5. Datenweitergabe",
+      "intro": "Wir verkaufen, vermieten oder handeln Ihre personenbezogenen Daten nicht. Wir können Ihre Daten nur in den folgenden begrenzten Fällen weitergeben:",
+      "items": [
+        "GitHub: Wir integrieren uns mit GitHub, um auf Ihre Repositories zuzugreifen. Wir greifen nur auf Repositories zu, die Sie ausdrücklich autorisieren.",
+        "Dienstleister: Wir können vertrauenswürdige Drittanbieter (z. B. Infrastrukturanbieter) einsetzen, die Daten in unserem Auftrag unter strengen Vertraulichkeitsvereinbarungen verarbeiten.",
+        "Gesetzliche Anforderungen: Wir können Daten offenlegen, wenn dies gesetzlich vorgeschrieben ist, durch Gerichtsbeschluss oder zum Schutz unserer Rechte und Sicherheit.",
+        "Geschäftsübertragungen: Im Falle einer Fusion oder Übernahme können Ihre Daten übertragen werden, aber wir werden Sie benachrichtigen und einen fortgesetzten Schutz gewährleisten."
+      ],
+      "noSelling": "Wir werden Ihre personenbezogenen Daten niemals an Dritte verkaufen."
+    },
+    "userRights": {
+      "title": "6. Ihre Rechte (DSGVO/DSG)",
+      "intro": "Gemäß DSGVO und Schweizer Datenschutzgesetz haben Sie folgende Rechte:",
+      "rights": [
+        {
+          "title": "Recht auf Zugang",
+          "description": "Sie können eine Kopie aller personenbezogenen Daten anfordern, die wir über Sie speichern."
+        },
+        {
+          "title": "Recht auf Berichtigung",
+          "description": "Sie können die Korrektur unrichtiger oder unvollständiger Daten verlangen."
+        },
+        {
+          "title": "Recht auf Löschung ('Recht auf Vergessenwerden')",
+          "description": "Sie können die Löschung Ihrer personenbezogenen Daten beantragen. Dies führt zur Beendigung Ihres Kontos und zur Entfernung aller zugehörigen Daten."
+        },
+        {
+          "title": "Recht auf Datenübertragbarkeit",
+          "description": "Sie können Ihre Daten in einem strukturierten, maschinenlesbaren Format anfordern."
+        },
+        {
+          "title": "Widerspruchsrecht",
+          "description": "Sie können gegen bestimmte Verarbeitungen Ihrer Daten Einspruch erheben."
+        },
+        {
+          "title": "Recht auf Einschränkung der Verarbeitung",
+          "description": "Sie können verlangen, dass wir die Nutzung Ihrer Daten einschränken."
+        },
+        {
+          "title": "Recht auf Widerruf der Einwilligung",
+          "description": "Sie können Ihre Einwilligung zur Datenverarbeitung jederzeit widerrufen."
+        }
+      ],
+      "exercise": "Um eines dieser Rechte auszuüben, kontaktieren Sie uns bitte unter support@helvetia.cloud oder nutzen Sie die Datenverwaltungstools in Ihren Kontoeinstellungen."
+    },
+    "cookies": {
+      "title": "7. Cookies & Tracking",
+      "intro": "Wir verwenden Cookies und ähnliche Technologien, um unsere Dienste bereitzustellen und zu verbessern:",
+      "types": [
+        {
+          "name": "Essentielle Cookies",
+          "description": "Erforderlich für Authentifizierung, Sicherheit und Kernfunktionalität der Plattform. Diese können nicht deaktiviert werden."
+        },
+        {
+          "name": "Funktionale Cookies",
+          "description": "Werden verwendet, um Ihre Präferenzen zu speichern (z. B. Theme, Sprache)."
+        },
+        {
+          "name": "Analyse-Cookies",
+          "description": "Helfen uns zu verstehen, wie Sie die Plattform nutzen, um Leistung und Benutzererfahrung zu verbessern. Wir verwenden datenschutzfreundliche Analysen."
+        }
+      ]
+    },
+    "children": {
+      "title": "8. Datenschutz für Kinder",
+      "content": "Helvetia Cloud richtet sich nicht an Nutzer unter 16 Jahren. Wir sammeln wissentlich keine personenbezogenen Daten von Kindern. Wenn Sie glauben, dass wir versehentlich Daten von einem Kind erfasst haben, kontaktieren Sie uns bitte umgehend."
+    },
+    "international": {
+      "title": "9. Internationale Datenübermittlungen",
+      "content": "Alle Daten werden in der Schweiz gespeichert und verarbeitet. Wir übertragen Ihre personenbezogenen Daten nicht außerhalb der Schweiz oder des Europäischen Wirtschaftsraums (EWR). Falls Übertragungen erforderlich werden, werden wir sicherstellen, dass angemessene Schutzmaßnahmen vorhanden sind (z. B. Standardvertragsklauseln)."
+    },
+    "changes": {
+      "title": "10. Änderungen der Datenschutzerklärung",
+      "content": "Wir können diese Datenschutzerklärung von Zeit zu Zeit aktualisieren. Wir werden Sie über wesentliche Änderungen per E-Mail oder durch einen auffälligen Hinweis auf unserer Plattform benachrichtigen. Das Datum 'Zuletzt aktualisiert' oben zeigt an, wann die Richtlinie zuletzt überarbeitet wurde. Ihre fortgesetzte Nutzung von Helvetia Cloud nach Änderungen stellt die Annahme der aktualisierten Richtlinie dar."
+    },
+    "contact": {
+      "title": "11. Kontakt & Beschwerden",
+      "intro": "Wenn Sie Fragen zu dieser Datenschutzerklärung haben oder Ihre Datenrechte ausüben möchten, kontaktieren Sie uns bitte:",
+      "email": "E-Mail",
+      "address": "Helvetia Cloud, Schweiz",
+      "complaint": "Sie haben das Recht, eine Beschwerde bei Ihrer örtlichen Datenschutzbehörde (z. B. dem Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten - EDÖB) einzureichen, wenn Sie glauben, dass Ihre Datenschutzrechte verletzt wurden."
+    }
   },
   "terms": {
     "pageTitle": "Nutzungsbedingungen",

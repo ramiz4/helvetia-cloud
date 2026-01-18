@@ -7,6 +7,7 @@ export * from './auth.routes';
 export * from './billing.routes';
 export * from './deployment.routes';
 export * from './feature-flag.routes';
+export * from './gdpr.routes';
 export * from './health.routes';
 export * from './project.routes';
 export * from './service.routes';

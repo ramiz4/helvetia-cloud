@@ -4,6 +4,8 @@ import {
   AlertCircle,
   ArrowUpRight,
   CheckCircle2,
+  Download,
+  FileText,
   Globe,
   LogOut,
   RefreshCw,
@@ -35,7 +37,11 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [confirmUsername, setConfirmUsername] = useState('');
 
   const fetchUser = useCallback(async () => {
     try {
@@ -83,6 +89,63 @@ export default function SettingsPage() {
 
   const reconnectGithub = () => {
     window.location.href = '/login';
+  };
+
+  const exportUserData = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/gdpr/export`);
+      if (res.ok) {
+        const data = await res.json();
+        // Create a downloadable JSON file
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `helvetia-cloud-data-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success('Data exported successfully');
+      } else {
+        toast.error('Failed to export data');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t.common.apiError);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!user || confirmUsername !== user.username) {
+      toast.error('Username confirmation does not match');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/gdpr/delete-account`, {
+        method: 'DELETE',
+        body: JSON.stringify({ confirmUsername }),
+      });
+      if (res.ok) {
+        toast.success('Account deleted successfully');
+        // Clear local storage and redirect to home
+        localStorage.clear();
+        window.location.href = '/';
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || 'Failed to delete account');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t.common.apiError);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -232,6 +295,83 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Privacy & Data Section */}
+        <section className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-[32px] overflow-hidden shadow-xl dark:shadow-2xl">
+          <div className="p-8 border-b border-slate-200 dark:border-white/5">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Privacy & Data
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-sm mt-1 font-medium">
+              Manage your personal data and privacy settings
+            </p>
+          </div>
+          <div className="p-8 space-y-6">
+            {/* Data Export */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-white/5">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg">
+                    <Download size={20} className="text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-white">
+                    Export Your Data
+                  </div>
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 font-medium max-w-md">
+                  Download a copy of all your personal data in JSON format. This includes your
+                  account information, projects, and deployments.
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-500">
+                  <Shield size={14} />
+                  <span>GDPR Article 20 - Right to data portability</span>
+                </div>
+              </div>
+              <button
+                onClick={exportUserData}
+                disabled={isExporting}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 disabled:bg-indigo-300 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2"
+              >
+                {isExporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    Export Data
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Privacy Policy Link */}
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <FileText size={20} className="text-slate-600 dark:text-slate-400" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-white">
+                    Privacy Policy
+                  </div>
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 font-medium max-w-md">
+                  Review our comprehensive privacy policy to understand how we collect, use, and
+                  protect your data.
+                </div>
+              </div>
+              <a
+                href="/privacy"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                View Policy
+                <ArrowUpRight size={16} />
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* Danger Zone */}
         <section className="bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-[32px] overflow-hidden shadow-xl dark:shadow-2xl">
           <div className="p-8 border-b border-rose-200 dark:border-rose-500/10 bg-rose-100/50 dark:bg-rose-500/5">
@@ -251,6 +391,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <button
+                onClick={() => setShowDeleteModal(true)}
                 className="w-full sm:w-auto p-4 rounded-xl bg-rose-200/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-md active:scale-95 border border-rose-200 dark:border-rose-500/20"
                 title={t.settings.deleteAccount}
               >
@@ -271,6 +412,64 @@ export default function SettingsPage() {
           isDanger
           isLoading={isDisconnecting}
         />
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-500/10 flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-rose-600 dark:text-rose-500" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Delete Account</h3>
+            </div>
+            <div className="mb-6">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                This action is permanent and cannot be undone. All your projects, deployments, and
+                data will be permanently deleted.
+              </p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                Please type your username to confirm:
+              </p>
+              <input
+                type="text"
+                value={confirmUsername}
+                onChange={(e) => setConfirmUsername(e.target.value)}
+                placeholder={user?.username || 'your-username'}
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setConfirmUsername('');
+                }}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteAccount}
+                disabled={isDeleting || confirmUsername !== user?.username}
+                className="flex-1 px-4 py-3 rounded-xl font-semibold bg-rose-600 text-white hover:bg-rose-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Delete Account
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

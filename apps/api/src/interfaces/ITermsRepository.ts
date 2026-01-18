@@ -14,6 +14,7 @@ export interface AcceptTermsData {
   userAgent?: string;
 }
 
+// Type for UserTermsAcceptance with termsVersion relation
 export type UserTermsAcceptanceWithVersion = UserTermsAcceptance & {
   termsVersion: TermsVersion;
 };

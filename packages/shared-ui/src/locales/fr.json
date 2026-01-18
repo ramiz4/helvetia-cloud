@@ -76,7 +76,26 @@
   "cookie": {
     "title": "Conformité RGPD / DSGVO",
     "text": "Nous utilisons des cookies pour garantir la meilleure expérience (conforme RGPD).",
-    "accept": "Accepter"
+    "accept": "Accepter tous les cookies",
+    "rejectNonEssential": "Rejeter les non-essentiels",
+    "customize": "Personnaliser",
+    "savePreferences": "Enregistrer les préférences",
+    "learnMore": "En savoir plus dans notre Politique de Confidentialité",
+    "preferences": {
+      "title": "Préférences des cookies",
+      "essential": {
+        "title": "Cookies essentiels",
+        "description": "Nécessaires pour l'authentification, la sécurité et les fonctionnalités de base de la plateforme. Ils ne peuvent pas être désactivés."
+      },
+      "functional": {
+        "title": "Cookies fonctionnels",
+        "description": "Utilisés pour mémoriser vos préférences (par exemple, thème, langue)."
+      },
+      "analytics": {
+        "title": "Cookies d'analyse",
+        "description": "Nous aident à comprendre comment vous utilisez la plateforme pour améliorer les performances et l'expérience utilisateur. Nous utilisons des analyses respectueuses de la vie privée."
+      }
+    }
   },
   "nav": {
     "brand": "HELVETIA",
@@ -301,6 +320,153 @@
     "sessionExpired": "Session expirée. Veuillez vous reconnecter.",
     "fetchReposFailed": "Échec de récupération des dépôts",
     "fetchBranchesFailed": "Échec de récupération des branches"
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "lastUpdated": "Dernière mise à jour",
+    "effectiveDate": "18 janvier 2026",
+    "intro": {
+      "title": "1. Introduction",
+      "welcome": "Bienvenue sur Helvetia Cloud. Nous nous engageons à protéger votre vie privée et à assurer la sécurité de vos données personnelles. Cette Politique de Confidentialité explique comment nous collectons, utilisons, traitons et protégeons vos informations conformément au Règlement Général sur la Protection des Données (RGPD), à la Loi fédérale suisse sur la protection des données (LPD) et à d'autres lois applicables en matière de protection des données.",
+      "dataControllerTitle": "Responsable du traitement",
+      "companyName": "Helvetia Cloud",
+      "address": "Suisse",
+      "email": "Contact"
+    },
+    "dataCollected": {
+      "title": "2. Données que nous collectons",
+      "accountInfo": {
+        "title": "Informations de compte",
+        "items": [
+          "Nom d'utilisateur et informations de profil GitHub",
+          "Adresse e-mail (de GitHub)",
+          "ID utilisateur GitHub et avatar",
+          "Jetons d'accès OAuth (chiffrés)"
+        ]
+      },
+      "serviceData": {
+        "title": "Données de service et de déploiement",
+        "items": [
+          "URLs de dépôts et informations de branches",
+          "Configurations de déploiement et variables d'environnement (chiffrées)",
+          "Journaux de construction et historique de déploiement",
+          "Métriques de conteneurs et utilisation des ressources",
+          "Configurations de domaines personnalisés"
+        ]
+      },
+      "technical": {
+        "title": "Données techniques et d'utilisation",
+        "items": [
+          "Adresses IP (pour la sécurité et la prévention de la fraude)",
+          "Type et version du navigateur",
+          "Informations sur l'appareil",
+          "Journaux d'accès et horodatages",
+          "Modèles d'utilisation de l'API"
+        ]
+      }
+    },
+    "dataUse": {
+      "title": "3. Comment nous utilisons vos données",
+      "items": [
+        "Fournir et maintenir les services de la plateforme Helvetia Cloud",
+        "Traiter les déploiements et gérer vos applications",
+        "Authentifier et autoriser l'accès à votre compte",
+        "Envoyer des notifications de service et des mises à jour importantes",
+        "Améliorer les performances de la plateforme et l'expérience utilisateur",
+        "Détecter et prévenir les menaces de sécurité et les activités frauduleuses",
+        "Respecter les obligations légales et appliquer nos Conditions d'utilisation",
+        "Fournir un support client et répondre à vos demandes"
+      ]
+    },
+    "dataStorage": {
+      "title": "4. Stockage et traitement des données",
+      "swissHosting": "Toutes les données sont stockées et traitées exclusivement en Suisse, garantissant les normes les plus élevées en matière de protection des données et de confidentialité.",
+      "retention": "Nous conservons vos données aussi longtemps que votre compte est actif et pendant une période raisonnable par la suite pour respecter les obligations légales. Les journaux de déploiement sont conservés pendant 90 jours. Vous pouvez demander la suppression de vos données à tout moment.",
+      "security": "Nous mettons en œuvre des mesures de sécurité conformes aux normes de l'industrie, notamment le chiffrement au repos et en transit, les contrôles d'accès, les audits de sécurité réguliers et les environnements de construction isolés."
+    },
+    "dataSharing": {
+      "title": "5. Partage des données",
+      "intro": "Nous ne vendons, ne louons ni n'échangeons vos données personnelles. Nous pouvons partager vos données uniquement dans les circonstances limitées suivantes :",
+      "items": [
+        "GitHub : Nous nous intégrons avec GitHub pour accéder à vos dépôts. Nous n'accédons qu'aux dépôts que vous autorisez explicitement.",
+        "Prestataires de services : Nous pouvons utiliser des prestataires de services tiers de confiance (par exemple, des fournisseurs d'infrastructure) qui traitent les données en notre nom dans le cadre d'accords de confidentialité stricts.",
+        "Exigences légales : Nous pouvons divulguer des données lorsque la loi, une ordonnance du tribunal ou pour protéger nos droits et notre sécurité l'exige.",
+        "Transferts d'entreprise : En cas de fusion ou d'acquisition, vos données peuvent être transférées, mais nous vous en informerons et assurerons une protection continue."
+      ],
+      "noSelling": "Nous ne vendrons jamais vos données personnelles à des tiers."
+    },
+    "userRights": {
+      "title": "6. Vos droits (RGPD/LPD)",
+      "intro": "En vertu du RGPD et de la loi suisse sur la protection des données, vous disposez des droits suivants :",
+      "rights": [
+        {
+          "title": "Droit d'accès",
+          "description": "Vous pouvez demander une copie de toutes les données personnelles que nous détenons à votre sujet."
+        },
+        {
+          "title": "Droit de rectification",
+          "description": "Vous pouvez demander la correction de données inexactes ou incomplètes."
+        },
+        {
+          "title": "Droit à l'effacement ('Droit à l'oubli')",
+          "description": "Vous pouvez demander la suppression de vos données personnelles. Cela entraînera la fermeture de votre compte et la suppression de toutes les données associées."
+        },
+        {
+          "title": "Droit à la portabilité des données",
+          "description": "Vous pouvez demander vos données dans un format structuré et lisible par machine."
+        },
+        {
+          "title": "Droit d'opposition",
+          "description": "Vous pouvez vous opposer à certains traitements de vos données."
+        },
+        {
+          "title": "Droit de limiter le traitement",
+          "description": "Vous pouvez demander que nous limitions la manière dont nous utilisons vos données."
+        },
+        {
+          "title": "Droit de retirer son consentement",
+          "description": "Vous pouvez retirer votre consentement au traitement des données à tout moment."
+        }
+      ],
+      "exercise": "Pour exercer l'un de ces droits, veuillez nous contacter à support@helvetia.cloud ou utiliser les outils de gestion des données dans les paramètres de votre compte."
+    },
+    "cookies": {
+      "title": "7. Cookies et suivi",
+      "intro": "Nous utilisons des cookies et des technologies similaires pour fournir et améliorer nos services :",
+      "types": [
+        {
+          "name": "Cookies essentiels",
+          "description": "Nécessaires pour l'authentification, la sécurité et les fonctionnalités de base de la plateforme. Ils ne peuvent pas être désactivés."
+        },
+        {
+          "name": "Cookies fonctionnels",
+          "description": "Utilisés pour mémoriser vos préférences (par exemple, thème, langue)."
+        },
+        {
+          "name": "Cookies d'analyse",
+          "description": "Nous aident à comprendre comment vous utilisez la plateforme pour améliorer les performances et l'expérience utilisateur. Nous utilisons des analyses respectueuses de la vie privée."
+        }
+      ]
+    },
+    "children": {
+      "title": "8. Confidentialité des enfants",
+      "content": "Helvetia Cloud n'est pas destiné aux utilisateurs de moins de 16 ans. Nous ne collectons pas sciemment de données personnelles auprès d'enfants. Si vous pensez que nous avons collecté par inadvertance des données auprès d'un enfant, veuillez nous contacter immédiatement."
+    },
+    "international": {
+      "title": "9. Transferts internationaux de données",
+      "content": "Toutes les données sont stockées et traitées en Suisse. Nous ne transférons pas vos données personnelles en dehors de la Suisse ou de l'Espace économique européen (EEE). Si des transferts deviennent nécessaires, nous veillerons à ce que des garanties appropriées soient en place (par exemple, les clauses contractuelles types)."
+    },
+    "changes": {
+      "title": "10. Modifications de la Politique de Confidentialité",
+      "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps en temps. Nous vous informerons des modifications importantes par e-mail ou par un avis bien visible sur notre plateforme. La date 'Dernière mise à jour' en haut indique quand la politique a été révisée pour la dernière fois. Votre utilisation continue d'Helvetia Cloud après les modifications constitue une acceptation de la politique mise à jour."
+    },
+    "contact": {
+      "title": "11. Contact et réclamations",
+      "intro": "Si vous avez des questions sur cette Politique de Confidentialité ou si vous souhaitez exercer vos droits en matière de données, veuillez nous contacter :",
+      "email": "E-mail",
+      "address": "Helvetia Cloud, Suisse",
+      "complaint": "Vous avez le droit de déposer une plainte auprès de votre autorité locale de protection des données (par exemple, le Préposé fédéral à la protection des données et à la transparence - PFPDT) si vous estimez que vos droits en matière de protection des données ont été violés."
+    }
   },
   "terms": {
     "pageTitle": "Conditions d'utilisation",
