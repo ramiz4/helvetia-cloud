@@ -1,4 +1,5 @@
 import { prisma } from 'database';
+import 'reflect-metadata';
 import { PrismaTermsRepository } from '../repositories/PrismaTermsRepository';
 import { TermsService } from '../services/TermsService';
 

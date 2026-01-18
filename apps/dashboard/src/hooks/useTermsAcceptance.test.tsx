@@ -112,7 +112,7 @@ describe('useAcceptTerms', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ termsId: 'terms-1' }),
+        body: JSON.stringify({ termsVersionId: 'terms-1' }),
       }),
     );
   });

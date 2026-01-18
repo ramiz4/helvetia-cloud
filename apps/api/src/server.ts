@@ -261,6 +261,9 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/api/v1/docs',
     '/api/v1/docs/json',
     '/api/v1/docs/yaml',
+    '/terms/latest',
+    '/terms/version',
+    '/terms/versions',
   ];
 
   // Get the URL without query parameters

@@ -81,7 +81,7 @@ export function TermsAcceptanceModal({ terms, onAccept, onCancel }: TermsAccepta
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
                 Version {terms.version} • Effective{' '}
-                {new Date(terms.effectiveDate).toLocaleDateString()}
+                {new Date(terms.effectiveAt).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -108,7 +108,7 @@ export function TermsAcceptanceModal({ terms, onAccept, onCancel }: TermsAccepta
 
         {/* Scroll indicator */}
         {!hasScrolledToBottom && (
-          <div className="absolute bottom-28 left-0 right-0 h-24 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none flex items-end justify-center pb-4">
+          <div className="absolute bottom-28 left-0 right-0 h-24 bg-linear-to-t from-white dark:from-slate-900 to-transparent pointer-events-none flex items-end justify-center pb-4">
             <div className="px-4 py-2 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-sm font-medium flex items-center gap-2 animate-bounce">
               <AlertCircle size={16} />
               <span>Please scroll to read all terms</span>
