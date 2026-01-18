@@ -467,5 +467,28 @@
       "address": "Helvetia Cloud, Suisse",
       "complaint": "Vous avez le droit de déposer une plainte auprès de votre autorité locale de protection des données (par exemple, le Préposé fédéral à la protection des données et à la transparence - PFPDT) si vous estimez que vos droits en matière de protection des données ont été violés."
     }
+  },
+  "terms": {
+    "pageTitle": "Conditions d'utilisation",
+    "pageDescription": "Consultez nos conditions d'utilisation et accords légaux",
+    "version": "Version",
+    "effectiveDate": "Date d'effet",
+    "lastUpdated": "Dernière mise à jour",
+    "selectLanguage": "Choisir la langue",
+    "loadingTerms": "Chargement des conditions...",
+    "errorLoading": "Échec du chargement des conditions d'utilisation",
+    "tryAgain": "Réessayer",
+    "acceptanceRequired": "Veuillez lire et accepter nos conditions d'utilisation",
+    "mustScrollToAccept": "Veuillez faire défiler jusqu'en bas pour activer le bouton d'acceptation",
+    "scrollToBottom": "Faire défiler pour accepter",
+    "iAccept": "J'accepte les conditions d'utilisation",
+    "acceptAndContinue": "Accepter et continuer",
+    "decline": "Refuser",
+    "cancel": "Annuler",
+    "acceptedOn": "Accepté le",
+    "needsAcceptance": "Vous devez accepter les conditions d'utilisation pour continuer à utiliser Helvetia Cloud",
+    "acceptingTerms": "Acceptation en cours...",
+    "acceptSuccess": "Conditions acceptées avec succès !",
+    "acceptError": "Échec de l'acceptation des conditions. Veuillez réessayer."
   }
 }

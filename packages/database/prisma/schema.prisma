@@ -25,6 +25,7 @@ model User {
   refreshTokens     RefreshToken[]
   organizations     OrganizationMember[]
   subscriptions     Subscription[]
+  termsAcceptances  UserTermsAcceptance[]
 }
 
 enum Role {
@@ -220,4 +221,38 @@ enum UsageMetric {
   MEMORY_GB_HOURS
   BANDWIDTH_GB
   STORAGE_GB
+}
+
+model TermsVersion {
+  id          String   @id @default(uuid())
+  version     String   @unique
+  content     String   @db.Text
+  language    String   @default("en")
+  effectiveAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  acceptances UserTermsAcceptance[]
+
+  @@index([version])
+  @@index([language])
+  @@index([effectiveAt])
+  @@unique([version, language])
+}
+
+model UserTermsAcceptance {
+  id             String       @id @default(uuid())
+  userId         String
+  termsVersionId String
+  ipAddress      String?
+  userAgent      String?
+  acceptedAt     DateTime     @default(now())
+  
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  termsVersion TermsVersion @relation(fields: [termsVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, termsVersionId])
+  @@index([userId])
+  @@index([termsVersionId])
+  @@index([acceptedAt])
 }

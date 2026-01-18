@@ -38,7 +38,11 @@ function AdminLoginContent() {
         localStorage.setItem('user', JSON.stringify(data.user));
         window.location.href = '/';
       } else {
-        setLocalError(data.error || t.login.invalidCredentials);
+        const errorMessage =
+          typeof data.error === 'string'
+            ? data.error
+            : data.error?.message || t.login.invalidCredentials;
+        setLocalError(errorMessage);
       }
     } catch {
       setLocalError(t.common.apiError);

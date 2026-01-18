@@ -141,12 +141,12 @@ export default function Footer() {
             </h4>
             <ul className="space-y-4 text-sm">
               <li>
-                <a
-                  href="#"
+                <Link
+                  href="/terms"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.termsOfService}
-                </a>
+                </Link>
               </li>
               <li>
                 <Link

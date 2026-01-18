@@ -467,5 +467,28 @@
       "address": "Helvetia Cloud, Svizzera",
       "complaint": "Avete il diritto di presentare un reclamo presso la vostra autorità locale per la protezione dei dati (ad es. l'Incaricato federale della protezione dei dati e della trasparenza - IFPDT) se ritenete che i vostri diritti in materia di protezione dei dati siano stati violati."
     }
+  },
+  "terms": {
+    "pageTitle": "Termini di servizio",
+    "pageDescription": "Leggi i nostri termini di servizio e accordi legali",
+    "version": "Versione",
+    "effectiveDate": "Data di efficacia",
+    "lastUpdated": "Ultimo aggiornamento",
+    "selectLanguage": "Seleziona lingua",
+    "loadingTerms": "Caricamento termini...",
+    "errorLoading": "Impossibile caricare i termini di servizio",
+    "tryAgain": "Riprova",
+    "acceptanceRequired": "Si prega di leggere e accettare i nostri termini di servizio",
+    "mustScrollToAccept": "Si prega di scorrere fino in fondo per abilitare il pulsante di accettazione",
+    "scrollToBottom": "Scorri per accettare",
+    "iAccept": "Accetto i termini di servizio",
+    "acceptAndContinue": "Accetta e continua",
+    "decline": "Rifiuta",
+    "cancel": "Annulla",
+    "acceptedOn": "Accettato il",
+    "needsAcceptance": "Devi accettare i termini di servizio per continuare a utilizzare Helvetia Cloud",
+    "acceptingTerms": "Accettazione in corso...",
+    "acceptSuccess": "Termini accettati con successo!",
+    "acceptError": "Impossibile accettare i termini. Riprova."
   }
 }

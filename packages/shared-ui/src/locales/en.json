@@ -466,5 +466,28 @@
       "address": "Helvetia Cloud, Switzerland",
       "complaint": "You have the right to lodge a complaint with your local data protection authority (e.g., the Swiss Federal Data Protection and Information Commissioner - FDPIC) if you believe your data protection rights have been violated."
     }
+  },
+  "terms": {
+    "pageTitle": "Terms of Service",
+    "pageDescription": "Read our terms of service and legal agreements",
+    "version": "Version",
+    "effectiveDate": "Effective Date",
+    "lastUpdated": "Last Updated",
+    "selectLanguage": "Select Language",
+    "loadingTerms": "Loading terms...",
+    "errorLoading": "Failed to load terms of service",
+    "tryAgain": "Try Again",
+    "acceptanceRequired": "Please review and accept our Terms of Service",
+    "mustScrollToAccept": "Please scroll to the bottom to enable the accept button",
+    "scrollToBottom": "Scroll to bottom to accept",
+    "iAccept": "I Accept the Terms of Service",
+    "acceptAndContinue": "Accept and Continue",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "acceptedOn": "Accepted on",
+    "needsAcceptance": "You must accept the Terms of Service to continue using Helvetia Cloud",
+    "acceptingTerms": "Accepting terms...",
+    "acceptSuccess": "Terms accepted successfully!",
+    "acceptError": "Failed to accept terms. Please try again."
   }
 }
