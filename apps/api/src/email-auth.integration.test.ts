@@ -3,7 +3,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const prisma = new PrismaClient();
 
-describe.skip('Email/Password Authentication', () => {
+// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
+// These tests require a real database to run
+// Set RUN_INTEGRATION_TESTS=1 to enable these tests
+const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
+
+describe.skipIf(shouldSkip)('Email/Password Authentication', () => {
   beforeAll(async () => {
     // Clean up test data
     await prisma.user.deleteMany({

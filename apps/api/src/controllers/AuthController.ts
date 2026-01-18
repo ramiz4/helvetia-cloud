@@ -75,6 +75,20 @@ export class AuthController {
       return reply.status(400).send({ error: 'Email, password, and username are required' });
     }
 
+    // Basic server-side validation for defense-in-depth
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return reply.status(400).send({ error: 'Invalid email format' });
+    }
+
+    if (password.length < 8) {
+      return reply.status(400).send({ error: 'Password must be at least 8 characters long' });
+    }
+
+    if (username.length < 3 || username.length > 30) {
+      return reply.status(400).send({ error: 'Username must be between 3 and 30 characters long' });
+    }
+
     try {
       const jwtSign = (payload: JwtPayload) => request.server.jwt.sign(payload);
       const result = await this.authService.registerWithEmail(email, password, username, jwtSign);
@@ -119,6 +133,18 @@ export class AuthController {
 
     if ((!email && !username) || !password) {
       return reply.status(400).send({ error: 'Email or username and password are required' });
+    }
+
+    // Basic server-side validation for defense-in-depth
+    if (email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        return reply.status(400).send({ error: 'Invalid email format' });
+      }
+    }
+
+    if (username && (username.length < 3 || username.length > 30)) {
+      return reply.status(400).send({ error: 'Username must be between 3 and 30 characters long' });
     }
 
     try {
@@ -273,6 +299,7 @@ export class AuthController {
       username: dbUser.username,
       email: dbUser.email,
       avatarUrl: dbUser.avatarUrl,
+      githubId: dbUser.githubId,
       hasGitHubConnected: !!dbUser.githubAccessToken,
       hasPasswordAuth: !!dbUser.password,
     };
