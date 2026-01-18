@@ -21,6 +21,8 @@ export default defineConfig({
       GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || 'test-client-secret',
       JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-change-me-in-production',
       ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef',
+      // Flag to skip integration tests (set to '1' to run integration tests)
+      RUN_INTEGRATION_TESTS: process.env.RUN_INTEGRATION_TESTS || '0',
     },
     coverage: {
       provider: 'v8',
