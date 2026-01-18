@@ -77,16 +77,6 @@ describe('Auth Route Validation', () => {
 
   describe('POST /auth/login', () => {
     it('should accept login with username and password', async () => {
-      // Mock the service to avoid actual DB hits, although validation happens before service call
-      // The controller will be called if validation passes
-      const { prisma } = await import('database');
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
-        id: 'user-1',
-        username: 'admin',
-        password: '$2b$10$hashedpassword',
-        role: 'ADMIN',
-      } as any);
-
       const response = await fastify.inject({
         method: 'POST',
         url: '/api/v1/auth/login',
@@ -96,8 +86,9 @@ describe('Auth Route Validation', () => {
         },
       });
 
-      // We expect 200 (if mocks work) or at least NOT 400 (Validation failed)
-      // Since we updated the schema to use username, this should pass validation
+      // Schema validation should pass (not 400)
+      // This test verifies that the schema validation accepts username/password format
+      // We expect either 401 (authentication failure) or 500 (service error), but NOT 400 (validation error)
       expect(response.statusCode).not.toBe(400);
     });
 
@@ -130,6 +121,23 @@ describe('Auth Route Validation', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+
+    it('should reject login if username is missing', async () => {
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: {
+          password: 'password123',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const json = response.json();
+      expect(json.success).toBe(false);
+      expect(json.error.code).toBe('VALIDATION_FAILED');
+      // Verify that 'username' is the missing property
+      expect(JSON.stringify(json.error.details)).toContain('username');
     });
   });
 });

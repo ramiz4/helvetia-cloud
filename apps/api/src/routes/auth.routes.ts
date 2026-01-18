@@ -84,7 +84,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       schema: {
         tags: ['Authentication'],
         summary: 'Login with credentials',
-        description: 'Authenticate with email and password. Returns JWT tokens.',
+        description: 'Authenticate with username and password. Returns JWT tokens.',
         body: {
           type: 'object',
           required: ['username', 'password'],
