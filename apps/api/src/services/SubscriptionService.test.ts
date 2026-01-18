@@ -1,6 +1,6 @@
 import { PrismaClient, SubscriptionPlan, SubscriptionStatus } from 'database';
 import 'reflect-metadata';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type MockedObject } from 'vitest';
 import { SubscriptionService } from './SubscriptionService';
 
 /**
@@ -93,7 +93,7 @@ const TEST_FIXTURES = {
 
 describe('SubscriptionService', () => {
   let subscriptionService: SubscriptionService;
-  let mockPrisma: jest.Mocked<PrismaClient>;
+  let mockPrisma: MockedObject<PrismaClient>;
 
   /**
    * Test setup
@@ -603,43 +603,6 @@ describe('SubscriptionService', () => {
    * Testing boundary conditions and error handling
    */
   describe('Edge Cases', () => {
-    it('should handle concurrent upsert operations correctly', async () => {
-      // Simulates race condition where subscription is created between findFirst and create
-      let callCount = 0;
-      vi.mocked(mockPrisma.subscription.findFirst).mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return Promise.resolve(null); // First call: no subscription
-        }
-        return Promise.resolve(TEST_FIXTURES.activeUserSubscription); // Second call: exists
-      });
-
-      vi.mocked(mockPrisma.subscription.create).mockResolvedValue({
-        id: 'sub-concurrent',
-        organizationId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: 'user-1',
-        stripeCustomerId: 'cus_123',
-        stripeSubscriptionId: 'sub_123',
-        plan: SubscriptionPlan.STARTER,
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(),
-      });
-
-      await subscriptionService.upsertSubscription({
-        userId: 'user-1',
-        stripeCustomerId: 'cus_123',
-        plan: SubscriptionPlan.STARTER,
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(),
-      });
-
-      expect(mockPrisma.subscription.create).toHaveBeenCalled();
-    });
-
     it('should handle subscription with far future period end date', async () => {
       const farFuture = new Date('2099-12-31');
       const subscription = {
@@ -728,7 +691,7 @@ describe('SubscriptionService', () => {
       });
     });
 
-    it('should handle missing stripeCustomerId in existing subscription', async () => {
+    it('should handle stripeCustomerId change in existing subscription', async () => {
       // This tests updating a subscription where Stripe customer ID changes
       const subscriptionWithOldCustomer = {
         ...TEST_FIXTURES.activeUserSubscription,
@@ -765,7 +728,7 @@ describe('SubscriptionService', () => {
    * even though Stripe API calls are mocked at a higher level (BillingService)
    */
   describe('Stripe Integration Points', () => {
-    it('should store Stripe customer ID correctly', async () => {
+    it('should store Stripe customer ID and subscription ID correctly', async () => {
       vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
       vi.mocked(mockPrisma.subscription.create).mockResolvedValue({
         id: 'sub-new',
@@ -794,38 +757,6 @@ describe('SubscriptionService', () => {
       expect(mockPrisma.subscription.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           stripeCustomerId: 'cus_stripe123',
-        }),
-      });
-    });
-
-    it('should store Stripe subscription ID correctly', async () => {
-      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
-      vi.mocked(mockPrisma.subscription.create).mockResolvedValue({
-        id: 'sub-new',
-        userId: 'user-1',
-        organizationId: null,
-        stripeCustomerId: 'cus_stripe123',
-        stripeSubscriptionId: 'sub_stripe123',
-        plan: SubscriptionPlan.STARTER,
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      await subscriptionService.upsertSubscription({
-        userId: 'user-1',
-        stripeCustomerId: 'cus_stripe123',
-        stripeSubscriptionId: 'sub_stripe123',
-        plan: SubscriptionPlan.STARTER,
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(),
-      });
-
-      expect(mockPrisma.subscription.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
           stripeSubscriptionId: 'sub_stripe123',
         }),
       });

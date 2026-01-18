@@ -6,7 +6,7 @@ This document describes the comprehensive unit test suite for `SubscriptionServi
 
 ## Test Coverage
 
-- **Total Tests**: 40
+- **Total Tests**: 38
 - **Coverage**: 100% (statements, branches, functions, lines)
 - **Test File**: `apps/api/src/services/SubscriptionService.test.ts`
 
@@ -160,34 +160,31 @@ Tests the retrieval of plan-based resource limits.
 - Progressive limits validation
 - Synchronous operation (no database access)
 
-### 6. Edge Cases (6 tests)
+### 6. Edge Cases (5 tests)
 
 Tests boundary conditions and complex scenarios.
 
 **Coverage**:
 
-- ✅ Handles concurrent upsert operations
 - ✅ Handles subscription with far future period end date
 - ✅ Handles subscription with past period end date
 - ✅ Handles transition from trial to paid subscription
 - ✅ Handles downgrade from paid to free plan
-- ✅ Handles missing stripeCustomerId in existing subscription
+- ✅ Handles stripeCustomerId change in existing subscription
 
 **Key Scenarios**:
 
-- Race conditions
 - Date boundary cases
 - Plan transitions (trial → paid, paid → free)
 - Customer ID changes
 
-### 7. Stripe Integration Points (5 tests)
+### 7. Stripe Integration Points (4 tests)
 
 Tests the service's handling of Stripe-related data.
 
 **Coverage**:
 
-- ✅ Stores Stripe customer ID correctly
-- ✅ Stores Stripe subscription ID correctly
+- ✅ Stores Stripe customer ID and subscription ID correctly
 - ✅ Handles webhook status updates from Stripe
 - ✅ Handles subscription cancellation from Stripe
 - ✅ Handles subscription renewal from Stripe webhook
@@ -350,7 +347,7 @@ When modifying `SubscriptionService`:
 - [Stripe Billing Implementation](../../docs/STRIPE_BILLING_IMPLEMENTATION.md)
 - [API Security](../../docs/SECURITY.md)
 - [Database Migrations](../../../../packages/database/docs/DATABASE_MIGRATIONS.md)
-- [Testing Guidelines](.github/instructions/backend.instructions.md)
+- [Testing Guidelines](../../../../../../.github/instructions/backend.instructions.md)
 
 ## Troubleshooting
 
