@@ -13,4 +13,5 @@ export * from './OrganizationService';
 export * from './ProjectManagementService';
 export * from './ServiceManagementService';
 export * from './SubscriptionService';
+export * from './TermsService';
 export * from './UsageTrackingService';
