@@ -28,6 +28,8 @@ export default defineConfig({
       STRIPE_PRICE_ID_STARTER: process.env.STRIPE_PRICE_ID_STARTER || 'price_test_starter',
       STRIPE_PRICE_ID_PRO: process.env.STRIPE_PRICE_ID_PRO || 'price_test_pro',
       STRIPE_PRICE_ID_ENTERPRISE: process.env.STRIPE_PRICE_ID_ENTERPRISE || 'price_test_enterprise',
+      // Flag to skip integration tests (set to '1' to run integration tests)
+      RUN_INTEGRATION_TESTS: process.env.RUN_INTEGRATION_TESTS || '0',
     },
     coverage: {
       provider: 'v8',

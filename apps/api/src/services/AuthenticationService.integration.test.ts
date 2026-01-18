@@ -7,9 +7,10 @@ import { PrismaUserRepository } from '../repositories/PrismaUserRepository';
 import { AuthenticationService } from './AuthenticationService';
 import { OrganizationService } from './OrganizationService';
 
-// Skip these integration tests if DATABASE_URL is not set
-const shouldSkip = !process.env.DATABASE_URL;
-const describeIf = shouldSkip ? describe.skip : describe;
+// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
+// These tests require a real database to run
+// Set RUN_INTEGRATION_TESTS=1 to enable these tests
+const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
 
 vi.mock('axios');
 vi.mock('../utils/crypto', () => ({
@@ -20,7 +21,7 @@ vi.mock('../utils/refreshToken', () => ({
   createRefreshToken: vi.fn(async (userId: string) => `refresh_token_${userId}`),
 }));
 
-describeIf('AuthenticationService - Concurrent Organization Creation', () => {
+describe.skipIf(shouldSkip)('AuthenticationService - Concurrent Organization Creation', () => {
   let authService: AuthenticationService;
   let userRepo: PrismaUserRepository;
   let orgRepo: PrismaOrganizationRepository;

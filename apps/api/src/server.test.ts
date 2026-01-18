@@ -59,6 +59,7 @@ vi.mock('database', () => {
         upsert: vi.fn(),
         create: vi.fn(),
         delete: vi.fn(),
+        count: vi.fn().mockResolvedValue(0), // Default to 0 services for limit checks
       },
       user: {
         findUnique: vi.fn(),
@@ -92,6 +93,20 @@ vi.mock('database', () => {
         update: vi.fn(),
         delete: vi.fn(),
       },
+      subscription: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'test-sub-1',
+          plan: 'STARTER',
+          status: 'ACTIVE',
+          stripeCustomerId: 'cus_test',
+          currentPeriodStart: new Date('2024-01-01'),
+          currentPeriodEnd: new Date('2024-02-01'),
+        }),
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
     },
     PrismaClient: vi.fn(),
     Prisma: {
@@ -103,6 +118,18 @@ vi.mock('database', () => {
       ADMIN: 'ADMIN',
       MEMBER: 'MEMBER',
       VIEWER: 'VIEWER',
+    },
+    SubscriptionPlan: {
+      FREE: 'FREE',
+      STARTER: 'STARTER',
+      PRO: 'PRO',
+      ENTERPRISE: 'ENTERPRISE',
+    },
+    SubscriptionStatus: {
+      ACTIVE: 'ACTIVE',
+      PAST_DUE: 'PAST_DUE',
+      CANCELED: 'CANCELED',
+      UNPAID: 'UNPAID',
     },
   };
 });

@@ -50,6 +50,20 @@ export enum ErrorCode {
   // Payload (4xx)
   PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE',
 
+  // Subscription & Billing (4xx)
+  SUBSCRIPTION_NOT_FOUND = 'SUBSCRIPTION_NOT_FOUND',
+  SUBSCRIPTION_INACTIVE = 'SUBSCRIPTION_INACTIVE',
+  SUBSCRIPTION_PAST_DUE = 'SUBSCRIPTION_PAST_DUE',
+  SUBSCRIPTION_CANCELED = 'SUBSCRIPTION_CANCELED',
+  SUBSCRIPTION_UNPAID = 'SUBSCRIPTION_UNPAID',
+
+  // Resource Limits (4xx)
+  LIMIT_SERVICE_COUNT_EXCEEDED = 'LIMIT_SERVICE_COUNT_EXCEEDED',
+  LIMIT_MEMORY_EXCEEDED = 'LIMIT_MEMORY_EXCEEDED',
+  LIMIT_CPU_EXCEEDED = 'LIMIT_CPU_EXCEEDED',
+  LIMIT_BANDWIDTH_EXCEEDED = 'LIMIT_BANDWIDTH_EXCEEDED',
+  LIMIT_STORAGE_EXCEEDED = 'LIMIT_STORAGE_EXCEEDED',
+
   // System & Server Errors (5xx)
   SYSTEM_ERROR = 'SYSTEM_ERROR',
   SYSTEM_DATABASE_ERROR = 'SYSTEM_DATABASE_ERROR',
@@ -102,6 +116,22 @@ export const ErrorMessages: Record<ErrorCode, string> = {
 
   // Payload
   [ErrorCode.PAYLOAD_TOO_LARGE]: 'Request payload is too large',
+
+  // Subscription & Billing
+  [ErrorCode.SUBSCRIPTION_NOT_FOUND]: 'No subscription found. Please subscribe to a plan.',
+  [ErrorCode.SUBSCRIPTION_INACTIVE]: 'Your subscription is not active.',
+  [ErrorCode.SUBSCRIPTION_PAST_DUE]:
+    'Your subscription payment is past due. Please update your payment method.',
+  [ErrorCode.SUBSCRIPTION_CANCELED]: 'Your subscription has been canceled.',
+  [ErrorCode.SUBSCRIPTION_UNPAID]: 'Your subscription is unpaid. Please complete payment.',
+
+  // Resource Limits
+  [ErrorCode.LIMIT_SERVICE_COUNT_EXCEEDED]:
+    'Service limit reached. Please upgrade your plan to create more services.',
+  [ErrorCode.LIMIT_MEMORY_EXCEEDED]: 'Memory limit exceeded. Please upgrade your plan.',
+  [ErrorCode.LIMIT_CPU_EXCEEDED]: 'CPU limit exceeded. Please upgrade your plan.',
+  [ErrorCode.LIMIT_BANDWIDTH_EXCEEDED]: 'Bandwidth limit exceeded. Please upgrade your plan.',
+  [ErrorCode.LIMIT_STORAGE_EXCEEDED]: 'Storage limit exceeded. Please upgrade your plan.',
 
   // System & Server Errors
   [ErrorCode.SYSTEM_ERROR]: 'An unexpected error occurred. Please try again.',

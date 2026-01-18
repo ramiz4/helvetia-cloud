@@ -3,6 +3,7 @@ import { BODY_LIMIT_SMALL } from '../config/constants';
 import { createRateLimitConfigs } from '../config/rateLimit';
 import { ServiceController } from '../controllers/ServiceController';
 import { resolve, TOKENS } from '../di';
+import { enforceResourceLimits, requireActiveSubscription } from '../middleware';
 
 /**
  * Service routes plugin
@@ -100,6 +101,7 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
     '/services',
     {
       bodyLimit: BODY_LIMIT_SMALL, // 100KB limit for service creation
+      preHandler: [requireActiveSubscription, enforceResourceLimits('service')],
       schema: {
         tags: ['Services'],
         summary: 'Create a new service',
@@ -116,6 +118,10 @@ export const serviceRoutes: FastifyPluginAsync = async (fastify) => {
           },
           401: {
             description: 'Unauthorized',
+            type: 'object',
+          },
+          403: {
+            description: 'Forbidden - subscription inactive or limit reached',
             type: 'object',
           },
           409: {
