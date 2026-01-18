@@ -60,7 +60,7 @@ describe.skipIf(shouldSkip)('PrivacyPolicyController Integration Tests', () => {
     it('should return latest policy', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/privacy-policy/latest?language=en',
+        url: '/api/v1/privacy-policy/latest?language=en',
       });
       expect(response.statusCode).toBe(200);
       const json = JSON.parse(response.body);
@@ -71,7 +71,7 @@ describe.skipIf(shouldSkip)('PrivacyPolicyController Integration Tests', () => {
     it('should return 404 for unknown language', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/privacy-policy/latest?language=unknown',
+        url: '/api/v1/privacy-policy/latest?language=unknown',
       });
       expect(response.statusCode).toBe(404);
     });
@@ -99,7 +99,7 @@ describe.skipIf(shouldSkip)('PrivacyPolicyController Integration Tests', () => {
         headers: { authorization: `Bearer ${authToken}` },
         payload: { privacyPolicyVersionId: privacyPolicyId },
       });
-      expect(response.statusCode).toBe(200);
+      expect(response.statusCode).toBe(201);
       const json = JSON.parse(response.body);
       expect(json.success).toBe(true);
     });

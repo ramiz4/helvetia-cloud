@@ -27,7 +27,7 @@ async function initializePrivacy() {
     console.log('✅ Privacy Policy initialized successfully!');
     console.log(`   Version: ${version}`);
     console.log(`   Effective Date: ${effectiveAt.toISOString()}`);
-    console.log(`   Languages: EN, DE, FR, IT`);
+    console.log(`   Languages: EN, DE, FR, IT, GSW`);
   } catch (error) {
     console.error('❌ Failed to initialize Privacy Policy:', error);
     throw error;

@@ -68,7 +68,15 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
     gsw: 'Wie Helvetia Cloud mit dine Date umgoht',
   };
 
-  const labels: Record<string, any> = {
+  const labels: Record<
+    string,
+    {
+      version: string;
+      effectiveDate: string;
+      lastUpdated: string;
+      backToDashboard: string;
+    }
+  > = {
     en: {
       version: 'Version',
       effectiveDate: 'Effective Date',
