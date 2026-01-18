@@ -1,8 +1,8 @@
 import { PrismaClient, SubscriptionPlan } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { planLimits, testSubscriptions } from '../test/fixtures/billing.fixtures';
 import { SubscriptionService } from './SubscriptionService';
-import { testSubscriptions, planLimits } from '../test/fixtures/billing.fixtures';
 
 describe('SubscriptionService', () => {
   let subscriptionService: SubscriptionService;
@@ -297,10 +297,10 @@ describe('SubscriptionService', () => {
 
     it('should handle all valid plan types', () => {
       const plans: SubscriptionPlan[] = ['FREE', 'STARTER', 'PRO', 'ENTERPRISE'];
-      
+
       plans.forEach((plan) => {
         const limits = subscriptionService.getResourceLimits(plan);
-        
+
         expect(limits).toBeDefined();
         expect(typeof limits.maxServices).toBe('number');
         expect(typeof limits.maxMemoryMB).toBe('number');
@@ -342,7 +342,7 @@ describe('SubscriptionService', () => {
     it('should handle subscription period at boundary dates', async () => {
       const periodStart = new Date('2024-01-01T00:00:00.000Z');
       const periodEnd = new Date('2024-12-31T23:59:59.999Z');
-      
+
       mockPrisma.subscription.findFirst.mockResolvedValue(null);
       mockPrisma.subscription.create.mockResolvedValue({});
 

@@ -1,14 +1,14 @@
 import 'reflect-metadata';
 import Stripe from 'stripe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { StripeWebhookController } from './StripeWebhookController';
-import {
-  createMockSubscription,
-  createMockInvoice,
-  createMockWebhookEvent,
-  createMockCustomer,
-} from '../test/mocks/stripe.mock';
 import { testPriceIds } from '../test/fixtures/billing.fixtures';
+import {
+  createMockCustomer,
+  createMockInvoice,
+  createMockSubscription,
+  createMockWebhookEvent,
+} from '../test/mocks/stripe.mock';
+import { StripeWebhookController } from './StripeWebhookController';
 
 // Mock env config
 vi.mock('../config/env', () => ({
@@ -138,7 +138,10 @@ describe('StripeWebhookController', () => {
     });
 
     it('should return 200 for successfully handled event', async () => {
-      const mockEvent = createMockWebhookEvent('customer.subscription.created', createMockSubscription());
+      const mockEvent = createMockWebhookEvent(
+        'customer.subscription.created',
+        createMockSubscription(),
+      );
       mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
       mockStripe.customers.retrieve.mockResolvedValue(
         createMockCustomer({ metadata: { userId: 'user-1' } }),
@@ -165,7 +168,10 @@ describe('StripeWebhookController', () => {
     });
 
     it('should return 500 if event handler throws error', async () => {
-      const mockEvent = createMockWebhookEvent('customer.subscription.created', createMockSubscription());
+      const mockEvent = createMockWebhookEvent(
+        'customer.subscription.created',
+        createMockSubscription(),
+      );
       mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
       mockStripe.customers.retrieve.mockRejectedValue(new Error('Customer fetch failed'));
 

@@ -115,6 +115,7 @@ Tests Stripe integration without actual API calls:
 - **Status Mapping**: Map Stripe statuses to internal enums
 
 **Key Test Cases:**
+
 - Returns existing customer ID if subscription exists
 - Creates new Stripe customer if needed
 - Maps subscription statuses correctly (active, trialing, past_due, canceled)
@@ -132,6 +133,7 @@ Tests database operations for subscriptions:
 - **Edge Cases**: Null subscription IDs, boundary dates
 
 **Key Test Cases:**
+
 - Retrieves subscription for user/organization
 - Creates new subscription if none exists
 - Updates existing subscription
@@ -149,6 +151,7 @@ Tests usage recording and cost calculation:
 - **Date Ranges**: Handle various date ranges correctly
 
 **Key Test Cases:**
+
 - Records usage with correct timestamps
 - Aggregates usage by metric type
 - Calculates costs using correct pricing constants
@@ -162,6 +165,7 @@ Tests usage recording and cost calculation:
 Tests HTTP endpoints for billing operations:
 
 **Endpoints Tested:**
+
 - `GET /billing/subscription` - Get current subscription
 - `POST /billing/checkout` - Create checkout session
 - `POST /billing/portal` - Create billing portal session
@@ -171,6 +175,7 @@ Tests HTTP endpoints for billing operations:
 - `GET /billing/usage/service/:id` - Get usage for specific service
 
 **Key Test Cases:**
+
 - Returns 401 for unauthenticated requests
 - Returns 404 when resources not found
 - Validates request parameters (dates, priceId, plan)
@@ -183,6 +188,7 @@ Tests HTTP endpoints for billing operations:
 Tests webhook event handling:
 
 **Events Tested:**
+
 - `customer.subscription.created` - New subscription
 - `customer.subscription.updated` - Subscription changes
 - `customer.subscription.deleted` - Canceled subscription
@@ -190,6 +196,7 @@ Tests webhook event handling:
 - `invoice.payment_failed` - Failed payment
 
 **Key Test Cases:**
+
 - Verifies webhook signature
 - Rejects malformed JSON
 - Rejects missing/invalid signatures
@@ -207,6 +214,7 @@ Tests webhook event handling:
 Located in `apps/api/src/test/mocks/stripe.mock.ts`:
 
 **Functions:**
+
 - `createMockStripe()` - Create mock Stripe client with all methods
 - `createMockCustomer()` - Create mock Stripe customer object
 - `createMockSubscription()` - Create mock Stripe subscription object
@@ -216,6 +224,7 @@ Located in `apps/api/src/test/mocks/stripe.mock.ts`:
 - `createMockWebhookEvent()` - Create mock Stripe webhook event
 
 **Usage:**
+
 ```typescript
 import { createMockStripe, createMockSubscription } from '../test/mocks/stripe.mock';
 
@@ -229,6 +238,7 @@ mockStripe.subscriptions.retrieve.mockResolvedValue(mockSub);
 Located in `apps/api/src/test/fixtures/billing.fixtures.ts`:
 
 **Available Fixtures:**
+
 - `testUsers` - Sample user objects
 - `testOrganizations` - Sample organization objects
 - `testSubscriptions` - Sample subscriptions (free, starter, pro, pastDue, canceled)
@@ -239,6 +249,7 @@ Located in `apps/api/src/test/fixtures/billing.fixtures.ts`:
 - `usagePricing` - Expected pricing per usage metric
 
 **Usage:**
+
 ```typescript
 import { testSubscriptions, planLimits } from '../test/fixtures/billing.fixtures';
 
@@ -301,7 +312,7 @@ expect(mockReply.send).toHaveBeenCalledWith({ sessionId: expect.any(String) });
 // Create webhook event
 const mockEvent = createMockWebhookEvent(
   'customer.subscription.created',
-  createMockSubscription({ status: 'active' })
+  createMockSubscription({ status: 'active' }),
 );
 
 // Mock Stripe webhook signature verification
@@ -406,6 +417,7 @@ mockRequest.rawBody = Buffer.from(JSON.stringify({ type: 'test' }));
 ## Continuous Integration
 
 Tests run automatically on:
+
 - Pull request creation
 - Push to main branch
 - Manual workflow trigger

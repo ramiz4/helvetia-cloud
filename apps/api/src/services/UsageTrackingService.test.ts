@@ -1,8 +1,8 @@
 import { PrismaClient, UsageMetric } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { UsageTrackingService } from './UsageTrackingService';
 import { testServices, testUsageRecords, usagePricing } from '../test/fixtures/billing.fixtures';
+import { UsageTrackingService } from './UsageTrackingService';
 
 describe('UsageTrackingService', () => {
   let usageTrackingService: UsageTrackingService;
@@ -186,10 +186,7 @@ describe('UsageTrackingService', () => {
 
   describe('getAggregatedUsage', () => {
     it('should retrieve aggregated usage for all user services', async () => {
-      mockPrisma.service.findMany.mockResolvedValue([
-        testServices.service1,
-        testServices.service2,
-      ]);
+      mockPrisma.service.findMany.mockResolvedValue([testServices.service1, testServices.service2]);
 
       mockPrisma.usageRecord.groupBy.mockResolvedValue([
         { metric: 'COMPUTE_HOURS', _sum: { quantity: 200 } },

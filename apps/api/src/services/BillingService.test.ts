@@ -2,9 +2,16 @@ import { PrismaClient } from 'database';
 import 'reflect-metadata';
 import Stripe from 'stripe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { testPriceIds, testSubscriptions } from '../test/fixtures/billing.fixtures';
+import {
+  createMockCheckoutSession,
+  createMockCustomer,
+  createMockInvoice,
+  createMockPortalSession,
+  createMockStripe,
+  createMockSubscription,
+} from '../test/mocks/stripe.mock';
 import { BillingService } from './BillingService';
-import { createMockStripe, createMockCustomer, createMockSubscription, createMockCheckoutSession, createMockPortalSession, createMockInvoice } from '../test/mocks/stripe.mock';
-import { testSubscriptions, testPriceIds } from '../test/fixtures/billing.fixtures';
 
 // Mock the Stripe config
 vi.mock('../config/stripe', () => ({
@@ -287,7 +294,9 @@ describe('BillingService', () => {
 
   describe('cancelSubscription', () => {
     it('should cancel a subscription', async () => {
-      mockStripe.subscriptions.cancel.mockResolvedValue(createMockSubscription({ status: 'canceled' }));
+      mockStripe.subscriptions.cancel.mockResolvedValue(
+        createMockSubscription({ status: 'canceled' }),
+      );
 
       await billingService.cancelSubscription('sub_test123');
 
@@ -400,10 +409,7 @@ describe('BillingService', () => {
 
   describe('getInvoices', () => {
     it('should retrieve invoices for a customer', async () => {
-      const mockInvoices = [
-        createMockInvoice({ id: 'in_1' }),
-        createMockInvoice({ id: 'in_2' }),
-      ];
+      const mockInvoices = [createMockInvoice({ id: 'in_1' }), createMockInvoice({ id: 'in_2' })];
       mockStripe.invoices.list.mockResolvedValue({
         data: mockInvoices,
         has_more: false,

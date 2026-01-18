@@ -1,8 +1,16 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { testServices, testSubscriptions, testUsers } from '../test/fixtures/billing.fixtures';
+import { createMockInvoice } from '../test/mocks/stripe.mock';
 import { BillingController } from './BillingController';
-import { testUsers, testSubscriptions, testServices } from '../test/fixtures/billing.fixtures';
-import { createMockCheckoutSession, createMockPortalSession, createMockInvoice } from '../test/mocks/stripe.mock';
+
+// Mock env module
+vi.mock('../config/env', () => ({
+  env: {
+    PLATFORM_DOMAIN: 'helvetia.cloud',
+    APP_BASE_URL: 'http://localhost:3000',
+  },
+}));
 
 describe('BillingController', () => {
   let controller: BillingController;
@@ -107,9 +115,10 @@ describe('BillingController', () => {
       mockRequest.body = { priceId: 'price_starter', plan: 'STARTER' };
       mockUserRepository.findById.mockResolvedValue(testUsers.user1);
       mockBillingService.getOrCreateCustomer.mockResolvedValue('cus_test123');
-      mockBillingService.createCheckoutSession.mockResolvedValue(
-        createMockCheckoutSession({ id: 'cs_test123', url: 'https://checkout.stripe.com/test' }),
-      );
+      mockBillingService.createCheckoutSession.mockResolvedValue({
+        sessionId: 'cs_test123',
+        url: 'https://checkout.stripe.com/test',
+      });
 
       const result = await controller.createCheckoutSession(mockRequest, mockReply);
 
@@ -185,9 +194,9 @@ describe('BillingController', () => {
   describe('createPortalSession', () => {
     it('should create portal session successfully', async () => {
       mockSubscriptionService.getSubscription.mockResolvedValue(testSubscriptions.starter);
-      mockBillingService.createPortalSession.mockResolvedValue(
-        createMockPortalSession({ url: 'https://billing.stripe.com/test' }),
-      );
+      mockBillingService.createPortalSession.mockResolvedValue({
+        url: 'https://billing.stripe.com/test',
+      });
 
       const result = await controller.createPortalSession(mockRequest, mockReply);
 
@@ -375,7 +384,9 @@ describe('BillingController', () => {
       await controller.getUsageHistory(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(400);
-      expect(mockReply.send).toHaveBeenCalledWith({ error: 'periodStart must be before periodEnd' });
+      expect(mockReply.send).toHaveBeenCalledWith({
+        error: 'periodStart must be before periodEnd',
+      });
     });
 
     it('should return 400 if date range exceeds 1 year', async () => {
