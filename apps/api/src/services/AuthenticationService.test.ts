@@ -379,14 +379,35 @@ describe('AuthenticationService', () => {
 
   describe('disconnectGitHub', () => {
     it('should disconnect GitHub account', async () => {
-      vi.mocked(mockUserRepo.findById).mockResolvedValue(mockUser);
-      vi.mocked(mockUserRepo.update).mockResolvedValue({ ...mockUser, githubAccessToken: null });
+      const userWithEmailAuth = {
+        ...mockUser,
+        email: 'test@example.com',
+        password: 'hashed_password',
+      };
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(userWithEmailAuth);
+      vi.mocked(mockUserRepo.update).mockResolvedValue({
+        ...userWithEmailAuth,
+        githubAccessToken: null,
+        githubId: null,
+      });
 
       await service.disconnectGitHub('user-1');
 
       expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
         githubAccessToken: null,
+        githubId: null,
       });
+    });
+
+    it('should throw UnauthorizedError if user does not have email/password auth', async () => {
+      const userWithoutEmailAuth = {
+        ...mockUser,
+        email: null,
+        password: null,
+      };
+      vi.mocked(mockUserRepo.findById).mockResolvedValue(userWithoutEmailAuth);
+
+      await expect(service.disconnectGitHub('user-1')).rejects.toThrow(UnauthorizedError);
     });
 
     it('should throw UnauthorizedError if user is not found', async () => {
