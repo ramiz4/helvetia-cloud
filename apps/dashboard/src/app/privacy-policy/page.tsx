@@ -1,5 +1,6 @@
 import type { PrivacyPolicy } from '@/types/privacy';
 import { Calendar, Clock, ShieldCheck } from 'lucide-react';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -41,12 +42,66 @@ interface PrivacyPageProps {
 
 export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
   const params = await searchParams;
-  const language = params.lang || 'en';
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get('helvetia-lang')?.value;
+  const language = params.lang || cookieLang || 'en';
   const policy = await fetchLatestPrivacyPolicy(language);
 
   if (!policy) {
     notFound();
   }
+
+  // Fallback labels if translation loading is complex in server component
+  const titles: Record<string, string> = {
+    en: 'Privacy Policy',
+    de: 'Datenschutzerklärung',
+    fr: 'Politique de confidentialité',
+    it: 'Informativa sulla privacy',
+    gsw: 'Dateschutzerklärung',
+  };
+
+  const subtitles: Record<string, string> = {
+    en: 'How Helvetia Cloud handles your data',
+    de: 'Wie Helvetia Cloud mit Ihren Daten umgeht',
+    fr: 'Comment Helvetia Cloud traite vos données',
+    it: 'Come Helvetia Cloud gestisce i tuoi dati',
+    gsw: 'Wie Helvetia Cloud mit dine Date umgoht',
+  };
+
+  const labels: Record<string, any> = {
+    en: {
+      version: 'Version',
+      effectiveDate: 'Effective Date',
+      lastUpdated: 'Last Updated',
+      backToDashboard: 'Back to Dashboard',
+    },
+    de: {
+      version: 'Version',
+      effectiveDate: 'Gültig ab',
+      lastUpdated: 'Zuletzt aktualisiert',
+      backToDashboard: 'Zurück zum Dashboard',
+    },
+    fr: {
+      version: 'Version',
+      effectiveDate: "Date d'entrée en vigueur",
+      lastUpdated: 'Dernière mise à jour',
+      backToDashboard: 'Retour au tableau de bord',
+    },
+    it: {
+      version: 'Versione',
+      effectiveDate: 'Data di efficacia',
+      lastUpdated: 'Ultimo aggiornamento',
+      backToDashboard: 'Torna alla dashboard',
+    },
+    gsw: {
+      version: 'Version',
+      effectiveDate: 'Gültig ab',
+      lastUpdated: 'Zuletzt aktualisiert',
+      backToDashboard: 'Zrugg zum Dashboard',
+    },
+  };
+
+  const t = labels[language] || labels.en;
 
   return (
     <div className="py-8 animate-fade-in max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -60,10 +115,10 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
               </div>
               <div>
                 <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                  Privacy Policy
+                  {titles[language] || titles.en}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400 text-lg font-medium mt-2">
-                  How Helvetia Cloud handles your data
+                  {subtitles[language] || subtitles.en}
                 </p>
               </div>
             </div>
@@ -78,7 +133,7 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
                 <ShieldCheck size={20} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Version
+                {t.version}
               </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{policy.version}</p>
@@ -90,15 +145,18 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
                 <Calendar size={20} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Effective Date
+                {t.effectiveDate}
               </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {new Date(policy.effectiveAt).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {new Date(policy.effectiveAt).toLocaleDateString(
+                language === 'gsw' ? 'de-CH' : language,
+                {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                },
+              )}
             </p>
           </div>
 
@@ -108,15 +166,18 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
                 <Clock size={20} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Last Updated
+                {t.lastUpdated}
               </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {new Date(policy.updatedAt).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+              {new Date(policy.updatedAt).toLocaleDateString(
+                language === 'gsw' ? 'de-CH' : language,
+                {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                },
+              )}
             </p>
           </div>
         </div>
@@ -135,7 +196,7 @@ export default async function PrivacyPage({ searchParams }: PrivacyPageProps) {
           href="/"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-lg"
         >
-          Back to Dashboard
+          {t.backToDashboard}
         </Link>
       </div>
     </div>

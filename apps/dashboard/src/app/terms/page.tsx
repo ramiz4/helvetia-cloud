@@ -1,5 +1,6 @@
 import type { TermsOfService } from '@/types/terms';
 import { Calendar, Clock, FileText } from 'lucide-react';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -41,12 +42,67 @@ interface TermsPageProps {
 
 export default async function TermsPage({ searchParams }: TermsPageProps) {
   const params = await searchParams;
-  const language = params.lang || 'en';
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get('helvetia-lang')?.value;
+  const language = params.lang || cookieLang || 'en';
   const terms = await fetchLatestTerms(language);
 
   if (!terms) {
     notFound();
   }
+
+  // Fallback labels if translation loading is complex in server component
+  // In a real app, we'd import the JSON or use a server-side i18n helper
+  const titles: Record<string, string> = {
+    en: 'Terms of Service',
+    de: 'Nutzungsbedingungen',
+    fr: "Conditions d'utilisation",
+    it: 'Termini di servizio',
+    gsw: 'Nutzigsbedingige',
+  };
+
+  const subtitles: Record<string, string> = {
+    en: 'Helvetia Cloud Platform Agreement',
+    de: 'Helvetia Cloud Plattform-Vereinbarung',
+    fr: 'Accord de plateforme Helvetia Cloud',
+    it: 'Accordo sulla piattaforma Helvetia Cloud',
+    gsw: 'Helvetia Cloud Plattform-Veriiubarig',
+  };
+
+  const labels: Record<string, any> = {
+    en: {
+      version: 'Version',
+      effectiveDate: 'Effective Date',
+      lastUpdated: 'Last Updated',
+      backToDashboard: 'Back to Dashboard',
+    },
+    de: {
+      version: 'Version',
+      effectiveDate: 'Gültig ab',
+      lastUpdated: 'Zuletzt aktualisiert',
+      backToDashboard: 'Zurück zum Dashboard',
+    },
+    fr: {
+      version: 'Version',
+      effectiveDate: "Date d'entrée en vigueur",
+      lastUpdated: 'Dernière mise à jour',
+      backToDashboard: 'Retour au tableau de bord',
+    },
+    it: {
+      version: 'Versione',
+      effectiveDate: 'Data di efficacia',
+      lastUpdated: 'Ultimo aggiornamento',
+      backToDashboard: 'Torna alla dashboard',
+    },
+    gsw: {
+      version: 'Version',
+      effectiveDate: 'Gültig ab',
+      lastUpdated: 'Zuletzt aktualisiert',
+      backToDashboard: 'Zrugg zum Dashboard',
+    },
+  };
+
+  const t = labels[language] || labels.en;
 
   return (
     <div className="py-8 animate-fade-in max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -60,10 +116,10 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
               </div>
               <div>
                 <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                  Terms of Service
+                  {titles[language] || titles.en}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400 text-lg font-medium mt-2">
-                  Helvetia Cloud Platform Agreement
+                  {subtitles[language] || subtitles.en}
                 </p>
               </div>
             </div>
@@ -78,7 +134,7 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
                 <FileText size={20} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Version
+                {t.version}
               </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{terms.version}</p>
@@ -90,15 +146,18 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
                 <Calendar size={20} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Effective Date
+                {t.effectiveDate}
               </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {new Date(terms.effectiveAt).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {new Date(terms.effectiveAt).toLocaleDateString(
+                language === 'gsw' ? 'de-CH' : language,
+                {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                },
+              )}
             </p>
           </div>
 
@@ -108,15 +167,18 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
                 <Clock size={20} />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Last Updated
+                {t.lastUpdated}
               </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {new Date(terms.updatedAt).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+              {new Date(terms.updatedAt).toLocaleDateString(
+                language === 'gsw' ? 'de-CH' : language,
+                {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                },
+              )}
             </p>
           </div>
         </div>
@@ -135,7 +197,7 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
           href="/"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-lg"
         >
-          Back to Dashboard
+          {t.backToDashboard}
         </Link>
       </div>
     </div>

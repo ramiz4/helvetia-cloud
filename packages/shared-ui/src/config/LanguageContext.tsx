@@ -45,12 +45,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     // Explicit validation to prevent XSS or invalid state
     if (saved && isValidLanguage(saved) && translations[saved]) {
       setLanguage(saved);
+      // Ensure cookie matches for server-side compatibility
+      if (typeof document !== 'undefined') {
+        document.cookie = `helvetia-lang=${saved}; path=/; max-age=31536000; SameSite=Lax`;
+      }
     }
   }, []);
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('helvetia-lang', lang);
+    if (typeof document !== 'undefined') {
+      document.cookie = `helvetia-lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+    }
   };
 
   // Prevent hydration mismatch by only rendering children after mount
