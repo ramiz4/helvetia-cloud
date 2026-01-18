@@ -21,6 +21,13 @@ export default defineConfig({
       GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || 'test-client-secret',
       JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-change-me-in-production',
       ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef',
+      // Stripe test keys for billing tests
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || 'sk_test_mock',
+      STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_mock',
+      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_mock',
+      STRIPE_PRICE_ID_STARTER: process.env.STRIPE_PRICE_ID_STARTER || 'price_test_starter',
+      STRIPE_PRICE_ID_PRO: process.env.STRIPE_PRICE_ID_PRO || 'price_test_pro',
+      STRIPE_PRICE_ID_ENTERPRISE: process.env.STRIPE_PRICE_ID_ENTERPRISE || 'price_test_enterprise',
       // Flag to skip integration tests (set to '1' to run integration tests)
       RUN_INTEGRATION_TESTS: process.env.RUN_INTEGRATION_TESTS || '0',
     },
