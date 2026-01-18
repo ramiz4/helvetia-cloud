@@ -264,6 +264,9 @@ fastify.addHook('onRequest', async (request, _reply) => {
     '/terms/latest',
     '/terms/version',
     '/terms/versions',
+    '/privacy-policy/latest',
+    '/privacy-policy/version',
+    '/privacy-policy/versions',
   ];
 
   // Get the URL without query parameters

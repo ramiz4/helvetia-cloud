@@ -25,7 +25,8 @@ model User {
   refreshTokens     RefreshToken[]
   organizations     OrganizationMember[]
   subscriptions     Subscription[]
-  termsAcceptances  UserTermsAcceptance[]
+  termsAcceptances         UserTermsAcceptance[]
+  privacyPolicyAcceptances UserPrivacyPolicyAcceptance[]
 }
 
 enum Role {
@@ -254,5 +255,39 @@ model UserTermsAcceptance {
   @@unique([userId, termsVersionId])
   @@index([userId])
   @@index([termsVersionId])
+  @@index([acceptedAt])
+}
+
+model PrivacyPolicyVersion {
+  id          String   @id @default(uuid())
+  version     String
+  content     String   @db.Text
+  language    String   @default("en")
+  effectiveAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  acceptances UserPrivacyPolicyAcceptance[]
+
+  @@index([version])
+  @@index([language])
+  @@index([effectiveAt])
+  @@unique([version, language])
+}
+
+model UserPrivacyPolicyAcceptance {
+  id                   String               @id @default(uuid())
+  userId               String
+  privacyPolicyVersionId String
+  ipAddress            String?
+  userAgent            String?
+  acceptedAt           DateTime             @default(now())
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  privacyPolicy PrivacyPolicyVersion @relation(fields: [privacyPolicyVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, privacyPolicyVersionId])
+  @@index([userId])
+  @@index([privacyPolicyVersionId])
   @@index([acceptedAt])
 }

@@ -490,5 +490,22 @@
     "acceptingTerms": "Akzeptiere Bedingige...",
     "acceptSuccess": "Nutzigsbedingige erfolgrich akzeptiert!",
     "acceptError": "Fähler bim Akzeptiere vo de Bedingige. Bitte probier's nomal."
+  },
+  "privacy": {
+    "pageTitle": "Dateschutzerklärung",
+    "pageDescription": "Lies, wie mir dini persönliche Date schützed",
+    "version": "Version",
+    "effectiveDate": "Gültig ab",
+    "lastUpdated": "Zletscht aktualisiert",
+    "selectLanguage": "Sproch wähle",
+    "loadingPrivacy": "Dateschutzerklärung wird glade...",
+    "errorLoading": "Fähler beim Lade vo de Dateschutzerklärung",
+    "tryAgain": "Nochmal probiere",
+    "acceptanceRequired": "Bitte lies und akzeptier üsi Dateschutzerklärung",
+    "iAccept": "Ich akzeptier d'Dateschutzerklärung",
+    "acceptAndContinue": "Akzeptiere und witergah",
+    "acceptingPrivacy": "Akzeptier Dateschutzerklärung...",
+    "acceptSuccess": "Dateschutzerklärung erfolgrich akzeptiert!",
+    "acceptError": "Fähler bim Akzeptiere vo de Dateschutzerklärung. Bitte probier's nomal."
   }
 }

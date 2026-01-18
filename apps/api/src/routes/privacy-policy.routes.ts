@@ -1,32 +1,32 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { BODY_LIMIT_SMALL } from '../config/constants';
 import { createRateLimitConfigs } from '../config/rateLimit';
-import { TermsController } from '../controllers/TermsController';
+import { PrivacyPolicyController } from '../controllers/PrivacyPolicyController';
 import { resolve, TOKENS } from '../di';
 import { authenticate } from '../middleware/auth.middleware';
 
 /**
- * Terms of Service routes
+ * Privacy Policy routes
  */
-export const termsRoutes: FastifyPluginAsync = async (fastify) => {
-  const controller = resolve<TermsController>(TOKENS.TermsController);
+export const privacyPolicyRoutes: FastifyPluginAsync = async (fastify) => {
+  const controller = resolve<PrivacyPolicyController>(TOKENS.PrivacyPolicyController);
 
   // Setup rate limiting
   const redis = fastify.redis;
-  const { authRateLimitConfig } = createRateLimitConfigs(redis);
+  const { standardRateLimitConfig } = createRateLimitConfigs(redis);
 
   /**
-   * GET /terms/latest
-   * Get the latest version of terms for a specific language (public)
+   * GET /privacy-policy/latest
+   * Get the latest version of privacy policy for a specific language (public)
    */
   fastify.get(
-    '/terms/latest',
+    '/privacy-policy/latest',
     {
-      config: { rateLimit: authRateLimitConfig },
+      config: { rateLimit: standardRateLimitConfig },
       schema: {
-        tags: ['Terms of Service'],
-        summary: 'Get latest terms of service',
-        description: 'Retrieve the latest version of terms of service for a specific language.',
+        tags: ['Privacy Policy'],
+        summary: 'Get latest privacy policy',
+        description: 'Retrieve the latest version of privacy policy for a specific language.',
         querystring: {
           type: 'object',
           properties: {
@@ -40,7 +40,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
         },
         response: {
           200: {
-            description: 'Latest terms of service',
+            description: 'Latest privacy policy',
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -58,7 +58,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
             },
           },
           404: {
-            description: 'Terms not found for specified language',
+            description: 'Privacy policy not found for specified language',
             type: 'object',
           },
           500: {
@@ -70,22 +70,22 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
-      return controller.getLatestTerms(request, reply);
+      return controller.getLatestPrivacyPolicy(request, reply);
     },
   );
 
   /**
-   * GET /terms/version
-   * Get terms by specific version and language (public)
+   * GET /privacy-policy/version
+   * Get privacy policy by specific version and language (public)
    */
   fastify.get(
-    '/terms/version',
+    '/privacy-policy/version',
     {
-      config: { rateLimit: authRateLimitConfig },
+      config: { rateLimit: standardRateLimitConfig },
       schema: {
-        tags: ['Terms of Service'],
-        summary: 'Get terms by version',
-        description: 'Retrieve a specific version of terms of service.',
+        tags: ['Privacy Policy'],
+        summary: 'Get privacy policy by version',
+        description: 'Retrieve a specific version of privacy policy.',
         querystring: {
           type: 'object',
           required: ['version'],
@@ -93,7 +93,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
             version: {
               type: 'string',
               example: '1.0.0',
-              description: 'Terms version',
+              description: 'Privacy policy version',
             },
             language: {
               type: 'string',
@@ -105,7 +105,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
         },
         response: {
           200: {
-            description: 'Terms of service for specified version',
+            description: 'Privacy policy for specified version',
             type: 'object',
           },
           400: {
@@ -113,7 +113,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
             type: 'object',
           },
           404: {
-            description: 'Terms version not found',
+            description: 'Privacy policy version not found',
             type: 'object',
           },
         },
@@ -121,22 +121,22 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
-      return controller.getTermsByVersion(request, reply);
+      return controller.getPrivacyPolicyByVersion(request, reply);
     },
   );
 
   /**
-   * GET /terms/versions
-   * Get all versions of terms for a specific language (public)
+   * GET /privacy-policy/versions
+   * Get all versions of privacy policy for a specific language (public)
    */
   fastify.get(
-    '/terms/versions',
+    '/privacy-policy/versions',
     {
-      config: { rateLimit: authRateLimitConfig },
+      config: { rateLimit: standardRateLimitConfig },
       schema: {
-        tags: ['Terms of Service'],
-        summary: 'List all terms versions',
-        description: 'Retrieve all versions of terms of service for a specific language.',
+        tags: ['Privacy Policy'],
+        summary: 'List all privacy policy versions',
+        description: 'Retrieve all versions of privacy policy for a specific language.',
         querystring: {
           type: 'object',
           properties: {
@@ -150,7 +150,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
         },
         response: {
           200: {
-            description: 'List of terms versions',
+            description: 'List of privacy policy versions',
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -179,33 +179,33 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   /**
-   * POST /terms/accept
-   * Accept terms of service (authenticated)
+   * POST /privacy-policy/accept
+   * Accept privacy policy (authenticated)
    */
   fastify.post(
-    '/terms/accept',
+    '/privacy-policy/accept',
     {
       preHandler: [authenticate],
       bodyLimit: BODY_LIMIT_SMALL,
-      config: { rateLimit: authRateLimitConfig },
+      config: { rateLimit: standardRateLimitConfig },
       schema: {
-        tags: ['Terms of Service'],
-        summary: 'Accept terms of service',
-        description: 'Record user acceptance of a specific terms version.',
+        tags: ['Privacy Policy'],
+        summary: 'Accept privacy policy',
+        description: 'Record user acceptance of a specific privacy policy version.',
         body: {
           type: 'object',
-          required: ['termsVersionId'],
+          required: ['privacyPolicyVersionId'],
           properties: {
-            termsVersionId: {
+            privacyPolicyVersionId: {
               type: 'string',
               format: 'uuid',
-              description: 'ID of the terms version being accepted',
+              description: 'ID of the privacy policy version being accepted',
             },
           },
         },
         response: {
           201: {
-            description: 'Terms accepted successfully',
+            description: 'Privacy policy accepted successfully',
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -214,7 +214,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
                 properties: {
                   id: { type: 'string', format: 'uuid' },
                   userId: { type: 'string', format: 'uuid' },
-                  termsVersionId: { type: 'string', format: 'uuid' },
+                  privacyPolicyVersionId: { type: 'string', format: 'uuid' },
                   acceptedAt: { type: 'string', format: 'date-time' },
                 },
               },
@@ -236,23 +236,23 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
-      return controller.acceptTerms(request, reply);
+      return controller.acceptPrivacyPolicy(request, reply);
     },
   );
 
   /**
-   * GET /terms/check-acceptance
-   * Check if user needs to accept latest terms (authenticated)
+   * GET /privacy-policy/check-acceptance
+   * Check if user needs to accept latest privacy policy (authenticated)
    */
   fastify.get(
-    '/terms/check-acceptance',
+    '/privacy-policy/check-acceptance',
     {
       preHandler: [authenticate],
-      config: { rateLimit: authRateLimitConfig },
+      config: { rateLimit: standardRateLimitConfig },
       schema: {
-        tags: ['Terms of Service'],
-        summary: 'Check terms acceptance status',
-        description: 'Check if the authenticated user has accepted the latest terms.',
+        tags: ['Privacy Policy'],
+        summary: 'Check privacy policy acceptance status',
+        description: 'Check if the authenticated user has accepted the latest privacy policy.',
         querystring: {
           type: 'object',
           properties: {
@@ -275,7 +275,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
                 properties: {
                   requiresAcceptance: {
                     type: 'boolean',
-                    description: 'Whether user needs to accept new terms',
+                    description: 'Whether user needs to accept new privacy policy',
                   },
                   latestVersion: {
                     type: 'object',

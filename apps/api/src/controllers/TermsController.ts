@@ -137,7 +137,7 @@ export class TermsController {
       const { termsVersionId } = validatedBody;
 
       // Get user from authenticated request
-      const user = (request as unknown as { user: { id: string } }).user;
+      const user = request.user;
       if (!user || !user.id) {
         return reply.code(401).send({
           success: false,
@@ -188,7 +188,7 @@ export class TermsController {
    */
   async checkAcceptance(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const user = (request as unknown as { user: { id: string } }).user;
+      const user = request.user;
       if (!user || !user.id) {
         return reply.code(401).send({
           success: false,

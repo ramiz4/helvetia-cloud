@@ -95,8 +95,8 @@ This roadmap tracks the progress of the Helvetia Cloud MVP.
 - [x] **Typography**: Choose a premium, glassmorphic typography for the platform.
 - [x] **DSGVO**: Implement DSGVO compliance for the platform.
 - [x] **GDPR**: Implement GDPR compliance for the platform.
-- [ ] **Privacy Policy**: Create a privacy policy for the platform.
-- [ ] **Terms of Service**: Create a terms of service for the platform.
+- [x] **Privacy Policy**: Create a privacy policy for the platform.
+- [x] **Terms of Service**: Create a terms of service for the platform.
 - [ ] **FAQ**: Create a FAQ for the platform.
 - [ ] **Blog**: Create a blog for the platform.
 

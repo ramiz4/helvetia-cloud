@@ -23,7 +23,17 @@ async function fetchTermsAcceptanceStatus(): Promise<TermsAcceptanceStatus> {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
-  return response.json();
+  const json = await response.json();
+  if (!json.success) {
+    throw new Error(json.error || 'Failed to fetch terms acceptance status');
+  }
+
+  return {
+    requiresAcceptance: json.data.requiresAcceptance,
+    latestTerms: json.data.latestVersion,
+    hasAccepted: !json.data.requiresAcceptance,
+    currentVersion: json.data.latestVersion?.version || '',
+  };
 }
 
 // Accept terms

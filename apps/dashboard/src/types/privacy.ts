@@ -1,4 +1,4 @@
-export interface TermsOfService {
+export interface PrivacyPolicy {
   id: string;
   version: string;
   content: string;
@@ -8,17 +8,17 @@ export interface TermsOfService {
   updatedAt: string;
 }
 
-export interface TermsAcceptance {
+export interface PrivacyPolicyAcceptance {
   userId: string;
-  termsId: string;
+  policyId: string;
   version: string;
   acceptedAt: string;
 }
 
-export interface TermsAcceptanceStatus {
+export interface PrivacyPolicyAcceptanceStatus {
   hasAccepted: boolean;
   currentVersion: string;
   acceptedVersion?: string;
   requiresAcceptance: boolean;
-  latestTerms?: TermsOfService;
+  latestPolicy?: PrivacyPolicy;
 }

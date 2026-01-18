@@ -490,5 +490,22 @@
     "acceptingTerms": "Akzeptiere Bedingungen...",
     "acceptSuccess": "Nutzungsbedingungen erfolgreich akzeptiert!",
     "acceptError": "Fehler beim Akzeptieren der Bedingungen. Bitte versuchen Sie es erneut."
+  },
+  "privacy": {
+    "pageTitle": "Datenschutzerklärung",
+    "pageDescription": "Lesen Sie, wie wir Ihre persönlichen Daten schützen",
+    "version": "Version",
+    "effectiveDate": "Gültig ab",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "selectLanguage": "Sprache wählen",
+    "loadingPrivacy": "Datenschutzerklärung wird geladen...",
+    "errorLoading": "Fehler beim Laden der Datenschutzerklärung",
+    "tryAgain": "Erneut versuchen",
+    "acceptanceRequired": "Bitte lesen und akzeptieren Sie unsere Datenschutzerklärung",
+    "iAccept": "Ich akzeptiere die Datenschutzerklärung",
+    "acceptAndContinue": "Akzeptieren und Fortfahren",
+    "acceptingPrivacy": "Akzeptiere Datenschutzerklärung...",
+    "acceptSuccess": "Datenschutzerklärung erfolgreich akzeptiert!",
+    "acceptError": "Fehler beim Akzeptieren der Datenschutzerklärung. Bitte versuchen Sie es erneut."
   }
 }

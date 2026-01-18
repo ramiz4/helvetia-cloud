@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronDown, Globe } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../config/LanguageContext';
 import { type Language } from '../config/translations';
@@ -12,6 +13,7 @@ interface LanguageSwitcherProps {
 export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -100,7 +102,10 @@ export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitc
         {languages.map((l) => (
           <button
             key={l.code}
-            onClick={() => setLanguage(l.code as Language)}
+            onClick={() => {
+              setLanguage(l.code as Language);
+              router.refresh();
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
               language === l.code
                 ? 'bg-indigo-50 dark:bg-indigo-500/20 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
@@ -169,6 +174,7 @@ export default function LanguageSwitcher({ variant = 'dropdown' }: LanguageSwitc
               role="menuitem"
               onClick={() => {
                 setLanguage(l.code as Language);
+                router.refresh();
                 setIsOpen(false);
                 buttonRef.current?.focus();
               }}

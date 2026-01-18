@@ -76,7 +76,7 @@ export class TermsService {
    * This should be called during application startup or migration
    */
   async initializeTermsFromFiles(version: string, effectiveAt: Date): Promise<void> {
-    const languages = ['en', 'de', 'fr', 'it'];
+    const languages = ['en', 'de', 'fr', 'it', 'gsw'];
 
     for (const language of languages) {
       // Check if version already exists

@@ -6,6 +6,14 @@ import LanguageSwitcher from '../LanguageSwitcher';
 import de from '../../locales/de.json';
 import en from '../../locales/en.json';
 
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  })),
+}));
+
 // Mock dependencies
 vi.mock('../../config/LanguageContext', async () => {
   const actual = await vi.importActual('../../config/LanguageContext');
