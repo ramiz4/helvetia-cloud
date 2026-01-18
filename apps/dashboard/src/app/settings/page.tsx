@@ -27,9 +27,11 @@ import { GithubIcon } from '../../components/icons/GithubIcon';
 interface UserInfo {
   id: string;
   username: string;
+  email: string | null;
   avatarUrl: string;
-  githubId: string;
+  githubId?: string | null;
   hasGitHubConnected: boolean;
+  hasPasswordAuth: boolean;
 }
 
 export default function SettingsPage() {
@@ -87,8 +89,23 @@ export default function SettingsPage() {
     }
   };
 
+  const connectGithub = () => {
+    if (!GITHUB_CLIENT_ID) {
+      toast.error('GitHub Client ID not configured');
+      return;
+    }
+
+    // Store current path to return after GitHub auth
+    sessionStorage.setItem('github_link_redirect', '/settings');
+
+    const redirectUri = `${window.location.origin}/auth/github-link-callback`;
+    const githubUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=user,repo,read:org,read:packages`;
+
+    window.location.href = githubUrl;
+  };
+
   const reconnectGithub = () => {
-    window.location.href = '/login';
+    connectGithub();
   };
 
   const exportUserData = async () => {
@@ -194,6 +211,9 @@ export default function SettingsPage() {
               <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {user?.username}
               </h2>
+              {user?.email && (
+                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">{user.email}</p>
+              )}
               <p className="text-slate-500 font-mono text-sm mt-1">ID: {user?.id}</p>
               <div className="flex gap-2 mt-4">
                 <span className="px-3 py-1 bg-indigo-500/15 text-indigo-400 text-[11px] font-bold uppercase tracking-wider rounded-full border border-indigo-500/20 shadow-sm">
@@ -253,19 +273,43 @@ export default function SettingsPage() {
               {user?.hasGitHubConnected ? (
                 <button
                   onClick={() => setShowDisconnectModal(true)}
-                  className="w-full sm:w-auto text-sm text-rose-400 hover:text-white font-bold transition-all flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 hover:bg-rose-500 rounded-xl border border-rose-500/20 shadow-md active:scale-95"
+                  disabled={!user.hasPasswordAuth}
+                  className="w-full sm:w-auto text-sm text-rose-400 hover:text-white font-bold transition-all flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/10 hover:bg-rose-500 disabled:bg-rose-500/5 disabled:text-rose-400/50 disabled:cursor-not-allowed rounded-xl border border-rose-500/20 shadow-md active:scale-95 disabled:active:scale-100"
+                  title={
+                    !user.hasPasswordAuth
+                      ? 'Cannot disconnect GitHub without email/password authentication'
+                      : ''
+                  }
                 >
                   <LogOut size={16} /> {t.settings.disconnect}
                 </button>
               ) : (
                 <button
-                  onClick={reconnectGithub}
+                  onClick={connectGithub}
                   className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold bg-indigo-500 text-white hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <RefreshCw size={16} /> {t.settings.reconnect}
+                  <GithubIcon size={16} /> Connect GitHub
                 </button>
               )}
             </div>
+
+            {!user?.hasPasswordAuth && user?.hasGitHubConnected && (
+              <div className="bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 rounded-2xl p-6 flex items-start gap-5">
+                <div className="p-3 bg-amber-100 dark:bg-amber-500/10 rounded-xl text-amber-500 dark:text-amber-400 mt-0.5 shadow-sm">
+                  <AlertCircle size={22} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-lg tracking-tight">
+                    Set up Email/Password Authentication
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed font-medium">
+                    You're currently using GitHub authentication only. To disconnect GitHub, you
+                    need to set up email/password authentication first. This ensures you can always
+                    access your account.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-6 flex items-start gap-5">
               <div className="p-3 bg-indigo-100 dark:bg-indigo-500/10 rounded-xl text-indigo-500 dark:text-indigo-400 mt-0.5 shadow-sm">
