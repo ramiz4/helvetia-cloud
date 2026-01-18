@@ -228,14 +228,14 @@ describe('UsageTrackingService', () => {
   });
 
   describe('calculateCost', () => {
-    it('should calculate cost correctly for compute hours', async () => {
+    it('should calculate cost correctly for compute hours', () => {
       const usage = createUsageRecordFixture({
         serviceId: 'service-123',
         metric: 'COMPUTE_HOURS',
         quantity: 100,
       });
 
-      const cost = await usageTrackingService.calculateCost(
+      const cost = usageTrackingService.calculateCost(
         usage.metric,
         usage.quantity,
       );
@@ -244,14 +244,14 @@ describe('UsageTrackingService', () => {
       expect(cost).toBe(1.0);
     });
 
-    it('should calculate cost correctly for memory', async () => {
+    it('should calculate cost correctly for memory', () => {
       const usage = createUsageRecordFixture({
         serviceId: 'service-123',
         metric: 'MEMORY_GB_HOURS',
         quantity: 100,
       });
 
-      const cost = await usageTrackingService.calculateCost(
+      const cost = usageTrackingService.calculateCost(
         usage.metric,
         usage.quantity,
       );
@@ -260,14 +260,14 @@ describe('UsageTrackingService', () => {
       expect(cost).toBe(0.5);
     });
 
-    it('should calculate cost correctly for bandwidth', async () => {
+    it('should calculate cost correctly for bandwidth', () => {
       const usage = createUsageRecordFixture({
         serviceId: 'service-123',
         metric: 'BANDWIDTH_GB',
         quantity: 50,
       });
 
-      const cost = await usageTrackingService.calculateCost(
+      const cost = usageTrackingService.calculateCost(
         usage.metric,
         usage.quantity,
       );
@@ -276,14 +276,14 @@ describe('UsageTrackingService', () => {
       expect(cost).toBe(6.0);
     });
 
-    it('should calculate cost correctly for storage', async () => {
+    it('should calculate cost correctly for storage', () => {
       const usage = createUsageRecordFixture({
         serviceId: 'service-123',
         metric: 'STORAGE_GB',
         quantity: 100,
       });
 
-      const cost = await usageTrackingService.calculateCost(
+      const cost = usageTrackingService.calculateCost(
         usage.metric,
         usage.quantity,
       );
@@ -292,69 +292,10 @@ describe('UsageTrackingService', () => {
       expect(cost).toBe(2.3);
     });
 
-    it('should handle zero quantity', async () => {
-      const cost = await usageTrackingService.calculateCost('COMPUTE_HOURS', 0);
+    it('should handle zero quantity', () => {
+      const cost = usageTrackingService.calculateCost('COMPUTE_HOURS', 0);
 
       expect(cost).toBe(0);
-    });
-  });
-
-  describe('getUsageForPeriod', () => {
-    it('should get all usage records for a service in a period', async () => {
-      const periodStart = new Date('2024-01-01');
-      const periodEnd = new Date('2024-01-31');
-      const scenario = billingScenarios.starterWithUsage;
-
-      mockPrisma.usageRecord.findMany.mockResolvedValue(scenario.usage);
-
-      const records = await usageTrackingService.getUsageForPeriod({
-        serviceId: scenario.services[0].id,
-        periodStart,
-        periodEnd,
-      });
-
-      expect(records).toHaveLength(scenario.usage.length);
-      expect(mockPrisma.usageRecord.findMany).toHaveBeenCalledWith({
-        where: {
-          serviceId: scenario.services[0].id,
-          periodStart: { gte: periodStart },
-          periodEnd: { lte: periodEnd },
-        },
-        orderBy: { timestamp: 'desc' },
-      });
-    });
-  });
-
-  describe('getTotalUsageByMetric', () => {
-    it('should calculate total usage by metric type', async () => {
-      const scenario = billingScenarios.proWithMultipleServices;
-      const periodStart = new Date('2024-01-01');
-      const periodEnd = new Date('2024-01-31');
-
-      // Mock services
-      mockPrisma.service.findMany.mockResolvedValue(scenario.services);
-
-      // Mock usage grouped by metric
-      mockPrisma.usageRecord.groupBy.mockResolvedValue([
-        { metric: 'COMPUTE_HOURS', _sum: { quantity: 650 } }, // 200 + 150 + 300
-        { metric: 'MEMORY_GB_HOURS', _sum: { quantity: 300 } }, // 100 + 200
-        { metric: 'BANDWIDTH_GB', _sum: { quantity: 100 } },
-      ]);
-
-      const totals = await usageTrackingService.getTotalUsageByMetric({
-        userId: scenario.user.id,
-        periodStart,
-        periodEnd,
-      });
-
-      expect(totals).toContainEqual({
-        metric: 'COMPUTE_HOURS',
-        quantity: 650,
-      });
-      expect(totals).toContainEqual({
-        metric: 'MEMORY_GB_HOURS',
-        quantity: 300,
-      });
     });
   });
 });

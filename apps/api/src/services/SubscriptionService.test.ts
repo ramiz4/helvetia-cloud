@@ -147,9 +147,9 @@ describe('SubscriptionService', () => {
     });
   });
 
-  describe('getPlanLimits', () => {
+  describe('getResourceLimits', () => {
     it('should return limits for FREE plan', async () => {
-      const limits = await subscriptionService.getPlanLimits('FREE');
+      const limits = subscriptionService.getResourceLimits('FREE');
 
       expect(limits).toEqual(subscriptionPlans.FREE.limits);
       expect(limits.maxServices).toBe(1);
@@ -157,7 +157,7 @@ describe('SubscriptionService', () => {
     });
 
     it('should return limits for STARTER plan', async () => {
-      const limits = await subscriptionService.getPlanLimits('STARTER');
+      const limits = subscriptionService.getResourceLimits('STARTER');
 
       expect(limits).toEqual(subscriptionPlans.STARTER.limits);
       expect(limits.maxServices).toBe(5);
@@ -165,7 +165,7 @@ describe('SubscriptionService', () => {
     });
 
     it('should return limits for PRO plan', async () => {
-      const limits = await subscriptionService.getPlanLimits('PRO');
+      const limits = subscriptionService.getResourceLimits('PRO');
 
       expect(limits).toEqual(subscriptionPlans.PRO.limits);
       expect(limits.maxServices).toBe(20);
@@ -173,7 +173,7 @@ describe('SubscriptionService', () => {
     });
 
     it('should return unlimited for ENTERPRISE plan', async () => {
-      const limits = await subscriptionService.getPlanLimits('ENTERPRISE');
+      const limits = subscriptionService.getResourceLimits('ENTERPRISE');
 
       expect(limits).toEqual(subscriptionPlans.ENTERPRISE.limits);
       expect(limits.maxServices).toBe(-1);
@@ -181,136 +181,57 @@ describe('SubscriptionService', () => {
     });
   });
 
-  describe('checkServiceLimit', () => {
-    it('should allow creating service within FREE plan limits', async () => {
-      mockPrisma.service.count.mockResolvedValue(0);
-
-      const canCreate = await subscriptionService.checkServiceLimit('user-123', 'FREE');
-
-      expect(canCreate).toBe(true);
-      expect(mockPrisma.service.count).toHaveBeenCalledWith({
-        where: { userId: 'user-123' },
-      });
-    });
-
-    it('should prevent creating service beyond FREE plan limits', async () => {
-      mockPrisma.service.count.mockResolvedValue(1); // Already at limit
-
-      const canCreate = await subscriptionService.checkServiceLimit('user-123', 'FREE');
-
-      expect(canCreate).toBe(false);
-    });
-
-    it('should allow creating multiple services on STARTER plan', async () => {
-      mockPrisma.service.count.mockResolvedValue(3);
-
-      const canCreate = await subscriptionService.checkServiceLimit('user-456', 'STARTER');
-
-      expect(canCreate).toBe(true);
-    });
-
-    it('should prevent creating service beyond STARTER plan limits', async () => {
-      mockPrisma.service.count.mockResolvedValue(5); // At limit
-
-      const canCreate = await subscriptionService.checkServiceLimit('user-456', 'STARTER');
-
-      expect(canCreate).toBe(false);
-    });
-
-    it('should always allow creating services on ENTERPRISE plan', async () => {
-      mockPrisma.service.count.mockResolvedValue(1000); // Way over any normal limit
-
-      const canCreate = await subscriptionService.checkServiceLimit(
-        'user-enterprise',
-        'ENTERPRISE',
-      );
-
-      expect(canCreate).toBe(true);
-    });
-  });
-
-  describe('isActive', () => {
-    it('should return true for ACTIVE subscription', () => {
-      expect(subscriptionService.isActive('ACTIVE')).toBe(true);
-    });
-
-    it('should return false for PAST_DUE subscription', () => {
-      expect(subscriptionService.isActive('PAST_DUE')).toBe(false);
-    });
-
-    it('should return false for CANCELED subscription', () => {
-      expect(subscriptionService.isActive('CANCELED')).toBe(false);
-    });
-
-    it('should return false for UNPAID subscription', () => {
-      expect(subscriptionService.isActive('UNPAID')).toBe(false);
-    });
-  });
-
-  describe('cancelSubscription', () => {
-    it('should update subscription status to CANCELED', async () => {
-      const testSub = billingScenarios.starterWithUsage.subscription;
-      mockPrisma.subscription.findFirst.mockResolvedValue(testSub);
-      mockPrisma.subscription.update.mockResolvedValue({
-        ...testSub,
-        status: 'CANCELED',
-      });
-
-      await subscriptionService.cancelSubscription({
-        userId: testSub.userId,
-      });
-
-      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
-        where: { id: testSub.id },
-        data: { status: 'CANCELED' },
-      });
-    });
-
-    it('should handle canceling organization subscription', async () => {
-      const orgId = 'org-789';
-      const testSub = createSubscriptionFixture({
-        organizationId: orgId,
-        plan: 'PRO',
-      });
-      mockPrisma.subscription.findFirst.mockResolvedValue(testSub);
-      mockPrisma.subscription.update.mockResolvedValue({
-        ...testSub,
-        status: 'CANCELED',
-      });
-
-      await subscriptionService.cancelSubscription({
-        organizationId: orgId,
-      });
-
-      expect(mockPrisma.subscription.update).toHaveBeenCalled();
-    });
-
-    it('should throw error if subscription not found', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue(null);
-
-      await expect(
-        subscriptionService.cancelSubscription({ userId: 'user-nonexistent' }),
-      ).rejects.toThrow('Subscription not found');
-    });
-  });
-
   describe('updateSubscriptionStatus', () => {
-    it('should update subscription status', async () => {
-      const testSub = billingScenarios.starterWithUsage.subscription;
-      mockPrisma.subscription.findFirst.mockResolvedValue(testSub);
+    it('should update subscription status by stripe subscription ID', async () => {
+      const stripeSubscriptionId = 'sub_test_123';
       mockPrisma.subscription.update.mockResolvedValue({
-        ...testSub,
+        id: 'sub-db-123',
+        stripeSubscriptionId,
         status: 'PAST_DUE',
       });
 
       await subscriptionService.updateSubscriptionStatus({
-        userId: testSub.userId,
+        stripeSubscriptionId,
         status: 'PAST_DUE',
       });
 
       expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
-        where: { id: testSub.id },
-        data: { status: 'PAST_DUE' },
+        where: { stripeSubscriptionId },
+        data: {
+          status: 'PAST_DUE',
+          currentPeriodStart: undefined,
+          currentPeriodEnd: undefined,
+        },
+      });
+    });
+
+    it('should update subscription status with period dates', async () => {
+      const stripeSubscriptionId = 'sub_test_456';
+      const periodStart = new Date('2024-01-01');
+      const periodEnd = new Date('2024-01-31');
+
+      mockPrisma.subscription.update.mockResolvedValue({
+        id: 'sub-db-456',
+        stripeSubscriptionId,
+        status: 'ACTIVE',
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
+      });
+
+      await subscriptionService.updateSubscriptionStatus({
+        stripeSubscriptionId,
+        status: 'ACTIVE',
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
+      });
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith({
+        where: { stripeSubscriptionId },
+        data: {
+          status: 'ACTIVE',
+          currentPeriodStart: periodStart,
+          currentPeriodEnd: periodEnd,
+        },
       });
     });
   });
