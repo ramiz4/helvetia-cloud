@@ -172,6 +172,8 @@ model Subscription {
   currentPeriodEnd     DateTime
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
+  lastSuspensionAt     DateTime?
+  lastWarningEmailAt   DateTime?
 
   user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)

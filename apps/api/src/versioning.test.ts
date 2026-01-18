@@ -2,10 +2,10 @@ import { prisma } from 'database';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildServer } from './server';
 
-// Skip these integration tests if DATABASE_URL is not set
+// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
 // These tests require a real database to run
-const shouldSkip = !process.env.DATABASE_URL;
-const describeIf = shouldSkip ? describe.skip : describe;
+// Set RUN_INTEGRATION_TESTS=1 to enable these tests
+const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
 
 /**
  * API Versioning Tests
@@ -16,7 +16,7 @@ const describeIf = shouldSkip ? describe.skip : describe;
  * 3. Authentication works with versioned routes
  * 4. Public routes work without authentication
  */
-describeIf('API Versioning', () => {
+describe.skipIf(shouldSkip)('API Versioning', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;
@@ -53,7 +53,7 @@ describeIf('API Versioning', () => {
         console.error('Failed to cleanup test user:', error);
       });
     }
-    await app.close();
+    if (app) await app.close();
   });
 
   describe('Unversioned Endpoints', () => {
