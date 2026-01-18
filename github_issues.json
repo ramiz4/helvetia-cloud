@@ -970,7 +970,7 @@
       "documentation"
     ],
     "body": "Create a comprehensive privacy policy for the Helvetia Cloud platform to ensure GDPR and DSGVO compliance and build user trust.\n\n**Current State:**\n- No privacy policy\n- GDPR and DSGVO compliance implemented in code\n- No public documentation of data practices\n\n**Requirements:**\n\n### Legal Framework\n- GDPR (General Data Protection Regulation) compliant\n- DSGVO (Datenschutz-Grundverordnung) compliant\n- Swiss data protection law compliant\n- ePrivacy Directive compliant\n\n### Content to Include:\n\n#### 1. Introduction\n- Who we are\n- Contact information\n- Data controller details\n\n#### 2. Data We Collect\n- Account information (email, username, GitHub profile)\n- Service data (repositories, deployments, logs)\n- Usage data (analytics, metrics)\n- Technical data (IP addresses, browser info)\n- Cookies and tracking technologies\n\n#### 3. How We Use Data\n- Provide platform services\n- Improve user experience\n- Security and fraud prevention\n- Communication and support\n- Legal compliance\n\n#### 4. Data Storage & Processing\n- Where data is stored (Switzerland)\n- How long data is retained\n- Data security measures\n- Encryption practices\n\n#### 5. Data Sharing\n- Third-party services (GitHub, Stripe)\n- Service providers\n- Legal requirements\n- No data selling policy\n\n#### 6. User Rights (GDPR)\n- Right to access\n- Right to rectification\n- Right to erasure (\"right to be forgotten\")\n- Right to data portability\n- Right to object\n- Right to restrict processing\n- How to exercise these rights\n\n#### 7. Cookies & Tracking\n- Types of cookies used\n- Cookie purposes\n- How to control cookies\n- Third-party analytics\n\n#### 8. Children's Privacy\n- Age restrictions\n- Parental consent requirements\n\n#### 9. International Data Transfers\n- EU-US data transfers\n- Adequacy decisions\n- Safeguards in place\n\n#### 10. Changes to Privacy Policy\n- How users will be notified\n- Effective date\n- Version history\n\n#### 11. Contact & Complaints\n- How to contact us\n- Data protection officer (if applicable)\n- Right to lodge complaint with supervisory authority\n\n**Acceptance Criteria:**\n\n- [ ] Draft privacy policy with legal team/consultant\n- [ ] Ensure GDPR compliance\n- [ ] Ensure DSGVO compliance\n- [ ] Include Swiss data protection law requirements\n- [ ] Add clear, user-friendly language\n- [ ] Create multi-language versions (EN, DE, FR, IT)\n- [ ] Design privacy policy page\n- [ ] Add link in footer and signup flow\n- [ ] Implement consent management\n- [ ] Add cookie banner with preferences\n- [ ] Set up data export functionality\n- [ ] Implement data deletion process\n- [ ] Create process for handling data requests\n- [ ] Set up versioning and change notifications\n- [ ] Legal review and approval\n- [ ] Publish and announce to users",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 235,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/235",
@@ -985,7 +985,7 @@
       "documentation"
     ],
     "body": "Create comprehensive Terms of Service for the Helvetia Cloud platform to define the legal relationship with users and protect the business.\n\n**Current State:**\n- No terms of service\n- No legal agreement with users\n- Risk of liability and disputes\n\n**Requirements:**\n\n### Content to Include:\n\n#### 1. Introduction & Acceptance\n- Overview of services\n- Agreement to terms\n- Who can use the service\n- Changes to terms\n\n#### 2. Definitions\n- Service\n- User/Customer\n- Account\n- Content\n- Deployment\n\n#### 3. Account Registration\n- Account requirements\n- Account security\n- User responsibilities\n- Account termination\n\n#### 4. Service Description\n- Platform services offered\n- Service availability (SLA)\n- Service modifications\n- Beta features\n\n#### 5. Acceptable Use Policy\n- Permitted uses\n- Prohibited activities:\n  - Illegal content\n  - Malware/harmful code\n  - Resource abuse\n  - Cryptocurrency mining\n  - Spam/phishing\n  - DDoS attacks\n  - Copyright infringement\n- Enforcement and consequences\n\n#### 6. Content & Intellectual Property\n- User content ownership\n- License granted to Helvetia\n- Platform IP ownership\n- Copyright complaints (DMCA)\n- Trademark usage\n\n#### 7. Payment & Billing\n- Pricing and fees\n- Payment methods\n- Billing cycles\n- Refund policy\n- Late payment\n- Tax obligations\n\n#### 8. Service Limits & Quotas\n- Resource limits per plan\n- Fair use policy\n- Overage charges\n- Service throttling\n\n#### 9. Data & Privacy\n- Reference to Privacy Policy\n- Data ownership\n- Data backups\n- Data retention\n- Data portability\n\n#### 10. Security\n- Our security measures\n- User security responsibilities\n- Incident reporting\n- Vulnerability disclosure\n\n#### 11. Service Level Agreement (SLA)\n- Uptime guarantee\n- Maintenance windows\n- Service credits\n- Exclusions\n\n#### 12. Liability & Warranties\n- Service provided \"as is\"\n- Disclaimer of warranties\n- Limitation of liability\n- Indemnification\n- Force majeure\n\n#### 13. Termination\n- User termination rights\n- Our termination rights\n- Effects of termination\n- Data retention after termination\n- Survival of terms\n\n#### 14. Dispute Resolution\n- Governing law (Swiss law)\n- Jurisdiction\n- Arbitration clause (optional)\n- Class action waiver (where applicable)\n\n#### 15. Miscellaneous\n- Entire agreement\n- Severability\n- Waiver\n- Assignment\n- Third-party services\n- Contact information\n\n**Special Considerations:**\n\n- Swiss law compliance\n- EU law compliance (for EU users)\n- B2B vs B2C differences\n- Enterprise terms (if applicable)\n- Developer terms for API usage\n\n**Acceptance Criteria:**\n\n- [ ] Draft terms of service with legal team/consultant\n- [ ] Ensure compliance with Swiss law\n- [ ] Add EU-specific terms for EU users\n- [ ] Include acceptable use policy\n- [ ] Define clear SLA commitments\n- [ ] Add liability limitations\n- [ ] Include dispute resolution mechanism\n- [ ] Create multi-language versions (EN, DE, FR, IT)\n- [ ] Design terms of service page\n- [ ] Add link in footer and signup flow\n- [ ] Require acceptance during signup\n- [ ] Implement terms version tracking\n- [ ] Set up notification for changes\n- [ ] Create separate enterprise terms (optional)\n- [ ] Legal review and approval\n- [ ] Publish and announce to users\n- [ ] Get existing user acceptance",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 236,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/236",
@@ -1095,7 +1095,7 @@
       "backend"
     ],
     "body": "Implement automated collection of resource usage metrics from running containers for billing purposes.\n\n**Current State:**\n- Usage tracking infrastructure exists (UsageTrackingService)\n- Manual usage recording API is available\n- No automated collection from containers\n- No background job for metrics collection\n\n**Scope:**\n\nThis issue covers Phase 3 of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Create background worker job for usage collection\n- [ ] Implement compute hours tracking\n- [ ] Implement memory GB-hours tracking  \n- [ ] Implement bandwidth GB tracking\n- [ ] Implement storage GB tracking\n- [ ] Schedule periodic collection (every 5-15 min)\n- [ ] Add usage aggregation logic\n- [ ] Create historical usage endpoints\n- [ ] Integrate with Stripe metered billing\n- [ ] Add error handling and retry logic\n- [ ] Implement data rollup and archival\n- [ ] Add monitoring and alerting\n- [ ] Write unit tests for metrics calculation\n- [ ] Write integration tests for collection job\n- [ ] Document usage collection system\n- [ ] Add configuration for collection intervals",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 256,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/256",
@@ -1112,7 +1112,7 @@
       "backend"
     ],
     "body": "Implement middleware to enforce subscription-based resource limits and prevent abuse.\n\n**Current State:**\n- Subscription tiers defined with resource limits\n- SubscriptionService provides getResourceLimits() method\n- No enforcement of these limits\n- Users can exceed their tier quotas\n\n**Scope:**\n\nThis issue covers Phase 4 of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Create subscription status middleware\n- [ ] Implement service count enforcement\n- [ ] Implement memory limit enforcement\n- [ ] Implement CPU limit enforcement\n- [ ] Implement bandwidth limit enforcement\n- [ ] Implement storage limit enforcement\n- [ ] Add grace period handling (7 days)\n- [ ] Implement automatic service suspension\n- [ ] Add payment retry logic\n- [ ] Create background job for suspension\n- [ ] Add email notifications for suspensions\n- [ ] Update frontend to show limits and usage\n- [ ] Add upgrade prompts when limits reached\n- [ ] Write unit tests for middleware\n- [ ] Write integration tests for enforcement\n- [ ] Document enforcement policies\n- [ ] Add monitoring for enforcement events",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 257,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/257",
@@ -1129,7 +1129,7 @@
       "ui/ux"
     ],
     "body": "Create a comprehensive billing dashboard UI for subscription management, usage monitoring, and payment handling.\n\n**Current State:**\n- Billing backend APIs are implemented\n- No frontend UI for billing features\n- Users cannot manage subscriptions or view usage\n\n**Scope:**\n\nThis issue covers Phase 5 of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Create billing overview page\n- [ ] Implement current plan card\n- [ ] Build usage metrics display\n- [ ] Create plan selector component\n- [ ] Implement payment method card\n- [ ] Build invoice list component\n- [ ] Add invoice download functionality\n- [ ] Implement upgrade flow\n- [ ] Implement downgrade flow\n- [ ] Add confirmation dialogs\n- [ ] Create success/cancel pages\n- [ ] Integrate with Stripe Checkout\n- [ ] Integrate with Stripe Customer Portal\n- [ ] Add loading states\n- [ ] Add error handling\n- [ ] Ensure mobile responsiveness\n- [ ] Add dark/light mode support\n- [ ] Test accessibility\n- [ ] Add usage forecasting (optional)\n- [ ] Write component tests\n- [ ] Update navigation to include billing link\n- [ ] Add billing notifications/alerts",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 258,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/258",
@@ -1145,10 +1145,26 @@
       "backend"
     ],
     "body": "Add comprehensive test coverage for billing services, controllers, and webhook handlers.\n\n**Current State:**\n- Billing implementation is complete\n- No tests for billing features\n- Risk of bugs in payment processing\n\n**Scope:**\n\nThis issue covers Phase 6 (Testing) of the Stripe Billing Integration (see #230).\n\n**Acceptance Criteria:**\n\n- [ ] Write unit tests for BillingService (>80% coverage)\n- [ ] Write unit tests for SubscriptionService (>80% coverage)\n- [ ] Write unit tests for UsageTrackingService (>80% coverage)\n- [ ] Write integration tests for BillingController\n- [ ] Write integration tests for StripeWebhookController\n- [ ] Write tests for subscription middleware\n- [ ] Write tests for resource enforcement\n- [ ] Create mock Stripe client\n- [ ] Create test fixtures\n- [ ] Test webhook signature verification\n- [ ] Test all Stripe event types\n- [ ] Test error handling\n- [ ] Test edge cases (grace period, limits, etc.)\n- [ ] Add E2E tests for checkout flow (optional)\n- [ ] Achieve minimum 80% code coverage\n- [ ] Set up test database for integration tests\n- [ ] Document test setup and execution",
-    "state": "OPEN",
+    "state": "CLOSED",
     "synced": true,
     "number": 259,
     "url": "https://github.com/ramiz4/helvetia-cloud/issues/259",
     "contentHash": "2a920f457382d05e6caa82c432d4d7c6b049a944230ffcb563ba5d42d39dda11"
+  },
+  {
+    "title": "[MEDIUM] Email/Password Authentication & GitHub Linking",
+    "labels": [
+      "P2",
+      "enhancement",
+      "feature",
+      "auth",
+      "security"
+    ],
+    "body": "Currently, only GitHub OAuth is supported. Users should be able to sign up and sign in using **email and password**, with the capability to link their GitHub account later for deployments.\n\n**Requirements:**\n- **Email Signup/Login**: Standard email/password flow.\n- **Deferred Linking**: Allow connecting a GitHub account from the dashboard settings after signup.\n- **Account Merging**: Handle scenarios where a user signs up with an email that matches an existing GitHub user (or vice-versa), or strictly separate them until linked.\n\n**Acceptance Criteria:**\n- [ ] Update `User` model for password support (ensure secure hashing per #183).\n- [ ] Implement `/auth/register` and `/auth/login` endpoints.\n- [ ] Create Email/Password UI forms on the login page.\n- [ ] Add \"Connect GitHub\" section in user settings.\n- [ ] Allow triggering deployments only if GitHub is connected (or handle non-GitHub deployments).\n- [ ] Add integration tests for the new auth flow.",
+    "state": "OPEN",
+    "synced": true,
+    "number": 294,
+    "url": "https://github.com/ramiz4/helvetia-cloud/issues/294",
+    "contentHash": "cd532d14e04d85d7b6d1e00551707780ded34e7def6f4d90118abdaeb69314e3"
   }
 ]
