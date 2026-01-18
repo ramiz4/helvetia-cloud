@@ -283,9 +283,13 @@ describe('StripeWebhookController - Error Handling', () => {
         },
       });
 
+      // Ensure the mock resolves successfully
+      mockSubscriptionService.upsertSubscription.mockResolvedValue(undefined as any);
+
       await controller.handleWebhook(mockRequest as FastifyRequest, mockReply as FastifyReply);
 
-      // Should still process but with undefined userId/organizationId
+      // Should still process successfully with undefined userId/organizationId
+      // The service should call upsertSubscription with undefined values
       expect(mockSubscriptionService.upsertSubscription).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: undefined,
@@ -578,6 +582,7 @@ describe('StripeWebhookController - Error Handling', () => {
       };
 
       mockStripeWebhooks.constructEvent.mockReturnValue(webhookEvent);
+      mockSubscriptionService.updateSubscriptionStatus.mockResolvedValue(undefined as any);
 
       // Simulate concurrent webhook processing
       const promises = Array.from({ length: 3 }, () =>
@@ -593,11 +598,9 @@ describe('StripeWebhookController - Error Handling', () => {
 
   describe('Configuration Edge Cases', () => {
     it('should reject webhooks when Stripe is not configured', async () => {
-      vi.doMock('../config/stripe', () => ({
-        getStripeClient: () => null,
-      }));
-
+      // Create a controller with no Stripe instance
       const unconfiguredController = new StripeWebhookController(mockSubscriptionService as any);
+      (unconfiguredController as any).stripe = null;
 
       await unconfiguredController.handleWebhook(
         mockRequest as FastifyRequest,
@@ -611,6 +614,8 @@ describe('StripeWebhookController - Error Handling', () => {
     });
 
     it('should reject webhooks when webhook secret is not configured', async () => {
+      // Mock env without webhook secret
+      const originalEnv = require('../config/env').env;
       vi.doMock('../config/env', () => ({
         env: {
           STRIPE_WEBHOOK_SECRET: undefined,
@@ -625,6 +630,9 @@ describe('StripeWebhookController - Error Handling', () => {
       expect(mockReply.send).toHaveBeenCalledWith({
         error: 'Stripe webhook secret is not configured',
       });
+
+      // Restore
+      vi.doMock('../config/env', () => ({ env: originalEnv }));
     });
   });
 
@@ -696,6 +704,8 @@ describe('StripeWebhookController - Error Handling', () => {
           },
         },
       });
+
+      mockSubscriptionService.updateSubscriptionStatus.mockResolvedValue(undefined as any);
 
       await controller.handleWebhook(mockRequest as FastifyRequest, mockReply as FastifyReply);
 
