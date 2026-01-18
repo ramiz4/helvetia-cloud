@@ -42,6 +42,7 @@ export class TermsController {
           language: terms.language,
           effectiveAt: terms.effectiveAt,
           createdAt: terms.createdAt,
+          updatedAt: (terms as any).updatedAt,
         },
       });
     } catch (error) {
@@ -79,6 +80,7 @@ export class TermsController {
           language: terms.language,
           effectiveAt: terms.effectiveAt,
           createdAt: terms.createdAt,
+          updatedAt: (terms as any).updatedAt,
         },
       });
     } catch (error) {

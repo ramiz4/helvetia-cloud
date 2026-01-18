@@ -1,12 +1,12 @@
 import type { TermsOfService } from '@/types/terms';
-import { Calendar, Clock, FileText, Globe } from 'lucide-react';
+import { Calendar, Clock, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 async function fetchLatestTerms(language: string = 'en'): Promise<TermsOfService | null> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-    const response = await fetch(`${apiUrl}/terms/latest?language=${language}`, {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${baseUrl}/api/v1/terms/latest?language=${language}`, {
       cache: 'no-store', // Always fetch fresh terms
     });
 
@@ -17,7 +17,8 @@ async function fetchLatestTerms(language: string = 'en'): Promise<TermsOfService
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    const json = await response.json();
+    return json.success ? json.data : null;
   } catch (error) {
     console.error('Failed to fetch terms:', error);
     return null;
@@ -65,31 +66,6 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
             </div>
           </div>
 
-          {/* Language Selector */}
-          <div className="bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-2 shadow-lg">
-            <div className="flex items-center gap-2">
-              <Globe size={18} className="text-slate-400 ml-2" />
-              <div className="flex gap-1">
-                {languages.map((lang) => (
-                  <Link
-                    key={lang.code}
-                    href={`/terms?lang=${lang.code}`}
-                    className={`
-                      px-3 py-2 rounded-xl font-semibold text-sm transition-all
-                      ${
-                        language === lang.code
-                          ? 'bg-indigo-500 text-white shadow-md'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
-                      }
-                    `}
-                    title={lang.label}
-                  >
-                    {lang.flag}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Metadata */}
@@ -116,7 +92,7 @@ export default async function TermsPage({ searchParams }: TermsPageProps) {
               </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {new Date(terms.effectiveDate).toLocaleDateString(undefined, {
+              {new Date(terms.effectiveAt).toLocaleDateString(undefined, {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',

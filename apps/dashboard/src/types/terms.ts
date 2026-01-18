@@ -3,7 +3,7 @@ export interface TermsOfService {
   version: string;
   content: string;
   language: 'en' | 'de' | 'fr' | 'it';
-  effectiveDate: string;
+  effectiveAt: string;
   createdAt: string;
   updatedAt: string;
 }
