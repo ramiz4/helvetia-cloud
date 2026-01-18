@@ -194,6 +194,9 @@ export const mockStripeSubscriptions = {
               quantity: item.quantity || 1,
               subscription: id,
               tax_rates: [],
+              // Add period fields to match what BillingService expects (even though they're not standard)
+              current_period_start: now,
+              current_period_end: now + 30 * 24 * 60 * 60,
             }))
           : [],
         has_more: false,

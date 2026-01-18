@@ -85,7 +85,7 @@ describe('SubscriptionService', () => {
 
     it('should throw error if neither userId nor organizationId provided', async () => {
       await expect(subscriptionService.getSubscription({})).rejects.toThrow(
-        'Either userId or organizationId must be provided',
+        'Either userId or organizationId must be provided for getSubscription',
       );
     });
   });
@@ -142,7 +142,7 @@ describe('SubscriptionService', () => {
       };
 
       await expect(subscriptionService.upsertSubscription(params as any)).rejects.toThrow(
-        'Either userId or organizationId must be provided',
+        'Either userId or organizationId must be provided for upsertSubscription',
       );
     });
   });
