@@ -10,6 +10,11 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => ({
     get: vi.fn(() => null),
   })),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
 }));
 
 // Mock next/image
@@ -23,8 +28,17 @@ vi.mock('shared-ui', async () => {
   return {
     ...actual,
     GITHUB_CLIENT_ID: 'test-client-id',
+    API_BASE_URL: 'http://localhost:3001',
   };
 });
+
+// Mock react-hot-toast
+vi.mock('react-hot-toast', () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
 
 describe('LoginPage', () => {
   const originalLocation = window.location;
@@ -248,6 +262,28 @@ describe('LoginPage', () => {
       await user.tab();
       const homeLink = screen.getByRole('link', { name: /back to home page/i });
       expect(homeLink).toHaveFocus();
+
+      // Tab to email input
+      await user.tab();
+      const emailInput = screen.getByPlaceholderText(/you@example.com/i);
+      expect(emailInput).toHaveFocus();
+
+      // Tab to password input
+      await user.tab();
+      const passwordInput = screen.getAllByPlaceholderText(/••••••••/i)[0];
+      expect(passwordInput).toHaveFocus();
+
+      // Tab to submit button
+      await user.tab();
+      const submitButton = screen.getByRole('button', { name: /^sign in$/i });
+      expect(submitButton).toHaveFocus();
+
+      // Tab to toggle button
+      await user.tab();
+      const toggleButton = screen.getByRole('button', {
+        name: /don't have an account\? sign up/i,
+      });
+      expect(toggleButton).toHaveFocus();
 
       // Tab to GitHub button
       await user.tab();
