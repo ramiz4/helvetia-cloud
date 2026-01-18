@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, Box, Cpu, GitBranch, Globe, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from 'shared-ui';
-import CookieBanner from './CookieBanner';
+import CookieBannerWrapper from './CookieBannerWrapper';
 
 export default function LandingPage() {
   const { t } = useLanguage();
@@ -146,7 +146,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <CookieBanner title={t.cookie.title} text={t.cookie.text} acceptText={t.cookie.accept} />
+      <CookieBannerWrapper />
     </div>
   );
 }

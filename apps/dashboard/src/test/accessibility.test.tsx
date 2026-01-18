@@ -58,13 +58,32 @@ describe('Accessibility Tests', () => {
 
   describe('CookieBanner Component', () => {
     it('should not have any accessibility violations', async () => {
-      const { container } = renderWithProviders(
-        <CookieBanner
-          title="Cookie Consent"
-          text="We use cookies to improve your experience."
-          acceptText="Accept"
-        />,
-      );
+      const mockTranslations = {
+        title: 'Cookie Consent',
+        text: 'We use cookies to improve your experience.',
+        accept: 'Accept All',
+        rejectNonEssential: 'Reject Non-Essential',
+        customize: 'Customize',
+        savePreferences: 'Save Preferences',
+        learnMore: 'Learn more',
+        preferences: {
+          title: 'Cookie Preferences',
+          essential: {
+            title: 'Essential',
+            description: 'Required for core functionality',
+          },
+          functional: {
+            title: 'Functional',
+            description: 'Remember your preferences',
+          },
+          analytics: {
+            title: 'Analytics',
+            description: 'Help us improve',
+          },
+        },
+      };
+
+      const { container } = renderWithProviders(<CookieBanner translations={mockTranslations} />);
       const results = await axe(container);
       expect(results.violations).toEqual([]);
     });

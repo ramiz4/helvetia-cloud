@@ -2,7 +2,12 @@ import { TermsVersion, UserTermsAcceptance } from 'database';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { inject, injectable } from 'tsyringe';
-import { AcceptTermsData, CreateTermsVersionData, ITermsRepository } from '../interfaces';
+import {
+  AcceptTermsData,
+  CreateTermsVersionData,
+  ITermsRepository,
+  UserTermsAcceptanceWithVersion,
+} from '../interfaces';
 
 /**
  * Service for managing Terms of Service
@@ -139,7 +144,7 @@ export class TermsService {
   async getUserLatestAcceptance(
     userId: string,
     language: string = 'en',
-  ): Promise<UserTermsAcceptance | null> {
+  ): Promise<UserTermsAcceptanceWithVersion | null> {
     return this.termsRepository.getUserLatestAcceptance(userId, language);
   }
 

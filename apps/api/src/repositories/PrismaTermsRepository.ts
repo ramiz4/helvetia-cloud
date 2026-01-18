@@ -1,6 +1,11 @@
 import { PrismaClient, TermsVersion, UserTermsAcceptance } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { AcceptTermsData, CreateTermsVersionData, ITermsRepository } from '../interfaces';
+import {
+  AcceptTermsData,
+  CreateTermsVersionData,
+  ITermsRepository,
+  UserTermsAcceptanceWithVersion,
+} from '../interfaces';
 
 /**
  * Prisma implementation of ITermsRepository
@@ -62,7 +67,7 @@ export class PrismaTermsRepository implements ITermsRepository {
   async getUserLatestAcceptance(
     userId: string,
     language: string,
-  ): Promise<UserTermsAcceptance | null> {
+  ): Promise<UserTermsAcceptanceWithVersion | null> {
     return this.prisma.userTermsAcceptance.findFirst({
       where: {
         userId,
