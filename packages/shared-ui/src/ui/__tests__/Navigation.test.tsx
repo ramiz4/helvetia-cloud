@@ -6,6 +6,10 @@ import Navigation, { NavLink } from '../Navigation';
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  })),
 }));
 
 // Mock next/image
