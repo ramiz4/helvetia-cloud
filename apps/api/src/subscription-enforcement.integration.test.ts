@@ -144,19 +144,6 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
       },
     });
     starterEnvId = starterEnv.id;
-
-    const proProject = await prisma.project.create({
-      data: {
-        name: 'default-project',
-        userId: proUserId,
-      },
-    });
-    const proEnv = await prisma.environment.create({
-      data: {
-        name: 'Production',
-        projectId: proProject.id,
-      },
-    });
   });
 
   afterAll(async () => {
