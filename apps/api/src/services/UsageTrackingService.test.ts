@@ -418,7 +418,7 @@ describe('UsageTrackingService', () => {
       expect(cost1).toBe(0.01);
 
       const cost2 = usageTrackingService.calculateCost('MEMORY_GB_HOURS', 1);
-      expect(cost2).toBe(0.01); // 0.005 rounds to 0.01
+      expect(cost2).toBe(0.01); // MEMORY_GB_HOURS rate is 0.005, which rounds to 0.01 at 2 decimal places
     });
   });
 });

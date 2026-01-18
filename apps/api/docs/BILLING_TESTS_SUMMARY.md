@@ -73,8 +73,8 @@
 ## Total Test Coverage
 
 - **Total Test Files**: 5
-- **Total Test Cases**: 186
-- **Lines of Test Code**: ~3,800
+- **Total Test Cases**: 129 (BillingService: 23, SubscriptionService: 24, UsageTrackingService: 26, BillingController: 33, StripeWebhookController: 23)
+- **Lines of Test Code**: ~2,900 (including tests, mocks, and fixtures)
 
 ## Test Execution Commands
 

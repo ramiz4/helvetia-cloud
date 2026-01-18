@@ -405,7 +405,7 @@ export function createMockWebhookEvent(
   return {
     id: 'evt_test123',
     object: 'event',
-    api_version: '2025-12-15.clover',
+    api_version: '2025-12-15.clover', // Matches the API version configured in config/stripe.ts
     created: now,
     data: {
       object: data,
