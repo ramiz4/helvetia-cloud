@@ -348,16 +348,6 @@ describe('Subscription Webhook Events', () => {
     it('should handle webhook for non-existent subscription gracefully', async () => {
       vi.mocked(mockSubscriptionService.getSubscription).mockResolvedValue(null);
 
-      const stripeEvent = {
-        type: 'customer.subscription.updated',
-        data: {
-          object: {
-            id: 'sub_stripe_nonexistent',
-            status: 'active',
-          },
-        },
-      };
-
       // Should not throw error
       const subscription = await mockSubscriptionService.getSubscription({
         userId: 'user-nonexistent',
