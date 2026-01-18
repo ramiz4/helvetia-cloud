@@ -10,8 +10,6 @@ import { StripeWebhookController } from './StripeWebhookController';
 
 // Create test price IDs before vi.mock calls (hoisted)
 const TEST_PRICE_ID_STARTER = 'price_test_starter_monthly';
-const TEST_PRICE_ID_PRO = 'price_test_pro_monthly';
-const TEST_PRICE_ID_ENTERPRISE = 'price_test_enterprise_monthly';
 
 // Mock dependencies
 const mockSubscriptionService = {
@@ -614,14 +612,15 @@ describe('StripeWebhookController - Error Handling', () => {
     });
 
     it('should reject webhooks when webhook secret is not configured', async () => {
-      // Mock env without webhook secret
-      const originalEnv = require('../config/env').env;
-      vi.doMock('../config/env', () => ({
-        env: {
-          STRIPE_WEBHOOK_SECRET: undefined,
-        },
-      }));
+      // Import the mocked env
+      const { env } = await import('../config/env.js');
+      const originalSecret = env.STRIPE_WEBHOOK_SECRET;
 
+      // Temporarily change it (it's a mock object so we can mutate it)
+      (env as any).STRIPE_WEBHOOK_SECRET = undefined;
+
+      // Re-initialize controller to pick up new state if it was cached
+      // (Though it uses the same env reference, some logic might have branch decisions in constructor)
       const controller = new StripeWebhookController(mockSubscriptionService as any);
 
       await controller.handleWebhook(mockRequest as FastifyRequest, mockReply as FastifyReply);
@@ -632,7 +631,7 @@ describe('StripeWebhookController - Error Handling', () => {
       });
 
       // Restore
-      vi.doMock('../config/env', () => ({ env: originalEnv }));
+      (env as any).STRIPE_WEBHOOK_SECRET = originalSecret;
     });
   });
 

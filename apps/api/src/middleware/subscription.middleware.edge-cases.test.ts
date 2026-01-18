@@ -70,7 +70,10 @@ describe('Subscription Middleware - Edge Cases and Error Handling', () => {
 
   describe('Grace Period Edge Cases', () => {
     it('should allow access at exact grace period boundary (7 days)', async () => {
-      const now = new Date();
+      const now = new Date('2024-01-15T12:00:00Z');
+      vi.useFakeTimers();
+      vi.setSystemTime(now);
+
       const periodEnd = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // Exactly 7 days ago
 
       vi.mocked(mockSubscriptionService.getSubscription).mockResolvedValue({
@@ -83,9 +86,13 @@ describe('Subscription Middleware - Edge Cases and Error Handling', () => {
         currentPeriodEnd: periodEnd,
       });
 
-      await expect(
-        requireActiveSubscription(mockRequest as FastifyRequest, mockReply as FastifyReply),
-      ).resolves.toBeUndefined();
+      try {
+        await expect(
+          requireActiveSubscription(mockRequest as FastifyRequest, mockReply as FastifyReply),
+        ).resolves.toBeUndefined();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should block access 1 second after grace period', async () => {

@@ -128,7 +128,7 @@ describe('BillingService - Edge Cases and Error Handling', () => {
       });
 
       it('should handle connection refused errors', async () => {
-        const customer = await mockStripeCustomers.create({
+        await mockStripeCustomers.create({
           email: testUsers.freeUser.email,
           name: testUsers.freeUser.username,
         });

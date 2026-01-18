@@ -38,7 +38,7 @@ export const requireActiveSubscription = async (request: FastifyRequest, _reply:
     const now = new Date();
     const timeSinceExpiry = now.getTime() - periodEnd.getTime();
 
-    if (timeSinceExpiry < gracePeriodMs) {
+    if (timeSinceExpiry <= gracePeriodMs) {
       // Still within grace period - allow access but log warning
       request.log.warn(
         {
@@ -184,7 +184,8 @@ export const enforceResourceLimits = (resourceType: 'service' | 'memory' | 'cpu'
       const totalCurrentCPU = services.length * 0.5; // Simplified calculation
       const totalCPUAfterCreation = totalCurrentCPU + requestedCPU;
 
-      if (totalCPUAfterCreation > limits.maxCPUCores) {
+      // Use a small epsilon for floating point comparison
+      if (totalCPUAfterCreation > limits.maxCPUCores + 0.0001) {
         throw new ForbiddenError(
           `CPU limit exceeded. Your ${subscription.plan} plan allows ${limits.maxCPUCores} CPU cores total. Current usage: ${totalCurrentCPU} cores, requested: ${requestedCPU} cores. Please upgrade your plan.`,
         );
