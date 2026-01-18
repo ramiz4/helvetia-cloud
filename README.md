@@ -397,6 +397,17 @@ pnpm test
 
 **Test Coverage**: The project maintains a minimum 80% code coverage threshold across all packages.
 
+### Billing Tests
+
+Comprehensive test infrastructure is available for billing-related features:
+
+- **Mock Stripe Client**: In-memory Stripe API implementation for testing
+- **Test Fixtures**: Predefined billing scenarios and test data
+- **47 Test Cases**: Coverage for BillingService, SubscriptionService, and UsageTrackingService
+- **Documentation**: Complete guide for writing billing tests
+
+For detailed information about billing tests, see [apps/api/docs/BILLING_TESTS.md](./apps/api/docs/BILLING_TESTS.md).
+
 For detailed information about integration tests, see [docs/INTEGRATION_TESTS.md](./docs/INTEGRATION_TESTS.md).
 
 ---
