@@ -41,6 +41,10 @@ This directory contains API-specific documentation for the Helvetia Cloud API se
 - **[TYPE_PATTERNS.md](./TYPE_PATTERNS.md)** - TypeScript patterns and type safety
 - **[TYPE_SAFETY_IMPROVEMENTS.md](./TYPE_SAFETY_IMPROVEMENTS.md)** - Type safety improvements
 
+### Testing
+
+- **[BILLING_TESTS.md](./BILLING_TESTS.md)** - Billing test infrastructure, mock Stripe client, test fixtures, and examples
+
 ## API Endpoints Overview
 
 ### Authentication (`/api/v1/auth`)
