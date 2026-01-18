@@ -301,5 +301,28 @@
     "sessionExpired": "Session expirée. Veuillez vous reconnecter.",
     "fetchReposFailed": "Échec de récupération des dépôts",
     "fetchBranchesFailed": "Échec de récupération des branches"
+  },
+  "terms": {
+    "pageTitle": "Conditions d'utilisation",
+    "pageDescription": "Consultez nos conditions d'utilisation et accords légaux",
+    "version": "Version",
+    "effectiveDate": "Date d'effet",
+    "lastUpdated": "Dernière mise à jour",
+    "selectLanguage": "Choisir la langue",
+    "loadingTerms": "Chargement des conditions...",
+    "errorLoading": "Échec du chargement des conditions d'utilisation",
+    "tryAgain": "Réessayer",
+    "acceptanceRequired": "Veuillez lire et accepter nos conditions d'utilisation",
+    "mustScrollToAccept": "Veuillez faire défiler jusqu'en bas pour activer le bouton d'acceptation",
+    "scrollToBottom": "Faire défiler pour accepter",
+    "iAccept": "J'accepte les conditions d'utilisation",
+    "acceptAndContinue": "Accepter et continuer",
+    "decline": "Refuser",
+    "cancel": "Annuler",
+    "acceptedOn": "Accepté le",
+    "needsAcceptance": "Vous devez accepter les conditions d'utilisation pour continuer à utiliser Helvetia Cloud",
+    "acceptingTerms": "Acceptation en cours...",
+    "acceptSuccess": "Conditions acceptées avec succès !",
+    "acceptError": "Échec de l'acceptation des conditions. Veuillez réessayer."
   }
 }
