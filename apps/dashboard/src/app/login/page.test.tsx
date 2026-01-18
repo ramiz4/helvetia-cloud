@@ -278,12 +278,12 @@ describe('LoginPage', () => {
       const submitButton = screen.getByRole('button', { name: /^sign in$/i });
       expect(submitButton).toHaveFocus();
 
-      // Tab to toggle button
+      // Tab to signup link
       await user.tab();
-      const toggleButton = screen.getByRole('button', {
+      const signupLink = screen.getByRole('link', {
         name: /don't have an account\? sign up/i,
       });
-      expect(toggleButton).toHaveFocus();
+      expect(signupLink).toHaveFocus();
 
       // Tab to GitHub button
       await user.tab();
