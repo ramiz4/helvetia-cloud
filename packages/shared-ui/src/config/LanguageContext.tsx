@@ -61,6 +61,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   // Prevent hydration mismatch by only rendering children after mount
+  // In test environment, bypass this check since tests don't involve SSR hydration
+  // and the mounted state would never be true in the test lifecycle
   if (!mounted && process.env.NODE_ENV !== 'test') {
     return null;
   }

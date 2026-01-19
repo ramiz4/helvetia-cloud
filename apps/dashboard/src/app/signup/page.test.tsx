@@ -128,6 +128,11 @@ describe('SignupPage', () => {
     });
     const results = await axe(container, {
       rules: {
+        // Disabled due to intentional duplicate content in responsive two-column layout:
+        // - landmark-unique: Multiple landmarks exist for desktop/mobile views
+        // - landmark-no-duplicate-contentinfo: Footer duplicated for desktop/mobile
+        // - heading-order: Headings may appear out of order across columns
+        // - page-has-heading-one: Multiple h1 elements exist for responsive layout
         'landmark-unique': { enabled: false },
         'page-has-heading-one': { enabled: false },
         'heading-order': { enabled: false },
