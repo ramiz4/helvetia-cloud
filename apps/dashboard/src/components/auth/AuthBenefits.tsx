@@ -28,9 +28,7 @@ export function AuthBenefits({ benefits }: AuthBenefitsProps) {
               {benefit.icon}
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
-                {title}
-              </h3>
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-1">{title}</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 {description}
               </p>
