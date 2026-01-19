@@ -48,7 +48,7 @@ function LoginContent() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         toast.success('Welcome back!');
-        router.push('/services');
+        router.push('/');
       } else {
         const errorData = await response.json();
         const errorMessage = isApiError(errorData)

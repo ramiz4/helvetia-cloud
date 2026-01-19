@@ -37,6 +37,27 @@ export function TermsAcceptanceModal({ terms, onAccept, onCancel }: TermsAccepta
     }
   };
 
+  useEffect(() => {
+    // Check initial scroll position and on content change
+    const checkScroll = () => {
+      if (!contentRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      if (isAtBottom) {
+        setHasScrolledToBottom(true);
+      }
+    };
+
+    // Use a small timeout to let the DOM settle
+    const timer = setTimeout(checkScroll, 100);
+    window.addEventListener('resize', checkScroll);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [terms.content]);
+
   const handleAccept = async () => {
     setIsAccepting(true);
     try {
@@ -63,7 +84,7 @@ export function TermsAcceptanceModal({ terms, onAccept, onCancel }: TermsAccepta
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={handleCancel} />
 

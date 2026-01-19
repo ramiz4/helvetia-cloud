@@ -60,7 +60,7 @@ function SignupContent() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         toast.success('Account created successfully!');
-        router.push('/services');
+        router.push('/');
       } else {
         const errorData = await response.json();
         const errorMessage = isApiError(errorData)

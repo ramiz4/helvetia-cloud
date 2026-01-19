@@ -41,6 +41,27 @@ export function PrivacyPolicyAcceptanceModal({
     }
   };
 
+  useEffect(() => {
+    // Check initial scroll position and on content change
+    const checkScroll = () => {
+      if (!contentRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      if (isAtBottom) {
+        setHasScrolledToBottom(true);
+      }
+    };
+
+    // Use a small timeout to let the DOM settle
+    const timer = setTimeout(checkScroll, 100);
+    window.addEventListener('resize', checkScroll);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [policy.content]);
+
   const handleAccept = async () => {
     setIsAccepting(true);
     try {
@@ -67,7 +88,7 @@ export function PrivacyPolicyAcceptanceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={handleCancel} />
 
@@ -110,7 +131,7 @@ export function PrivacyPolicyAcceptanceModal({
 
         {/* Scroll indicator */}
         {!hasScrolledToBottom && (
-          <div className="absolute bottom-28 left-0 right-0 h-24 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none flex items-end justify-center pb-4">
+          <div className="absolute bottom-28 left-0 right-0 h-24 bg-linear-to-t from-white dark:from-slate-900 to-transparent pointer-events-none flex items-end justify-center pb-4">
             <div className="px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium flex items-center gap-2 animate-bounce">
               <AlertCircle size={16} />
               <span>Please scroll to read the full policy</span>
