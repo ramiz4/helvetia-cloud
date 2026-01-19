@@ -10,10 +10,12 @@ vi.mock('ioredis', () => {
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
   };
+  const RedisMock = vi.fn(function () {
+    return mockRedis;
+  });
   return {
-    default: vi.fn(function () {
-      return mockRedis;
-    }),
+    default: RedisMock,
+    Redis: RedisMock,
   };
 });
 
@@ -95,7 +97,7 @@ vi.mock('dockerode', () => {
   };
 });
 
-import { fastify } from './server';
+import { fastify } from './server.js';
 
 describe('Service Status Determination', () => {
   beforeAll(async () => {

@@ -11,10 +11,12 @@ vi.mock('ioredis', () => {
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
   };
+  const RedisMock = vi.fn(function () {
+    return mockRedis;
+  });
   return {
-    default: vi.fn(function () {
-      return mockRedis;
-    }),
+    default: RedisMock,
+    Redis: RedisMock,
   };
 });
 
@@ -152,7 +154,7 @@ vi.mock('@fastify/rate-limit', () => {
   };
 });
 
-import { fastify } from './server';
+import { fastify } from './server.js';
 
 /**
  * Helper function to check if a field has an error in the new Zod v4 format

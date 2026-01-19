@@ -14,10 +14,12 @@ vi.mock('ioredis', () => {
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
   };
+  const RedisMock = vi.fn(function () {
+    return mockRedis;
+  });
   return {
-    default: vi.fn(function () {
-      return mockRedis;
-    }),
+    default: RedisMock,
+    Redis: RedisMock,
   };
 });
 
@@ -102,7 +104,7 @@ vi.mock('@fastify/rate-limit', () => {
   };
 });
 
-import { fastify } from './server';
+import { fastify } from './server.js';
 
 // Get references to mocked modules after imports
 let mockRedis: any;
@@ -113,7 +115,8 @@ async function setup() {
   const { prisma } = await import('database');
 
   // Create instance to get the mock
-  mockRedis = new IORedis();
+  const MockRedis = IORedis as unknown as new () => any;
+  mockRedis = new MockRedis();
   mockPrisma = prisma;
 }
 

@@ -1,13 +1,8 @@
 import { prisma } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { buildServer } from './server';
+import { buildServer } from './server.js';
 
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-// These tests require a real database to run
-// Set RUN_INTEGRATION_TESTS=1 to enable these tests
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
-describe.skipIf(shouldSkip)('SSE Streaming Integration Tests', () => {
+describe('SSE Streaming Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;

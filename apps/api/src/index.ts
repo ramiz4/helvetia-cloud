@@ -1,5 +1,5 @@
-import { env } from './config/env';
-import './load-env';
+import { env } from './config/env.js';
+import './load-env.js';
 
 // Environment variables are initialized in server.ts
 
