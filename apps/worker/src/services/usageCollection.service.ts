@@ -1,6 +1,6 @@
 import { PrismaClient, UsageMetric } from 'database';
 import Docker from 'dockerode';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import { logger } from 'shared';
 
 /**
@@ -45,14 +45,14 @@ interface PreviousMetrics {
  * Collects resource usage metrics from running containers
  */
 export class UsageCollectionService {
-  private redis: IORedis;
+  private redis: Redis;
 
   constructor(
     private docker: Docker,
     private prisma: PrismaClient,
     redisUrl?: string,
   ) {
-    this.redis = new IORedis(redisUrl || process.env.REDIS_URL || 'redis://localhost:6379', {
+    this.redis = new Redis(redisUrl || process.env.REDIS_URL || 'redis://localhost:6379', {
       maxRetriesPerRequest: null,
     });
   }

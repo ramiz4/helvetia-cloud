@@ -61,7 +61,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   // Prevent hydration mismatch by only rendering children after mount
-  if (!mounted) {
+  if (!mounted && process.env.NODE_ENV !== 'test') {
     return null;
   }
 

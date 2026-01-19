@@ -4,9 +4,13 @@ import { IPrivacyPolicyRepository } from '../interfaces/index.js';
 import { PrivacyPolicyService } from './PrivacyPolicyService.js';
 
 // Mock path and fs/promises
-vi.mock('path', () => {
+// Mock path and fs/promises
+vi.mock('path', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('path')>();
   return {
+    ...actual,
     default: {
+      ...actual,
       join: vi.fn((...args) => args.join('/')),
     },
     join: vi.fn((...args) => args.join('/')),

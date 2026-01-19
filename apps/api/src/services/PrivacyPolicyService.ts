@@ -2,12 +2,16 @@ import { PrivacyPolicyVersion, UserPrivacyPolicyAcceptance } from 'database';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { inject, injectable } from 'tsyringe';
+import { fileURLToPath } from 'url';
 import {
   AcceptPrivacyPolicyData,
   CreatePrivacyPolicyVersionData,
   IPrivacyPolicyRepository,
   UserPrivacyPolicyAcceptanceWithVersion,
 } from '../interfaces/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Service for managing Privacy Policy

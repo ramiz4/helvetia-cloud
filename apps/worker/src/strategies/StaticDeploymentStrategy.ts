@@ -1,8 +1,16 @@
 import { logger } from 'shared';
-import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
-import { DockerfileBuilder } from '../utils/builders';
-import { ensureImageExists, ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
-import { getSecureBindMounts } from '../utils/workspace';
+import type {
+  DeploymentContext,
+  DeploymentResult,
+  IDeploymentStrategy,
+} from '../interfaces/index.js';
+import { DockerfileBuilder } from '../utils/builders/index.js';
+import {
+  ensureImageExists,
+  ensureNetworkExists,
+  getNetworkName,
+} from '../utils/containerHelpers.js';
+import { getSecureBindMounts } from '../utils/workspace.js';
 
 /**
  * Strategy for deploying static sites

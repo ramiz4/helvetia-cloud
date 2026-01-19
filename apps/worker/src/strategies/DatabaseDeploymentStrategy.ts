@@ -1,5 +1,9 @@
 import { logger } from 'shared';
-import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
+import type {
+  DeploymentContext,
+  DeploymentResult,
+  IDeploymentStrategy,
+} from '../interfaces/index.js';
 
 // Type for Docker pull progress events
 interface DockerPullProgressEvent {

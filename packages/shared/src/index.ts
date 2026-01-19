@@ -4,7 +4,8 @@
  */
 
 // Orchestration exports (for API/Worker)
-export * from './orchestration';
+// Orchestration exports (for API/Worker)
+export * from './orchestration/index.js';
 
 // Utility exports (for API/Worker)
-export * from './utils';
+export * from './utils/index.js';

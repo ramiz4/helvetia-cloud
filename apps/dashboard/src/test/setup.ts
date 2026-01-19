@@ -31,7 +31,7 @@ vi.spyOn(console, 'warn').mockImplementation(() => {});
 import { configure } from '@testing-library/react';
 
 configure({
-  getElementError: (message, container) => {
+  getElementError: (message) => {
     // Return a concise error
     const error = new Error(message || 'Element found/not found error');
     error.name = 'TestingLibraryElementError';

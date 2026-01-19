@@ -1,4 +1,4 @@
-import { AppError } from './AppError';
+import { AppError } from './AppError.js';
 
 /**
  * Error thrown when a requested resource is not found

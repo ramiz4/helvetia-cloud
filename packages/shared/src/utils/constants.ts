@@ -1,4 +1,4 @@
-import { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser';
+import { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser.js';
 
 /**
  * Container resource limit constants

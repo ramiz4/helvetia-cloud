@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { getNetworkName } from '../containerHelpers';
+import { getNetworkName } from '../containerHelpers.js';
 
 /**
  * Builder for generating Docker Compose override files

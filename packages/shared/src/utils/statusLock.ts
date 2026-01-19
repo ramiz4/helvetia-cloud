@@ -1,7 +1,7 @@
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import Redlock from 'redlock';
-import { LOCK_RETRY_DELAY_MS, LOCK_RETRY_JITTER_MS, STATUS_LOCK_TTL_MS } from './constants';
-import { logger } from './logger';
+import { LOCK_RETRY_DELAY_MS, LOCK_RETRY_JITTER_MS, STATUS_LOCK_TTL_MS } from './constants.js';
+import { logger } from './logger.js';
 
 // Type for Lock from redlock
 // Note: Custom type definition needed due to incompatibilities between
@@ -15,7 +15,7 @@ type Lock = {
 };
 
 // Initialize Redis client for Redlock
-const redisClient = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const redisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
 

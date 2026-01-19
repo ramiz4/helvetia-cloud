@@ -1,16 +1,16 @@
 import 'reflect-metadata';
-import './load-env';
+import './load-env.js';
 
 // Validate environment variables before doing anything else
-import { initEnv } from './config/env';
+import { initEnv } from './config/env.js';
 initEnv();
 
 import { logger } from 'shared';
-import { scheduleCleanupJob } from './cleanup';
-import { startHealthServer, stopHealthServer } from './health-server';
-import { subscriptionCheckWorker } from './subscriptionCheckWorker';
-import { scheduleUsageCollection } from './usageCollection';
-import { worker } from './worker';
+import { scheduleCleanupJob } from './cleanup.js';
+import { startHealthServer, stopHealthServer } from './health-server.js';
+import { subscriptionCheckWorker } from './subscriptionCheckWorker.js';
+import { scheduleUsageCollection } from './usageCollection.js';
+import { worker } from './worker.js';
 
 logger.info('Worker started and listening for jobs...');
 

@@ -6,7 +6,7 @@ import {
   CLEANUP_OLD_IMAGES,
   DISK_USAGE_THRESHOLD_PERCENT,
   IMAGE_RETENTION_DAYS,
-} from '../config/constants';
+} from '../config/constants.js';
 
 export interface CleanupResult {
   danglingImagesRemoved: number;
