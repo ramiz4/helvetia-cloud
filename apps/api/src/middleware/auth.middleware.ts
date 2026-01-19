@@ -50,11 +50,13 @@ export function isPublicRoute(url: string): boolean {
 
   // Check if it's a versioned public route (e.g., /api/v1/auth/refresh)
   for (const publicRoute of PUBLIC_ROUTES) {
-    if (
-      path === `/api/v1${publicRoute}` ||
-      path === `/api/v1${publicRoute}/` ||
-      path.startsWith(`/api/v1${publicRoute}/`)
-    ) {
+    const versionedRoute = `/api/v1${publicRoute}`;
+    if (path === versionedRoute || path === `${versionedRoute}/`) {
+      return true;
+    }
+    // Check for sub-routes: ensure the character after the public route is a forward slash
+    // This prevents matching unintended routes like /terms/latest-draft when /terms/latest is public
+    if (path.startsWith(`${versionedRoute}/`) && path.length > versionedRoute.length + 1) {
       return true;
     }
   }
