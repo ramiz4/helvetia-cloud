@@ -154,6 +154,9 @@ describe('Resource Limit Enforcement Integration Tests', () => {
     await prisma.user.deleteMany({
       where: { id: { in: userIds } },
     });
+
+    // Close the server to prevent resource leaks
+    await app.close();
   });
 
   beforeEach(async () => {

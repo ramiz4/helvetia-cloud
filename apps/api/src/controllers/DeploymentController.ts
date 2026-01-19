@@ -549,7 +549,7 @@ export class DeploymentController {
         }
         await cleanup();
       },
-      isTestEnv ? 1000 : LOGS_CONNECTION_TIMEOUT_MS,
+      isTestEnv ? 100 : LOGS_CONNECTION_TIMEOUT_MS,
     );
 
     // Clean up on client disconnect

@@ -268,7 +268,8 @@ let serverPromise: Promise<Awaited<ReturnType<typeof createServer>>> | null = nu
 
 /**
  * Build or get the Fastify server instance
- * In test environment, this still provides a singleton per worker (test file)
+ * In production, this provides a singleton instance.
+ * In test environment, call resetServerForTesting() between test files to avoid state pollution.
  */
 export async function buildServer() {
   if (!serverPromise) {
@@ -277,9 +278,24 @@ export async function buildServer() {
   return serverPromise;
 }
 
-// Export a convenience instance for tests and index.ts.
-// Top-level await ensures this is initialized before any module that imports it runs its code.
-export const fastify = await buildServer();
+/**
+ * Reset the server singleton for testing purposes
+ * MUST be called in afterAll/afterEach hooks to prevent test pollution
+ *
+ * @example
+ * ```typescript
+ * afterAll(async () => {
+ *   await app.close();
+ *   resetServerForTesting();
+ * });
+ * ```
+ */
+export function resetServerForTesting(): void {
+  if (!isTestEnv) {
+    throw new Error('resetServerForTesting() can only be called in test environment');
+  }
+  serverPromise = null;
+}
 
 // Re-export common helpers and constants used by tests for compatibility
 export { BODY_LIMIT_GLOBAL, BODY_LIMIT_SMALL, BODY_LIMIT_STANDARD } from './config/constants.js';
