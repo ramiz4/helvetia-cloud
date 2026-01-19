@@ -614,7 +614,7 @@ export class ServiceController {
           }
           cleanup();
         },
-        isTestEnv ? 1000 : CONNECTION_TIMEOUT_MS, // Set to 1000ms for tests to allow cleanup tests to pass
+        isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
       );
 
       // Clean up on client disconnect
