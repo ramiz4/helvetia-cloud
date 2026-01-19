@@ -1,4 +1,4 @@
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
 
@@ -6,7 +6,7 @@ const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
  * Rate limit configuration factory
  * Creates rate limit configs for different endpoint types
  */
-export function createRateLimitConfigs(redisConnection: IORedis) {
+export function createRateLimitConfigs(redisConnection: Redis) {
   // Stricter rate limiting for authentication endpoints
   const authRateLimitConfig = {
     max: isTestEnv ? 10000 : parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
