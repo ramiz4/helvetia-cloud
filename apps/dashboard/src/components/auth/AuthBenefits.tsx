@@ -16,6 +16,9 @@ export function AuthBenefits({ benefits }: AuthBenefitsProps) {
       {benefits.map((benefit) => {
         const [rawTitle, ...rest] = benefit.text.split(':');
         const title = rawTitle.trim() || 'Feature';
+        // When the benefit text contains multiple colons (e.g. "Title: Part 1: Part 2"),
+        // we treat the first segment as the title and rejoin the remaining segments
+        // with ":" so that additional colons are preserved in the description, then trim.
         const description = rest.length > 0 ? rest.join(':').trim() : benefit.text;
 
         return (
