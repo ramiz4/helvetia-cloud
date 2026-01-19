@@ -93,7 +93,6 @@ Integration tests require:
 
 - A test database connection
 - Stripe environment variables configured
-- The RUN_INTEGRATION_TESTS flag set
 
 **Setup:**
 
@@ -108,7 +107,6 @@ Integration tests require:
    ```bash
    export DATABASE_URL="postgresql://postgres:postgres@localhost:5433/helvetia_test"
    export REDIS_URL="redis://localhost:6380"
-   export RUN_INTEGRATION_TESTS=1
    export STRIPE_SECRET_KEY="sk_test_mock_key"
    export STRIPE_WEBHOOK_SECRET="whsec_test_secret"
    export STRIPE_PRICE_ID_STARTER="price_test_starter"
@@ -125,17 +123,16 @@ Integration tests require:
 4. **Run integration tests:**
 
    ```bash
-   # Run all integration tests including Stripe webhook tests
-   RUN_INTEGRATION_TESTS=1 pnpm --filter api test StripeWebhookController.integration.test.ts
+   # Run all integration tests (includes Stripe webhook tests)
+   pnpm --filter api test:integration
 
-   # Or run all integration tests
-   RUN_INTEGRATION_TESTS=1 pnpm --filter api test
+   # Or from the root
+   pnpm test:integration
    ```
 
 **Quick Run (with environment variables inline):**
 
 ```bash
-RUN_INTEGRATION_TESTS=1 \
 DATABASE_URL="postgresql://postgres:postgres@localhost:5433/helvetia_test" \
 REDIS_URL="redis://localhost:6380" \
 STRIPE_SECRET_KEY="sk_test_mock" \
@@ -143,16 +140,15 @@ STRIPE_WEBHOOK_SECRET="whsec_test_secret" \
 STRIPE_PRICE_ID_STARTER="price_test_starter" \
 STRIPE_PRICE_ID_PRO="price_test_pro" \
 STRIPE_PRICE_ID_ENTERPRISE="price_test_enterprise" \
-pnpm --filter api test StripeWebhookController.integration.test.ts
+pnpm --filter api test:integration
 ```
 
-### Without Integration Tests
+### Unit Tests Only
 
-By default, integration tests are skipped if `RUN_INTEGRATION_TESTS` is not set:
+To run only unit tests (fast, no database required):
 
 ```bash
-# This will skip Stripe webhook integration tests
-pnpm --filter api test StripeWebhookController.integration.test.ts
+pnpm --filter api test
 ```
 
 ## Test Coverage
@@ -513,10 +509,10 @@ it('should work', async () => {
 
 ### Tests are Skipped
 
-If integration tests are skipped, ensure `RUN_INTEGRATION_TESTS=1` is set:
+Integration tests are now run using a separate command. Use:
 
 ```bash
-RUN_INTEGRATION_TESTS=1 pnpm --filter api test StripeWebhookController
+pnpm --filter api test:integration
 ```
 
 ### Database Connection Errors
