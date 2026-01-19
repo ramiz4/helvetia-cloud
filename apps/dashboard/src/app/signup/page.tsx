@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, Lock, Mail, Shield, User, Zap } from 'lucide-react';
+import { CheckCircle2, Lock, Mail, Shield, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -8,6 +8,7 @@ import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL, GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
+import { getPlatformBenefits, handleGitHubLogin as handleGitHubOAuth } from '../../utils/auth';
 
 function SignupContent() {
   const { t } = useLanguage();
@@ -20,15 +21,7 @@ function SignupContent() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGitHubLogin = () => {
-    if (!GITHUB_CLIENT_ID) {
-      console.error('NEXT_PUBLIC_GITHUB_CLIENT_ID is not defined');
-      return;
-    }
-
-    const redirectUri = `${window.location.origin}/auth/callback`;
-    const githubUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=user,repo,read:org,read:packages`;
-
-    window.location.href = githubUrl;
+    handleGitHubOAuth(GITHUB_CLIENT_ID);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -78,23 +71,7 @@ function SignupContent() {
     }
   };
 
-  const benefits = [
-    {
-      id: 'deploy-git',
-      icon: <Zap size={18} className="text-indigo-400" />,
-      text: t.login.benefit1,
-    },
-    {
-      id: 'hosted-switzerland',
-      icon: <Shield size={18} className="text-emerald-400" />,
-      text: t.login.benefit2,
-    },
-    {
-      id: 'enterprise-security',
-      icon: <Lock size={18} className="text-blue-400" />,
-      text: t.login.benefit3,
-    },
-  ];
+  const benefits = getPlatformBenefits(t);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
@@ -142,7 +119,7 @@ function SignupContent() {
           >
             {/* Top accent bar */}
             <div
-              className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-indigo-500 via-blue-500 to-indigo-500"
+              className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500"
               aria-hidden="true"
             />
 
@@ -153,7 +130,7 @@ function SignupContent() {
                   className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl"
                   aria-hidden="true"
                 />
-                <div className="relative w-full h-full bg-linear-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
                   <Image
                     src="/logo.png"
                     alt="Helvetia Cloud Logo"
@@ -336,7 +313,7 @@ function SignupContent() {
                 <GithubIcon size={24} aria-hidden="true" />
                 <span className="text-xl">{t.login.continueWithGithub}</span>
                 <div
-                  className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
                   aria-hidden="true"
                 />
               </button>
