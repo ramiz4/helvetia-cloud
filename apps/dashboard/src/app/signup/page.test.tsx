@@ -38,20 +38,24 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 describe('SignupPage', () => {
-  const originalLocation = window.location;
+  let originalLocation: Location;
 
   beforeEach(() => {
+    originalLocation = window.location;
     vi.clearAllMocks();
     delete (window as { location?: Location }).location;
     window.location = {
       ...originalLocation,
       href: 'http://localhost:3000/signup',
       origin: 'http://localhost:3000',
-    };
+    } as string & Location;
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
   });
 
   const renderSignupPage = () => {
