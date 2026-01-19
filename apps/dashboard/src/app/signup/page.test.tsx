@@ -42,7 +42,6 @@ global.fetch = vi.fn();
 
 describe('SignupPage', () => {
   let originalLocation: Location;
-  let mockPush: ReturnType<typeof vi.fn>;
   let mockToast: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -54,15 +53,16 @@ describe('SignupPage', () => {
       href: 'http://localhost:3000/signup',
       origin: 'http://localhost:3000',
     } as string & Location;
-    
+
     // Reset localStorage
     localStorage.clear();
-    
+
     // Get mocked functions
-    const { useRouter } = await import('next/navigation');
     const toast = (await import('react-hot-toast')).default;
-    mockPush = useRouter().push as ReturnType<typeof vi.fn>;
-    mockToast = toast as unknown as { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
+    mockToast = toast as unknown as {
+      error: ReturnType<typeof vi.fn>;
+      success: ReturnType<typeof vi.fn>;
+    };
   });
 
   afterEach(() => {
@@ -249,7 +249,7 @@ describe('SignupPage', () => {
     it('successfully registers a user', async () => {
       const user = userEvent.setup();
       const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
-      
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -311,7 +311,7 @@ describe('SignupPage', () => {
     it('shows loading state during registration', async () => {
       const user = userEvent.setup();
       const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
-      
+
       // Mock a slow response
       mockFetch.mockImplementationOnce(
         () =>
@@ -369,7 +369,7 @@ describe('SignupPage', () => {
     it('handles registration API error', async () => {
       const user = userEvent.setup();
       const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
-      
+
       mockFetch.mockResolvedValueOnce({
         ok: false,
         json: async () => ({ error: 'Email already exists' }),
@@ -405,7 +405,7 @@ describe('SignupPage', () => {
     it('handles network error', async () => {
       const user = userEvent.setup();
       const mockFetch = global.fetch as ReturnType<typeof vi.fn>;
-      
+
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       renderSignupPage();
