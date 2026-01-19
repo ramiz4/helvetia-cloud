@@ -86,7 +86,7 @@ export default function Footer() {
               {t.footer.product}
             </h4>
             <ul className="space-y-4 text-sm">
-              {isAuthenticated && (
+              {isAuthenticated ? (
                 <>
                   <li>
                     <Link
@@ -104,16 +104,25 @@ export default function Footer() {
                       {t.nav.deployments}
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      href="/billing"
+                      className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      {t.nav.billing}
+                    </Link>
+                  </li>
                 </>
+              ) : (
+                <li>
+                  <Link
+                    href="/pricing"
+                    className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    {t.footer.pricing}
+                  </Link>
+                </li>
               )}
-              <li>
-                <Link
-                  href="/pricing"
-                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                >
-                  {t.footer.pricing}
-                </Link>
-              </li>
             </ul>
           </div>
 

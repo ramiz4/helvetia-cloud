@@ -41,9 +41,13 @@ describe('PricingPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useRouter as any).mockReturnValue({ push: mockPush });
-    (useSubscription as any).mockReturnValue({ data: null });
-    (checkAndRefreshToken as any).mockResolvedValue(false);
+    vi.mocked(useRouter).mockReturnValue({ push: mockPush } as unknown as ReturnType<
+      typeof useRouter
+    >);
+    vi.mocked(useSubscription).mockReturnValue({ data: null } as unknown as ReturnType<
+      typeof useSubscription
+    >);
+    vi.mocked(checkAndRefreshToken).mockResolvedValue(false);
 
     // Clear localStorage
     localStorage.clear();
@@ -84,7 +88,7 @@ describe('PricingPage', () => {
   it('redirects to billing when authenticated user selects a plan', async () => {
     // Mock authenticated state
     localStorage.setItem('user', JSON.stringify({ id: '123' }));
-    (checkAndRefreshToken as any).mockResolvedValue(true);
+    vi.mocked(checkAndRefreshToken).mockResolvedValue(true);
 
     renderPricingPage();
 
@@ -103,8 +107,10 @@ describe('PricingPage', () => {
 
   it('highlights the current user plan if authenticated', async () => {
     localStorage.setItem('user', JSON.stringify({ id: '123' }));
-    (checkAndRefreshToken as any).mockResolvedValue(true);
-    (useSubscription as any).mockReturnValue({ data: { plan: 'PRO' } });
+    vi.mocked(checkAndRefreshToken).mockResolvedValue(true);
+    vi.mocked(useSubscription).mockReturnValue({ data: { plan: 'PRO' } } as unknown as ReturnType<
+      typeof useSubscription
+    >);
 
     renderPricingPage();
 

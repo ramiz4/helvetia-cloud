@@ -97,6 +97,7 @@ export default function DashboardNavigation() {
       href: '/pricing',
       icon: Tag,
       isPublic: true,
+      show: !isLoggedIn,
     },
     {
       label: t.nav.billing,

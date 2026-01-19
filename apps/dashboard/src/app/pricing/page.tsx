@@ -27,7 +27,7 @@ export default function PricingPage() {
     initAuth();
   }, []);
 
-  const handleSelectPlan = (plan: PlanDetails) => {
+  const handleSelectPlan = (_plan: PlanDetails) => {
     if (!isAuthenticated) {
       toast.error('Please login or sign up to select a plan.');
       router.push('/login?callbackUrl=/billing');
