@@ -19,13 +19,9 @@ import { StripeWebhookController } from './StripeWebhookController.js';
  * - Stripe webhook secret configured
  * - Mock Stripe data
  *
- * Run with: RUN_INTEGRATION_TESTS=1 pnpm test StripeWebhookController.integration.test.ts
+ * Run with: pnpm --filter api test:integration
  */
-
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
-describe.skipIf(shouldSkip)('StripeWebhookController Integration Tests', () => {
+describe('StripeWebhookController Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let prisma: PrismaClient;
   const webhookSecret = 'whsec_test_stripe_webhook_secret_12345';

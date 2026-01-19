@@ -1,13 +1,13 @@
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
-import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
+import { TOKENS } from '../di/tokens.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../errors/index.js';
 import {
   Environment,
   IOrganizationRepository,
   IProjectManagementService,
   IProjectRepository,
   Project,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 @injectable()
 export class ProjectManagementService implements IProjectManagementService {

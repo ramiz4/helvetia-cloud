@@ -1,9 +1,9 @@
 import { PrismaClient, SubscriptionStatus } from 'database';
 import Stripe from 'stripe';
 import { inject, injectable } from 'tsyringe';
-import { getStripeClient, isStripeConfigured } from '../config/stripe';
-import { TOKENS } from '../di/tokens';
-import type { IBillingService } from '../interfaces';
+import { getStripeClient, isStripeConfigured } from '../config/stripe.js';
+import { TOKENS } from '../di/tokens.js';
+import type { IBillingService } from '../interfaces/index.js';
 
 /**
  * BillingService

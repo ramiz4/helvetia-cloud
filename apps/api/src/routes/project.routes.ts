@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import { ProjectController } from '../controllers/ProjectController';
-import { getContainer, TOKENS } from '../di/container';
+import { ProjectController } from '../controllers/ProjectController.js';
+import { getContainer, TOKENS } from '../di/container.js';
 
 export async function projectRoutes(fastify: FastifyInstance) {
   const container = getContainer();

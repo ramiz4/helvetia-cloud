@@ -1,4 +1,4 @@
-import type { Environment, Project } from './IProjectRepository';
+import type { Environment, Project } from './IProjectRepository.js';
 
 /**
  * Interface for ProjectManagementService

@@ -7,4 +7,4 @@ export {
   registerInstance,
   registerSingleton,
   resolve,
-} from './container';
+} from './container.js';

@@ -2,9 +2,9 @@ import { SubscriptionPlan, SubscriptionStatus } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import Stripe from 'stripe';
 import { inject, injectable } from 'tsyringe';
-import { env } from '../config/env';
-import { getStripeClient } from '../config/stripe';
-import { SubscriptionService } from '../services';
+import { env } from '../config/env.js';
+import { getStripeClient } from '../config/stripe.js';
+import { SubscriptionService } from '../services/index.js';
 
 /**
  * StripeWebhookController

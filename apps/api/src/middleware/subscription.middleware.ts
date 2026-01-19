@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { resolve, TOKENS } from '../di';
-import { ForbiddenError } from '../errors';
-import type { ISubscriptionService } from '../interfaces';
+import { resolve, TOKENS } from '../di/index.js';
+import { ForbiddenError } from '../errors/index.js';
+import type { ISubscriptionService } from '../interfaces/index.js';
 
 /**
  * Subscription status middleware

@@ -5,7 +5,7 @@ import {
   DeploymentCreateInput,
   DeploymentUpdateInput,
   IDeploymentRepository,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Prisma implementation of IDeploymentRepository

@@ -1,5 +1,5 @@
-import { AppError } from './AppError';
-import { ErrorCode } from './ErrorCodes';
+import { AppError } from './AppError.js';
+import { ErrorCode } from './ErrorCodes.js';
 
 /**
  * Error thrown when input validation fails

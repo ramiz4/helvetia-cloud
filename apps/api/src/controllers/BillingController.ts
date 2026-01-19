@@ -1,8 +1,11 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import { env } from '../config/env';
-import type { IUserRepository } from '../interfaces';
-import { BillingService, SubscriptionService, UsageTrackingService } from '../services';
+import { env } from '../config/env.js';
+import { TOKENS } from '../di/tokens.js';
+import type { IUserRepository } from '../interfaces/index.js';
+import { BillingService } from '../services/BillingService.js';
+import { SubscriptionService } from '../services/SubscriptionService.js';
+import { UsageTrackingService } from '../services/UsageTrackingService.js';
 
 /**
  * BillingController
@@ -12,13 +15,13 @@ import { BillingService, SubscriptionService, UsageTrackingService } from '../se
 @injectable()
 export class BillingController {
   constructor(
-    @inject(Symbol.for('BillingService'))
+    @inject(TOKENS.BillingService)
     private billingService: BillingService,
-    @inject(Symbol.for('SubscriptionService'))
+    @inject(TOKENS.SubscriptionService)
     private subscriptionService: SubscriptionService,
-    @inject(Symbol.for('UsageTrackingService'))
+    @inject(TOKENS.UsageTrackingService)
     private usageTrackingService: UsageTrackingService,
-    @inject(Symbol.for('IUserRepository'))
+    @inject(TOKENS.UserRepository)
     private userRepository: IUserRepository,
   ) {}
 

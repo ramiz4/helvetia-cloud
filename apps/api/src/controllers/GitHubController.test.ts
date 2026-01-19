@@ -8,8 +8,8 @@ import type {
   GitHubRepository,
   IGitHubService,
   IUserRepository,
-} from '../interfaces';
-import { GitHubController } from './GitHubController';
+} from '../interfaces/index.js';
+import { GitHubController } from './GitHubController.js';
 
 // Mock crypto module
 vi.mock('../utils/crypto', () => ({

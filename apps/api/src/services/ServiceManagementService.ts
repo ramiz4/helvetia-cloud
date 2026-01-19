@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
-import type { CreateServiceDto, UpdateServiceDto } from '../dto';
-import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
+import { TOKENS } from '../di/tokens.js';
+import type { CreateServiceDto, UpdateServiceDto } from '../dto/index.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   IContainerOrchestrator,
   IDeploymentRepository,
@@ -11,7 +11,7 @@ import type {
   IServiceManagementService,
   IServiceRepository,
   Service,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * ServiceManagementService

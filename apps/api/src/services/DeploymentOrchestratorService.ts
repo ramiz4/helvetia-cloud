@@ -1,8 +1,8 @@
 import { Queue } from 'bullmq';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
-import type { QueueDeploymentJobDto } from '../dto';
-import { ForbiddenError, NotFoundError } from '../errors';
+import { TOKENS } from '../di/tokens.js';
+import type { QueueDeploymentJobDto } from '../dto/index.js';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   Deployment,
   IDeploymentOrchestratorService,
@@ -12,8 +12,8 @@ import type {
   IServiceRepository,
   IUserRepository,
   Service,
-} from '../interfaces';
-import { decrypt } from '../utils/crypto';
+} from '../interfaces/index.js';
+import { decrypt } from '../utils/crypto.js';
 
 /**
  * DeploymentOrchestratorService

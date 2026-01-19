@@ -1,6 +1,6 @@
 import { SubscriptionPlan, SubscriptionStatus } from 'database';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ISubscriptionService } from '../interfaces';
+import type { ISubscriptionService } from '../interfaces/index.js';
 
 /**
  * Tests for Stripe webhook subscription event handling

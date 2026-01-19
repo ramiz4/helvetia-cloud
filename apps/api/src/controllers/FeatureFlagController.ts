@@ -1,15 +1,15 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
-import { TOKENS } from '../di/tokens';
+import { TOKENS } from '../di/tokens.js';
 import {
   CheckBulkFlagSchema,
   CheckFlagSchema,
   CreateFlagSchema,
   UpdateFlagSchema,
-} from '../schemas/feature-flag.schema';
-import type { FeatureFlagService } from '../services';
-import { formatZodError } from '../utils/errorFormatting';
+} from '../schemas/feature-flag.schema.js';
+import type { FeatureFlagService } from '../services/index.js';
+import { formatZodError } from '../utils/errorFormatting.js';
 
 /**
  * FeatureFlagController

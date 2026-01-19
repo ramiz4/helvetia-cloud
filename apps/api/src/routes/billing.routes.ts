@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BillingController } from '../controllers/BillingController';
-import { resolve, TOKENS } from '../di';
-import { authenticate } from '../middleware/auth.middleware';
+import { BillingController } from '../controllers/BillingController.js';
+import { resolve, TOKENS } from '../di/index.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 /**
  * Billing routes plugin

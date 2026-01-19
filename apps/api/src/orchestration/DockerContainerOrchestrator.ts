@@ -1,12 +1,12 @@
 import Docker from 'dockerode';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
+import { TOKENS } from '../di/tokens.js';
 import {
   BuildImageOptions,
   ContainerStatus,
   CreateContainerOptions,
   IContainerOrchestrator,
-} from '../interfaces/IContainerOrchestrator';
+} from '../interfaces/IContainerOrchestrator.js';
 
 /**
  * Docker implementation of the IContainerOrchestrator interface

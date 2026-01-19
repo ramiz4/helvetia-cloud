@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BODY_LIMIT_SMALL } from '../config/constants';
-import { AuthController } from '../controllers/AuthController';
-import { resolve, TOKENS } from '../di';
-import { authenticate } from '../middleware/auth.middleware';
+import { BODY_LIMIT_SMALL } from '../config/constants.js';
+import { AuthController } from '../controllers/AuthController.js';
+import { resolve, TOKENS } from '../di/index.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 /**
  * Auth routes plugin

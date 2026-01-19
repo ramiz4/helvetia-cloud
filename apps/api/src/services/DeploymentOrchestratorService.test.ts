@@ -1,7 +1,7 @@
 import type { Queue } from 'bullmq';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, NotFoundError } from '../errors';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   IDeploymentRepository,
   IOrganizationRepository,
@@ -9,8 +9,8 @@ import type {
   IServiceRepository,
   IUserRepository,
   Service,
-} from '../interfaces';
-import { DeploymentOrchestratorService } from './DeploymentOrchestratorService';
+} from '../interfaces/index.js';
+import { DeploymentOrchestratorService } from './DeploymentOrchestratorService.js';
 
 // Mock the crypto module
 vi.mock('../utils/crypto', () => ({

@@ -3,16 +3,16 @@
  * Export all services from a single entry point
  */
 
-export * from './AuthenticationService';
-export * from './BillingService';
-export * from './DeploymentOrchestratorService';
-export * from './FeatureFlagService';
-export * from './GitHubService';
-export * from './InitializationService';
-export * from './OrganizationService';
-export * from './PrivacyPolicyService';
-export * from './ProjectManagementService';
-export * from './ServiceManagementService';
-export * from './SubscriptionService';
-export * from './TermsService';
-export * from './UsageTrackingService';
+export * from './AuthenticationService.js';
+export * from './BillingService.js';
+export * from './DeploymentOrchestratorService.js';
+export * from './FeatureFlagService.js';
+export * from './GitHubService.js';
+export * from './InitializationService.js';
+export * from './OrganizationService.js';
+export * from './PrivacyPolicyService.js';
+export * from './ProjectManagementService.js';
+export * from './ServiceManagementService.js';
+export * from './SubscriptionService.js';
+export * from './TermsService.js';
+export * from './UsageTrackingService.js';

@@ -1,4 +1,4 @@
-import type { ContainerStatus } from '../../interfaces';
+import type { ContainerStatus } from '../../interfaces/index.js';
 
 /**
  * Helper to determine service status based on database state and container state

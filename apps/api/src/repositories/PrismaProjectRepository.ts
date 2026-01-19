@@ -6,7 +6,7 @@ import {
   IProjectRepository,
   Project,
   ProjectCreateInput,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 @injectable()
 export class PrismaProjectRepository implements IProjectRepository {

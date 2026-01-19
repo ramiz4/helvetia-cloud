@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { GitHubController } from '../controllers/GitHubController';
-import { resolve, TOKENS } from '../di';
+import { GitHubController } from '../controllers/GitHubController.js';
+import { resolve, TOKENS } from '../di/index.js';
 
 /**
  * GitHub routes plugin

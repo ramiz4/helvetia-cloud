@@ -1,11 +1,7 @@
 import { prisma } from 'database';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { buildServer } from '../server';
-
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
-describe.skipIf(shouldSkip)('PrivacyPolicyController Integration Tests', () => {
+import { buildServer } from '../server.js';
+describe('PrivacyPolicyController Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;

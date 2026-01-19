@@ -1,7 +1,7 @@
 import { prisma } from 'database';
 import 'reflect-metadata';
-import { PrismaPrivacyPolicyRepository } from '../repositories/PrismaPrivacyPolicyRepository';
-import { PrivacyPolicyService } from '../services/PrivacyPolicyService';
+import { PrismaPrivacyPolicyRepository } from '../repositories/PrismaPrivacyPolicyRepository.js';
+import { PrivacyPolicyService } from '../services/PrivacyPolicyService.js';
 
 /**
  * Initialize Privacy Policy

@@ -1,4 +1,4 @@
-import { Service } from './IServiceRepository';
+import { Service } from './IServiceRepository.js';
 
 export interface Project {
   id: string;

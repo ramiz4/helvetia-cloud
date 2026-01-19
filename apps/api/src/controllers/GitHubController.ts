@@ -1,9 +1,9 @@
-import '../types/fastify';
+import '../types/fastify.js';
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import type { IGitHubService, IUserRepository } from '../interfaces';
-import { decrypt } from '../utils/crypto';
+import type { IGitHubService, IUserRepository } from '../interfaces/index.js';
+import { decrypt } from '../utils/crypto.js';
 
 /**
  * GitHubController

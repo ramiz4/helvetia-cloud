@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { describe, expect, it } from 'vitest';
-import { hashPassword, isLegacyHash, verifyPassword } from './password';
+import { hashPassword, isLegacyHash, verifyPassword } from './password.js';
 
 describe('password utilities', () => {
   describe('hashPassword', () => {

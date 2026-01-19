@@ -1,17 +1,17 @@
-import '../types/fastify';
+import '../types/fastify.js';
 
 import type { Queue } from 'bullmq';
 import crypto from 'crypto';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
+import { TOKENS } from '../di/tokens.js';
 import type {
   IDeploymentRepository,
   ILogger,
   IServiceRepository,
   IUserRepository,
-} from '../interfaces';
-import { getRepoUrlMatchCondition } from '../utils/repoUrl';
+} from '../interfaces/index.js';
+import { getRepoUrlMatchCondition } from '../utils/repoUrl.js';
 
 interface PullRequestEvent {
   action: string;

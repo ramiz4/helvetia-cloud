@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fastify } from '../server';
+import { fastify } from '../server.js';
 
 /**
  * Tests for request ID middleware

@@ -1,4 +1,4 @@
-import type { Environment } from './IProjectRepository';
+import type { Environment } from './IProjectRepository.js';
 
 /**
  * Repository URL condition type for flexible matching

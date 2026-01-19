@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRepoUrlMatchCondition, normalizeRepoUrl } from './repoUrl';
+import { getRepoUrlMatchCondition, normalizeRepoUrl } from './repoUrl.js';
 
 describe('normalizeRepoUrl', () => {
   it('should remove .git suffix from URL', () => {

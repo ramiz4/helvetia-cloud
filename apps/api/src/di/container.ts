@@ -4,18 +4,18 @@ import Docker from 'dockerode';
 import 'reflect-metadata';
 import { DockerContainerOrchestrator, logger } from 'shared';
 import { container } from 'tsyringe';
-import { AuthController } from '../controllers/AuthController';
-import { BillingController } from '../controllers/BillingController';
-import { DeploymentController } from '../controllers/DeploymentController';
-import { FeatureFlagController } from '../controllers/FeatureFlagController';
-import { GitHubController } from '../controllers/GitHubController';
-import { OrganizationController } from '../controllers/OrganizationController';
-import { PrivacyPolicyController } from '../controllers/PrivacyPolicyController';
-import { ProjectController } from '../controllers/ProjectController';
-import { ServiceController } from '../controllers/ServiceController';
-import { StripeWebhookController } from '../controllers/StripeWebhookController';
-import { TermsController } from '../controllers/TermsController';
-import { WebhookController } from '../controllers/WebhookController';
+import { AuthController } from '../controllers/AuthController.js';
+import { BillingController } from '../controllers/BillingController.js';
+import { DeploymentController } from '../controllers/DeploymentController.js';
+import { FeatureFlagController } from '../controllers/FeatureFlagController.js';
+import { GitHubController } from '../controllers/GitHubController.js';
+import { OrganizationController } from '../controllers/OrganizationController.js';
+import { PrivacyPolicyController } from '../controllers/PrivacyPolicyController.js';
+import { ProjectController } from '../controllers/ProjectController.js';
+import { ServiceController } from '../controllers/ServiceController.js';
+import { StripeWebhookController } from '../controllers/StripeWebhookController.js';
+import { TermsController } from '../controllers/TermsController.js';
+import { WebhookController } from '../controllers/WebhookController.js';
 import {
   PrismaDeploymentRepository,
   PrismaFeatureFlagRepository,
@@ -25,7 +25,7 @@ import {
   PrismaServiceRepository,
   PrismaTermsRepository,
   PrismaUserRepository,
-} from '../repositories';
+} from '../repositories/index.js';
 import {
   AuthenticationService,
   BillingService,
@@ -40,8 +40,8 @@ import {
   SubscriptionService,
   TermsService,
   UsageTrackingService,
-} from '../services';
-import { TOKENS } from './tokens';
+} from '../services/index.js';
+import { TOKENS } from './tokens.js';
 
 /**
  * DI Container configuration

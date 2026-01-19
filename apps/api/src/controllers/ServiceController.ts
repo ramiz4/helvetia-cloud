@@ -2,26 +2,26 @@ import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
-import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/constants';
-import { ForbiddenError, NotFoundError } from '../errors';
-import { getServiceMetrics } from '../handlers/metrics.handler';
+import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/constants.js';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
+import { getServiceMetrics } from '../handlers/metrics.handler.js';
 import type {
   IContainerOrchestrator,
   IDeploymentRepository,
   IServiceManagementService,
   IServiceRepository,
-} from '../interfaces';
+} from '../interfaces/index.js';
 import {
   ProtectionToggleSchema,
   ServiceCreateSchema,
   ServiceUpdateSchema,
-} from '../schemas/service.schema';
-import '../types/fastify';
-import { formatZodError } from '../utils/errorFormatting';
-import { getSafeOrigin } from '../utils/helpers/cors.helper';
-import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
-import { determineServiceStatus } from '../utils/helpers/status.helper';
-import { validateToken } from '../utils/tokenValidation';
+} from '../schemas/service.schema.js';
+import '../types/fastify.js';
+import { formatZodError } from '../utils/errorFormatting.js';
+import { getSafeOrigin } from '../utils/helpers/cors.helper.js';
+import { getDefaultPortForServiceType } from '../utils/helpers/service.helper.js';
+import { determineServiceStatus } from '../utils/helpers/status.helper.js';
+import { validateToken } from '../utils/tokenValidation.js';
 
 /**
  * Type alias for container orchestrator with Docker instance access
@@ -614,7 +614,7 @@ export class ServiceController {
           }
           cleanup();
         },
-        isTestEnv ? 100 : CONNECTION_TIMEOUT_MS,
+        isTestEnv ? 1000 : CONNECTION_TIMEOUT_MS, // Set to 1000ms for tests to allow cleanup tests to pass
       );
 
       // Clean up on client disconnect

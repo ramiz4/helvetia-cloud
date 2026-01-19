@@ -1,6 +1,6 @@
 import { PrismaClient, Role } from 'database';
 import { inject, injectable } from 'tsyringe';
-import type { IOrganizationRepository } from '../interfaces/IOrganizationRepository';
+import type { IOrganizationRepository } from '../interfaces/IOrganizationRepository.js';
 
 @injectable()
 export class PrismaOrganizationRepository implements IOrganizationRepository {

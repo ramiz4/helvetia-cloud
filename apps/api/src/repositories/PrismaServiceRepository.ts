@@ -6,7 +6,7 @@ import {
   Service,
   ServiceCreateInput,
   ServiceUpdateInput,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Prisma implementation of IServiceRepository

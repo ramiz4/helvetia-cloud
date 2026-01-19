@@ -1,4 +1,4 @@
-import type { Deployment } from './index';
+import type { Deployment } from './index.js';
 
 /**
  * Interface for DeploymentOrchestratorService

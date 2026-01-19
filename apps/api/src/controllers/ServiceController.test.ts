@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, NotFoundError } from '../errors';
-import { ServiceController } from './ServiceController';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
+import { ServiceController } from './ServiceController.js';
 
 // Mock database module
 vi.mock('database', () => ({

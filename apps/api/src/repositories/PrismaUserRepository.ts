@@ -6,7 +6,7 @@ import {
   UserCreateInput,
   UserUpdateInput,
   UserWhereUniqueInput,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Prisma implementation of IUserRepository

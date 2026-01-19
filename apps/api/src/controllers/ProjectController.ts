@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import { IProjectManagementService } from '../interfaces';
+import { IProjectManagementService } from '../interfaces/index.js';
 
 @injectable()
 export class ProjectController {

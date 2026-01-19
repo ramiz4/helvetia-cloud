@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { createRateLimitConfigs } from '../config/rateLimit';
-import { FeatureFlagController } from '../controllers/FeatureFlagController';
-import { resolve, TOKENS } from '../di';
-import { requireAdmin } from '../middleware/auth.middleware';
+import { createRateLimitConfigs } from '../config/rateLimit.js';
+import { FeatureFlagController } from '../controllers/FeatureFlagController.js';
+import { resolve, TOKENS } from '../di/index.js';
+import { requireAdmin } from '../middleware/auth.middleware.js';
 
 /**
  * Feature flag routes

@@ -16,7 +16,7 @@ import fastifySwaggerUi from '@fastify/swagger-ui';
 import { Queue } from 'bullmq';
 import crypto from 'crypto';
 import Fastify from 'fastify';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import { logger, loggerOptions } from 'shared';
 import { BODY_LIMIT_GLOBAL, LOG_REQUESTS, LOG_RESPONSES } from './config/constants.js';
 import { initializeContainer, registerInstance } from './di/index.js';
@@ -27,13 +27,11 @@ import { isOriginAllowed } from './utils/helpers/cors.helper.js';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
 
-// Initialize DI container
 initializeContainer();
 
-// Create Redis connection
-const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const redisConnection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
-  retryStrategy: (times) => Math.min(times * 50, 2000),
+  retryStrategy: (times: number) => Math.min(times * 50, 2000),
 });
 
 // Register Redis connection in DI if not already registered (useful for testing)
@@ -265,28 +263,24 @@ export async function createServer() {
   return app;
 }
 
-// In test environment, buildServer always creates a fresh instance.
-// In other environments, it returns a singleton instance.
-let fastifyInstance: Awaited<ReturnType<typeof createServer>> | null = null;
+// Use a promise to ensure singleton initialization is thread-safe/race-condition free
+let serverPromise: Promise<Awaited<ReturnType<typeof createServer>>> | null = null;
 
+/**
+ * Build or get the Fastify server instance
+ * In test environment, this still provides a singleton per worker (test file)
+ */
 export async function buildServer() {
-  if (isTestEnv) {
-    return createServer();
+  if (!serverPromise) {
+    serverPromise = createServer();
   }
-
-  if (!fastifyInstance) {
-    fastifyInstance = await createServer();
-  }
-  return fastifyInstance;
+  return serverPromise;
 }
 
-// Keep the export for index.ts (though it should ideally use buildServer)
-// Use a side-effect to initialize it for non-test environments if absolutely needed,
-// but buildServer is the preferred way.
-export let fastify: Awaited<ReturnType<typeof createServer>>;
+// Export a convenience instance for tests and index.ts.
+// Top-level await ensures this is initialized before any module that imports it runs its code.
+export const fastify = await buildServer();
 
-if (!isTestEnv) {
-  buildServer().then((instance) => {
-    fastify = instance;
-  });
-}
+// Re-export common helpers and constants used by tests for compatibility
+export { BODY_LIMIT_GLOBAL, BODY_LIMIT_SMALL, BODY_LIMIT_STANDARD } from './config/constants.js';
+export { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper.js';

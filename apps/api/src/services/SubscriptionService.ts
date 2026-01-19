@@ -1,7 +1,7 @@
 import { PrismaClient, SubscriptionPlan, SubscriptionStatus } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
-import type { ISubscriptionService } from '../interfaces';
+import { TOKENS } from '../di/tokens.js';
+import type { ISubscriptionService } from '../interfaces/index.js';
 
 /**
  * Resource limits for each subscription plan

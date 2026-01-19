@@ -1,13 +1,13 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
-import { TOKENS } from '../di/tokens';
+import { TOKENS } from '../di/tokens.js';
 import {
   AcceptPrivacyPolicySchema,
   GetPrivacyPolicySchema,
-} from '../schemas/privacy-policy.schema';
-import type { PrivacyPolicyService } from '../services';
-import { formatZodError } from '../utils/errorFormatting';
+} from '../schemas/privacy-policy.schema.js';
+import type { PrivacyPolicyService } from '../services/index.js';
+import { formatZodError } from '../utils/errorFormatting.js';
 
 /**
  * PrivacyPolicyController

@@ -1,9 +1,9 @@
 import type { Role } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { resolve, TOKENS } from '../di';
-import { ForbiddenError, ValidationError } from '../errors';
-import type { OrganizationService } from '../services/OrganizationService';
+import { resolve, TOKENS } from '../di/index.js';
+import { ForbiddenError, ValidationError } from '../errors/index.js';
+import type { OrganizationService } from '../services/OrganizationService.js';
 
 /**
  * Get role hierarchy dynamically to avoid top-level imports

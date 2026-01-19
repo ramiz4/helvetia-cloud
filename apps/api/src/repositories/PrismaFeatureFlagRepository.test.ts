@@ -1,7 +1,7 @@
 import { Prisma } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PrismaFeatureFlagRepository } from './PrismaFeatureFlagRepository';
+import { PrismaFeatureFlagRepository } from './PrismaFeatureFlagRepository.js';
 
 // Mock PrismaClient
 const mockPrismaClient = {

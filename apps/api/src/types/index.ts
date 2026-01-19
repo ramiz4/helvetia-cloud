@@ -2,4 +2,4 @@
  * Central export for all custom types
  */
 
-export type { JwtPayload, MetricsTimerFunction } from './fastify';
+export type { JwtPayload, MetricsTimerFunction } from './fastify.js';

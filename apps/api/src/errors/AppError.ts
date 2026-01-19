@@ -1,6 +1,6 @@
-import type { ErrorCode } from './ErrorCodes';
-import { ErrorMessages } from './ErrorCodes';
-import { getLocalizedErrorMessage, type Language } from './i18n';
+import type { ErrorCode } from './ErrorCodes.js';
+import { ErrorMessages } from './ErrorCodes.js';
+import { getLocalizedErrorMessage, type Language } from './i18n/index.js';
 
 /**
  * Standard error response format

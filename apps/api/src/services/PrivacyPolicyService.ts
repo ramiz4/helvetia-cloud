@@ -7,7 +7,7 @@ import {
   CreatePrivacyPolicyVersionData,
   IPrivacyPolicyRepository,
   UserPrivacyPolicyAcceptanceWithVersion,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Service for managing Privacy Policy

@@ -1,5 +1,5 @@
-import type { ErrorCode } from '../ErrorCodes';
-import { en } from './en';
+import type { ErrorCode } from '../ErrorCodes.js';
+import { en } from './en.js';
 
 /**
  * Supported languages

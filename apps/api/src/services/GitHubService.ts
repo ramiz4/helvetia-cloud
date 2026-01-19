@@ -7,7 +7,7 @@ import type {
   GitHubPackage,
   GitHubRepository,
   IGitHubService,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * GitHubService

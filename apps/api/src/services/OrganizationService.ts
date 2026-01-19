@@ -1,8 +1,8 @@
 import { Organization, Role } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
-import { ForbiddenError, NotFoundError } from '../errors';
-import type { IOrganizationRepository } from '../interfaces/IOrganizationRepository';
+import { TOKENS } from '../di/tokens.js';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
+import type { IOrganizationRepository } from '../interfaces/IOrganizationRepository.js';
 
 @injectable()
 export class OrganizationService {
