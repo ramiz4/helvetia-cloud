@@ -22,6 +22,7 @@ import {
   useLanguage,
 } from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
+import { getUserFriendlyErrorMessage, isApiError } from '../../utils/apiErrors';
 
 interface UserInfo {
   id: string;
@@ -150,7 +151,10 @@ export default function SettingsPage() {
         window.location.href = '/';
       } else {
         const errorData = await res.json();
-        toast.error(errorData.error || 'Failed to delete account');
+        const errorMessage = isApiError(errorData)
+          ? getUserFriendlyErrorMessage(errorData)
+          : errorData.error || 'Failed to delete account';
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error(err);

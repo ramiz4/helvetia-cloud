@@ -9,6 +9,7 @@ import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL, GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
+import { getUserFriendlyErrorMessage, isApiError } from '../../utils/apiErrors';
 import { getPlatformBenefits, handleGitHubLogin as handleGitHubOAuth } from '../../utils/auth';
 
 function SignupContent() {
@@ -62,7 +63,10 @@ function SignupContent() {
         router.push('/services');
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Registration failed');
+        const errorMessage = isApiError(errorData)
+          ? getUserFriendlyErrorMessage(errorData)
+          : errorData.error || 'Registration failed';
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error('Auth error:', err);

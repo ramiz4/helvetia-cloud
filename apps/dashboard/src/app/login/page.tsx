@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL, GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
 import { AuthBenefits } from '../../components/auth/AuthBenefits';
 import { GithubIcon } from '../../components/icons/GithubIcon';
+import { getUserFriendlyErrorMessage, isApiError } from '../../utils/apiErrors';
 import { getPlatformBenefits, handleGitHubLogin as handleGitHubOAuth } from '../../utils/auth';
 
 function LoginContent() {
@@ -50,7 +51,10 @@ function LoginContent() {
         router.push('/services');
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Login failed');
+        const errorMessage = isApiError(errorData)
+          ? getUserFriendlyErrorMessage(errorData)
+          : errorData.error || 'Login failed';
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error('Auth error:', err);
