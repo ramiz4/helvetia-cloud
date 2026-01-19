@@ -1,38 +1,50 @@
 'use client';
 
-import { CheckCircle2, Lock, Mail, Shield } from 'lucide-react';
+import { CheckCircle2, Lock, Mail, Shield, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL, GITHUB_CLIENT_ID, useLanguage } from 'shared-ui';
 import { GithubIcon } from '../../components/icons/GithubIcon';
 import { getPlatformBenefits, handleGitHubLogin as handleGitHubOAuth } from '../../utils/auth';
 
-function LoginContent() {
+function SignupContent() {
   const { t } = useLanguage();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const errorParam = searchParams.get('error');
-  const error = errorParam === 'code_expired' ? t.login.codeExpired : errorParam;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGitHubLogin = () => {
     handleGitHubOAuth(GITHUB_CLIENT_ID);
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (!username || username.length < 3) {
+      toast.error('Username must be at least 3 characters');
+      return;
+    }
 
     setIsLoading(true);
 
     try {
-      const endpoint = '/auth/login';
-      const body = { email, password };
+      const endpoint = '/auth/register';
+      const body = { email, password, username };
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
@@ -45,11 +57,11 @@ function LoginContent() {
         const data = await response.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        toast.success('Welcome back!');
+        toast.success('Account created successfully!');
         router.push('/services');
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Login failed');
+        toast.error(errorData.error || 'Registration failed');
       }
     } catch (err) {
       console.error('Auth error:', err);
@@ -65,10 +77,10 @@ function LoginContent() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Skip to main content for accessibility */}
       <a
-        href="#login-form"
+        href="#signup-form"
         className="fixed left-4 top-4 z-50 -translate-y-20 transform bg-indigo-500 text-white px-4 py-2 rounded-lg focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
       >
-        Skip to login form
+        Skip to signup form
       </a>
 
       {/* Background decoration */}
@@ -97,13 +109,13 @@ function LoginContent() {
           {t.login.backToHome}
         </Link>
 
-        {/* Main login card */}
+        {/* Main signup card */}
         <main>
           <div
-            id="login-form"
+            id="signup-form"
             className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl dark:shadow-2xl relative overflow-hidden"
             role="region"
-            aria-label="Login form"
+            aria-label="Signup form"
           >
             {/* Top accent bar */}
             <div
@@ -130,10 +142,10 @@ function LoginContent() {
                 </div>
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
-                {t.login.swissCloudSecurity}
+                Create an Account
               </h1>
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-base sm:text-lg">
-                {t.login.securityDesc}
+                Start building with the most secure Swiss cloud.
               </p>
             </div>
 
@@ -155,30 +167,33 @@ function LoginContent() {
               ))}
             </div>
 
-            {/* Error message */}
-            {error && (
-              <div
-                className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl animate-in fade-in slide-in-from-top-2"
-                role="alert"
-                aria-live="assertive"
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className="p-1 bg-red-500/20 rounded-lg text-red-500 mt-0.5"
-                    aria-hidden="true"
-                  >
-                    <span className="text-xs font-bold font-mono">!</span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-red-400 mb-1">{t.login.authError}</div>
-                    <div className="text-xs text-red-400/80 leading-relaxed">{error}</div>
-                  </div>
+            {/* Signup Form */}
+            <form onSubmit={handleRegister} className="space-y-4 mb-6">
+              <div>
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                >
+                  Username
+                </label>
+                <div className="relative">
+                  <User
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={20}
+                  />
+                  <input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="johndoe"
+                    required
+                    minLength={3}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
                 </div>
               </div>
-            )}
 
-            {/* Email/Password Form */}
-            <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
               <div>
                 <label
                   htmlFor="email"
@@ -228,6 +243,31 @@ function LoginContent() {
                 </div>
               </div>
 
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+                >
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={20}
+                  />
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={8}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={isLoading}
@@ -236,18 +276,18 @@ function LoginContent() {
                 {isLoading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Signing In...
+                    Creating Account...
                   </>
                 ) : (
-                  'Sign In'
+                  'Create Account'
                 )}
               </button>
 
               <Link
-                href="/signup"
+                href="/login"
                 className="block text-center w-full text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 font-semibold transition-colors mt-4"
               >
-                Don&apos;t have an account? Sign up
+                Already have an account? Sign in
               </Link>
             </form>
 
@@ -350,21 +390,21 @@ function LoginContent() {
   );
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <Suspense
       fallback={
         <div
           className="min-h-[80vh] flex items-center justify-center"
           role="status"
-          aria-label="Loading login page"
+          aria-label="Loading signup page"
         >
           <div className="w-12 h-12 border-4 border-white/10 border-t-indigo-500 rounded-full animate-spin-fast" />
           <span className="sr-only">Loading...</span>
         </div>
       }
     >
-      <LoginContent />
+      <SignupContent />
     </Suspense>
   );
 }

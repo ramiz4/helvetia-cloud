@@ -41,9 +41,10 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 describe('LoginPage', () => {
-  const originalLocation = window.location;
+  let originalLocation: Location;
 
   beforeEach(() => {
+    originalLocation = window.location;
     vi.clearAllMocks();
     // Mock window.location
     delete (window as { location?: Location }).location;
@@ -51,11 +52,14 @@ describe('LoginPage', () => {
       ...originalLocation,
       href: 'http://localhost:3000/login',
       origin: 'http://localhost:3000',
-    };
+    } as string & Location;
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
   });
 
   const renderLoginPage = () => {
@@ -156,7 +160,7 @@ describe('LoginPage', () => {
     const { useSearchParams } = await import('next/navigation');
     vi.mocked(useSearchParams).mockReturnValue({
       get: vi.fn((key: string) => (key === 'error' ? 'Authentication failed' : null)),
-    } as ReturnType<typeof useSearchParams>);
+    } as unknown as ReturnType<typeof useSearchParams>);
 
     renderLoginPage();
 
@@ -171,7 +175,7 @@ describe('LoginPage', () => {
     const { useSearchParams } = await import('next/navigation');
     vi.mocked(useSearchParams).mockReturnValue({
       get: vi.fn((key: string) => (key === 'error' ? 'code_expired' : null)),
-    } as ReturnType<typeof useSearchParams>);
+    } as unknown as ReturnType<typeof useSearchParams>);
 
     renderLoginPage();
 
@@ -234,7 +238,7 @@ describe('LoginPage', () => {
       const { useSearchParams } = await import('next/navigation');
       vi.mocked(useSearchParams).mockReturnValue({
         get: vi.fn((key: string) => (key === 'error' ? 'Test error' : null)),
-      } as ReturnType<typeof useSearchParams>);
+      } as unknown as ReturnType<typeof useSearchParams>);
 
       renderLoginPage();
 
@@ -278,12 +282,12 @@ describe('LoginPage', () => {
       const submitButton = screen.getByRole('button', { name: /^sign in$/i });
       expect(submitButton).toHaveFocus();
 
-      // Tab to toggle button
+      // Tab to signup link
       await user.tab();
-      const toggleButton = screen.getByRole('button', {
+      const signupLink = screen.getByRole('link', {
         name: /don't have an account\? sign up/i,
       });
-      expect(toggleButton).toHaveFocus();
+      expect(signupLink).toHaveFocus();
 
       // Tab to GitHub button
       await user.tab();
