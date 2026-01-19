@@ -1,7 +1,7 @@
 import { PrismaClient, UsageMetric } from 'database';
 import Docker from 'dockerode';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { UsageCollectionService } from './usageCollection.service';
+import { UsageCollectionService } from './usageCollection.service.js';
 
 // Mock logger
 vi.mock('shared', () => ({
@@ -20,7 +20,7 @@ vi.mock('ioredis', () => {
     this.quit = vi.fn().mockResolvedValue('OK');
     return this;
   });
-  return { default: mockRedis };
+  return { Redis: mockRedis, default: mockRedis };
 });
 
 describe('UsageCollectionService', () => {
@@ -302,7 +302,7 @@ describe('UsageCollectionService', () => {
       });
 
       const callArgs = vi.mocked(mockPrisma.usageRecord.createMany).mock.calls[0][0];
-      expect(callArgs.data).toHaveLength(1); // Only compute hours
+      expect(callArgs?.data).toHaveLength(1); // Only compute hours
     });
 
     it('should not create records if no usage', async () => {

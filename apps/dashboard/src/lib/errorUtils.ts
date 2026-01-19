@@ -1,3 +1,5 @@
+import { getUserFriendlyErrorMessage, isApiError } from '../utils/apiErrors';
+
 /**
  * Zod v4 flattened error structure (from z.flattenError)
  */
@@ -20,6 +22,11 @@ export async function getErrorMessage(
 ): Promise<string> {
   try {
     const data = await response.json();
+
+    // Case 0: API Error Response with code
+    if (isApiError(data)) {
+      return getUserFriendlyErrorMessage(data);
+    }
 
     // Case 1: Standard 'message' field
     if (data.message && typeof data.message === 'string') {

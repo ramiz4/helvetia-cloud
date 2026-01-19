@@ -1,15 +1,15 @@
 import { Queue } from 'bullmq';
 import Fastify, { FastifyReply, FastifyRequest } from 'fastify';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import { logger } from 'shared';
-import { env } from './config/env';
-import { workerMetricsService } from './services/metrics.service';
+import { env } from './config/env.js';
+import { workerMetricsService } from './services/metrics.service.js';
 
 // Track worker start time for uptime calculation
 const workerStartTime = Date.now();
 
 // Redis connection for health checks (lazy initialized)
-let redisConnection: IORedis | null = null;
+let redisConnection: Redis | null = null;
 let deploymentQueue: Queue | null = null;
 
 // Create Fastify instance for health checks
@@ -48,7 +48,7 @@ healthServer.get('/health', async (_request: FastifyRequest, reply: FastifyReply
   try {
     // Initialize Redis connection if needed
     if (!redisConnection) {
-      redisConnection = new IORedis(env.REDIS_URL, {
+      redisConnection = new Redis(env.REDIS_URL, {
         maxRetriesPerRequest: null,
         lazyConnect: true,
       });

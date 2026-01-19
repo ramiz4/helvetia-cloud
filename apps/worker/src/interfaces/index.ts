@@ -4,23 +4,23 @@ export {
   DeploymentCreateInput,
   DeploymentUpdateInput,
   IDeploymentRepository,
-} from './IDeploymentRepository';
+} from './IDeploymentRepository.js';
 export {
   IServiceRepository,
   Service,
   ServiceCreateInput,
   ServiceUpdateInput,
-} from './IServiceRepository';
+} from './IServiceRepository.js';
 
 // Infrastructure interfaces
-export { CacheOptions, ICache } from './ICache';
+export { CacheOptions, ICache } from './ICache.js';
 export {
   BuildImageOptions,
   ContainerStatus,
   CreateContainerOptions,
   IContainerOrchestrator,
-} from './IContainerOrchestrator';
-export { ILogger, LogContext, LogLevel } from './ILogger';
+} from './IContainerOrchestrator.js';
+export { ILogger, LogContext, LogLevel } from './ILogger.js';
 
 // Deployment strategy interfaces
-export { DeploymentContext, DeploymentResult, IDeploymentStrategy } from './IDeploymentStrategy';
+export { DeploymentContext, DeploymentResult, IDeploymentStrategy } from './IDeploymentStrategy.js';

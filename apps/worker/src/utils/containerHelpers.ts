@@ -1,8 +1,8 @@
 import { prisma } from 'database';
 import Docker from 'dockerode';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import { logger, PLATFORM_DOMAIN, withStatusLock } from 'shared';
-import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
+import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants.js';
 
 type NetworkConfig = {
   Aliases: string[];
@@ -300,7 +300,7 @@ export async function rollbackContainers(params: {
  * Publish logs to Redis for real-time streaming
  */
 export async function publishLogs(
-  redisConnection: IORedis,
+  redisConnection: Redis,
   deploymentId: string,
   logs: string,
 ): Promise<void> {

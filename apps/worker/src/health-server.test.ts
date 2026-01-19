@@ -1,6 +1,6 @@
 import { logger } from 'shared';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { healthServer, startHealthServer } from './health-server';
+import { healthServer, startHealthServer } from './health-server.js';
 
 // Mock env config
 vi.mock('./config/env', () => ({
@@ -43,6 +43,7 @@ const { MockIORedis, MockQueue } = vi.hoisted(() => ({
 }));
 
 vi.mock('ioredis', () => ({
+  Redis: MockIORedis,
   default: MockIORedis,
 }));
 

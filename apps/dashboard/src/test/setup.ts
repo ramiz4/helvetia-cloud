@@ -27,3 +27,15 @@ vi.spyOn(console, 'error').mockImplementation(() => {});
 vi.spyOn(console, 'warn').mockImplementation(() => {});
 // Optionally suppress log as well if it's too noisy
 // vi.spyOn(console, 'log').mockImplementation(() => {});
+
+import { configure } from '@testing-library/react';
+
+configure({
+  getElementError: (message) => {
+    // Return a concise error
+    const error = new Error(message || 'Element found/not found error');
+    error.name = 'TestingLibraryElementError';
+    error.stack = undefined;
+    return error;
+  },
+});

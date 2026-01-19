@@ -1,8 +1,8 @@
-import type { IDeploymentStrategy } from '../interfaces';
-import { ComposeDeploymentStrategy } from './ComposeDeploymentStrategy';
-import { DatabaseDeploymentStrategy } from './DatabaseDeploymentStrategy';
-import { DockerDeploymentStrategy } from './DockerDeploymentStrategy';
-import { StaticDeploymentStrategy } from './StaticDeploymentStrategy';
+import type { IDeploymentStrategy } from '../interfaces/index.js';
+import { ComposeDeploymentStrategy } from './ComposeDeploymentStrategy.js';
+import { DatabaseDeploymentStrategy } from './DatabaseDeploymentStrategy.js';
+import { DockerDeploymentStrategy } from './DockerDeploymentStrategy.js';
+import { StaticDeploymentStrategy } from './StaticDeploymentStrategy.js';
 
 /**
  * Factory for creating deployment strategies

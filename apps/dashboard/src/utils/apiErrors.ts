@@ -91,6 +91,7 @@ export const UserFriendlyErrorMessages: Partial<Record<ErrorCode, string>> = {
   [ErrorCode.AUTH_TOKEN_EXPIRED]: 'Your session has expired. Please log in again.',
   [ErrorCode.AUTH_TOKEN_INVALID]: 'Your session is invalid. Please log in again.',
   [ErrorCode.AUTH_TOKEN_MISSING]: 'Please log in to continue.',
+  [ErrorCode.AUTH_INVALID_CREDENTIALS]: 'Invalid email or password.',
   [ErrorCode.AUTH_UNAUTHORIZED]: 'You need to be logged in to access this.',
   [ErrorCode.AUTH_FORBIDDEN]: "You don't have permission to do that.",
   [ErrorCode.AUTH_GITHUB_FAILED]: 'GitHub authentication failed. Please try again.',

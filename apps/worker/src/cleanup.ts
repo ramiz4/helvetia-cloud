@@ -1,16 +1,21 @@
-import { Queue, Worker } from 'bullmq';
+import { Job, Queue, Worker } from 'bullmq';
 import { prisma } from 'database';
 import Docker from 'dockerode';
 import dotenv from 'dotenv';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import path from 'path';
 import { DockerContainerOrchestrator, logger } from 'shared';
-import { VolumeManager } from './orchestration';
-import { cleanupDockerImages } from './services/imageCleanup';
+import { VolumeManager } from './orchestration/index.js';
+import { cleanupDockerImages } from './services/imageCleanup.js';
+
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const redisConnection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
 
@@ -104,64 +109,65 @@ async function permanentlyDeleteService(id: string) {
   logger.info(`Successfully deleted service ${service.name} (${id})`);
 }
 
-// Worker to process cleanup jobs
-export const cleanupWorker = new Worker(
-  'service-cleanup',
-  async (_job) => {
-    logger.info('Running scheduled cleanup job for soft-deleted services and Docker images');
+// Processor for the cleanup job
+export const cleanupProcessor = async (_job: Job) => {
+  logger.info('Running scheduled cleanup job for soft-deleted services and Docker images');
 
-    // 1. Cleanup soft-deleted services
-    logger.info('=== Service Cleanup Phase ===');
-    // Find services deleted more than 30 days ago
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  // 1. Cleanup soft-deleted services
+  logger.info('=== Service Cleanup Phase ===');
+  // Find services deleted more than 30 days ago
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const servicesToDelete = await prisma.service.findMany({
-      where: {
-        deletedAt: {
-          not: null,
-          lt: thirtyDaysAgo,
-        },
+  const servicesToDelete = await prisma.service.findMany({
+    where: {
+      deletedAt: {
+        not: null,
+        lt: thirtyDaysAgo,
       },
-    });
+    },
+  });
 
-    logger.info(`Found ${servicesToDelete.length} services to permanently delete`);
+  logger.info(`Found ${servicesToDelete.length} services to permanently delete`);
 
-    for (const service of servicesToDelete) {
-      try {
-        await permanentlyDeleteService(service.id);
-      } catch (error) {
-        logger.error({ err: error, serviceId: service.id }, 'Failed to delete service');
-      }
-    }
-
-    // 2. Cleanup Docker images
-    logger.info('=== Docker Image Cleanup Phase ===');
-    const docker = new Docker();
-    let imageCleanupResult;
-
+  for (const service of servicesToDelete) {
     try {
-      imageCleanupResult = await cleanupDockerImages(docker);
-      logger.info(
-        `Image cleanup completed: ${imageCleanupResult.danglingImagesRemoved} dangling, ${imageCleanupResult.oldImagesRemoved} old images removed`,
-      );
+      await permanentlyDeleteService(service.id);
     } catch (error) {
-      logger.error({ err: error }, 'Failed to cleanup Docker images');
-      imageCleanupResult = {
-        danglingImagesRemoved: 0,
-        oldImagesRemoved: 0,
-        bytesFreed: 0,
-        errors: [error instanceof Error ? error.message : String(error)],
-      };
+      logger.error({ err: error, serviceId: service.id }, 'Failed to delete service');
     }
+  }
 
-    return {
-      deletedCount: servicesToDelete.length,
-      imageCleanup: imageCleanupResult,
+  // 2. Cleanup Docker images
+  logger.info('=== Docker Image Cleanup Phase ===');
+  const docker = new Docker();
+  let imageCleanupResult;
+
+  try {
+    imageCleanupResult = await cleanupDockerImages(docker);
+    logger.info(
+      `Image cleanup completed: ${imageCleanupResult.danglingImagesRemoved} dangling, ${imageCleanupResult.oldImagesRemoved} old images removed`,
+    );
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to cleanup Docker images');
+    imageCleanupResult = {
+      danglingImagesRemoved: 0,
+      oldImagesRemoved: 0,
+      bytesFreed: 0,
+      errors: [error instanceof Error ? error.message : String(error)],
     };
-  },
-  { connection: redisConnection },
-);
+  }
+
+  return {
+    deletedCount: servicesToDelete.length,
+    imageCleanup: imageCleanupResult,
+  };
+};
+
+// Worker to process cleanup jobs
+export const cleanupWorker = new Worker('service-cleanup', cleanupProcessor, {
+  connection: redisConnection,
+});
 
 // Schedule the cleanup job to run daily at 2 AM
 export async function scheduleCleanupJob() {

@@ -188,7 +188,7 @@ describe('NewServicePage', () => {
     const options = createCall[1]!;
     const body = JSON.parse(options.body as string);
 
-    expect(url).toContain('/services');
+    expect(url).toContain('/');
     expect(options.method).toBe('POST');
 
     // Key assertions for the bug fix

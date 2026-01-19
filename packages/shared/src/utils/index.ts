@@ -10,14 +10,14 @@ export {
   redlock,
   releaseStatusLock,
   withStatusLock,
-} from './statusLock';
+} from './statusLock.js';
 
 // Log utilities
-export { logger, loggerOptions, type Logger } from './logger';
-export { createScrubber } from './logs';
+export { logger, loggerOptions, type Logger } from './logger.js';
+export { createScrubber } from './logs.js';
 
 // Config parser utilities
-export { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser';
+export { parseFloatEnv, parseIntEnv, parseStringEnv } from './configParser.js';
 
 // Constants
 export {
@@ -30,4 +30,4 @@ export {
   PLATFORM_DOMAIN,
   PLATFORM_DOMAIN_REGEX,
   STATUS_LOCK_TTL_MS,
-} from './constants';
+} from './constants.js';

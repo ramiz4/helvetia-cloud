@@ -1,8 +1,16 @@
 import { logger } from 'shared';
-import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
-import { DockerfileBuilder } from '../utils/builders';
-import { ensureImageExists, ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
-import { getSecureBindMounts } from '../utils/workspace';
+import type {
+  DeploymentContext,
+  DeploymentResult,
+  IDeploymentStrategy,
+} from '../interfaces/index.js';
+import { DockerfileBuilder } from '../utils/builders/index.js';
+import {
+  ensureImageExists,
+  ensureNetworkExists,
+  getNetworkName,
+} from '../utils/containerHelpers.js';
+import { getSecureBindMounts } from '../utils/workspace.js';
 
 /**
  * Strategy for deploying standard Docker services
@@ -60,7 +68,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
         await new Promise<void>((resolve, reject) => {
           docker.modem.followProgress(
             stream,
-            (err, _res) => {
+            (err: Error | null, _res: unknown) => {
               if (err) {
                 if (err.toString().includes('403')) {
                   context.onLog?.(`\n❌ GHCR access denied (403). Common fixes:\n`);
@@ -79,7 +87,7 @@ export class DockerDeploymentStrategy implements IDeploymentStrategy {
                 resolve();
               }
             },
-            (event) => {
+            (event: { status?: string; progress?: string; id?: string }) => {
               const status = event.status || '';
               const progress = event.progress || '';
               const id = event.id ? `[${event.id}] ` : '';

@@ -38,6 +38,9 @@ vi.mock('ioredis', () => {
     quit: vi.fn(),
   };
   return {
+    Redis: vi.fn(function () {
+      return mockRedis;
+    }),
     default: vi.fn(function () {
       return mockRedis;
     }),
@@ -98,7 +101,7 @@ describe('Service Cleanup Worker', () => {
 
   it('should permanently delete services older than 30 days', async () => {
     // Import after mocks are set up
-    const { cleanupWorker } = await import('./cleanup');
+    const { cleanupProcessor } = await import('./cleanup.js');
 
     const thirtyOneDaysAgo = new Date();
     thirtyOneDaysAgo.setDate(thirtyOneDaysAgo.getDate() - 31);
@@ -128,7 +131,7 @@ describe('Service Cleanup Worker', () => {
     ]);
 
     // Execute the worker processor
-    const result = await cleanupWorker.processor({
+    const result = await cleanupProcessor({
       id: 'job-1',
       name: 'daily-cleanup',
       data: {},
@@ -164,12 +167,12 @@ describe('Service Cleanup Worker', () => {
   });
 
   it('should not delete services deleted less than 30 days ago', async () => {
-    const { cleanupWorker } = await import('./cleanup');
+    const { cleanupProcessor } = await import('./cleanup.js');
 
     // Return empty array - no services older than 30 days
     mockPrisma.service.findMany.mockResolvedValue([]);
 
-    const result = await cleanupWorker.processor({
+    const result = await cleanupProcessor({
       id: 'job-2',
       name: 'daily-cleanup',
       data: {},
@@ -182,7 +185,7 @@ describe('Service Cleanup Worker', () => {
   });
 
   it('should handle cleanup errors gracefully', async () => {
-    const { cleanupWorker } = await import('./cleanup');
+    const { cleanupProcessor } = await import('./cleanup.js');
 
     const serviceWithError = {
       id: 'error-service-id',
@@ -197,7 +200,7 @@ describe('Service Cleanup Worker', () => {
     mockPrisma.deployment.findMany.mockRejectedValue(new Error('Database error'));
 
     // Should not throw, but log the error
-    const result = await cleanupWorker.processor({
+    const result = await cleanupProcessor({
       id: 'job-3',
       name: 'daily-cleanup',
       data: {},
@@ -208,7 +211,7 @@ describe('Service Cleanup Worker', () => {
   });
 
   it('should clean up COMPOSE service volumes', async () => {
-    const { cleanupWorker } = await import('./cleanup');
+    const { cleanupProcessor } = await import('./cleanup.js');
 
     const composeService = {
       id: 'compose-service-id',
@@ -234,7 +237,7 @@ describe('Service Cleanup Worker', () => {
       ],
     });
 
-    await cleanupWorker.processor({
+    await cleanupProcessor({
       id: 'job-4',
       name: 'daily-cleanup',
       data: {},
@@ -247,7 +250,7 @@ describe('Service Cleanup Worker', () => {
   });
 
   it('should schedule cleanup job with correct cron pattern', async () => {
-    const { scheduleCleanupJob, cleanupQueue } = await import('./cleanup');
+    const { scheduleCleanupJob, cleanupQueue } = await import('./cleanup.js');
 
     await scheduleCleanupJob();
 
@@ -263,12 +266,12 @@ describe('Service Cleanup Worker', () => {
   });
 
   it('should cleanup Docker images during scheduled job', async () => {
-    const { cleanupWorker } = await import('./cleanup');
-    const { cleanupDockerImages } = await import('./services/imageCleanup');
+    const { cleanupProcessor } = await import('./cleanup.js');
+    const { cleanupDockerImages } = await import('./services/imageCleanup.js');
 
     mockPrisma.service.findMany.mockResolvedValue([]);
 
-    const result = await cleanupWorker.processor({
+    const result = await cleanupProcessor({
       id: 'job-5',
       name: 'daily-cleanup',
       data: {},
@@ -282,13 +285,13 @@ describe('Service Cleanup Worker', () => {
   });
 
   it('should handle image cleanup errors gracefully', async () => {
-    const { cleanupWorker } = await import('./cleanup');
-    const { cleanupDockerImages } = await import('./services/imageCleanup');
+    const { cleanupProcessor } = await import('./cleanup.js');
+    const { cleanupDockerImages } = await import('./services/imageCleanup.js');
 
     mockPrisma.service.findMany.mockResolvedValue([]);
     (cleanupDockerImages as any).mockRejectedValueOnce(new Error('Docker daemon error'));
 
-    const result = await cleanupWorker.processor({
+    const result = await cleanupProcessor({
       id: 'job-6',
       name: 'daily-cleanup',
       data: {},

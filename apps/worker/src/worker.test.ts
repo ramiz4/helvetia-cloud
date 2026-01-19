@@ -10,6 +10,9 @@ vi.mock('ioredis', () => {
     publish: vi.fn(),
   };
   return {
+    Redis: vi.fn(function () {
+      return mockRedis;
+    }),
     default: vi.fn(function () {
       return mockRedis;
     }),
@@ -51,8 +54,8 @@ vi.mock('dockerode', () => {
   };
 });
 
-import { getSecureBindMounts } from './utils/workspace';
-import { worker } from './worker';
+import { getSecureBindMounts } from './utils/workspace.js';
+import { worker } from './worker.js';
 
 describe('Worker', () => {
   it('should be defined', () => {
@@ -67,7 +70,7 @@ describe('Worker', () => {
 
       // Check that dangerous mounts are not present
       const dangerousPaths = ['/Users', '/home', '/root', '/etc', '/workspaces'];
-      const hasDangerousMount = mounts.some((mount) => {
+      const hasDangerousMount = mounts.some((mount: string) => {
         const hostPath = mount.split(':')[0];
         return dangerousPaths.some(
           (dangerous) => hostPath === dangerous || hostPath.startsWith(dangerous + '/'),

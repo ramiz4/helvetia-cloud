@@ -2,7 +2,7 @@ import Docker from 'dockerode';
 import 'reflect-metadata';
 import { DockerContainerOrchestrator, logger } from 'shared';
 import { container } from 'tsyringe';
-import { TOKENS } from './tokens';
+import { TOKENS } from './tokens.js';
 
 /**
  * DI Container configuration for worker

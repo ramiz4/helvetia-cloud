@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL, fetchWithAuth } from 'shared-ui';
+import { getUserFriendlyErrorMessage, isApiError } from '../../../utils/apiErrors';
 
 function GitHubLinkCallbackContent() {
   const router = useRouter();
@@ -42,7 +43,10 @@ function GitHubLinkCallbackContent() {
           setTimeout(() => router.push('/settings'), 1500);
         } else {
           const errorData = await response.json();
-          toast.error(errorData.error || 'Failed to link GitHub account');
+          const errorMessage = isApiError(errorData)
+            ? getUserFriendlyErrorMessage(errorData)
+            : errorData.error || 'Failed to link GitHub account';
+          toast.error(errorMessage);
           setStatus('error');
           setTimeout(() => router.push('/settings'), 2000);
         }

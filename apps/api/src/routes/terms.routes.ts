@@ -283,6 +283,7 @@ export const termsRoutes: FastifyPluginAsync = async (fastify) => {
                     properties: {
                       id: { type: 'string', format: 'uuid' },
                       version: { type: 'string' },
+                      content: { type: 'string' },
                       effectiveAt: { type: 'string', format: 'date-time' },
                     },
                   },

@@ -4,7 +4,7 @@ import {
   ContainerStatus,
   CreateContainerOptions,
   IContainerOrchestrator,
-} from './IContainerOrchestrator';
+} from './IContainerOrchestrator.js';
 
 /**
  * Docker implementation of the IContainerOrchestrator interface.

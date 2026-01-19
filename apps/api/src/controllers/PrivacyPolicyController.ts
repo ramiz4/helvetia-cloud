@@ -215,6 +215,7 @@ export class PrivacyPolicyController {
             ? {
                 id: latestPolicy.id,
                 version: latestPolicy.version,
+                content: latestPolicy.content,
                 effectiveAt: latestPolicy.effectiveAt,
               }
             : null,

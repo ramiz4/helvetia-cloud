@@ -1,2 +1,2 @@
-export { ComposeFileBuilder } from './ComposeFileBuilder';
-export { DockerfileBuilder } from './DockerfileBuilder';
+export { ComposeFileBuilder } from './ComposeFileBuilder.js';
+export { DockerfileBuilder } from './DockerfileBuilder.js';

@@ -1,8 +1,16 @@
 import { PLATFORM_DOMAIN, logger } from 'shared';
-import type { DeploymentContext, DeploymentResult, IDeploymentStrategy } from '../interfaces';
-import { ComposeFileBuilder } from '../utils/builders';
-import { ensureImageExists, ensureNetworkExists, getNetworkName } from '../utils/containerHelpers';
-import { getSecureBindMounts } from '../utils/workspace';
+import type {
+  DeploymentContext,
+  DeploymentResult,
+  IDeploymentStrategy,
+} from '../interfaces/index.js';
+import { ComposeFileBuilder } from '../utils/builders/index.js';
+import {
+  ensureImageExists,
+  ensureNetworkExists,
+  getNetworkName,
+} from '../utils/containerHelpers.js';
+import { getSecureBindMounts } from '../utils/workspace.js';
 
 /**
  * Strategy for deploying Docker Compose projects

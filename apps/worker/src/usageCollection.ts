@@ -1,13 +1,18 @@
 import { Queue, Worker } from 'bullmq';
 import { prisma } from 'database';
 import Docker from 'dockerode';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import path from 'path';
 import { logger } from 'shared';
-import { UsageCollectionService } from './services/usageCollection.service';
+import { UsageCollectionService } from './services/usageCollection.service.js';
 
 // Load environment variables
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 // Configuration
@@ -25,7 +30,7 @@ const STRIPE_ENABLED =
   !!process.env.STRIPE_PRICE_ID_STORAGE_GB;
 
 // Redis connection
-const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const redisConnection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
 

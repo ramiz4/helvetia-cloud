@@ -2,12 +2,16 @@ import { TermsVersion, UserTermsAcceptance } from 'database';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { inject, injectable } from 'tsyringe';
+import { fileURLToPath } from 'url';
 import {
   AcceptTermsData,
   CreateTermsVersionData,
   ITermsRepository,
   UserTermsAcceptanceWithVersion,
 } from '../interfaces/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Service for managing Terms of Service

@@ -41,6 +41,27 @@ export function PrivacyPolicyAcceptanceModal({
     }
   };
 
+  useEffect(() => {
+    // Check initial scroll position and on content change
+    const checkScroll = () => {
+      if (!contentRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      if (isAtBottom) {
+        setHasScrolledToBottom(true);
+      }
+    };
+
+    // Use a small timeout to let the DOM settle
+    const timer = setTimeout(checkScroll, 100);
+    window.addEventListener('resize', checkScroll);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [policy.content]);
+
   const handleAccept = async () => {
     setIsAccepting(true);
     try {

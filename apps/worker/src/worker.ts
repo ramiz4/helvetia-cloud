@@ -1,23 +1,26 @@
 import { Job, Worker } from 'bullmq';
 import { prisma } from 'database';
 import Docker from 'dockerode';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import { createScrubber, logger } from 'shared';
-import { MAX_LOG_SIZE_CHARS } from './config/constants';
-import type { DeploymentContext } from './interfaces';
-import { workerMetricsService } from './services/metrics.service';
-import { DeploymentStrategyFactory } from './strategies';
+import { MAX_LOG_SIZE_CHARS } from './config/constants.js';
+import type { DeploymentContext } from './interfaces/index.js';
+import { workerMetricsService } from './services/metrics.service.js';
+import { DeploymentStrategyFactory } from './strategies/index.js';
 import {
   cleanupOldContainers,
   publishLogs,
   rollbackContainers,
   startContainer,
   updateDeploymentStatus,
-} from './utils/containerHelpers';
-import { formatValidationErrors, validateGeneratedDockerfile } from './utils/dockerfile-validator';
+} from './utils/containerHelpers.js';
+import {
+  formatValidationErrors,
+  validateGeneratedDockerfile,
+} from './utils/dockerfile-validator.js';
 
 const docker = new Docker();
-const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+const redisConnection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
 

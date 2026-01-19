@@ -1,4 +1,4 @@
-import { Service } from '@/types/service';
+import { Service, ServiceStatus } from '@/types/service';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

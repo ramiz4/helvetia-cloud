@@ -4,6 +4,7 @@ import { PrivacyPolicyAcceptanceModal } from '@/components/PrivacyPolicyAcceptan
 import { TermsAcceptanceModal } from '@/components/TermsAcceptanceModal';
 import { usePrivacyAcceptance } from '@/hooks/usePrivacyAcceptance';
 import { useTermsAcceptance } from '@/hooks/useTermsAcceptance';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface TermsAcceptanceWrapperProps {
@@ -11,51 +12,58 @@ interface TermsAcceptanceWrapperProps {
 }
 
 export function TermsAcceptanceWrapper({ children }: TermsAcceptanceWrapperProps) {
+  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-  // Check authentication on mount
+  // Check authentication on mount and route changes
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    setIsAuthenticated(!!user);
-  }, []);
+    const checkAuth = () => {
+      const user = localStorage.getItem('user');
+      setIsAuthenticated(!!user);
+    };
+
+    checkAuth();
+
+    // Re-check on storage changes (like logging out/in from another tab)
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, [pathname]);
 
   // Fetch terms acceptance status
-  const {
-    data: termsStatus,
-    isLoading: isTermsLoading,
-    isError: isTermsError,
-  } = useTermsAcceptance(isAuthenticated === true);
+  const { data: termsStatus } = useTermsAcceptance(isAuthenticated === true);
 
   // Fetch privacy acceptance status
-  const {
-    data: privacyStatus,
-    isLoading: isPrivacyLoading,
-    isError: isPrivacyError,
-  } = usePrivacyAcceptance(isAuthenticated === true);
+  const { data: privacyStatus } = usePrivacyAcceptance(isAuthenticated === true);
 
-  // Manage modals
+  // Manage modals reactively during render for better responsiveness
+  const currentRequiresTerms = !!(
+    isAuthenticated &&
+    termsStatus?.requiresAcceptance &&
+    termsStatus?.latestTerms
+  );
+  const currentRequiresPrivacy = !!(
+    isAuthenticated &&
+    !currentRequiresTerms &&
+    privacyStatus?.requiresAcceptance &&
+    privacyStatus?.latestPolicy
+  );
+
+  // Still use useEffect for side effects if needed, but the render logic is now primary
   useEffect(() => {
-    if (!isAuthenticated) return;
-
-    // Terms take precedence
-    if (termsStatus?.requiresAcceptance && termsStatus?.latestTerms) {
-      setShowTermsModal(true);
-      setShowPrivacyModal(false);
-    } else if (privacyStatus?.requiresAcceptance && privacyStatus?.latestPolicy) {
-      // Only show privacy if terms are accepted (or don't need acceptance)
-      setShowTermsModal(false);
-      setShowPrivacyModal(true);
-    } else {
+    if (!isAuthenticated) {
       setShowTermsModal(false);
       setShowPrivacyModal(false);
+      return;
     }
-  }, [termsStatus, privacyStatus, isAuthenticated]);
+
+    setShowTermsModal(currentRequiresTerms);
+    setShowPrivacyModal(currentRequiresPrivacy);
+  }, [isAuthenticated, currentRequiresTerms, currentRequiresPrivacy]);
 
   const handleTermsAccept = () => {
     setShowTermsModal(false);
-    // The effect will run again and show privacy modal if needed
   };
 
   const handlePrivacyAccept = () => {
@@ -71,11 +79,6 @@ export function TermsAcceptanceWrapper({ children }: TermsAcceptanceWrapperProps
     setShowPrivacyModal(false);
     window.location.href = '/login';
   };
-
-  // Don't render anything while loading or if not authenticated (initial check)
-  if (isTermsLoading || isPrivacyLoading || isTermsError || isPrivacyError || !isAuthenticated) {
-    return <>{children}</>;
-  }
 
   return (
     <>

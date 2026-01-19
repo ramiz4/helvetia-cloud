@@ -209,6 +209,7 @@ export class TermsController {
             ? {
                 id: latestTerms.id,
                 version: latestTerms.version,
+                content: latestTerms.content,
                 effectiveAt: latestTerms.effectiveAt,
               }
             : null,

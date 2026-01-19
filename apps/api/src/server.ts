@@ -22,6 +22,7 @@ import { BODY_LIMIT_GLOBAL, LOG_REQUESTS, LOG_RESPONSES } from './config/constan
 import { initializeContainer, registerInstance } from './di/index.js';
 import { TOKENS } from './di/tokens.js';
 import { UnauthorizedError } from './errors/index.js';
+import { isPublicRoute } from './middleware/auth.middleware.js';
 import { metricsService } from './services/metrics.service.js';
 import { isOriginAllowed } from './utils/helpers/cors.helper.js';
 
@@ -203,44 +204,8 @@ export async function createServer() {
   app.addHook('onRequest', requestIdMiddleware);
 
   app.addHook('onRequest', async (request, _reply) => {
-    const publicRoutes = [
-      '/health',
-      '/metrics',
-      '/metrics/json',
-      '/webhooks/github',
-      '/auth/github',
-      '/auth/login',
-      '/auth/refresh',
-      '/auth/logout',
-      '/feature-flags/check',
-      '/feature-flags/check-bulk',
-      '/api/v1/docs',
-      '/api/v1/docs/json',
-      '/api/v1/docs/yaml',
-      '/terms/latest',
-      '/terms/version',
-      '/terms/versions',
-      '/privacy-policy/latest',
-      '/privacy-policy/version',
-      '/privacy-policy/versions',
-      '/webhooks/stripe',
-    ];
-
-    const fullUrl = request.url.split('?')[0];
-
-    if (publicRoutes.includes(fullUrl)) {
+    if (isPublicRoute(request.url)) {
       return;
-    }
-
-    if (fullUrl.startsWith('/api/v1/docs/') || fullUrl.startsWith('/api/v1/docs/static/')) {
-      return;
-    }
-
-    if (fullUrl.startsWith('/api/v1/')) {
-      const pathWithoutVersion = fullUrl.substring(7);
-      if (publicRoutes.includes(pathWithoutVersion)) {
-        return;
-      }
     }
 
     try {
