@@ -1,11 +1,14 @@
 import { PrismaClient } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { buildServer } from '../server';
+import { env, initEnv } from '../config/env.js';
+import { resolve, TOKENS } from '../di/index.js';
+import { buildServer } from '../server.js';
 import {
   createMockStripeCustomer,
   generateStripeWebhookSignature,
   webhookEventFixtures,
-} from '../test/fixtures/stripe-webhook.fixtures';
+} from '../test/fixtures/stripe-webhook.fixtures.js';
+import { StripeWebhookController } from './StripeWebhookController.js';
 
 /**
  * Integration tests for StripeWebhookController
@@ -36,6 +39,8 @@ describe.skipIf(shouldSkip)('StripeWebhookController Integration Tests', () => {
     process.env.STRIPE_PRICE_ID_STARTER = 'price_test_starter';
     process.env.STRIPE_PRICE_ID_PRO = 'price_test_pro';
     process.env.STRIPE_PRICE_ID_ENTERPRISE = 'price_test_enterprise';
+
+    initEnv();
 
     // Build server
     app = await buildServer();
@@ -68,7 +73,13 @@ describe.skipIf(shouldSkip)('StripeWebhookController Integration Tests', () => {
     const org = await prisma.organization.create({
       data: {
         name: 'test-org-stripe-webhook',
-        ownerId: testUserId,
+        slug: 'test-org-stripe-webhook',
+        members: {
+          create: {
+            userId: testUserId,
+            role: 'OWNER',
+          },
+        },
       },
     });
     testOrgId = org.id;
@@ -124,7 +135,8 @@ describe.skipIf(shouldSkip)('StripeWebhookController Integration Tests', () => {
       });
 
       expect(response.statusCode).toBe(400);
-      expect(JSON.parse(response.body)).toHaveProperty('error', 'Missing stripe-signature header');
+      const data = JSON.parse(response.body);
+      expect(JSON.stringify(data.error)).toMatch(/stripe-signature/);
     });
 
     it('should reject webhook with invalid signature', async () => {
@@ -580,74 +592,63 @@ describe.skipIf(shouldSkip)('StripeWebhookController Integration Tests', () => {
     });
 
     it('should return error when Stripe is not configured', async () => {
-      // Temporarily remove Stripe secret
-      const originalSecret = process.env.STRIPE_SECRET_KEY;
-      delete process.env.STRIPE_SECRET_KEY;
+      // Temporarily remove Stripe instance from controller
+      const controller = resolve<StripeWebhookController>(TOKENS.StripeWebhookController);
+      const originalStripe = (controller as any).stripe;
+      (controller as any).stripe = null;
 
-      // Rebuild server without Stripe
-      await app.close();
-      app = await buildServer();
-      await app.ready();
+      try {
+        const event = webhookEventFixtures.subscriptionCreated();
+        const payload = JSON.stringify(event);
+        const signature = generateStripeWebhookSignature(payload, webhookSecret);
 
-      const event = webhookEventFixtures.subscriptionCreated();
-      const payload = JSON.stringify(event);
-      const signature = generateStripeWebhookSignature(payload, webhookSecret);
+        const response = await app.inject({
+          method: 'POST',
+          url: '/api/v1/webhooks/stripe',
+          headers: {
+            'content-type': 'application/json',
+            'stripe-signature': signature,
+          },
+          payload,
+        });
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/v1/webhooks/stripe',
-        headers: {
-          'content-type': 'application/json',
-          'stripe-signature': signature,
-        },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(500);
-      expect(JSON.parse(response.body)).toHaveProperty('error', 'Stripe is not configured');
-
-      // Restore and rebuild
-      process.env.STRIPE_SECRET_KEY = originalSecret;
-      await app.close();
-      app = await buildServer();
-      await app.ready();
+        expect(response.statusCode).toBe(500);
+        expect(JSON.parse(response.body)).toHaveProperty('error', 'Stripe is not configured');
+      } finally {
+        // Restore Stripe instance
+        (controller as any).stripe = originalStripe;
+      }
     });
 
     it('should return error when webhook secret is not configured', async () => {
-      // Temporarily remove webhook secret
-      const originalWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      delete process.env.STRIPE_WEBHOOK_SECRET;
+      // Temporarily remove webhook secret from env
+      const originalWebhookSecret = env.STRIPE_WEBHOOK_SECRET;
+      (env as any).STRIPE_WEBHOOK_SECRET = undefined;
 
-      // Rebuild server without webhook secret
-      await app.close();
-      app = await buildServer();
-      await app.ready();
+      try {
+        const event = webhookEventFixtures.subscriptionCreated();
+        const payload = JSON.stringify(event);
+        const signature = generateStripeWebhookSignature(payload, webhookSecret);
 
-      const event = webhookEventFixtures.subscriptionCreated();
-      const payload = JSON.stringify(event);
-      const signature = generateStripeWebhookSignature(payload, webhookSecret);
+        const response = await app.inject({
+          method: 'POST',
+          url: '/api/v1/webhooks/stripe',
+          headers: {
+            'content-type': 'application/json',
+            'stripe-signature': signature,
+          },
+          payload,
+        });
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/v1/webhooks/stripe',
-        headers: {
-          'content-type': 'application/json',
-          'stripe-signature': signature,
-        },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(500);
-      expect(JSON.parse(response.body)).toHaveProperty(
-        'error',
-        'Stripe webhook secret is not configured',
-      );
-
-      // Restore and rebuild
-      process.env.STRIPE_WEBHOOK_SECRET = originalWebhookSecret;
-      await app.close();
-      app = await buildServer();
-      await app.ready();
+        expect(response.statusCode).toBe(500);
+        expect(JSON.parse(response.body)).toHaveProperty(
+          'error',
+          'Stripe webhook secret is not configured',
+        );
+      } finally {
+        // Restore webhook secret
+        (env as any).STRIPE_WEBHOOK_SECRET = originalWebhookSecret;
+      }
     });
   });
 

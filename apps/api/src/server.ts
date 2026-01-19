@@ -1,10 +1,10 @@
-import { initEnv } from './config/env';
-import './load-env';
+import { initEnv } from './config/env.js';
+import './load-env.js';
 
 // Initialize environment variables
 initEnv();
 
-import './types/fastify';
+import './types/fastify.js';
 
 import fastifyCookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -18,18 +18,12 @@ import crypto from 'crypto';
 import Fastify from 'fastify';
 import IORedis from 'ioredis';
 import { logger, loggerOptions } from 'shared';
-import {
-  BODY_LIMIT_GLOBAL,
-  BODY_LIMIT_SMALL,
-  BODY_LIMIT_STANDARD,
-  LOG_REQUESTS,
-  LOG_RESPONSES,
-} from './config/constants';
-import { initializeContainer, registerInstance } from './di';
-import { TOKENS } from './di/tokens';
-import { UnauthorizedError } from './errors';
-import { metricsService } from './services/metrics.service';
-import { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper';
+import { BODY_LIMIT_GLOBAL, LOG_REQUESTS, LOG_RESPONSES } from './config/constants.js';
+import { initializeContainer, registerInstance } from './di/index.js';
+import { TOKENS } from './di/tokens.js';
+import { UnauthorizedError } from './errors/index.js';
+import { metricsService } from './services/metrics.service.js';
+import { isOriginAllowed } from './utils/helpers/cors.helper.js';
 
 const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST;
 
@@ -73,244 +67,226 @@ registerInstance(TOKENS.DeploymentQueue, deploymentQueue);
  * - Request ID generation for tracing
  * - AJV schema validator with OpenAPI keywords support
  */
-export const fastify = Fastify({
-  logger: isTestEnv ? false : loggerOptions,
-  bodyLimit: BODY_LIMIT_GLOBAL,
-  // Generate unique request IDs for correlation
-  genReqId: (req) => {
-    // Use existing request ID header if provided, otherwise generate new one
-    return (req.headers['x-request-id'] as string) || crypto.randomUUID();
-  },
-  // Disable automatic request logging (we'll do it manually for more control)
-  disableRequestLogging: !LOG_REQUESTS && !LOG_RESPONSES,
-  // Configure AJV to allow OpenAPI keywords like 'example'
-  ajv: {
-    customOptions: {
-      strict: false, // Disable strict mode to allow OpenAPI keywords
-      keywords: ['example'], // Explicitly allow 'example' keyword
-    },
-  },
-  // Disable schema-based response serialization to allow all response properties
-  // This ensures responses are not stripped based on OpenAPI schemas
-  schemaController: {
-    compilersFactory: {
-      buildSerializer: () => () => JSON.stringify,
-    },
-  },
-});
-
-// Store redis connection on fastify instance for route access
-fastify.redis = redisConnection;
-
-// Export CORS helper functions and body limits for testing
-export {
-  BODY_LIMIT_GLOBAL,
-  BODY_LIMIT_SMALL,
-  BODY_LIMIT_STANDARD,
-  getAllowedOrigins,
-  getSafeOrigin,
-  isOriginAllowed,
-};
-
-// Register plugins
-if (LOG_REQUESTS || LOG_RESPONSES) {
-  fastify.addHook('onResponse', async (request, reply) => {
-    const responseTime = reply.elapsedTime.toFixed(2);
-    const level = reply.statusCode >= 500 ? 'error' : reply.statusCode >= 400 ? 'warn' : 'info';
-
-    request.log[level](
-      {
-        reqId: request.id,
-        method: request.method,
-        url: request.url,
-        statusCode: reply.statusCode,
-        responseTime: `${responseTime}ms`,
-        userId: request.user?.id,
-      },
-      `Request completed: ${request.method} ${request.url} - ${reply.statusCode} (${responseTime}ms)`,
-    );
-  });
-}
-
 /**
- * Metrics Collection Hook
- *
- * Collects metrics for all HTTP requests:
- * - Request count by method, route, and status code
- * - Request duration histogram
- * - Requests in progress gauge
- *
- * This hook tracks requests in flight and records timing after completion.
+ * Create and configure a Fastify server instance
  */
-fastify.addHook('onRequest', async (request, _reply) => {
-  // Track in-progress requests
-  const route = request.routeOptions?.url || request.url;
-  request.metricsEndTimer = metricsService.startHttpRequest(request.method, route);
-});
+export async function createServer() {
+  const app = Fastify({
+    logger: isTestEnv ? false : loggerOptions,
+    bodyLimit: BODY_LIMIT_GLOBAL,
+    genReqId: (req) => {
+      return (req.headers['x-request-id'] as string) || crypto.randomUUID();
+    },
+    disableRequestLogging: !LOG_REQUESTS && !LOG_RESPONSES,
+    ajv: {
+      customOptions: {
+        strict: false,
+        keywords: ['example'],
+      },
+    },
+    schemaController: {
+      compilersFactory: {
+        buildSerializer: () => () => JSON.stringify,
+      },
+    },
+  });
 
-fastify.addHook('onResponse', async (request, reply) => {
-  // Record completed request metrics
-  const route = request.routeOptions?.url || request.url;
-  const endTimer = request.metricsEndTimer;
+  // Store redis connection on fastify instance for route access
+  app.redis = redisConnection;
 
-  if (endTimer) {
-    const duration = endTimer();
-    metricsService.recordHttpRequest(request.method, route, reply.statusCode, duration);
+  // Register plugins
+  if (LOG_REQUESTS || LOG_RESPONSES) {
+    app.addHook('onResponse', async (request, reply) => {
+      const responseTime = reply.elapsedTime.toFixed(2);
+      const level = reply.statusCode >= 500 ? 'error' : reply.statusCode >= 400 ? 'warn' : 'info';
+
+      request.log[level](
+        {
+          reqId: request.id,
+          method: request.method,
+          url: request.url,
+          statusCode: reply.statusCode,
+          responseTime: `${responseTime}ms`,
+          userId: request.user?.id,
+        },
+        `Request completed: ${request.method} ${request.url} - ${reply.statusCode} (${responseTime}ms)`,
+      );
+    });
   }
-});
 
-fastify.register(cors, {
-  origin: (origin, cb) => {
-    // Allow requests with no origin (like curl, Postman, or same-origin requests)
-    if (!origin) {
-      cb(null, true);
+  app.addHook('onRequest', async (request, _reply) => {
+    const route = request.routeOptions?.url || request.url;
+    request.metricsEndTimer = metricsService.startHttpRequest(request.method, route);
+  });
+
+  app.addHook('onResponse', async (request, reply) => {
+    const route = request.routeOptions?.url || request.url;
+    const endTimer = request.metricsEndTimer;
+
+    if (endTimer) {
+      const duration = endTimer();
+      metricsService.recordHttpRequest(request.method, route, reply.statusCode, duration);
+    }
+  });
+
+  app.register(cors, {
+    origin: (origin, cb) => {
+      if (!origin) {
+        cb(null, true);
+        return;
+      }
+
+      if (isOriginAllowed(origin)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Not allowed by CORS'), false);
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
+
+  app.register(fastifyCookie);
+  app.register(fastifyJwt, {
+    secret: process.env.JWT_SECRET || 'supersecret',
+    cookie: {
+      cookieName: 'token',
+      signed: false,
+    },
+    sign: {
+      expiresIn: '15m',
+    },
+  });
+
+  app.register(rateLimit, {
+    max: isTestEnv ? 10000 : parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
+    redis: redisConnection,
+    nameSpace: 'helvetia-rate-limit:',
+    skipOnError: true,
+    allowList: ['/health'],
+    keyGenerator: (request) => {
+      return request.ip;
+    },
+    errorResponseBuilder: (_request, context) => {
+      return {
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: `Rate limit exceeded, retry in ${Math.ceil(context.ttl / 1000)} seconds`,
+      };
+    },
+    addHeadersOnExceeding: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true,
+    },
+    addHeaders: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true,
+    },
+  });
+
+  if (!isTestEnv) {
+    import('./config/swagger.js')
+      .then(({ swaggerConfig, swaggerUiConfig }) => {
+        app.register(fastifySwagger, swaggerConfig);
+        app.register(fastifySwaggerUi, swaggerUiConfig);
+      })
+      .catch((error) => {
+        logger.error({ err: error }, 'Failed to register Swagger plugins');
+      });
+  }
+
+  const { errorHandler } = await import('./middleware/error.middleware.js');
+  app.setErrorHandler(errorHandler);
+
+  const { requestIdMiddleware } = await import('./middleware/request-id.middleware.js');
+  app.addHook('onRequest', requestIdMiddleware);
+
+  app.addHook('onRequest', async (request, _reply) => {
+    const publicRoutes = [
+      '/health',
+      '/metrics',
+      '/metrics/json',
+      '/webhooks/github',
+      '/auth/github',
+      '/auth/login',
+      '/auth/refresh',
+      '/auth/logout',
+      '/feature-flags/check',
+      '/feature-flags/check-bulk',
+      '/api/v1/docs',
+      '/api/v1/docs/json',
+      '/api/v1/docs/yaml',
+      '/terms/latest',
+      '/terms/version',
+      '/terms/versions',
+      '/privacy-policy/latest',
+      '/privacy-policy/version',
+      '/privacy-policy/versions',
+      '/webhooks/stripe',
+    ];
+
+    const fullUrl = request.url.split('?')[0];
+
+    if (publicRoutes.includes(fullUrl)) {
       return;
     }
 
-    // Check if origin is in the allowed list
-    if (isOriginAllowed(origin)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Not allowed by CORS'), false);
+    if (fullUrl.startsWith('/api/v1/docs/') || fullUrl.startsWith('/api/v1/docs/static/')) {
+      return;
     }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-});
 
-fastify.register(fastifyCookie);
-fastify.register(fastifyJwt, {
-  secret: process.env.JWT_SECRET || 'supersecret',
-  cookie: {
-    cookieName: 'token',
-    signed: false,
-  },
-  sign: {
-    expiresIn: '15m', // Short-lived access token (15 minutes)
-  },
-});
+    if (fullUrl.startsWith('/api/v1/')) {
+      const pathWithoutVersion = fullUrl.substring(7);
+      if (publicRoutes.includes(pathWithoutVersion)) {
+        return;
+      }
+    }
 
-// Global rate limiting
-fastify.register(rateLimit, {
-  max: isTestEnv ? 10000 : parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
-  timeWindow: process.env.RATE_LIMIT_WINDOW || '1 minute',
-  redis: redisConnection,
-  nameSpace: 'helvetia-rate-limit:',
-  skipOnError: true, // Don't block requests if Redis is down
-  allowList: ['/health'], // Exclude health endpoint
-  keyGenerator: (request) => {
-    // Global limiter is intentionally IP-based because authentication runs later
-    return request.ip;
-  },
-  errorResponseBuilder: (_request, context) => {
-    return {
-      statusCode: 429,
-      error: 'Too Many Requests',
-      message: `Rate limit exceeded, retry in ${Math.ceil(context.ttl / 1000)} seconds`,
-    };
-  },
-  addHeadersOnExceeding: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-  addHeaders: {
-    'x-ratelimit-limit': true,
-    'x-ratelimit-remaining': true,
-    'x-ratelimit-reset': true,
-  },
-});
+    try {
+      await request.jwtVerify();
+    } catch {
+      throw new UnauthorizedError('Authentication required');
+    }
+  });
 
-// Create rate limit configs
-// const { authRateLimitConfig } = createRateLimitConfigs(redisConnection);
+  app.get('/health', async () => {
+    return { status: 'ok' };
+  });
 
-// Register Swagger/OpenAPI documentation (only in non-test environments)
-if (!isTestEnv) {
-  import('./config/swagger.js')
-    .then(({ swaggerConfig, swaggerUiConfig }) => {
-      fastify.register(fastifySwagger, swaggerConfig);
-      fastify.register(fastifySwaggerUi, swaggerUiConfig);
-    })
-    .catch((error) => {
-      logger.error({ err: error }, 'Failed to register Swagger plugins');
-    });
+  const { metricsRoutes } = await import('./routes/metrics.routes.js');
+  app.register(metricsRoutes);
+
+  const { v1Routes } = await import('./routes/v1/index.js');
+  app.register(v1Routes, { prefix: '/api/v1' });
+
+  return app;
 }
 
-// Register global error handler
-import { errorHandler } from './middleware/error.middleware';
-fastify.setErrorHandler(errorHandler);
+// In test environment, buildServer always creates a fresh instance.
+// In other environments, it returns a singleton instance.
+let fastifyInstance: Awaited<ReturnType<typeof createServer>> | null = null;
 
-// Register request ID middleware to add X-Request-Id header to all responses
-import { requestIdMiddleware } from './middleware/request-id.middleware';
-fastify.addHook('onRequest', requestIdMiddleware);
-
-// Auth hook
-fastify.addHook('onRequest', async (request, _reply) => {
-  // Public routes that don't require authentication (without version prefix)
-  const publicRoutes = [
-    '/health',
-    '/metrics',
-    '/metrics/json',
-    '/webhooks/github',
-    '/auth/github',
-    '/auth/login',
-    '/auth/refresh',
-    '/auth/logout',
-    '/feature-flags/check',
-    '/feature-flags/check-bulk',
-    '/api/v1/docs',
-    '/api/v1/docs/json',
-    '/api/v1/docs/yaml',
-    '/terms/latest',
-    '/terms/version',
-    '/terms/versions',
-    '/privacy-policy/latest',
-    '/privacy-policy/version',
-    '/privacy-policy/versions',
-  ];
-
-  // Get the URL without query parameters
-  const fullUrl = request.url.split('?')[0];
-
-  // Check if it's a public route (unversioned)
-  if (publicRoutes.includes(fullUrl)) {
-    return;
-  }
-
-  // Allow swagger-ui static assets
-  if (fullUrl.startsWith('/api/v1/docs/') || fullUrl.startsWith('/api/v1/docs/static/')) {
-    return;
-  }
-
-  // Check if it's a versioned public route (e.g., /api/v1/auth/refresh)
-  // We need to check if the URL starts with /api/v1 and then matches a public route
-  if (fullUrl.startsWith('/api/v1/')) {
-    const pathWithoutVersion = fullUrl.substring(7); // Remove '/api/v1' prefix
-    if (publicRoutes.includes(pathWithoutVersion)) {
-      return;
-    }
-  }
-
-  try {
-    await request.jwtVerify();
-  } catch {
-    throw new UnauthorizedError('Authentication required');
-  }
-});
-
-fastify.get('/health', async () => {
-  return { status: 'ok' };
-});
-
-// Register metrics routes (unversioned - monitoring endpoints)
-import { metricsRoutes } from './routes/metrics.routes';
-fastify.register(metricsRoutes);
-
-// Register API v1 routes under /api/v1 prefix
-import { v1Routes } from './routes/v1';
-fastify.register(v1Routes, { prefix: '/api/v1' });
-
-// Export a factory function for testing
 export async function buildServer() {
-  return fastify;
+  if (isTestEnv) {
+    return createServer();
+  }
+
+  if (!fastifyInstance) {
+    fastifyInstance = await createServer();
+  }
+  return fastifyInstance;
+}
+
+// Keep the export for index.ts (though it should ideally use buildServer)
+// Use a side-effect to initialize it for non-test environments if absolutely needed,
+// but buildServer is the preferred way.
+export let fastify: Awaited<ReturnType<typeof createServer>>;
+
+if (!isTestEnv) {
+  buildServer().then((instance) => {
+    fastify = instance;
+  });
 }

@@ -148,16 +148,17 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
 
   afterAll(async () => {
     // Cleanup
+    const userIds = [freeUserId, starterUserId, proUserId].filter(Boolean) as string[];
+
     await prisma.subscription.deleteMany({
-      where: { userId: { in: [freeUserId, starterUserId, proUserId] } },
+      where: { userId: { in: userIds } },
     });
     await prisma.service.deleteMany({
-      where: { userId: { in: [freeUserId, starterUserId, proUserId] } },
+      where: { userId: { in: userIds } },
     });
     await prisma.user.deleteMany({
-      where: { id: { in: [freeUserId, starterUserId, proUserId] } },
+      where: { id: { in: userIds } },
     });
-    if (app) await app.close();
   });
 
   beforeEach(async () => {

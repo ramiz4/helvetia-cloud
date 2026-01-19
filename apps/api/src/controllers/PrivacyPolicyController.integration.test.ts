@@ -71,7 +71,7 @@ describe.skipIf(shouldSkip)('PrivacyPolicyController Integration Tests', () => {
     it('should return 404 for unknown language', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/privacy-policy/latest?language=unknown',
+        url: '/api/v1/privacy-policy/latest?language=de',
       });
       expect(response.statusCode).toBe(404);
     });
