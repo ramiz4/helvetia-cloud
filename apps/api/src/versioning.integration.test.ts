@@ -11,7 +11,7 @@ import { buildServer } from './server.js';
  * 3. Authentication works with versioned routes
  * 4. Public routes work without authentication
  */
-describe.skipIf(shouldSkip)('API Versioning', () => {
+describe('API Versioning', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;

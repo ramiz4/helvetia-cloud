@@ -2,7 +2,7 @@ import { prisma } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildServer } from './server.js';
 
-describe.skipIf(shouldSkip)('SSE Redis Subscription Cleanup Tests', () => {
+describe('SSE Redis Subscription Cleanup Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;
