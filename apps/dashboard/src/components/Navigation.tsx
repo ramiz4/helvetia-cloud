@@ -3,7 +3,7 @@
 import ModernThemeSwitch from '@/components/ModernThemeSwitch';
 import { useFeatureFlag } from '@/lib/featureFlags';
 import { useOrganizationContext } from '@/lib/OrganizationContext';
-import { BookOpen, Building2, CreditCard, LayoutDashboard, Settings } from 'lucide-react';
+import { BookOpen, Building2, CreditCard, LayoutDashboard, Settings, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -48,7 +48,12 @@ export default function DashboardNavigation() {
 
     // Listen for storage events (e.g. logging out in another tab)
     window.addEventListener('storage', checkLogin);
-    return () => window.removeEventListener('storage', checkLogin);
+    window.addEventListener('auth-change', checkLogin);
+
+    return () => {
+      window.removeEventListener('storage', checkLogin);
+      window.removeEventListener('auth-change', checkLogin);
+    };
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -68,6 +73,7 @@ export default function DashboardNavigation() {
       );
     } finally {
       localStorage.removeItem('user');
+      window.dispatchEvent(new Event('auth-change'));
       setIsLoggedIn(false);
       setUser(null);
       router.push('/login');
@@ -85,6 +91,12 @@ export default function DashboardNavigation() {
       href: '/deployments',
       icon: BookOpen,
       show: showDeployments,
+    },
+    {
+      label: 'Pricing',
+      href: '/pricing',
+      icon: Tag,
+      isPublic: true,
     },
     {
       label: t.nav.billing,

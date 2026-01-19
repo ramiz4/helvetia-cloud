@@ -3,12 +3,32 @@
 import { ExternalLink, Mail, ShieldCheck, Twitter } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useLanguage } from 'shared-ui';
 import { GithubIcon } from './icons/GithubIcon';
 
 export default function Footer() {
   const { t } = useLanguage();
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = localStorage.getItem('user');
+      setIsAuthenticated(!!user);
+    };
+
+    checkAuth();
+    window.addEventListener('auth-change', checkAuth);
+    window.addEventListener('storage', checkAuth);
+
+    return () => {
+      window.removeEventListener('auth-change', checkAuth);
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, [pathname]);
 
   return (
     <footer className="w-full border-t border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/50 backdrop-blur-md pt-16 pb-8 mt-auto">
@@ -66,29 +86,33 @@ export default function Footer() {
               {t.footer.product}
             </h4>
             <ul className="space-y-4 text-sm">
+              {isAuthenticated && (
+                <>
+                  <li>
+                    <Link
+                      href="/"
+                      className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      {t.nav.dashboard}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/deployments"
+                      className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      {t.nav.deployments}
+                    </Link>
+                  </li>
+                </>
+              )}
               <li>
                 <Link
-                  href="/"
-                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                >
-                  {t.nav.dashboard}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/deployments"
-                  className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                >
-                  {t.nav.deployments}
-                </Link>
-              </li>
-              <li>
-                <a
                   href="/pricing"
                   className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.footer.pricing}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

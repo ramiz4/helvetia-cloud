@@ -1,13 +1,12 @@
 'use client';
 
+import { AvailablePlans } from '@/components/billing/AvailablePlans';
 import { CurrentPlanCard } from '@/components/billing/CurrentPlanCard';
 import { InvoiceList } from '@/components/billing/InvoiceList';
-import { PlanCard } from '@/components/billing/PlanCard';
 import { UsageMetrics } from '@/components/billing/UsageMetrics';
 import { useCheckout, useInvoices, usePortal, useSubscription, useUsage } from '@/hooks/useBilling';
-import { PLANS } from '@/lib/plans';
 import type { PlanDetails } from '@/types/billing';
-import { AlertCircle, CreditCard, TrendingUp } from 'lucide-react';
+import { AlertCircle, CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -217,32 +216,11 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Available Plans */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
-              <TrendingUp size={24} className="text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Available Plans</h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
-                Choose the plan that fits your needs
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {PLANS.map((plan) => (
-              <PlanCard
-                key={plan.name}
-                plan={plan}
-                currentPlan={subscription?.plan}
-                onSelect={handleSelectPlan}
-                loading={checkoutMutation.isPending}
-              />
-            ))}
-          </div>
-        </div>
+        <AvailablePlans
+          currentPlan={subscription?.plan}
+          onSelect={handleSelectPlan}
+          isLoading={checkoutMutation.isPending}
+        />
 
         {/* Invoices */}
         {!invoicesLoading && !invoicesError && invoices && invoices.length > 0 && (
