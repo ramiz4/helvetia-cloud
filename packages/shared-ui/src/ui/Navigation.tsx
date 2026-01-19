@@ -14,6 +14,7 @@ export interface NavLink {
   href: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   show?: boolean;
+  isPublic?: boolean;
 }
 
 interface NavigationProps {
@@ -154,16 +155,41 @@ export default function Navigation({
               </div>
             </div>
           ) : (
-            <div className="hidden lg:flex items-center gap-4">
-              {desktopThemeSwitcher || themeSwitcher}
-              <LanguageSwitcher />
-              <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium cursor-pointer transition-all border border-transparent text-[14px] gap-2 bg-indigo-500 text-white shadow-lg hover:bg-indigo-600 hover:-translate-y-0.5 active:scale-95"
-              >
-                <span>{t.nav.login}</span>
-              </Link>
+            <div className="hidden lg:flex items-center gap-6">
+              <div className="flex gap-2">
+                {links
+                  .filter((link) => link.show !== false && link.isPublic)
+                  .map((link) => {
+                    const Icon = link.icon;
+                    const isActive = pathname === link.href;
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-medium transition-all ${
+                          isActive
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <Icon size={18} />
+                        <span>{link.label}</span>
+                      </Link>
+                    );
+                  })}
+              </div>
+
+              <div className="flex items-center gap-4">
+                {desktopThemeSwitcher || themeSwitcher}
+                <LanguageSwitcher />
+                <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-1" />
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium cursor-pointer transition-all border border-transparent text-[14px] gap-2 bg-indigo-500 text-white shadow-lg hover:bg-indigo-600 hover:-translate-y-0.5 active:scale-95"
+                >
+                  <span>{t.nav.login}</span>
+                </Link>
+              </div>
             </div>
           )}
 
@@ -282,28 +308,55 @@ export default function Navigation({
                 </div>
               </>
             ) : (
-              <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-3 px-4">
-                  <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                    {t.nav.selectLanguage}
-                  </span>
-                  <LanguageSwitcher variant="minimal" />
+              <>
+                <div className="flex flex-col gap-2">
+                  {links
+                    .filter((link) => link.show !== false && link.isPublic)
+                    .map((link) => {
+                      const Icon = link.icon;
+                      const isActive = pathname === link.href;
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[16px] font-medium transition-all ${
+                            isActive
+                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <Icon size={20} />
+                          <span>{link.label}</span>
+                        </Link>
+                      );
+                    })}
                 </div>
-                {themeSwitcher && (
+
+                <div className="h-px bg-slate-200 dark:bg-white/10" />
+
+                <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-3 px-4">
                     <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                      {t.theme?.switchTheme || 'Theme'}
+                      {t.nav.selectLanguage}
                     </span>
-                    {themeSwitcher}
+                    <LanguageSwitcher variant="minimal" />
                   </div>
-                )}
-                <Link
-                  href="/login"
-                  className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold bg-indigo-500 text-white shadow-lg gap-2"
-                >
-                  <span>{t.nav.login}</span>
-                </Link>
-              </div>
+                  {themeSwitcher && (
+                    <div className="flex flex-col gap-3 px-4">
+                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                        {t.theme?.switchTheme || 'Theme'}
+                      </span>
+                      {themeSwitcher}
+                    </div>
+                  )}
+                  <Link
+                    href="/login"
+                    className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold bg-indigo-500 text-white shadow-lg gap-2"
+                  >
+                    <span>{t.nav.login}</span>
+                  </Link>
+                </div>
+              </>
             )}
           </nav>
         </div>

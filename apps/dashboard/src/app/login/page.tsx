@@ -47,6 +47,7 @@ function LoginContent() {
         const data = await response.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        window.dispatchEvent(new Event('auth-change'));
         toast.success('Welcome back!');
         router.push('/');
       } else {
@@ -91,7 +92,7 @@ function LoginContent() {
         <div className="hidden lg:flex flex-col space-y-8 px-4">
           <div className="space-y-6 mt-16">
             <div className="space-y-4">
-              <h1 className="text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+              <h1 className="text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
                 {t.login.swissCloudSecurity}
               </h1>
               <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
@@ -129,7 +130,7 @@ function LoginContent() {
           {/* Mobile Header (Only visible on small screens) */}
           <div className="lg:hidden flex flex-col items-center text-center mb-8">
             <div className="relative w-16 h-16 mb-4">
-              <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="relative w-full h-full bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Image src="/logo.png" alt="Logo" width={32} height={32} />
               </div>
             </div>
@@ -147,7 +148,7 @@ function LoginContent() {
             >
               {/* Top accent bar */}
               <div
-                className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500"
+                className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-indigo-500 via-blue-500 to-indigo-500"
                 aria-hidden="true"
               />
 
@@ -269,7 +270,7 @@ function LoginContent() {
                   <GithubIcon size={24} aria-hidden="true" />
                   <span className="text-xl">{t.login.continueWithGithub}</span>
                   <div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
+                    className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:animate-shimmer pointer-events-none"
                     aria-hidden="true"
                   />
                 </button>
