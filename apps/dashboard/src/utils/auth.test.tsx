@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { handleGitHubLogin, getPlatformBenefits } from './auth';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getPlatformBenefits, handleGitHubLogin } from './auth';
 
 describe('handleGitHubLogin', () => {
   let originalLocation: Location;
@@ -34,7 +34,13 @@ describe('handleGitHubLogin', () => {
   });
 
   it('should construct correct redirect URI based on origin', () => {
-    window.location.origin = 'https://example.com';
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...originalLocation,
+        origin: 'https://example.com',
+      },
+    });
     const clientId = 'test-client-id';
     handleGitHubLogin(clientId);
 
