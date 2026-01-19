@@ -2,16 +2,10 @@ import axios from 'axios';
 import { prisma, Role } from 'database';
 import 'reflect-metadata';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { PrismaOrganizationRepository } from '../repositories/PrismaOrganizationRepository';
-import { PrismaUserRepository } from '../repositories/PrismaUserRepository';
-import { AuthenticationService } from './AuthenticationService';
-import { OrganizationService } from './OrganizationService';
-
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-// These tests require a real database to run
-// Set RUN_INTEGRATION_TESTS=1 to enable these tests
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
+import { PrismaOrganizationRepository } from '../repositories/PrismaOrganizationRepository.js';
+import { PrismaUserRepository } from '../repositories/PrismaUserRepository.js';
+import { AuthenticationService } from './AuthenticationService.js';
+import { OrganizationService } from './OrganizationService.js';
 vi.mock('axios');
 vi.mock('../utils/crypto', () => ({
   encrypt: vi.fn((token: string) => `encrypted_${token}`),
@@ -21,7 +15,7 @@ vi.mock('../utils/refreshToken', () => ({
   createRefreshToken: vi.fn(async (userId: string) => `refresh_token_${userId}`),
 }));
 
-describe.skipIf(shouldSkip)('AuthenticationService - Concurrent Organization Creation', () => {
+describe('AuthenticationService - Concurrent Organization Creation', () => {
   let authService: AuthenticationService;
   let userRepo: PrismaUserRepository;
   let orgRepo: PrismaOrganizationRepository;

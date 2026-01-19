@@ -1,4 +1,4 @@
-import { ErrorCode, ErrorMessages } from '../ErrorCodes';
+import { ErrorCode, ErrorMessages } from '../ErrorCodes.js';
 
 /**
  * English error messages

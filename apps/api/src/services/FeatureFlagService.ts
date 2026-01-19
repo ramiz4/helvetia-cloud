@@ -4,7 +4,7 @@ import {
   FeatureFlag,
   IFeatureFlagRepository,
   UpdateFeatureFlagData,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Service for managing feature flags

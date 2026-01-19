@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { OrganizationController } from '../controllers/OrganizationController';
-import { resolve, TOKENS } from '../di';
+import { OrganizationController } from '../controllers/OrganizationController.js';
+import { resolve, TOKENS } from '../di/index.js';
 
 export const organizationRoutes: FastifyPluginAsync = async (fastify) => {
   const controller = resolve<OrganizationController>(TOKENS.OrganizationController);

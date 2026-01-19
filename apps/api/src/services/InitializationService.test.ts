@@ -3,10 +3,10 @@ import { Role } from 'database';
 import 'reflect-metadata';
 import { logger } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from '../config/env';
-import type { IFeatureFlagRepository, IUserRepository } from '../interfaces';
-import * as passwordUtils from '../utils/password';
-import { InitializationService } from './InitializationService';
+import { env } from '../config/env.js';
+import type { IFeatureFlagRepository, IUserRepository } from '../interfaces/index.js';
+import * as passwordUtils from '../utils/password.js';
+import { InitializationService } from './InitializationService.js';
 
 vi.mock('shared', async () => {
   const actual = await vi.importActual('shared');

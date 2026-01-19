@@ -5,8 +5,8 @@ import {
   mockStripeCustomers,
   mockStripeSubscriptions,
   resetMockStripe,
-} from '../test/mocks/stripe.mock';
-import { StripeWebhookController } from './StripeWebhookController';
+} from '../test/mocks/stripe.mock.js';
+import { StripeWebhookController } from './StripeWebhookController.js';
 
 // Create test price IDs before vi.mock calls (hoisted)
 const TEST_PRICE_ID_STARTER = 'price_test_starter_monthly';

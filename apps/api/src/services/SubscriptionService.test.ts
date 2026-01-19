@@ -1,7 +1,7 @@
 import { PrismaClient, SubscriptionPlan, SubscriptionStatus } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi, type MockedObject } from 'vitest';
-import { SubscriptionService } from './SubscriptionService';
+import { SubscriptionService } from './SubscriptionService.js';
 
 /**
  * Test fixtures for subscription data

@@ -1,9 +1,9 @@
 import { Role } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { env } from '../config/env';
-import { TOKENS } from '../di/tokens';
-import type { IFeatureFlagRepository, ILogger, IUserRepository } from '../interfaces';
-import { hashPassword, isLegacyHash } from '../utils/password';
+import { env } from '../config/env.js';
+import { TOKENS } from '../di/tokens.js';
+import type { IFeatureFlagRepository, ILogger, IUserRepository } from '../interfaces/index.js';
+import { hashPassword, isLegacyHash } from '../utils/password.js';
 
 @injectable()
 export class InitializationService {

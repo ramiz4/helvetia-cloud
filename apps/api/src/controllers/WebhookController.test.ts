@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import 'reflect-metadata';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WebhookController } from './WebhookController';
+import { WebhookController } from './WebhookController.js';
 
 describe('WebhookController', () => {
   let controller: WebhookController;

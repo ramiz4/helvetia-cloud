@@ -1,8 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { User, UserCreateInput, UserUpdateInput, UserWhereUniqueInput } from '../interfaces';
-import { PrismaUserRepository } from './PrismaUserRepository';
+import type {
+  User,
+  UserCreateInput,
+  UserUpdateInput,
+  UserWhereUniqueInput,
+} from '../interfaces/index.js';
+import { PrismaUserRepository } from './PrismaUserRepository.js';
 
 describe('PrismaUserRepository', () => {
   let repository: PrismaUserRepository;

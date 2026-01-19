@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOG_LEVEL, LOG_REDACT_PATHS, LOG_REQUESTS, LOG_RESPONSES } from './config/constants';
+import { LOG_LEVEL, LOG_REDACT_PATHS, LOG_REQUESTS, LOG_RESPONSES } from './config/constants.js';
 
 /**
  * Tests for logging configuration constants

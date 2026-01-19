@@ -25,6 +25,8 @@
     "format": "prettier --write .",
     "test": "pnpm --filter '*' --parallel test",
     "test:coverage": "pnpm --filter '*' --parallel test:coverage",
+    "test:integration": "pnpm --filter api test:integration",
+    "test:all": "pnpm test && pnpm test:integration",
     "prepare": "husky",
     "semantic-release": "semantic-release"
   },

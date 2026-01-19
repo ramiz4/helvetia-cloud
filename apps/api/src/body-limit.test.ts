@@ -11,10 +11,12 @@ vi.mock('ioredis', () => {
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
   };
+  const RedisMock = vi.fn(function () {
+    return mockRedis;
+  });
   return {
-    default: vi.fn(function () {
-      return mockRedis;
-    }),
+    default: RedisMock,
+    Redis: RedisMock,
   };
 });
 
@@ -162,7 +164,7 @@ vi.mock('axios', () => {
   };
 });
 
-import { BODY_LIMIT_GLOBAL, BODY_LIMIT_SMALL, BODY_LIMIT_STANDARD, fastify } from './server';
+import { BODY_LIMIT_GLOBAL, BODY_LIMIT_SMALL, BODY_LIMIT_STANDARD, fastify } from './server.js';
 
 describe('Request Body Size Limits', () => {
   // Helper function to generate auth token

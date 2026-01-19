@@ -1,7 +1,7 @@
 import { UsageMetric } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { UsageTrackingService } from './UsageTrackingService';
+import { UsageTrackingService } from './UsageTrackingService.js';
 
 describe('UsageTrackingService', () => {
   let service: UsageTrackingService;

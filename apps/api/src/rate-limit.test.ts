@@ -1,17 +1,40 @@
 import axios, { AxiosResponse } from 'axios';
 import crypto from 'crypto';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock axios before importing server
 vi.mock('axios');
 
+// Mock rate-limit to avoid hangs during testing
+vi.mock('@fastify/rate-limit', () => ({
+  default: Object.assign(
+    vi.fn(async () => {}),
+    {
+      Symbol: { for: vi.fn() },
+    },
+  ),
+}));
+
 // Mock Redis and other dependencies before importing server
 vi.mock('ioredis', () => {
   const mockRedis: any = {
-    on: vi.fn(),
+    status: 'ready',
+    on: vi.fn(function (this: any, event, callback) {
+      if (event === 'ready' || event === 'connect') {
+        callback();
+      }
+      return this;
+    }),
+    once: vi.fn(function (this: any, event, callback) {
+      if (event === 'ready' || event === 'connect') {
+        callback();
+      }
+      return this;
+    }),
     subscribe: vi.fn(),
+    unsubscribe: vi.fn(),
     removeListener: vi.fn(),
-    quit: vi.fn(),
+    quit: vi.fn().mockResolvedValue('OK'),
     defineCommand: vi.fn((name: string) => {
       mockRedis[name] = vi.fn().mockResolvedValue([0, 60000]);
     }),
@@ -26,11 +49,17 @@ vi.mock('ioredis', () => {
     }),
     exec: vi.fn().mockResolvedValue([[null, [0, 60000]]]),
     unref: vi.fn(),
-  };
-  return {
-    default: vi.fn(function () {
+    duplicate: vi.fn(function () {
       return mockRedis;
     }),
+  };
+
+  const MockRedis = vi.fn(function () {
+    return mockRedis;
+  });
+  return {
+    default: MockRedis,
+    Redis: MockRedis,
   };
 });
 
@@ -172,15 +201,26 @@ vi.stubGlobal('process', {
   exit: vi.fn() as unknown as (code?: number) => never,
 });
 
-import { fastify } from './server';
+import { buildServer } from './server.js';
 
 describe('Rate Limiting', () => {
+  let app: Awaited<ReturnType<typeof buildServer>>;
+
+  beforeAll(async () => {
+    console.log('[RATE-LIMIT-TEST] app initialization starting...');
+    app = await buildServer();
+    console.log('[RATE-LIMIT-TEST] app.ready() starting...');
+    await app.ready();
+    console.log('[RATE-LIMIT-TEST] app initialization complete.');
+  });
   beforeEach(async () => {
+    console.log('[RATE-LIMIT-TEST] beforeEach starting...');
     vi.clearAllMocks();
 
     // Reset rate limit mock behavior to allow requests by default
     const IORedis = (await import('ioredis')).default as unknown as any;
     const redis = new IORedis();
+    console.log('[RATE-LIMIT-TEST] resetting redis mock...');
 
     // Reset all mocked functions to return allowed state
     for (const key of Object.keys(redis)) {
@@ -188,12 +228,13 @@ describe('Rate Limiting', () => {
         redis[key].mockResolvedValue([0, 60000]);
       }
     }
+    console.log('[RATE-LIMIT-TEST] beforeEach complete.');
   });
 
   it('should not rate limit health endpoint', async () => {
     // Make multiple requests quickly
     for (let i = 0; i < 15; i++) {
-      const response = await fastify.inject({
+      const response = await app.inject({
         method: 'GET',
         url: '/health',
       });
@@ -218,9 +259,9 @@ describe('Rate Limiting', () => {
     vi.mocked(prisma.service.findMany).mockResolvedValue([]);
 
     const mockUser = { id: 'user-1', username: 'testuser' };
-    const token = fastify.jwt.sign(mockUser);
+    const token = app.jwt.sign(mockUser);
 
-    const response = await fastify.inject({
+    const response = await app.inject({
       method: 'GET',
       url: '/api/v1/services', // Rate limited endpoint
       headers: {
@@ -238,12 +279,12 @@ describe('Rate Limiting', () => {
 
   it('should allow authenticated requests to services endpoint', async () => {
     const mockUser = { id: 'user-1', username: 'testuser' };
-    const token = fastify.jwt.sign(mockUser);
+    const token = app.jwt.sign(mockUser);
 
     const { prisma } = await import('database');
     vi.mocked(prisma.service.findMany).mockResolvedValue([]);
 
-    const response = await fastify.inject({
+    const response = await app.inject({
       method: 'GET',
       url: '/api/v1/services',
       headers: {
@@ -284,7 +325,7 @@ describe('Rate Limiting', () => {
       updatedAt: new Date(),
     } as never);
 
-    const response = await fastify.inject({
+    const response = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/github',
       payload: { code: 'test-code' },
@@ -305,7 +346,7 @@ describe('Rate Limiting', () => {
 
   it('should allow deployment endpoint requests for authenticated users', async () => {
     const mockUser = { id: 'user-1', username: 'testuser' };
-    const token = fastify.jwt.sign(mockUser);
+    const token = app.jwt.sign(mockUser);
 
     const { prisma } = await import('database');
 
@@ -355,7 +396,7 @@ describe('Rate Limiting', () => {
       updatedAt: new Date(),
     } as never);
 
-    const response = await fastify.inject({
+    const response = await app.inject({
       method: 'POST',
       url: '/api/v1/services/service-1/deploy',
       headers: {
@@ -384,7 +425,7 @@ describe('Rate Limiting', () => {
     const signature =
       'sha256=' + crypto.createHmac('sha256', 'test-secret').update(payloadBuffer).digest('hex');
 
-    const response = await fastify.inject({
+    const response = await app.inject({
       method: 'POST',
       url: '/api/v1/webhooks/github',
       payload: payloadBuffer,

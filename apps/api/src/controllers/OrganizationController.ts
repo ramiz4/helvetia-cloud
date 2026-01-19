@@ -1,10 +1,10 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { z } from 'zod';
-import { TOKENS } from '../di/tokens';
-import { ValidationError } from '../errors';
-import { OrganizationService } from '../services/OrganizationService';
-import { formatZodError } from '../utils/errorFormatting';
+import { TOKENS } from '../di/tokens.js';
+import { ValidationError } from '../errors/index.js';
+import { OrganizationService } from '../services/OrganizationService.js';
+import { formatZodError } from '../utils/errorFormatting.js';
 
 const createOrganizationSchema = z.object({
   name: z.string().min(3).max(50),

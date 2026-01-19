@@ -1,7 +1,7 @@
 import { prisma } from 'database';
 import 'reflect-metadata';
-import { PrismaTermsRepository } from '../repositories/PrismaTermsRepository';
-import { TermsService } from '../services/TermsService';
+import { PrismaTermsRepository } from '../repositories/PrismaTermsRepository.js';
+import { TermsService } from '../services/TermsService.js';
 
 /**
  * Initialize Terms of Service

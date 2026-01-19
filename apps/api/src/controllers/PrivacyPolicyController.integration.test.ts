@@ -1,11 +1,7 @@
 import { prisma } from 'database';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { buildServer } from '../server';
-
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
-describe.skipIf(shouldSkip)('PrivacyPolicyController Integration Tests', () => {
+import { buildServer } from '../server.js';
+describe('PrivacyPolicyController Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;
@@ -71,7 +67,7 @@ describe.skipIf(shouldSkip)('PrivacyPolicyController Integration Tests', () => {
     it('should return 404 for unknown language', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/privacy-policy/latest?language=unknown',
+        url: '/api/v1/privacy-policy/latest?language=de',
       });
       expect(response.statusCode).toBe(404);
     });

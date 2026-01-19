@@ -6,7 +6,7 @@ import {
   FeatureFlag,
   IFeatureFlagRepository,
   UpdateFeatureFlagData,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Prisma implementation of IFeatureFlagRepository

@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { metricsService } from '../services/metrics.service';
+import { metricsService } from '../services/metrics.service.js';
 
 /**
  * Metrics Routes

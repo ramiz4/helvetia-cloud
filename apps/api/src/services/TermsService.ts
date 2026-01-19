@@ -7,7 +7,7 @@ import {
   CreateTermsVersionData,
   ITermsRepository,
   UserTermsAcceptanceWithVersion,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Service for managing Terms of Service

@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BODY_LIMIT_STANDARD } from '../config/constants';
-import { createRateLimitConfigs } from '../config/rateLimit';
-import { WebhookController } from '../controllers/WebhookController';
-import { resolve, TOKENS } from '../di';
+import { BODY_LIMIT_STANDARD } from '../config/constants.js';
+import { createRateLimitConfigs } from '../config/rateLimit.js';
+import { WebhookController } from '../controllers/WebhookController.js';
+import { resolve, TOKENS } from '../di/index.js';
 
 /**
  * Webhook routes plugin

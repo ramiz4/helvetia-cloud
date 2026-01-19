@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getServiceMetrics } from './metrics.handler';
+import { getServiceMetrics } from './metrics.handler.js';
 
 // Mock Dockerode types nicely
 const mockStats = vi.fn();

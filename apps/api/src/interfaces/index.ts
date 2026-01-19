@@ -4,64 +4,64 @@ export {
   DeploymentCreateInput,
   DeploymentUpdateInput,
   IDeploymentRepository,
-} from './IDeploymentRepository';
+} from './IDeploymentRepository.js';
 export {
   CreateFeatureFlagData,
   FeatureFlag,
   IFeatureFlagRepository,
   UpdateFeatureFlagData,
-} from './IFeatureFlagRepository';
-export { IOrganizationRepository } from './IOrganizationRepository';
+} from './IFeatureFlagRepository.js';
+export { IOrganizationRepository } from './IOrganizationRepository.js';
 export {
   AcceptPrivacyPolicyData,
   CreatePrivacyPolicyVersionData,
   IPrivacyPolicyRepository,
   UserPrivacyPolicyAcceptanceWithVersion,
-} from './IPrivacyPolicyRepository';
+} from './IPrivacyPolicyRepository.js';
 export {
   Environment,
   EnvironmentCreateInput,
   IProjectRepository,
   Project,
   ProjectCreateInput,
-} from './IProjectRepository';
+} from './IProjectRepository.js';
 export {
   IRefreshTokenRepository,
   RefreshToken,
   RefreshTokenCreateInput,
   RefreshTokenUpdateManyMutationInput,
   RefreshTokenWhereInput,
-} from './IRefreshTokenRepository';
+} from './IRefreshTokenRepository.js';
 export {
   IServiceRepository,
   RepoUrlCondition,
   Service,
   ServiceCreateInput,
   ServiceUpdateInput,
-} from './IServiceRepository';
+} from './IServiceRepository.js';
 export {
   AcceptTermsData,
   CreateTermsVersionData,
   ITermsRepository,
   UserTermsAcceptanceWithVersion,
-} from './ITermsRepository';
+} from './ITermsRepository.js';
 export {
   IUserRepository,
   User,
   UserCreateInput,
   UserUpdateInput,
   UserWhereUniqueInput,
-} from './IUserRepository';
+} from './IUserRepository.js';
 
 // Infrastructure interfaces
-export { CacheOptions, ICache } from './ICache';
+export { CacheOptions, ICache } from './ICache.js';
 export {
   BuildImageOptions,
   ContainerStatus,
   CreateContainerOptions,
   IContainerOrchestrator,
-} from './IContainerOrchestrator';
-export { DeploymentJobData, IDeploymentQueue, JobOptions } from './IDeploymentQueue';
+} from './IContainerOrchestrator.js';
+export { DeploymentJobData, IDeploymentQueue, JobOptions } from './IDeploymentQueue.js';
 export {
   GetRepositoriesParams,
   GitHubBranch,
@@ -69,13 +69,13 @@ export {
   GitHubPackage,
   GitHubRepository,
   IGitHubService,
-} from './IGitHubService';
-export { ILogger, LogContext, LogLevel } from './ILogger';
+} from './IGitHubService.js';
+export { ILogger, LogContext, LogLevel } from './ILogger.js';
 
 // Service interfaces
-export { IBillingService } from './IBillingService';
-export { IDeploymentOrchestratorService } from './IDeploymentOrchestratorService';
-export { IProjectManagementService } from './IProjectManagementService';
-export { IServiceManagementService } from './IServiceManagementService';
-export { ISubscriptionService } from './ISubscriptionService';
-export { IUsageTrackingService } from './IUsageTrackingService';
+export { IBillingService } from './IBillingService.js';
+export { IDeploymentOrchestratorService } from './IDeploymentOrchestratorService.js';
+export { IProjectManagementService } from './IProjectManagementService.js';
+export { IServiceManagementService } from './IServiceManagementService.js';
+export { ISubscriptionService } from './ISubscriptionService.js';
+export { IUsageTrackingService } from './IUsageTrackingService.js';

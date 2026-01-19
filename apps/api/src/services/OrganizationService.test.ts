@@ -1,8 +1,8 @@
 import { Role } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { IOrganizationRepository } from '../interfaces/IOrganizationRepository';
-import { OrganizationService } from './OrganizationService';
+import type { IOrganizationRepository } from '../interfaces/IOrganizationRepository.js';
+import { OrganizationService } from './OrganizationService.js';
 
 describe('OrganizationService', () => {
   let organizationService: OrganizationService;

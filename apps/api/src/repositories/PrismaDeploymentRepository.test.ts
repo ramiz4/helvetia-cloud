@@ -1,8 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Deployment, DeploymentCreateInput, DeploymentUpdateInput } from '../interfaces';
-import { PrismaDeploymentRepository } from './PrismaDeploymentRepository';
+import type {
+  Deployment,
+  DeploymentCreateInput,
+  DeploymentUpdateInput,
+} from '../interfaces/index.js';
+import { PrismaDeploymentRepository } from './PrismaDeploymentRepository.js';
 
 describe('PrismaDeploymentRepository', () => {
   let repository: PrismaDeploymentRepository;

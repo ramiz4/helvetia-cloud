@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { prisma, User } from 'database';
 import type { FastifyInstance } from 'fastify';
-import type IORedis from 'ioredis';
+import type { Redis } from 'ioredis';
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 30;
 const ACCESS_TOKEN_EXPIRY_MINUTES = 15;
@@ -39,7 +39,7 @@ export async function createRefreshToken(userId: string): Promise<string> {
 export async function verifyAndRotateRefreshToken(
   token: string,
   fastify: FastifyInstance,
-  redis: IORedis,
+  redis: Redis,
 ): Promise<{ accessToken: string; refreshToken: string; userId: string; user: User } | null> {
   // Check if token is in revocation list (Redis)
   const isRevoked = await redis.get(`revoked:refresh:${token}`);
@@ -98,7 +98,7 @@ export async function verifyAndRotateRefreshToken(
 /**
  * Revoke a refresh token
  */
-export async function revokeRefreshToken(token: string, redis: IORedis): Promise<void> {
+export async function revokeRefreshToken(token: string, redis: Redis): Promise<void> {
   // Mark as revoked in database
   await prisma.refreshToken.updateMany({
     where: { token },
@@ -115,7 +115,7 @@ export async function revokeRefreshToken(token: string, redis: IORedis): Promise
 /**
  * Revoke all refresh tokens for a user
  */
-export async function revokeAllUserRefreshTokens(userId: string, redis: IORedis): Promise<void> {
+export async function revokeAllUserRefreshTokens(userId: string, redis: Redis): Promise<void> {
   const tokens = await prisma.refreshToken.findMany({
     where: { userId, revoked: false },
   });

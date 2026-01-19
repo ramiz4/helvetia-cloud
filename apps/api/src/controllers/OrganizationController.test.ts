@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, NotFoundError, ValidationError } from '../errors';
-import { OrganizationService } from '../services/OrganizationService';
-import { OrganizationController } from './OrganizationController';
+import { ForbiddenError, NotFoundError, ValidationError } from '../errors/index.js';
+import { OrganizationService } from '../services/OrganizationService.js';
+import { OrganizationController } from './OrganizationController.js';
 
 describe('OrganizationController', () => {
   let controller: OrganizationController;

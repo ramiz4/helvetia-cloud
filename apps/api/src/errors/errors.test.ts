@@ -7,7 +7,7 @@ import {
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from '../errors';
+} from '../errors/index.js';
 
 describe('Error Classes', () => {
   describe('AppError', () => {

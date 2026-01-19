@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ErrorCode } from '../ErrorCodes';
-import { detectLanguage, getLocalizedErrorMessage } from './index';
+import { ErrorCode } from '../ErrorCodes.js';
+import { detectLanguage, getLocalizedErrorMessage } from './index.js';
 
 describe('Error i18n', () => {
   describe('getLocalizedErrorMessage', () => {

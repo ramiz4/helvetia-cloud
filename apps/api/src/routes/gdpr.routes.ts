@@ -1,8 +1,12 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BODY_LIMIT_SMALL } from '../config/constants';
-import { resolve, TOKENS } from '../di';
-import type { IOrganizationRepository, IProjectRepository, IUserRepository } from '../interfaces';
-import { authenticate } from '../middleware/auth.middleware';
+import { BODY_LIMIT_SMALL } from '../config/constants.js';
+import { resolve, TOKENS } from '../di/index.js';
+import type {
+  IOrganizationRepository,
+  IProjectRepository,
+  IUserRepository,
+} from '../interfaces/index.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 /**
  * GDPR/Data Privacy routes plugin

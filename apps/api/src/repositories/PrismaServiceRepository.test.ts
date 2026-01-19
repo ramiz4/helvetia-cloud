@@ -1,8 +1,8 @@
 import { Prisma, PrismaClient } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Service, ServiceCreateInput, ServiceUpdateInput } from '../interfaces';
-import { PrismaServiceRepository } from './PrismaServiceRepository';
+import type { Service, ServiceCreateInput, ServiceUpdateInput } from '../interfaces/index.js';
+import { PrismaServiceRepository } from './PrismaServiceRepository.js';
 
 describe('PrismaServiceRepository', () => {
   let repository: PrismaServiceRepository;

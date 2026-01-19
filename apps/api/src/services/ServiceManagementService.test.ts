@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConflictError, ForbiddenError, NotFoundError } from '../errors';
+import { ConflictError, ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   IDeploymentRepository,
   IOrganizationRepository,
   IServiceRepository,
-} from '../interfaces';
-import { ServiceManagementService } from './ServiceManagementService';
+} from '../interfaces/index.js';
+import { ServiceManagementService } from './ServiceManagementService.js';
 
 describe('ServiceManagementService', () => {
   let service: ServiceManagementService;

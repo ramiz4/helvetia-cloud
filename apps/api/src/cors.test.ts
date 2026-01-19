@@ -11,10 +11,12 @@ vi.mock('ioredis', () => {
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
   };
+  const RedisMock = vi.fn(function () {
+    return mockRedis;
+  });
   return {
-    default: vi.fn(function () {
-      return mockRedis;
-    }),
+    default: RedisMock,
+    Redis: RedisMock,
   };
 });
 
@@ -97,7 +99,7 @@ vi.mock('@fastify/rate-limit', () => {
   };
 });
 
-import { fastify, getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './server';
+import { fastify, getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './server.js';
 
 describe('CORS Security', () => {
   const originalEnv = process.env.ALLOWED_ORIGINS;

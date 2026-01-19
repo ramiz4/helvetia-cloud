@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { IPrivacyPolicyRepository } from '../interfaces';
-import { PrivacyPolicyService } from './PrivacyPolicyService';
+import { IPrivacyPolicyRepository } from '../interfaces/index.js';
+import { PrivacyPolicyService } from './PrivacyPolicyService.js';
 
 // Mock path and fs/promises
 vi.mock('path', () => {

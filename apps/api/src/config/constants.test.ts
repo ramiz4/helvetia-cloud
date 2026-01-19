@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as constants from './constants';
+import * as constants from './constants.js';
 
 describe('Configuration Constants', () => {
   describe('Container Resource Limits', () => {

@@ -10,8 +10,9 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    // By default, exclude integration tests (only run unit tests)
-    exclude: ['**/node_modules/**', '**/dist/**', '**/*.integration.test.ts'],
+    // Only run integration tests (*.integration.test.ts files)
+    include: ['**/*.integration.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**'],
     testTimeout: 30000,
     hookTimeout: 30000,
     env: {
@@ -41,8 +42,6 @@ export default defineConfig({
         '**/*.config.ts',
         '**/test/**',
       ],
-      // Current coverage: ~53% statements, ~53% branches
-      // Target: Progressive improvement toward 80%
       thresholds: {
         lines: 50,
         functions: 45,

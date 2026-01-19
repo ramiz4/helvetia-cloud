@@ -1,9 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BODY_LIMIT_SMALL } from '../config/constants';
-import { createRateLimitConfigs } from '../config/rateLimit';
-import { ServiceController } from '../controllers/ServiceController';
-import { resolve, TOKENS } from '../di';
-import { enforceResourceLimits, requireActiveSubscription } from '../middleware';
+import { BODY_LIMIT_SMALL } from '../config/constants.js';
+import { createRateLimitConfigs } from '../config/rateLimit.js';
+import { ServiceController } from '../controllers/ServiceController.js';
+import { resolve, TOKENS } from '../di/index.js';
+import { enforceResourceLimits, requireActiveSubscription } from '../middleware/index.js';
 
 /**
  * Service routes plugin

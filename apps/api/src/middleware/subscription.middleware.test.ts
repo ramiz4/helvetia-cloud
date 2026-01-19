@@ -1,10 +1,10 @@
 import { SubscriptionPlan, SubscriptionStatus } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as di from '../di';
-import { ForbiddenError } from '../errors';
-import type { ISubscriptionService } from '../interfaces';
-import { enforceResourceLimits, requireActiveSubscription } from './subscription.middleware';
+import * as di from '../di/index.js';
+import { ForbiddenError } from '../errors/index.js';
+import type { ISubscriptionService } from '../interfaces/index.js';
+import { enforceResourceLimits, requireActiveSubscription } from './subscription.middleware.js';
 
 // Mock dependencies
 vi.mock('../di', () => ({

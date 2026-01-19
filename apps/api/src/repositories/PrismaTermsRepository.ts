@@ -5,7 +5,7 @@ import {
   CreateTermsVersionData,
   ITermsRepository,
   UserTermsAcceptanceWithVersion,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Prisma implementation of ITermsRepository

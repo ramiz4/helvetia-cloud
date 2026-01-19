@@ -3,12 +3,12 @@
  * Export all route plugins from a single entry point
  */
 
-export * from './auth.routes';
-export * from './billing.routes';
-export * from './deployment.routes';
-export * from './feature-flag.routes';
-export * from './gdpr.routes';
-export * from './health.routes';
-export * from './project.routes';
-export * from './service.routes';
-export * from './webhook.routes';
+export * from './auth.routes.js';
+export * from './billing.routes.js';
+export * from './deployment.routes.js';
+export * from './feature-flag.routes.js';
+export * from './gdpr.routes.js';
+export * from './health.routes.js';
+export * from './project.routes.js';
+export * from './service.routes.js';
+export * from './webhook.routes.js';

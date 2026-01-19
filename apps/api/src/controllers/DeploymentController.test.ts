@@ -1,10 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, NotFoundError } from '../errors';
-import type { IDeploymentRepository, IServiceRepository } from '../interfaces';
-import { DeploymentOrchestratorService } from '../services';
-import { DeploymentController } from './DeploymentController';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
+import type { IDeploymentRepository, IServiceRepository } from '../interfaces/index.js';
+import { DeploymentOrchestratorService } from '../services/index.js';
+import { DeploymentController } from './DeploymentController.js';
 
 // Mock database module
 vi.mock('database', () => ({

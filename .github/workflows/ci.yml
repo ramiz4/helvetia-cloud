@@ -32,8 +32,60 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-  test:
-    name: Run Tests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm generate
+
+      - name: Build database package
+        run: pnpm --filter database build
+
+      - name: Run Unit Tests with Coverage
+        run: pnpm test:coverage
+
+      - name: Upload API Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/api/coverage/lcov.info
+          flags: api-unit
+          name: api-unit-coverage
+          fail_ci_if_error: false
+
+      - name: Upload Worker Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/worker/coverage/lcov.info
+          flags: worker-unit
+          name: worker-unit-coverage
+          fail_ci_if_error: false
+
+      - name: Upload Dashboard Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/dashboard/coverage/lcov.info
+          flags: dashboard-unit
+          name: dashboard-unit-coverage
+          fail_ci_if_error: false
+
+  integration-tests:
+    name: Integration Tests
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -88,32 +140,8 @@ jobs:
       - name: Run database migrations
         run: pnpm migrate:deploy
 
-      - name: Run Tests with Coverage
-        run: pnpm test:coverage
-
-      - name: Upload API Coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./apps/api/coverage/lcov.info
-          flags: api
-          name: api-coverage
-          fail_ci_if_error: false
-
-      - name: Upload Worker Coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./apps/worker/coverage/lcov.info
-          flags: worker
-          name: worker-coverage
-          fail_ci_if_error: false
-
-      - name: Upload Dashboard Coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./apps/dashboard/coverage/lcov.info
-          flags: dashboard
-          name: dashboard-coverage
-          fail_ci_if_error: false
+      - name: Run Integration Tests
+        run: pnpm test:integration
 
   security:
     name: Dependency Audit

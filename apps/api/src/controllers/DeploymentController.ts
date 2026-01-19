@@ -1,20 +1,20 @@
-import '../types/fastify';
+import '../types/fastify.js';
 
 import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { PLATFORM_DOMAIN, withStatusLock } from 'shared';
 import { inject, injectable } from 'tsyringe';
-import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants';
-import { ForbiddenError, NotFoundError } from '../errors';
+import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants.js';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   IContainerOrchestrator,
   IDeploymentOrchestratorService,
   IDeploymentRepository,
   IServiceRepository,
-} from '../interfaces';
-import { getSafeOrigin } from '../utils/helpers/cors.helper';
-import { getDefaultPortForServiceType } from '../utils/helpers/service.helper';
-import { validateToken } from '../utils/tokenValidation';
+} from '../interfaces/index.js';
+import { getSafeOrigin } from '../utils/helpers/cors.helper.js';
+import { getDefaultPortForServiceType } from '../utils/helpers/service.helper.js';
+import { validateToken } from '../utils/tokenValidation.js';
 
 /**
  * Type alias for container orchestrator with Docker instance access

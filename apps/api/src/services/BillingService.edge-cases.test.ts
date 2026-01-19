@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { testStripePrices, testUsers } from '../test/fixtures/billing.fixtures';
+import { testStripePrices, testUsers } from '../test/fixtures/billing.fixtures.js';
 import {
   createMockStripe,
   mockStripeCustomers,
   mockStripeSubscriptions,
   resetMockStripe,
-} from '../test/mocks/stripe.mock';
-import { BillingService } from './BillingService';
+} from '../test/mocks/stripe.mock.js';
+import { BillingService } from './BillingService.js';
 
 // Mock the stripe config
 vi.mock('../config/stripe', () => ({

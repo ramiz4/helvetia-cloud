@@ -7,7 +7,7 @@ import {
   registerSingleton,
   resolve,
   TOKENS,
-} from '../di';
+} from '../di/index.js';
 
 describe('DI Container', () => {
   beforeEach(() => {

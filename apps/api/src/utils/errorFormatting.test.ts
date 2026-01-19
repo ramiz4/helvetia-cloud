@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { formatZodError, formatZodErrorTree } from './errorFormatting';
+import { formatZodError, formatZodErrorTree } from './errorFormatting.js';
 
 describe('errorFormatting', () => {
   describe('formatZodError', () => {

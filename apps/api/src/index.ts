@@ -1,32 +1,40 @@
-import { env } from './config/env';
-import './load-env';
+import { env } from './config/env.js';
+import './load-env.js';
 
 // Environment variables are initialized in server.ts
 
-import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants';
-import { resolve, TOKENS } from './di';
-import { fastify } from './server';
-import { InitializationService } from './services/InitializationService';
-import { scheduleSubscriptionChecks } from './services/SubscriptionCheckScheduler';
-import { statusReconciliationService } from './utils/statusReconciliation';
+import { STATUS_RECONCILIATION_INTERVAL_MS } from './config/constants.js';
+import { resolve, TOKENS } from './di/index.js';
+import { buildServer } from './server.js';
+import { InitializationService } from './services/InitializationService.js';
+import { scheduleSubscriptionChecks } from './services/SubscriptionCheckScheduler.js';
+import { statusReconciliationService } from './utils/statusReconciliation.js';
+
+let app: Awaited<ReturnType<typeof buildServer>>;
 
 const start = async () => {
   try {
+    app = await buildServer();
+
     // Run initializations
     const initService = resolve<InitializationService>(TOKENS.InitializationService);
     await initService.initialize();
 
-    await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
-    fastify.log.info(`API Server listening on port ${env.PORT}`);
+    await app.listen({ port: env.PORT, host: '0.0.0.0' });
+    app.log.info(`API Server listening on port ${env.PORT}`);
 
     // Start status reconciliation service
     statusReconciliationService.start(STATUS_RECONCILIATION_INTERVAL_MS);
 
     // Schedule subscription checks
     await scheduleSubscriptionChecks();
-    fastify.log.info('Subscription check scheduler initialized');
+    app.log.info('Subscription check scheduler initialized');
   } catch (err) {
-    fastify.log.error(err);
+    if (app) {
+      app.log.error(err);
+    } else {
+      console.error(err);
+    }
 
     // If the address is already in use, kill the parent process (likely the watcher)
     // to force an immediate exit instead of waiting for file changes.
@@ -34,7 +42,7 @@ const start = async () => {
       try {
         process.kill(process.ppid);
       } catch (e) {
-        fastify.log.error(e, 'Failed to kill parent process');
+        if (app) app.log.error(e, 'Failed to kill parent process');
       }
     }
 
@@ -47,12 +55,12 @@ let isShuttingDown = false;
 
 const shutdown = async (signal: string) => {
   if (isShuttingDown) {
-    fastify.log.info(`${signal} received but shutdown already in progress`);
+    if (app) app.log.info(`${signal} received but shutdown already in progress`);
     return;
   }
 
   isShuttingDown = true;
-  fastify.log.info(`${signal} received, closing server gracefully...`);
+  if (app) app.log.info(`${signal} received, closing server gracefully......`);
 
   try {
     // Stop status reconciliation service
@@ -63,12 +71,18 @@ const shutdown = async (signal: string) => {
     await closeSubscriptionScheduler();
 
     // Close Fastify server (waits for in-flight requests to complete)
-    await fastify.close();
-    fastify.log.info('Fastify server closed');
+    if (app) {
+      await app.close();
+      app.log.info('Fastify server closed');
+    }
 
     process.exit(0);
   } catch (error) {
-    fastify.log.error(error, 'Error during graceful shutdown');
+    if (app) {
+      app.log.error(error, 'Error during graceful shutdown');
+    } else {
+      console.error('Error during graceful shutdown', error);
+    }
     process.exit(1);
   }
 };

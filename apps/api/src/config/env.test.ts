@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { validateEnv } from './env';
+import { validateEnv } from './env.js';
 
 describe('Environment Validation - API', () => {
   let originalEnv: NodeJS.ProcessEnv;

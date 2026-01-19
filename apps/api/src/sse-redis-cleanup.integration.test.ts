@@ -1,13 +1,8 @@
 import { prisma } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildServer } from './server';
+import { buildServer } from './server.js';
 
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-// These tests require a real database to run
-// Set RUN_INTEGRATION_TESTS=1 to enable these tests
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
-describe.skipIf(shouldSkip)('SSE Redis Subscription Cleanup Tests', () => {
+describe('SSE Redis Subscription Cleanup Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;
@@ -123,34 +118,24 @@ describe.skipIf(shouldSkip)('SSE Redis Subscription Cleanup Tests', () => {
         },
       });
 
-      // Track the duplicated connection
+      // Track the duplicated connection and its quit method
       let duplicatedConnection: any = null;
+      let quitSpy: any = null;
       const originalDuplicate = app.redis.duplicate.bind(app.redis);
 
-      vi.spyOn(app.redis, 'duplicate').mockImplementation(() => {
-        duplicatedConnection = originalDuplicate();
-        return duplicatedConnection;
-      });
-
-      // Spy on quit method of the duplicated connection
-      let quitSpy: ReturnType<typeof vi.spyOn> | null = null;
       const quitPromise = new Promise<void>((resolve) => {
-        const checkInterval = setInterval(() => {
-          if (duplicatedConnection && !quitSpy) {
-            quitSpy = vi.spyOn(duplicatedConnection, 'quit');
-            quitSpy.mockImplementation(async () => {
-              resolve();
-              return 'OK';
-            });
-            clearInterval(checkInterval);
-          }
-        }, 10);
+        vi.spyOn(app.redis, 'duplicate').mockImplementation(() => {
+          duplicatedConnection = originalDuplicate();
+          quitSpy = vi.spyOn(duplicatedConnection, 'quit');
+          quitSpy.mockImplementation(async () => {
+            resolve();
+            return 'OK';
+          });
+          return duplicatedConnection;
+        });
 
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          clearInterval(checkInterval);
-          resolve();
-        }, 5000);
+        // Timeout after 5 seconds to avoid hanging tests
+        setTimeout(resolve, 5000);
       });
 
       // Make the request
@@ -162,13 +147,14 @@ describe.skipIf(shouldSkip)('SSE Redis Subscription Cleanup Tests', () => {
         },
       });
 
-      // Wait for quit to be called (connection cleanup happens on timeout in test mode)
+      // Wait for quit to be called or timeout
       await quitPromise;
 
-      // Wait for response to complete
+      // Wait for response to complete (it ends after cleanup)
       await responsePromise;
 
       // Verify that quit was called to close the dedicated connection
+      expect(duplicatedConnection).not.toBeNull();
       expect(quitSpy).toHaveBeenCalled();
 
       vi.restoreAllMocks();

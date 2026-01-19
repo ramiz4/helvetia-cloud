@@ -3,11 +3,11 @@ import crypto from 'crypto';
 import { Role } from 'database';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { UnauthorizedError } from '../errors';
-import type { IUserRepository } from '../interfaces';
-import * as passwordUtils from '../utils/password';
-import { AuthenticationService } from './AuthenticationService';
-import { OrganizationService } from './OrganizationService';
+import { UnauthorizedError } from '../errors/index.js';
+import type { IUserRepository } from '../interfaces/index.js';
+import * as passwordUtils from '../utils/password.js';
+import { AuthenticationService } from './AuthenticationService.js';
+import { OrganizationService } from './OrganizationService.js';
 
 vi.mock('axios');
 vi.mock('database', async () => {

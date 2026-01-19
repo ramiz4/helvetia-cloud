@@ -1,9 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BODY_LIMIT_SMALL } from '../config/constants';
-import { createRateLimitConfigs } from '../config/rateLimit';
-import { PrivacyPolicyController } from '../controllers/PrivacyPolicyController';
-import { resolve, TOKENS } from '../di';
-import { authenticate } from '../middleware/auth.middleware';
+import { BODY_LIMIT_SMALL } from '../config/constants.js';
+import { createRateLimitConfigs } from '../config/rateLimit.js';
+import { PrivacyPolicyController } from '../controllers/PrivacyPolicyController.js';
+import { resolve, TOKENS } from '../di/index.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 /**
  * Privacy Policy routes

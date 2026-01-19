@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BODY_LIMIT_STANDARD } from '../config/constants';
-import { StripeWebhookController } from '../controllers/StripeWebhookController';
-import { resolve, TOKENS } from '../di';
+import { BODY_LIMIT_STANDARD } from '../config/constants.js';
+import { StripeWebhookController } from '../controllers/StripeWebhookController.js';
+import { resolve, TOKENS } from '../di/index.js';
 
 /**
  * Stripe webhook routes plugin

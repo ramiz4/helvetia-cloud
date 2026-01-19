@@ -1,30 +1,26 @@
-import { prisma } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildServer } from '../server';
+import { createMockStripe } from '../test/mocks/stripe.mock.js';
+
+// Mock the stripe config FIRST to ensure it's applied before anything imports it
+vi.mock('../config/stripe.js', () => ({
+  getStripeClient: () => createMockStripe(),
+  isStripeConfigured: () => true,
+  getStripePriceIds: () => ({
+    STARTER: 'price_test_starter_monthly',
+    PRO: 'price_test_pro_monthly',
+    ENTERPRISE: 'price_test_enterprise_monthly',
+  }),
+}));
+
+import { prisma } from 'database';
+import { buildServer } from '../server.js';
 import {
   createSubscriptionFixture,
   createUsageRecordFixture,
   testStripePrices,
-} from '../test/fixtures/billing.fixtures';
-import { createMockStripe, resetMockStripe } from '../test/mocks/stripe.mock';
-
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-// These tests require a real database to run
-// Set RUN_INTEGRATION_TESTS=1 to enable these tests
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
-// Mock the stripe config
-vi.mock('../config/stripe', () => ({
-  getStripeClient: () => createMockStripe(),
-  isStripeConfigured: () => true,
-  getStripePriceIds: () => ({
-    STARTER: testStripePrices.starter,
-    PRO: testStripePrices.pro,
-    ENTERPRISE: testStripePrices.enterprise,
-  }),
-}));
-
-describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
+} from '../test/fixtures/billing.fixtures.js';
+import { resetMockStripe } from '../test/mocks/stripe.mock.js';
+describe('BillingController Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let testUserId: string;
   let authToken: string;
@@ -52,11 +48,12 @@ describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
       where: { githubId: 'test-gh-billing' },
     });
 
-    // Create a test user
+    // Create a unique test user to avoid conflicts
+    const randomSuffix = Math.random().toString(36).substring(7);
     const testUser = await prisma.user.create({
       data: {
-        username: 'billing-test-user',
-        githubId: 'test-gh-billing',
+        username: `billing-test-user-${randomSuffix}`,
+        githubId: `test-gh-billing-${randomSuffix}`,
       },
     });
     testUserId = testUser.id;
@@ -153,6 +150,9 @@ describe.skipIf(shouldSkip)('BillingController Integration Tests', () => {
       expect(data.id).toBe(subscription.id);
       expect(data.plan).toBe('STARTER');
       expect(data.status).toBe('ACTIVE');
+
+      // Cleanup
+      await prisma.subscription.delete({ where: { id: subscription.id } });
     });
 
     it('should return 401 for unauthenticated request', async () => {

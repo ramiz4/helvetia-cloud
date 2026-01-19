@@ -2,14 +2,14 @@ import axios from 'axios';
 import crypto from 'crypto';
 import { Prisma, PrismaClient, Role } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
-import type { AuthResponseDto, GitHubUserDto } from '../dto';
-import { UnauthorizedError } from '../errors';
-import type { IUserRepository } from '../interfaces';
-import { decrypt, encrypt } from '../utils/crypto';
-import { hashPassword, isLegacyHash, verifyPassword } from '../utils/password';
-import { createRefreshToken } from '../utils/refreshToken';
-import { OrganizationService } from './OrganizationService';
+import { TOKENS } from '../di/tokens.js';
+import type { AuthResponseDto, GitHubUserDto } from '../dto/index.js';
+import { UnauthorizedError } from '../errors/index.js';
+import type { IUserRepository } from '../interfaces/index.js';
+import { decrypt, encrypt } from '../utils/crypto.js';
+import { hashPassword, isLegacyHash, verifyPassword } from '../utils/password.js';
+import { createRefreshToken } from '../utils/refreshToken.js';
+import { OrganizationService } from './OrganizationService.js';
 
 /**
  * AuthenticationService

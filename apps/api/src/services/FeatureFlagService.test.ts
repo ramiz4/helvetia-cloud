@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { IFeatureFlagRepository } from '../interfaces';
-import { FeatureFlagService } from './FeatureFlagService';
+import type { IFeatureFlagRepository } from '../interfaces/index.js';
+import { FeatureFlagService } from './FeatureFlagService.js';
 
 describe('FeatureFlagService', () => {
   let service: FeatureFlagService;

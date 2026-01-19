@@ -1,13 +1,8 @@
 import { prisma, SubscriptionPlan, SubscriptionStatus } from 'database';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { buildServer } from './server';
+import { buildServer } from './server.js';
 
-// Skip these integration tests unless RUN_INTEGRATION_TESTS is set
-// These tests require a real database to run
-// Set RUN_INTEGRATION_TESTS=1 to enable these tests
-const shouldSkip = process.env.RUN_INTEGRATION_TESTS !== '1';
-
-describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () => {
+describe('Resource Limit Enforcement Integration Tests', () => {
   let app: Awaited<ReturnType<typeof buildServer>>;
   let freeUserId: string;
   let starterUserId: string;
@@ -148,16 +143,20 @@ describe.skipIf(shouldSkip)('Resource Limit Enforcement Integration Tests', () =
 
   afterAll(async () => {
     // Cleanup
+    const userIds = [freeUserId, starterUserId, proUserId].filter(Boolean) as string[];
+
     await prisma.subscription.deleteMany({
-      where: { userId: { in: [freeUserId, starterUserId, proUserId] } },
+      where: { userId: { in: userIds } },
     });
     await prisma.service.deleteMany({
-      where: { userId: { in: [freeUserId, starterUserId, proUserId] } },
+      where: { userId: { in: userIds } },
     });
     await prisma.user.deleteMany({
-      where: { id: { in: [freeUserId, starterUserId, proUserId] } },
+      where: { id: { in: userIds } },
     });
-    if (app) await app.close();
+
+    // Close the server to prevent resource leaks
+    await app.close();
   });
 
   beforeEach(async () => {

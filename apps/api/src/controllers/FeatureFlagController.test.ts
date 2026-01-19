@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import 'reflect-metadata';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { FeatureFlagService } from '../services';
-import { FeatureFlagController } from './FeatureFlagController';
+import { FeatureFlagService } from '../services/index.js';
+import { FeatureFlagController } from './FeatureFlagController.js';
 
 describe('FeatureFlagController', () => {
   let controller: FeatureFlagController;

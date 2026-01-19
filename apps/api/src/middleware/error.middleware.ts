@@ -1,5 +1,5 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
-import { AppError, ErrorCode } from '../errors';
+import { AppError, ErrorCode } from '../errors/index.js';
 
 /**
  * Global error handler middleware

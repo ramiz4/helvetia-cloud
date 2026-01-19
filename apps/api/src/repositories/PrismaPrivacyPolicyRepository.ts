@@ -5,7 +5,7 @@ import {
   CreatePrivacyPolicyVersionData,
   IPrivacyPolicyRepository,
   UserPrivacyPolicyAcceptanceWithVersion,
-} from '../interfaces';
+} from '../interfaces/index.js';
 
 /**
  * Prisma implementation of IPrivacyPolicyRepository

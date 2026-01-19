@@ -1,5 +1,5 @@
-import type { CreateServiceDto, UpdateServiceDto } from '../dto';
-import type { Deployment, Service } from './index';
+import type { CreateServiceDto, UpdateServiceDto } from '../dto/index.js';
+import type { Deployment, Service } from './index.js';
 
 /**
  * Interface for ServiceManagementService

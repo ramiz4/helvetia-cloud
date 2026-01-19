@@ -12,10 +12,12 @@ vi.mock('ioredis', () => {
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
   };
+  const RedisMock = vi.fn(function () {
+    return mockRedis;
+  });
   return {
-    default: vi.fn(function () {
-      return mockRedis;
-    }),
+    default: RedisMock,
+    Redis: RedisMock,
   };
 });
 
@@ -108,7 +110,7 @@ vi.mock('@fastify/rate-limit', () => {
   };
 });
 
-import { buildServer } from './server';
+import { buildServer } from './server.js';
 
 describe('GitHub Webhook - Repo URL Normalization', () => {
   const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || 'test-secret';

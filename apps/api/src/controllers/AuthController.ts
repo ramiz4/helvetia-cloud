@@ -1,11 +1,11 @@
-import '../types/fastify';
+import '../types/fastify.js';
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
-import type { IUserRepository } from '../interfaces';
-import { AuthenticationService } from '../services';
-import type { JwtPayload } from '../types';
-import { revokeAllUserRefreshTokens } from '../utils/refreshToken';
+import type { IUserRepository } from '../interfaces/index.js';
+import { AuthenticationService } from '../services/index.js';
+import type { JwtPayload } from '../types/index.js';
+import { revokeAllUserRefreshTokens } from '../utils/refreshToken.js';
 
 /**
  * AuthController

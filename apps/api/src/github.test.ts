@@ -20,10 +20,12 @@ vi.mock('ioredis', () => {
     pttl: vi.fn().mockResolvedValue(60000),
     eval: vi.fn().mockResolvedValue([0, 60000]),
   };
+  const RedisMock = vi.fn(function () {
+    return mockRedis;
+  });
   return {
-    default: vi.fn(function () {
-      return mockRedis;
-    }),
+    default: RedisMock,
+    Redis: RedisMock,
   };
 });
 
@@ -161,7 +163,7 @@ vi.mock('./utils/crypto', () => ({
   decrypt: vi.fn((val) => val),
 }));
 
-import { fastify } from './server';
+import { fastify } from './server.js';
 
 describe('GitHub Integration', () => {
   beforeEach(() => {

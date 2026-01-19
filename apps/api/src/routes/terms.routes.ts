@@ -1,9 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { BODY_LIMIT_SMALL } from '../config/constants';
-import { createRateLimitConfigs } from '../config/rateLimit';
-import { TermsController } from '../controllers/TermsController';
-import { resolve, TOKENS } from '../di';
-import { authenticate } from '../middleware/auth.middleware';
+import { BODY_LIMIT_SMALL } from '../config/constants.js';
+import { createRateLimitConfigs } from '../config/rateLimit.js';
+import { TermsController } from '../controllers/TermsController.js';
+import { resolve, TOKENS } from '../di/index.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 /**
  * Terms of Service routes

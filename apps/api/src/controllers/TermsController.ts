@@ -1,10 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
-import { TOKENS } from '../di/tokens';
-import { AcceptTermsSchema, GetTermsSchema } from '../schemas/terms.schema';
-import type { TermsService } from '../services';
-import { formatZodError } from '../utils/errorFormatting';
+import { TOKENS } from '../di/tokens.js';
+import { AcceptTermsSchema, GetTermsSchema } from '../schemas/terms.schema.js';
+import type { TermsService } from '../services/index.js';
+import { formatZodError } from '../utils/errorFormatting.js';
 
 /**
  * TermsController

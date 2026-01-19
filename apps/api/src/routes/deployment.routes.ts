@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { createRateLimitConfigs } from '../config/rateLimit';
-import { DeploymentController } from '../controllers/DeploymentController';
-import { resolve, TOKENS } from '../di';
+import { createRateLimitConfigs } from '../config/rateLimit.js';
+import { DeploymentController } from '../controllers/DeploymentController.js';
+import { resolve, TOKENS } from '../di/index.js';
 
 /**
  * Deployment routes plugin

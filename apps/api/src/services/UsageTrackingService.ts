@@ -1,7 +1,7 @@
 import { PrismaClient, UsageMetric } from 'database';
 import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '../di/tokens';
-import type { IUsageTrackingService } from '../interfaces';
+import { TOKENS } from '../di/tokens.js';
+import type { IUsageTrackingService } from '../interfaces/index.js';
 
 /**
  * Pricing per unit for each metric (in USD)
