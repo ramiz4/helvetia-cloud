@@ -10,7 +10,8 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**'],
+    // By default, exclude integration tests (only run unit tests)
+    exclude: ['**/node_modules/**', '**/dist/**', '**/*.integration.test.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
     env: {
@@ -28,13 +29,18 @@ export default defineConfig({
       STRIPE_PRICE_ID_STARTER: process.env.STRIPE_PRICE_ID_STARTER || 'price_test_starter',
       STRIPE_PRICE_ID_PRO: process.env.STRIPE_PRICE_ID_PRO || 'price_test_pro',
       STRIPE_PRICE_ID_ENTERPRISE: process.env.STRIPE_PRICE_ID_ENTERPRISE || 'price_test_enterprise',
-      // Flag to skip integration tests (set to '1' to run integration tests)
-      RUN_INTEGRATION_TESTS: process.env.RUN_INTEGRATION_TESTS || '0',
     },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/*.test.ts', '**/*.config.ts', '**/test/**'],
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/*.test.ts',
+        '**/*.integration.test.ts',
+        '**/*.config.ts',
+        '**/test/**',
+      ],
       // Current coverage: ~53% statements, ~53% branches
       // Target: Progressive improvement toward 80%
       thresholds: {
