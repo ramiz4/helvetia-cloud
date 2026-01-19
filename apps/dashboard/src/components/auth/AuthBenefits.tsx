@@ -15,7 +15,7 @@ export function AuthBenefits({ benefits }: AuthBenefitsProps) {
     <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-white/10" role="list">
       {benefits.map((benefit) => {
         const [rawTitle, ...rest] = benefit.text.split(':');
-        const title = (rawTitle ?? '').trim() || 'Feature';
+        const title = rawTitle.trim() || 'Feature';
         const description = rest.length > 0 ? rest.join(':').trim() : benefit.text;
 
         return (
