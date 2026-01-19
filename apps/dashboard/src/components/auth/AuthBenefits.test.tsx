@@ -36,8 +36,8 @@ describe('AuthBenefits', () => {
     // Benefit 2 appears as both title and description if no colon
     expect(screen.getAllByText('Benefit 2')[0]).toBeInTheDocument();
 
-    // Check full descriptions
-    expect(screen.getByText('Benefit 1: Description 1')).toBeInTheDocument();
+    // Check descriptions (text after : if present, or full text if no :)
+    expect(screen.getByText('Description 1')).toBeInTheDocument();
   });
 
   it('renders icons for each benefit', () => {

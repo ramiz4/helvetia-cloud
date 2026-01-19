@@ -74,14 +74,19 @@ describe('LoginPage', () => {
   it('renders login page with heading', async () => {
     renderLoginPage();
     await waitFor(() => {
-      expect(screen.getAllByRole('heading', { level: 1 })[0]).toBeInTheDocument();
+      // Check for the main heading (appears twice: desktop and mobile)
+      const headings = screen.getAllByRole('heading', {
+        level: 1,
+        name: /swiss cloud security/i,
+      });
+      expect(headings.length).toBeGreaterThanOrEqual(1);
     });
   });
 
   it('displays GitHub login button', async () => {
     renderLoginPage();
     await waitFor(() => {
-      const button = screen.getAllByRole('button', { name: /sign in with github/i })[0];
+      const button = screen.getByRole('button', { name: /sign in with github/i });
       expect(button).toBeInTheDocument();
     });
   });

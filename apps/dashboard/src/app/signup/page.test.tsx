@@ -84,10 +84,12 @@ describe('SignupPage', () => {
   it('renders signup page with heading', async () => {
     renderSignupPage();
     await waitFor(() => {
-      const headings = screen.getAllByRole('heading', { level: 1 });
-      expect(headings.length).toBeGreaterThan(0);
-      const texts = screen.getAllByText(/create an account/i);
-      expect(texts.length).toBeGreaterThan(0);
+      // Check for the main heading (appears twice: desktop and mobile)
+      const headings = screen.getAllByRole('heading', {
+        level: 1,
+        name: /create an account/i,
+      });
+      expect(headings.length).toBeGreaterThanOrEqual(1);
     });
   });
 
