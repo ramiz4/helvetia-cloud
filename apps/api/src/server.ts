@@ -300,3 +300,7 @@ export function resetServerForTesting(): void {
 // Re-export common helpers and constants used by tests for compatibility
 export { BODY_LIMIT_GLOBAL, BODY_LIMIT_SMALL, BODY_LIMIT_STANDARD } from './config/constants.js';
 export { getAllowedOrigins, getSafeOrigin, isOriginAllowed } from './utils/helpers/cors.helper.js';
+
+// Export fastify instance for test compatibility
+// This uses top-level await to initialize the singleton
+export const fastify = await buildServer();
