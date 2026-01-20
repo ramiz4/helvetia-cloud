@@ -4,12 +4,12 @@ import { TOKENS } from '../di/tokens.js';
 import type { ISubscriptionService } from '../interfaces/index.js';
 
 /**
- * Duration for virtual FREE subscription (10 years in milliseconds)
+ * Duration for virtual FREE subscription (~10 years in milliseconds, averaged with leap years)
  * This provides effectively unlimited access for free tier users without requiring
  * explicit database records. The 10-year period ensures users won't face unexpected
  * expiration while being far enough in the future to not require maintenance.
  */
-const VIRTUAL_FREE_SUBSCRIPTION_DURATION_MS = 10 * 365 * 24 * 60 * 60 * 1000;
+const VIRTUAL_FREE_SUBSCRIPTION_DURATION_MS = 10 * 365.25 * 24 * 60 * 60 * 1000;
 
 /**
  * Resource limits for each subscription plan
