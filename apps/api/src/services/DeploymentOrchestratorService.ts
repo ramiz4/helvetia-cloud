@@ -1,8 +1,8 @@
 import { Queue } from 'bullmq';
+import { ForbiddenError, NotFoundError } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../di/tokens.js';
 import type { QueueDeploymentJobDto } from '../dto/index.js';
-import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   Deployment,
   IDeploymentOrchestratorService,

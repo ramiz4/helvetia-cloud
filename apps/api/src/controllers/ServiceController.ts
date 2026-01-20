@@ -1,9 +1,9 @@
 import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { ForbiddenError, NotFoundError } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { ZodError } from 'zod';
 import { CONNECTION_TIMEOUT_MS, METRICS_UPDATE_INTERVAL_MS } from '../config/constants.js';
-import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import { getServiceMetrics } from '../handlers/metrics.handler.js';
 import type {
   IContainerOrchestrator,

@@ -1,8 +1,8 @@
 import crypto from 'crypto';
+import { ConflictError, ForbiddenError, NotFoundError } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../di/tokens.js';
 import type { CreateServiceDto, UpdateServiceDto } from '../dto/index.js';
-import { ConflictError, ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   IContainerOrchestrator,
   IDeploymentRepository,

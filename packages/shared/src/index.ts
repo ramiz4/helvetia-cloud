@@ -3,7 +3,9 @@
  * Contains Docker orchestration, Redis utilities, and distributed locks
  */
 
-// Orchestration exports (for API/Worker)
+// Error exports (for API/Worker)
+export * from './errors/index.js';
+
 // Orchestration exports (for API/Worker)
 export * from './orchestration/index.js';
 

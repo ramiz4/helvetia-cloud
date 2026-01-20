@@ -1,8 +1,8 @@
 import type { Role } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { ForbiddenError, ValidationError } from 'shared';
 import { z } from 'zod';
 import { resolve, TOKENS } from '../di/index.js';
-import { ForbiddenError, ValidationError } from '../errors/index.js';
 import type { OrganizationService } from '../services/OrganizationService.js';
 
 /**

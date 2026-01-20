@@ -1,8 +1,8 @@
 import { SubscriptionPlan, SubscriptionStatus } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { ForbiddenError } from 'shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as di from '../di/index.js';
-import { ForbiddenError } from '../errors/index.js';
 import type { ISubscriptionService } from '../interfaces/index.js';
 import { enforceResourceLimits, requireActiveSubscription } from './subscription.middleware.js';
 

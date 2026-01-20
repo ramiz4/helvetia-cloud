@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import 'reflect-metadata';
+import { ForbiddenError, NotFoundError } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type { IDeploymentRepository, IServiceRepository } from '../interfaces/index.js';
 import { DeploymentOrchestratorService } from '../services/index.js';
 import { DeploymentController } from './DeploymentController.js';

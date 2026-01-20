@@ -1,6 +1,6 @@
 import 'reflect-metadata';
+import { ForbiddenError, NotFoundError } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import { ServiceController } from './ServiceController.js';
 
 // Mock database module
