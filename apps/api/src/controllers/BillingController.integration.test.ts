@@ -164,7 +164,7 @@ describe('BillingController Integration Tests', () => {
       expect(response.statusCode).toBe(401);
     });
 
-    it('should return 404 if user has no subscription', async () => {
+    it('should return `virtual:free_default` subscription if user has no database subscription record', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/api/v1/billing/subscription',
@@ -173,9 +173,11 @@ describe('BillingController Integration Tests', () => {
         },
       });
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(200);
       const data = JSON.parse(response.body);
-      expect(data.error).toBe('No subscription found');
+      expect(data.id).toBe('virtual:free_default');
+      expect(data.plan).toBe('FREE');
+      expect(data.status).toBe('ACTIVE');
     });
   });
 
@@ -260,7 +262,7 @@ describe('BillingController Integration Tests', () => {
       expect(data.url).toContain('billing.stripe.com');
     });
 
-    it('should return 400 if user has no subscription (virtual FREE plan)', async () => {
+    it('should return 400 if user is on the virtual FREE plan (no Stripe account)', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/billing/portal',
@@ -311,7 +313,7 @@ describe('BillingController Integration Tests', () => {
       expect(Array.isArray(data.invoices)).toBe(true);
     });
 
-    it('should return 404 if user has no subscription', async () => {
+    it('should return empty array if user is on the virtual FREE plan', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/api/v1/billing/invoices',
@@ -320,7 +322,10 @@ describe('BillingController Integration Tests', () => {
         },
       });
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data).toHaveProperty('invoices');
+      expect(Array.isArray(data.invoices)).toBe(true);
     });
 
     it('should return 401 for unauthenticated request', async () => {
@@ -386,7 +391,7 @@ describe('BillingController Integration Tests', () => {
       expect(Array.isArray(data.usage)).toBe(true);
     });
 
-    it('should return 404 if user has no subscription', async () => {
+    it('should return usage for virtual FREE plan if user is on the virtual FREE plan', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/api/v1/billing/usage',
@@ -395,7 +400,12 @@ describe('BillingController Integration Tests', () => {
         },
       });
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(200);
+      const data = JSON.parse(response.body);
+      expect(data).toHaveProperty('usage');
+      expect(data).toHaveProperty('periodStart');
+      expect(data).toHaveProperty('periodEnd');
+      expect(Array.isArray(data.usage)).toBe(true);
     });
   });
 
