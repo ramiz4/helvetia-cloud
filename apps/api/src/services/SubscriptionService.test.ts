@@ -171,7 +171,8 @@ describe('SubscriptionService', () => {
       expect(result).not.toBeNull();
       expect(result?.plan).toBe(SubscriptionPlan.FREE);
       expect(result?.status).toBe(SubscriptionStatus.ACTIVE);
-      expect(result?.id).toBe('free_default');
+      expect(result?.id).toBe('virtual:free_default');
+      expect(result?.stripeCustomerId).toBeNull();
     });
 
     it('should return null when no subscription found for organizationId', async () => {
