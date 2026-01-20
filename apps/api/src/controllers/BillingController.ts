@@ -141,6 +141,8 @@ export class BillingController {
 
       const subscription = await this.subscriptionService.getSubscription({ userId });
 
+      // Users on the virtual FREE plan do not have a Stripe customer (no stripeCustomerId),
+      // so they have no invoices because they have not subscribed to a paid plan yet.
       if (!subscription || !subscription.stripeCustomerId) {
         return { invoices: [] };
       }

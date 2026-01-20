@@ -260,7 +260,7 @@ describe('BillingController Integration Tests', () => {
       expect(data.url).toContain('billing.stripe.com');
     });
 
-    it('should return 404 if user has no subscription', async () => {
+    it('should return 400 if user has no subscription (virtual FREE plan)', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/billing/portal',
@@ -269,9 +269,11 @@ describe('BillingController Integration Tests', () => {
         },
       });
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(400);
       const data = JSON.parse(response.body);
-      expect(data.error).toBe('No subscription found');
+      expect(data.error).toBe(
+        'No active billing account. Please upgrade your plan to manage billing.',
+      );
     });
 
     it('should return 401 for unauthenticated request', async () => {
