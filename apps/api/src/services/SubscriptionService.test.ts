@@ -21,6 +21,8 @@ const TEST_FIXTURES = {
     currentPeriodEnd: new Date('2024-02-01'),
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
+    lastSuspensionAt: null,
+    lastWarningEmailAt: null,
   },
   pastDueUserSubscription: {
     id: 'sub-2',
@@ -34,6 +36,8 @@ const TEST_FIXTURES = {
     currentPeriodEnd: new Date('2024-02-01'),
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-15'),
+    lastSuspensionAt: null,
+    lastWarningEmailAt: null,
   },
   canceledUserSubscription: {
     id: 'sub-3',
@@ -47,6 +51,8 @@ const TEST_FIXTURES = {
     currentPeriodEnd: new Date('2024-02-01'),
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-20'),
+    lastSuspensionAt: null,
+    lastWarningEmailAt: null,
   },
   // Organization subscriptions
   activeOrgSubscription: {
@@ -61,6 +67,8 @@ const TEST_FIXTURES = {
     currentPeriodEnd: new Date('2024-02-01'),
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
+    lastSuspensionAt: null,
+    lastWarningEmailAt: null,
   },
   unpaidOrgSubscription: {
     id: 'sub-5',
@@ -74,6 +82,8 @@ const TEST_FIXTURES = {
     currentPeriodEnd: new Date('2024-02-01'),
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-18'),
+    lastSuspensionAt: null,
+    lastWarningEmailAt: null,
   },
   // Subscription without Stripe subscription ID (trial or free tier)
   freeTrialSubscription: {
@@ -88,6 +98,8 @@ const TEST_FIXTURES = {
     currentPeriodEnd: new Date('2024-02-01'),
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
+    lastSuspensionAt: null,
+    lastWarningEmailAt: null,
   },
 };
 
@@ -151,10 +163,24 @@ describe('SubscriptionService', () => {
       expect(result).toEqual(TEST_FIXTURES.activeOrgSubscription);
     });
 
-    it('should return null when no subscription found', async () => {
+    it('should return default FREE subscription when no subscription found for userId', async () => {
       vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
 
       const result = await subscriptionService.getSubscription({ userId: 'user-nonexistent' });
+
+      expect(result).not.toBeNull();
+      expect(result?.plan).toBe(SubscriptionPlan.FREE);
+      expect(result?.status).toBe(SubscriptionStatus.ACTIVE);
+      expect(result?.id).toBe('virtual:free_default');
+      expect(result?.stripeCustomerId).toBeNull();
+    });
+
+    it('should return null when no subscription found for organizationId', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
+
+      const result = await subscriptionService.getSubscription({
+        organizationId: 'org-nonexistent',
+      });
 
       expect(result).toBeNull();
     });
@@ -197,6 +223,8 @@ describe('SubscriptionService', () => {
         organizationId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        lastSuspensionAt: null,
+        lastWarningEmailAt: null,
         ...newSubscriptionData,
       });
 
@@ -264,6 +292,8 @@ describe('SubscriptionService', () => {
         userId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        lastSuspensionAt: null,
+        lastWarningEmailAt: null,
         ...orgSubscriptionData,
       });
 
@@ -313,6 +343,8 @@ describe('SubscriptionService', () => {
         stripeSubscriptionId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        lastSuspensionAt: null,
+        lastWarningEmailAt: null,
         ...trialData,
       });
 
@@ -475,11 +507,21 @@ describe('SubscriptionService', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when no subscription exists', async () => {
+    it('should return true (default FREE) when no subscription exists for userId', async () => {
       vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
 
       const result = await subscriptionService.hasActiveSubscription({
         userId: 'user-nonexistent',
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when no subscription exists for organizationId', async () => {
+      vi.mocked(mockPrisma.subscription.findFirst).mockResolvedValue(null);
+
+      const result = await subscriptionService.hasActiveSubscription({
+        organizationId: 'org-nonexistent',
       });
 
       expect(result).toBe(false);
@@ -740,6 +782,8 @@ describe('SubscriptionService', () => {
         status: SubscriptionStatus.ACTIVE,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(),
+        lastSuspensionAt: null,
+        lastWarningEmailAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });

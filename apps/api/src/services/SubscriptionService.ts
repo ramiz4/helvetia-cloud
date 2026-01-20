@@ -4,6 +4,14 @@ import { TOKENS } from '../di/tokens.js';
 import type { ISubscriptionService } from '../interfaces/index.js';
 
 /**
+ * Duration for virtual FREE subscription (~10 years in milliseconds, averaged with leap years)
+ * This provides effectively unlimited access for free tier users without requiring
+ * explicit database records. The 10-year period ensures users won't face unexpected
+ * expiration while being far enough in the future to not require maintenance.
+ */
+const VIRTUAL_FREE_SUBSCRIPTION_DURATION_MS = 10 * 365.25 * 24 * 60 * 60 * 1000;
+
+/**
  * Resource limits for each subscription plan
  */
 const PLAN_LIMITS = {
@@ -55,7 +63,7 @@ export class SubscriptionService implements ISubscriptionService {
     id: string;
     plan: SubscriptionPlan;
     status: SubscriptionStatus;
-    stripeCustomerId: string;
+    stripeCustomerId: string | null;
     stripeSubscriptionId: string | null;
     currentPeriodStart: Date;
     currentPeriodEnd: Date;
@@ -71,7 +79,28 @@ export class SubscriptionService implements ISubscriptionService {
       },
     });
 
-    return subscription;
+    if (subscription) {
+      return subscription;
+    }
+
+    // Return a virtual FREE subscription for users without one
+    // This allows access to free tier resources without requiring a database record
+    // Organizations do not receive virtual subscriptions - they must explicitly subscribe
+    if (params.userId) {
+      return {
+        // Virtual subscription, not persisted in the database
+        id: 'virtual:free_default',
+        plan: SubscriptionPlan.FREE,
+        status: SubscriptionStatus.ACTIVE,
+        // No Stripe customer - user has not subscribed to a paid plan
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + VIRTUAL_FREE_SUBSCRIPTION_DURATION_MS),
+      };
+    }
+
+    return null;
   }
 
   /**
