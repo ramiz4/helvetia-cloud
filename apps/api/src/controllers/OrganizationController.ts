@@ -1,8 +1,8 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { ValidationError } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { z } from 'zod';
 import { TOKENS } from '../di/tokens.js';
-import { ValidationError } from '../errors/index.js';
 import { OrganizationService } from '../services/OrganizationService.js';
 import { formatZodError } from '../utils/errorFormatting.js';
 

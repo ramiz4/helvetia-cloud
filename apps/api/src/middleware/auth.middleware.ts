@@ -1,6 +1,6 @@
 import { Role } from 'database';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { UnauthorizedError } from '../errors/index.js';
+import { UnauthorizedError } from 'shared';
 
 /**
  * List of routes that don't require authentication

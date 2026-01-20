@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { ForbiddenError } from 'shared';
 import { resolve, TOKENS } from '../di/index.js';
-import { ForbiddenError } from '../errors/index.js';
 import type { ISubscriptionService } from '../interfaces/index.js';
 
 /**

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
+import { ForbiddenError, NotFoundError, ValidationError } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, NotFoundError, ValidationError } from '../errors/index.js';
 import { OrganizationService } from '../services/OrganizationService.js';
 import { OrganizationController } from './OrganizationController.js';
 

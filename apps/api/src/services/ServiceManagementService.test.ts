@@ -1,6 +1,6 @@
 import 'reflect-metadata';
+import { ConflictError, ForbiddenError, NotFoundError } from 'shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConflictError, ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   IDeploymentRepository,
   IOrganizationRepository,

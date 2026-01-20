@@ -1,7 +1,7 @@
 import { Organization, Role } from 'database';
+import { ForbiddenError, NotFoundError } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../di/tokens.js';
-import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type { IOrganizationRepository } from '../interfaces/IOrganizationRepository.js';
 
 @injectable()

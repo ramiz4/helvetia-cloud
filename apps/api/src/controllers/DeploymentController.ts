@@ -2,10 +2,9 @@ import '../types/fastify.js';
 
 import type Docker from 'dockerode';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { PLATFORM_DOMAIN, withStatusLock } from 'shared';
+import { ForbiddenError, NotFoundError, PLATFORM_DOMAIN, withStatusLock } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { CONTAINER_CPU_NANOCPUS, CONTAINER_MEMORY_LIMIT_BYTES } from '../config/constants.js';
-import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type {
   IContainerOrchestrator,
   IDeploymentOrchestratorService,

@@ -1,6 +1,6 @@
+import { ConflictError, ForbiddenError, NotFoundError } from 'shared';
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../di/tokens.js';
-import { ConflictError, ForbiddenError, NotFoundError } from '../errors/index.js';
 import {
   Environment,
   IOrganizationRepository,
