@@ -109,8 +109,10 @@ export class BillingController {
 
       const subscription = await this.subscriptionService.getSubscription({ userId });
 
-      if (!subscription) {
-        return reply.status(404).send({ error: 'No subscription found' });
+      if (!subscription || !subscription.stripeCustomerId) {
+        return reply.status(400).send({
+          error: 'No active billing account. Please upgrade your plan to manage billing.',
+        });
       }
 
       const session = await this.billingService.createPortalSession({
@@ -139,8 +141,8 @@ export class BillingController {
 
       const subscription = await this.subscriptionService.getSubscription({ userId });
 
-      if (!subscription) {
-        return reply.status(404).send({ error: 'No subscription found' });
+      if (!subscription || !subscription.stripeCustomerId) {
+        return { invoices: [] };
       }
 
       const invoices = await this.billingService.getInvoices(subscription.stripeCustomerId);

@@ -71,7 +71,25 @@ export class SubscriptionService implements ISubscriptionService {
       },
     });
 
-    return subscription;
+    if (subscription) {
+      return subscription;
+    }
+
+    // Return a default FREE subscription for users without one
+    // This allows access to free tier resources without manual subscription
+    if (params.userId) {
+      return {
+        id: 'free_default',
+        plan: SubscriptionPlan.FREE,
+        status: SubscriptionStatus.ACTIVE,
+        stripeCustomerId: '',
+        stripeSubscriptionId: null,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 10), // 10 years
+      };
+    }
+
+    return null;
   }
 
   /**
