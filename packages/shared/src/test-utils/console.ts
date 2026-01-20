@@ -1,6 +1,15 @@
 import { vi } from 'vitest';
 
 /**
+ * Test utilities for suppressing console output in tests.
+ *
+ * @packageDocumentation
+ * @requires vitest - This module requires vitest to be installed in the consuming package.
+ *                    It is declared as an optional peer dependency, so ensure your test
+ *                    environment includes vitest before importing these utilities.
+ */
+
+/**
  * Suppress console output in tests
  * This is useful to keep test output clean and focused on test results
  *
